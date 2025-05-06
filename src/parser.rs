@@ -459,62 +459,129 @@ pub fn compare_ast_blocks(blocks: &[Vec<Stmt>]) -> String {
                     name_values[0].clone()
                 };
                 
-                // 値が異なるかチェックする変数を削除（常にホール化するため）
-                let expr_type = match expr {
-                    Expr::New(cls) => format!("new {}", cls),
-                    Expr::Num(_) | Expr::Str(_) => {
-                        // リテラル値は常に違いを検出する対象として扱う
-                        let hole_name = format!("Hole{}", hole_counter);
-                        holes.push(HoleInfo {
-                            name: hole_name.clone(),
-                            position: "var_value".to_string(),
-                            values: expr_values.clone(),
-                        });
-                        hole_counter += 1;
-                        hole_name
-                    },
-                    _ => format!("{:?}", expr),
+                // 値が異なるかチェック
+                let expr_differs = match expr {
+                    Expr::New(_) => false, // newはそのまま保持
+                    _ => expr_values.iter().any(|e| e != &expr_values[0])
                 };
                 
-                template_code.push_str(&format!("var {} = {};\n", name_hole, expr_type));
-            },
-            
-            Stmt::Assign { lhs, expr } => {
-                // 左辺と右辺を比較
-                let lhs_str = lhs_to_str(lhs);
-                let mut lhs_values: Vec<String> = vec![lhs_str.clone()];
-                let mut expr_values: Vec<String> = vec![expr_to_str(expr)];
-                
-                for other_stmt in stmts_at_position.iter().skip(1) {
-                    if let Stmt::Assign { lhs: l, expr: e } = other_stmt {
-                        lhs_values.push(lhs_to_str(l));
-                        expr_values.push(expr_to_str(e));
-                    }
-                }
-                
-                // 左辺が異なるかチェック
-                let lhs_differs = lhs_values.iter().any(|l| l != &lhs_values[0]);
-                let lhs_template = if lhs_differs {
+                let expr_hole = if expr_differs {
                     let hole_name = format!("Hole{}", hole_counter);
                     holes.push(HoleInfo {
                         name: hole_name.clone(),
-                        position: "lhs".to_string(),
-                        values: lhs_values.clone(),
+                        position: "var_value".to_string(),
+                        values: expr_values.clone(),
                     });
                     hole_counter += 1;
                     hole_name
                 } else {
+                    format_expr(expr)
+                };
+                
+                template_code.push_str(&format!("var {} = {};\n", name_hole, expr_hole));
+            },
+            
+            Stmt::Assign { lhs, expr } => {
+                // 左辺と右辺の比較準備
+                let mut lhs_values = Vec::new();
+                let mut expr_values = Vec::new();
+                
+                // すべてのブロックからLhsとExprを抽出
+                for stmt in &stmts_at_position {
+                    if let Stmt::Assign { lhs: l, expr: e } = stmt {
+                        lhs_values.push(l);
+                        expr_values.push(e);
+                    }
+                }
+                
+                // オブジェクトアクセスのプロパティ名を抽出・比較
+                let common_property = extract_common_property(&lhs_values);
+                
+                // オブジェクト部分が異なるか確認
+                let lhs_obj_differs = lhs_values.iter().any(|l| {
+                    if let Lhs::ObjAccess(obj, _) = l {
+                        // オブジェクト部分を比較
+                        if let Lhs::ObjAccess(first_obj, _) = &lhs_values[0] {
+                            !objects_are_equal(obj, first_obj)
+                        } else {
+                            true
+                        }
+                    } else {
+                        true
+                    }
+                });
+                
+                // オブジェクト部分とプロパティ名から適切なテンプレートを生成
+                let lhs_template = if lhs_obj_differs {
+                    if let Some(prop) = common_property {
+                        // 共通のプロパティがある場合
+                        let hole_name = format!("Hole{}", hole_counter);
+                        
+                        // オブジェクト部分のみを抽出して保存
+                        let obj_values = lhs_values.iter().map(|l| {
+                            if let Lhs::ObjAccess(obj, _) = l {
+                                format_lhs(obj)
+                            } else {
+                                format_lhs(l)
+                            }
+                        }).collect::<Vec<String>>();
+                        
+                        holes.push(HoleInfo {
+                            name: hole_name.clone(),
+                            position: "lhs_obj".to_string(),
+                            values: obj_values,
+                        });
+                        hole_counter += 1;
+                        
+                        // ホール名.プロパティの形式で返す
+                        format!("{}.{}", hole_name, prop)
+                    } else {
+                        // 共通のプロパティがない場合は完全にホール化
+                        let hole_name = format!("Hole{}", hole_counter);
+                        
+                        // 左辺全体を保存
+                        let lhs_full_values = lhs_values.iter()
+                            .map(|l| format_lhs(l))
+                            .collect::<Vec<String>>();
+                        
+                        holes.push(HoleInfo {
+                            name: hole_name.clone(),
+                            position: "lhs".to_string(),
+                            values: lhs_full_values,
+                        });
+                        hole_counter += 1;
+                        hole_name
+                    }
+                } else {
+                    // オブジェクト部分が同じ場合はそのまま使用
                     format_lhs(lhs)
                 };
                 
                 // 右辺が異なるかチェック
-                let expr_differs = expr_values.iter().any(|e| e != &expr_values[0]);
+                let expr_differs = expr_values.iter().any(|e| {
+                    if let Expr::Var(name) = e {
+                        if let Expr::Var(first_name) = &expr_values[0] {
+                            name != first_name
+                        } else {
+                            true
+                        }
+                    } else {
+                        true
+                    }
+                });
+                
                 let expr_template = if expr_differs {
                     let hole_name = format!("Hole{}", hole_counter);
+                    
+                    // 全ての式を文字列に変換
+                    let expr_str_values = expr_values.iter()
+                        .map(|e| format_expr(e))
+                        .collect::<Vec<String>>();
+                    
                     holes.push(HoleInfo {
                         name: hole_name.clone(),
                         position: "expr".to_string(),
-                        values: expr_values.clone(),
+                        values: expr_str_values,
                     });
                     hole_counter += 1;
                     hole_name
@@ -525,9 +592,31 @@ pub fn compare_ast_blocks(blocks: &[Vec<Stmt>]) -> String {
                 template_code.push_str(&format!("{} = {};\n", lhs_template, expr_template));
             },
             
-            _ => {
-                // その他のステートメントはそのまま出力
-                template_code.push_str(&format!("{:?};\n", stmt));
+            Stmt::Expr(e) => {
+                let mut expr_values = Vec::new();
+                expr_values.push(format_expr(e));
+                
+                for stmt in stmts_at_position.iter().skip(1) {
+                    if let Stmt::Expr(other_e) = stmt {
+                        expr_values.push(format_expr(other_e));
+                    }
+                }
+                
+                let expr_differs = expr_values.iter().any(|expr| expr != &expr_values[0]);
+                let expr_template = if expr_differs {
+                    let hole_name = format!("Hole{}", hole_counter);
+                    holes.push(HoleInfo {
+                        name: hole_name.clone(),
+                        position: "expr".to_string(),
+                        values: expr_values,
+                    });
+                    hole_counter += 1;
+                    hole_name
+                } else {
+                    expr_values[0].clone()
+                };
+                
+                template_code.push_str(&format!("{};\n", expr_template));
             }
         }
     }
@@ -544,44 +633,46 @@ pub fn compare_ast_blocks(blocks: &[Vec<Stmt>]) -> String {
     template_code
 }
 
-// ステートメントの種類を返す補助関数
-fn stmt_kind(stmt: &Stmt) -> &'static str {
-    match stmt {
-        Stmt::VarDecl { .. } => "VarDecl",
-        Stmt::Assign { .. } => "Assign",
-        Stmt::Expr(_) => "Expr",
-    }
-}
-
-// 左辺値を整形する補助関数
-fn format_lhs(lhs: &Lhs) -> String {
-    match lhs {
-        Lhs::Var(name) => name.clone(),
-        Lhs::ObjAccess(obj, prop) => {
-            match &**obj {
-                Lhs::Var(name) => format!("{}.{}", name, prop),
-                Lhs::ObjAccess(inner_obj, inner_prop) => {
-                    // ネストされたオブジェクトアクセスをサポート
-                    let inner_fmt = format_lhs(&Lhs::ObjAccess(inner_obj.clone(), inner_prop.clone()));
-                    format!("{}.{}", inner_fmt, prop)
-                },
-                _ => format!("<complex>.{}", prop),
-            }
+// オブジェクトが等しいかどうかを確認する補助関数
+fn objects_are_equal(obj1: &Box<Lhs>, obj2: &Box<Lhs>) -> bool {
+    match (&**obj1, &**obj2) {
+        (Lhs::Var(name1), Lhs::Var(name2)) => name1 == name2,
+        (Lhs::ObjAccess(inner_obj1, prop1), Lhs::ObjAccess(inner_obj2, prop2)) => {
+            prop1 == prop2 && objects_are_equal(inner_obj1, inner_obj2)
         },
-        _ => format!("{:?}", lhs),
+        _ => false
     }
 }
 
-// 式を整形する補助関数
-fn format_expr(expr: &Expr) -> String {
-    match expr {
-        Expr::Var(name) => name.clone(),
-        Expr::Num(n) => n.to_string(),
-        Expr::Str(s) => format!("\"{}\"", s),
-        Expr::New(cls) => format!("new {}", cls),
-        Expr::This => "this".to_string(),
-        Expr::Literal(lit) => lit.clone(),
-        _ => format!("{:?}", expr),
+// 複数のLhsからの共通プロパティ名を抽出する補助関数
+fn extract_common_property(lhs_values: &[&Lhs]) -> Option<String> {
+    if lhs_values.is_empty() {
+        return None;
+    }
+    
+    // 全ての要素がObjAccessかチェック
+    if !lhs_values.iter().all(|lhs| matches!(lhs, Lhs::ObjAccess(_, _))) {
+        return None;
+    }
+    
+    // 最初の要素からプロパティ名を取得
+    let first_prop = if let Lhs::ObjAccess(_, prop) = lhs_values[0] {
+        prop
+    } else {
+        return None;
+    };
+    
+    // すべての要素が同じプロパティ名を持つか確認
+    if lhs_values.iter().all(|lhs| {
+        if let Lhs::ObjAccess(_, prop) = lhs {
+            prop == first_prop
+        } else {
+            false
+        }
+    }) {
+        Some(first_prop.clone())
+    } else {
+        None
     }
 }
 
@@ -618,5 +709,55 @@ fn lhs_to_str(lhs: &Lhs) -> String {
             }
         },
         _ => "lhs_unknown".into(),
+    }
+}
+
+// 左辺値を整形する補助関数
+fn format_lhs(lhs: &Lhs) -> String {
+    match lhs {
+        Lhs::Var(name) => name.clone(),
+        Lhs::ObjAccess(obj, prop) => {
+            // 最後のプロパティは常に保持する
+            match &**obj {
+                Lhs::Var(name) => format!("{}.{}", name, prop),
+                Lhs::ObjAccess(inner_obj, inner_prop) => {
+                    // ネストされたオブジェクトアクセスをサポート
+                    let inner_fmt = format_lhs(&Lhs::ObjAccess(inner_obj.clone(), inner_prop.clone()));
+                    format!("{}.{}", inner_fmt, prop)
+                },
+                _ => format!("<complex>.{}", prop),
+            }
+        },
+        _ => format!("{:?}", lhs),
+    }
+}
+
+// 式を整形する補助関数
+fn format_expr(expr: &Expr) -> String {
+    match expr {
+        Expr::Var(name) => name.clone(),
+        Expr::Num(n) => n.to_string(),
+        Expr::Str(s) => format!("\"{}\"", s),
+        Expr::New(cls) => format!("new {}", cls),
+        Expr::This => "this".to_string(),
+        Expr::Literal(lit) => lit.clone(),
+        Expr::MethodCall(obj, method, args) => {
+            let obj_str = format_lhs(obj);
+            let args_str = args.iter()
+                .map(|arg| format_expr(arg))
+                .collect::<Vec<String>>()
+                .join(", ");
+            format!("{}.{}({})", obj_str, method, args_str)
+        },
+        _ => format!("{:?}", expr),
+    }
+}
+
+// ステートメントの種類を返す補助関数
+fn stmt_kind(stmt: &Stmt) -> &'static str {
+    match stmt {
+        Stmt::VarDecl { .. } => "var_decl",
+        Stmt::Assign { .. } => "assign",
+        Stmt::Expr(_) => "expr",
     }
 }
