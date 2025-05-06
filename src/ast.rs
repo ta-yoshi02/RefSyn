@@ -15,6 +15,8 @@ pub enum Expr {
     This,
     Lhs(Box<Lhs>),
     Hole(Placeholder),
+    Literal(String), // 新しいバリアント
+    MethodCall(Box<Lhs>, String, Vec<Expr>), // obj.method(args)
 }
 
 /* ---------- L-value ---------- */
@@ -30,6 +32,7 @@ pub enum Lhs {
 pub enum Stmt {
     VarDecl { name: String, expr: Expr },
     Assign  { lhs: Lhs,     expr: Expr },
+    Expr(Expr), // 新しいバリアント
 }
 
 /* ---------- Program ---------- */
@@ -50,6 +53,17 @@ impl Display for Expr {
             This          => write!(f, "this"),
             Lhs(lhs)      => write!(f, "{lhs}"),
             Hole(ph)      => write!(f, "{ph}"),
+            Literal(lit)  => write!(f, "{lit}"),
+            MethodCall(obj, method, args) => {
+                write!(f, "{obj}.{method}(")?;
+                for (i, arg) in args.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{arg}")?;
+                }
+                write!(f, ")")
+            },
         }
     }
 }
@@ -71,6 +85,7 @@ impl Display for Stmt {
         match self {
             VarDecl { name, expr } => write!(f, "var {name} = {expr}"),
             Assign  { lhs, expr }  => write!(f, "{lhs} = {expr}"),
+            Expr(expr)             => write!(f, "{expr}"),
         }
     }
 }

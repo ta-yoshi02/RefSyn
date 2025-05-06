@@ -16,7 +16,7 @@ RefSyn は、データ構造に対する操作の具体例（メソッド呼び�
 
 このバックエンドは、[Warp](https://github.com/seanmonstar/warp) フレームワークを使用した Rust 製の Web サーバーとして構築されています。以下の主要なコンポーネントと連携します:
 
-* **Kanon (フロントエンド):** ユーザーインターフェースを提供し、GUI で作成された仕様をこのバックエンドに送信します。合成結果を受け取り、エディタに表示します。
+* **Kanon (フロントエンド):** ユーザーインターフェースを提供し、GUI で作成された仕様をこのバックエンドに送信します。合成結果を受け取り、エディタに表示します。Kanonは豊富なサンプルデータ構造（連結リスト、ツリー、グラフなど）を含み、様々な操作例を提供します。
 * **Escher-Scala (PBE バックエンド):** 実際に PBE 合成を行う独立したサービス（Scala で実装）。この RefSyn バックエンドは、Escher-Scala に対して合成タスク（`tests.json` 形式で記述）を依頼し、結果を受け取ります。（連携は HTTP 経由を想定）。
 
 コアロジックは以下のステップを含みます:
@@ -40,6 +40,31 @@ RefSyn は、データ構造に対する操作の具体例（メソッド呼び�
 
 このようにして、複数の仕様からメソッド呼び出しの共通パターンを見つけ、
 差分となる部分のみを合成用にエンコードする仕組みを提供します。
+
+## サンプルデータ構造 (Sample Data Structures)
+
+Kanonフロントエンドは、以下のカテゴリの豊富なサンプルデータ構造を提供しています：
+
+1. **基本データ構造 (basics):**
+   - 単方向連結リスト (singular-linked-list.js)
+   - 双方向連結リスト (doubly-linked-list.js)
+   - AVL木 (AVL.js)
+   - 二分探索木 (binary-search-tree.js)
+   - 挿入ソート (linked-list-insertSort.js)
+
+2. **高度なレイアウト用データ構造 (for_FIFA_layout):**
+   - グラフ (graph.js)
+   - B+木 (B+_tree.js)
+   - フィボナッチヒープ (fibonacci_heap.js)
+   - スキップリスト (skip_list.js)
+   - 赤黒木 (red_black_tree.js)
+   - 三分木 (ternary_tree.js)
+   - 隣接行列 (Adjacencey_Matrix.js)
+   - ダイクストラ最短経路 (dijkstra_shortest_path.js)
+   - ラムダ計算 (lambda-calculus.js)
+   - その他、複合データ構造の例
+
+これらのサンプルは、データ構造に対する操作の動作を視覚的に理解し、自動合成のための仕様を定義する際の参考となります。
 
 ## ディレクトリ構成とモジュールの役割 (Directory Structure and Roles)
 ```
