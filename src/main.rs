@@ -1,1083 +1,445 @@
 mod ast;
+mod env; // env モジュールを宣言
 mod parser;
+mod server;
 
-use warp::Filter;
 use serde::{Deserialize, Serialize};
-use warp::http::Method;
 use crate::parser::parse_operations;
+use crate::env::MemoEnv; // MemoEnv をインポート
 use std::collections::HashMap;
+use warp::http::StatusCode;
+use crate::ast::{Stmt, Placeholder, Expr, Lhs, Program}; // Program を追加
 
-// メソッドIDからインデックスを抽出
-fn extract_method_index(id: &str) -> Option<i32> {
-    // "method_1", "method1" または "__temp1" のようなパターンを検出
-    let digits: String = id.chars().filter(|c| c.is_digit(10)).collect();
-    digits.parse::<i32>().ok()
-}
-
-// __tempID から数値部分を抽出するヘルパー関数
-fn extract_temp_id_number(id: &str) -> Option<i32> {
-    if id.starts_with("__temp") {
-        let digits = id.chars()
-            .filter(|c| c.is_digit(10))
-            .collect::<String>();
-        return digits.parse::<i32>().ok();
-    }
-    None
-}
-
-// 操作が特定のグループに属するかを判定
-fn belongs_to_group(op: &serde_json::Value, group_id: &str) -> bool {
-    // IDフィールドのチェック
-    if let Some(id) = op.get("id").and_then(|v| v.as_str()) {
-        if id.contains(group_id) {
-            return true;
-        }
-    }
-    
-    // fromフィールドのチェック
-    if let Some(from) = op.get("from").and_then(|v| v.as_str()) {
-        if from.contains(group_id) {
-            return true;
-        }
-    }
-    
-    // toフィールドのチェック
-    if let Some(to) = op.get("to").and_then(|v| v.as_str()) {
-        if to.contains(group_id) {
-            return true;
-        }
-    }
-    
-    false
+#[derive(Deserialize, Debug)]
+pub struct MethodCallOperation { // New struct for individual method call operations
+    #[serde(rename = "callLabel")]
+    call_label: String,
+    #[serde(rename = "contextSensitiveID")]
+    context_sensitive_id: String,
+    #[serde(rename = "receiverObject")]
+    receiver_object: String, // This is the ID of the receiver object
+    #[serde(rename = "methodName")]
+    method_name: String,
+    operations: Vec<serde_json::Value>,
 }
 
 #[derive(Deserialize, Debug)]
-struct SynthesisRequest {
-    operations: Vec<serde_json::Value>,
-    code_lines: Vec<String>,
-    context_id: Option<String>, // メソッド呼び出しの文脈情報を追加
+pub struct SynthesisRequest { // Modified to accept a list of MethodCallOperation
+    method_calls: Vec<MethodCallOperation>, // New field
 }
 
-#[derive(Serialize)]
-struct SynthesisResponse {
-    code: String,
+#[derive(Debug, Serialize, Deserialize)] // Added Debug and Deserialize
+pub struct SynthesisResponse {
+    pub common_pattern: Option<String>, // Made public for direct access if needed
+    pub hole_information: Option<HashMap<String, Vec<String>>>, // Made public
+    pub code: Vec<String>, // Changed to Vec<String> and made public
+    pub individual_codes: Vec<String>, // メソッド呼び出しごとのコード
 }
 
-#[derive(Serialize)]
-struct ComparisonResponse {
-    common: Vec<String>,
-    differing: Vec<String>,
-}
-
-fn generate_code(operations: &Vec<serde_json::Value>, code_lines: &Vec<String>) -> String {
-    let mut result = String::new();
-    result.push_str("// Generated code:\n\n");
-
-    // メタデータとしての操作内容を表示
-    for op in operations {
-        if let Ok(op_str) = serde_json::to_string_pretty(op) {
-            result.push_str(&format!("// operation: {}\n", op_str));
-        } else {
-            result.push_str("// operation: <failed to serialize>\n");
-        }
-    }
-
-    // 操作をASTに変換
-    let ops_result = parser::parse_operations(operations);
-    if let Err(e) = ops_result {
-        result.push_str(&format!("\n// Error parsing operations: {}\n", e));
-        // 元のコード行を追加
-        for line in code_lines {
-            result.push_str(&format!("{}\n", line));
-        }
-        return result;
-    }
-
-    let (_program, common_stmts, differing_stmts) = ops_result.unwrap();
-
-    // メソッド呼び出し別のコード生成
-    result.push_str("\n// メソッド呼び出し別コード:\n");
-    
-    // Kanonからの操作データに基づいて、呼び出し単位でグループ化
-    let mut method_calls = extract_method_calls_from_operations(operations, code_lines);
-    
-    // メソッド呼び出しを番号でソート（call1, call2, ...の順に）
-    method_calls.sort_by(|(a, _), (b, _)| {
-        let a_num = extract_call_number(a);
-        let b_num = extract_call_number(b);
-        a_num.cmp(&b_num)
-    });
-    
-    // メソッド呼び出し単位でステートメントをグループ化
-    let mut call_blocks = Vec::new();
-    for (call_info, call_ops) in &method_calls {
-        if let Ok((method_program, _, _)) = parser::parse_operations(call_ops) {
-            // 各メソッド呼び出しのステートメントを保存（トポロジカルソートした順序で）
-            let sorted_stmts = sort_statements(&method_program.stmts);
-            call_blocks.push(sorted_stmts.clone());
-            
-            // メソッド呼び出し情報を表示
-            result.push_str(&format!("\n// {}\n", call_info));
-            
-            // トポロジカルソートしたステートメントを表示
-            for stmt in &sorted_stmts {
-                let stmt_str = format_statement(stmt);
-                result.push_str(&format!("{}\n", stmt_str));
-            }
-        }
-    }
-    
-    // 共通パターンの抽出と表示
-    if call_blocks.len() > 1 {
-        result.push_str("\n// 共通パターン (ホール表現):\n");
-        let common_template = parser::extract_common_template(&call_blocks);
-        result.push_str(&common_template);
-    } else {
-        result.push_str("\n// 共通パターンを抽出するには2つ以上のメソッド呼び出しが必要です\n");
-    }
-    
-    // 共通部分と差分部分の表示
-    if !common_stmts.is_empty() {
-        result.push_str("\n// 共通部分:\n");
-        for stmt in &common_stmts {
-            result.push_str(&format!("{}\n", stmt));
-        }
-    }
-
-    if !differing_stmts.is_empty() {
-        result.push_str("\n// 差分部分:\n");
-        for stmt in &differing_stmts {
-            result.push_str(&format!("{}\n", stmt));
-        }
-    }
-
-    // 元のコード行も表示
-    result.push_str("\n// 元のメソッド呼び出し:\n");
-    for line in code_lines {
-        result.push_str(&format!("{}\n", line));
-    }
-
-    result
-}
-
-// メソッド呼び出し番号を抽出する補助関数
-fn extract_call_number(call_info: &str) -> i32 {
-    // "call1", "call2" などから数字部分を抽出
-    let digits: String = call_info.chars()
-        .filter(|c| c.is_digit(10))
-        .collect();
-    digits.parse::<i32>().unwrap_or(i32::MAX) // 解析できない場合は大きな値
-}
-
-// ステートメントを適切な文字列形式にフォーマットする
 fn format_statement(stmt: &ast::Stmt) -> String {
-    match stmt {
-        ast::Stmt::VarDecl { name, expr } => {
-            let expr_str = match expr {
-                ast::Expr::New(class_name) => format!("new {}", class_name),
-                ast::Expr::Num(n) => n.to_string(),
-                ast::Expr::Str(s) => format!("\"{}\"", s),
-                ast::Expr::This => "this".to_string(),
-                ast::Expr::MethodCall(obj, method, args) => {
-                    // オブジェクトの処理
-                    let processed_obj = process_lhs_obj(obj);
-                    let obj_str = match &processed_obj {
-                        ast::Lhs::Var(name) => name.clone(),
-                        ast::Lhs::ObjAccess(inner_obj, prop) => {
-                            // ネストされたオブジェクトアクセスを処理
-                            let inner_obj_str = match &**inner_obj {
-                                ast::Lhs::Var(obj_name) => {
-                                    if obj_name == "main-new1" {
-                                        "this".to_string()
-                                    } else {
-                                        obj_name.clone()
-                                    }
-                                },
-                                _ => format!("<complex>"),
-                            };
-                            format!("{}.{}", inner_obj_str, prop)
-                        },
-                        _ => "this".to_string(),
-                    };
-                    
-                    let args_str = args.iter()
-                        .map(|arg| match arg {
-                            ast::Expr::Var(name) => name.clone(),
-                            ast::Expr::Num(n) => n.to_string(),
-                            ast::Expr::Str(s) => format!("\"{}\"", s),
-                            ast::Expr::This => "this".to_string(),
-                            _ => format!("{:?}", arg),
-                        })
-                        .collect::<Vec<String>>()
-                        .join(", ");
-                    
-                    format!("{}.{}({})", obj_str, method, args_str)
-                },
-                _ => format!("{:?}", expr),
-            };
-            format!("var {} = {};", name, expr_str)
-        },
-        ast::Stmt::Assign { lhs, expr } => {
-            // 左辺値の処理
-            let processed_lhs = process_lhs_obj(lhs);
-            let lhs_str = match &processed_lhs {
-                ast::Lhs::Var(name) => {
-                    if name == "main-new1" {
-                        "this".to_string()
-                    } else {
-                        name.clone()
-                    }
-                },
-                ast::Lhs::ObjAccess(obj, prop) => {
-                    let obj_str = match &**obj {
-                        ast::Lhs::Var(obj_name) => {
-                            if obj_name == "main-new1" {
-                                "this".to_string()
-                            } else {
-                                obj_name.clone()
-                            }
-                        },
-                        ast::Lhs::ObjAccess(inner_obj, inner_prop) => {
-                            // ネストされたアクセスを処理
-                            let inner_str = format_statement(&ast::Stmt::Assign {
-                                lhs: ast::Lhs::ObjAccess(inner_obj.clone(), inner_prop.clone()),
-                                expr: ast::Expr::Var("dummy".to_string())
-                            });
-                            // "inner_obj.prop = dummy;" 形式から "inner_obj.prop" 部分を抽出
-                            inner_str.trim_end_matches(" = dummy;").to_string()
-                        },
-                        _ => format!("<complex>"),
-                    };
-                    format!("{}.{}", obj_str, prop)
-                },
-                _ => format!("{:?}", &processed_lhs),
-            };
-            
-            let expr_str = match expr {
-                ast::Expr::Var(name) => {
-                    if name == "main-new1" {
-                        "this".to_string()
-                    } else {
-                        name.clone()
-                    }
-                },
-                ast::Expr::This => "this".to_string(),
-                ast::Expr::Num(n) => n.to_string(),
-                ast::Expr::Str(s) => format!("\"{}\"", s),
-                ast::Expr::MethodCall(obj, method, args) => {
-                    let processed_obj = process_lhs_obj(obj);
-                    let obj_str = match &processed_obj {
-                        ast::Lhs::Var(name) => {
-                            if name == "main-new1" {
-                                "this".to_string()
-                            } else {
-                                name.clone()
-                            }
-                        },
-                        _ => "this".to_string(),
-                    };
-                    
-                    let args_str = args.iter()
-                        .map(|arg| match arg {
-                            ast::Expr::Var(name) => {
-                                if name == "main-new1" {
-                                    "this".to_string()
-                                } else {
-                                    name.clone()
-                                }
-                            },
-                            ast::Expr::Num(n) => n.to_string(),
-                            ast::Expr::Str(s) => format!("\"{}\"", s),
-                            _ => format!("{:?}", arg),
-                        })
-                        .collect::<Vec<String>>()
-                        .join(", ");
-                    
-                    format!("{}.{}({})", obj_str, method, args_str)
-                },
-                _ => format!("{:?}", expr),
-            };
-            
-            format!("{} = {};", lhs_str, expr_str)
-        },
-        ast::Stmt::Expr(expr) => {
-            match expr {
-                ast::Expr::MethodCall(obj, method, args) => {
-                    let processed_obj = process_lhs_obj(obj);
-                    let obj_str = match &processed_obj {
-                        ast::Lhs::Var(name) => {
-                            if name == "main-new1" {
-                                "this".to_string()
-                            } else {
-                                name.clone()
-                            }
-                        },
-                        ast::Lhs::ObjAccess(inner_obj, prop) => {
-                            let obj_name = match &**inner_obj {
-                                ast::Lhs::Var(name) => {
-                                    if name == "main-new1" {
-                                        "this".to_string()
-                                    } else {
-                                        name.clone()
-                                    }
-                                },
-                                _ => format!("<complex>"),
-                            };
-                            format!("{}.{}", obj_name, prop)
-                        },
-                        _ => "this".to_string(),
-                    };
-                    
-                    let args_str = args.iter()
-                        .map(|arg| match arg {
-                            ast::Expr::Var(name) => {
-                                if name == "main-new1" {
-                                    "this".to_string()
-                                } else {
-                                    name.clone()
-                                }
-                            },
-                            ast::Expr::Num(n) => n.to_string(),
-                            ast::Expr::Str(s) => format!("\"{}\"", s),
-                            ast::Expr::This => "this".to_string(),
-                            _ => format!("{:?}", arg),
-                        })
-                        .collect::<Vec<String>>()
-                        .join(", ");
-                    
-                    format!("{}.{}({});", obj_str, method, args_str)
-                },
-                _ => format!("{:?};", expr),
-            }
-        },
+    format!("{}", stmt)
+}
+
+fn add_to_hole(
+    hole_map: &mut HashMap<String, Vec<String>>, // Changed type
+    next_hole_id: &mut usize,
+    category: &str,
+    value1_str: String,
+    value2_str: String,
+) -> Placeholder {
+    let hole_key = format!("Hole{} ({})", *next_hole_id, category);
+    let placeholder_name = format!("Hole{}", *next_hole_id);
+    *next_hole_id += 1;
+    hole_map.insert(hole_key, vec![value1_str, value2_str]);
+    placeholder_name // Return the base name for use in AST::Hole
+}
+
+// Helper function to update an existing hole's values
+fn update_hole_value(
+    hole_map: &mut HashMap<String, Vec<String>>, // Changed type
+    placeholder_key: &str, // Changed to take the full key
+    new_value_str: String,
+) {
+    if let Some(values) = hole_map.get_mut(placeholder_key) {
+        values.push(new_value_str);
+    } else {
+        eprintln!("Warning: Attempted to update non-existent hole with key: {}", placeholder_key);
     }
 }
 
-// Lhs::ObjAccess の場合にもmain-new1をthisに置き換え
-fn process_lhs_obj(obj: &ast::Lhs) -> ast::Lhs {
-    match obj {
-        ast::Lhs::Var(name) => {
-            if name == "main-new1" {
-                ast::Lhs::Var("this".to_string())
+fn synchronize_and_hole_expr(
+    template_expr: &mut ast::Expr,
+    target_expr: &ast::Expr,
+    next_hole_id: &mut usize,
+    hole_map: &mut HashMap<String, Vec<String>>, // Changed type
+) {
+    match (template_expr.clone(), target_expr) {
+        (ast::Expr::Num(n1), ast::Expr::Num(n2)) => {
+            if n1 != *n2 {
+                let ph_name = add_to_hole(hole_map, next_hole_id, "num_value", n1.to_string(), n2.to_string());
+                *template_expr = ast::Expr::Hole(ph_name);
+            }
+        }
+        (ast::Expr::Str(s1), ast::Expr::Str(s2)) => {
+            if s1 != *s2 {
+                let ph_name = add_to_hole(hole_map, next_hole_id, "str_value", s1.clone(), s2.clone());
+                *template_expr = ast::Expr::Hole(ph_name);
+            }
+        }
+        (ast::Expr::Var(v1), ast::Expr::Var(v2)) => {
+            if v1 != *v2 {
+                let ph_name = add_to_hole(hole_map, next_hole_id, "var_name", v1.clone(), v2.clone());
+                *template_expr = ast::Expr::Hole(ph_name);
+            }
+        }
+        (ast::Expr::New(c1), ast::Expr::New(c2)) => {
+            if c1 != *c2 {
+                let ph_name = add_to_hole(hole_map, next_hole_id, "class_name", c1.clone(), c2.clone());
+                *template_expr = ast::Expr::Hole(ph_name);
+            }
+        }
+        (ast::Expr::Lhs(mut lhs1), ast::Expr::Lhs(lhs2)) => {
+            synchronize_and_hole_lhs(&mut lhs1, lhs2, next_hole_id, hole_map);
+            *template_expr = ast::Expr::Lhs(lhs1);
+        }
+        (ast::Expr::MethodCall(obj1, method1, args1), ast::Expr::MethodCall(obj2, method2, args2)) => {
+            let mut mut_obj1 = obj1.clone();
+            synchronize_and_hole_lhs(&mut mut_obj1, obj2, next_hole_id, hole_map);
+            let new_obj1 = mut_obj1;
+
+            if method1 != *method2 {
+                let expr1_str = format!("{}", ast::Expr::MethodCall(obj1.clone(), method1.clone(), args1.clone()));
+                let expr2_str = format!("{}", ast::Expr::MethodCall(obj2.clone(), method2.clone(), args2.clone()));
+                let ph_name_call = add_to_hole(hole_map, next_hole_id, "method_call_expr", expr1_str, expr2_str);
+                *template_expr = ast::Expr::Hole(ph_name_call);
+                return;
+            }
+            if args1.len() != args2.len() {
+                let expr1_str = format!("{}", ast::Expr::MethodCall(obj1.clone(), method1.clone(), args1.clone()));
+                let expr2_str = format!("{}", ast::Expr::MethodCall(obj2.clone(), method2.clone(), args2.clone()));
+                let ph_name_call = add_to_hole(hole_map, next_hole_id, "method_call_expr_args_len_diff", expr1_str, expr2_str);
+                *template_expr = ast::Expr::Hole(ph_name_call);
+                return;
+            }
+
+            let mut new_args1 = Vec::new();
+            for (arg1, arg2) in args1.iter().zip(args2.iter()) {
+                let mut mut_arg1 = arg1.clone();
+                synchronize_and_hole_expr(&mut mut_arg1, arg2, next_hole_id, hole_map);
+                new_args1.push(mut_arg1);
+            }
+            *template_expr = ast::Expr::MethodCall(new_obj1, method1, new_args1);
+        }
+        (e1, e2) => {
+            if let ast::Expr::Hole(ph_name) = &e1 {
+                let mut found_key = None;
+                for key_in_map in hole_map.keys() {
+                    if key_in_map.starts_with(ph_name) && key_in_map.contains("(") {
+                        found_key = Some(key_in_map.clone());
+                        break;
+                    }
+                }
+                if let Some(actual_hole_key) = found_key {
+                    update_hole_value(hole_map, &actual_hole_key, format!("{}", e2));
+                } else {
+                    let e1_str = format!("{}", e1);
+                    let e2_str = format!("{}", e2);
+                    let new_ph_name = add_to_hole(hole_map, next_hole_id, "expr_mismatch", e1_str, e2_str);
+                    *template_expr = ast::Expr::Hole(new_ph_name);
+                }
+            } else if e1.to_string() != e2.to_string() {
+                let e1_str = format!("{}", e1.clone());
+                let e2_str = format!("{}", e2);
+                let ph_name = add_to_hole(hole_map, next_hole_id, "expr_value", e1_str, e2_str);
+                *template_expr = ast::Expr::Hole(ph_name);
+            }
+        }
+    }
+}
+
+fn synchronize_and_hole_lhs(
+    template_lhs: &mut ast::Lhs,
+    target_lhs: &ast::Lhs,
+    next_hole_id: &mut usize,
+    hole_map: &mut HashMap<String, Vec<String>>, // Changed type
+) {
+    match (template_lhs.clone(), target_lhs) {
+        (ast::Lhs::Var(v1), ast::Lhs::Var(v2)) => {
+            if v1 != *v2 {
+                let ph_name = add_to_hole(hole_map, next_hole_id, "lhs_var_name", v1, v2.clone());
+                *template_lhs = ast::Lhs::Hole(ph_name);
+            }
+        }
+        (ast::Lhs::ObjAccess(obj1, prop1), ast::Lhs::ObjAccess(obj2, prop2)) => {
+            let mut mut_obj1 = obj1.clone();
+            synchronize_and_hole_lhs(&mut mut_obj1, obj2, next_hole_id, hole_map);
+            let new_obj1 = mut_obj1;
+
+            if prop1 != *prop2 {
+                let lhs1_str = format!("{}", ast::Lhs::ObjAccess(obj1.clone(), prop1.clone()));
+                let lhs2_str = format!("{}", ast::Lhs::ObjAccess(obj2.clone(), prop2.clone()));
+                let ph_name = add_to_hole(hole_map, next_hole_id, "lhs_obj_access_prop_diff", lhs1_str, lhs2_str);
+                *template_lhs = ast::Lhs::Hole(ph_name);
             } else {
-                obj.clone()
+                *template_lhs = ast::Lhs::ObjAccess(new_obj1, prop1.clone());
             }
-        },
-        ast::Lhs::ObjAccess(inner_obj, prop) => {
-            let processed_obj = process_lhs_obj(inner_obj);
-            ast::Lhs::ObjAccess(Box::new(processed_obj), prop.clone())
-        },
-        _ => obj.clone(),
+        }
+        (ast::Lhs::This, ast::Lhs::This) => { /* Match, do nothing */ }
+        (l1, l2) => {
+            if let ast::Lhs::Hole(ph_name) = &l1 {
+                let mut found_key = None;
+                for key_in_map in hole_map.keys() {
+                    if key_in_map.starts_with(ph_name) && key_in_map.contains("(") {
+                        found_key = Some(key_in_map.clone());
+                        break;
+                    }
+                }
+                if let Some(actual_hole_key) = found_key {
+                    update_hole_value(hole_map, &actual_hole_key, format!("{}", l2));
+                } else {
+                    let l1_str = format!("{}", l1);
+                    let l2_str = format!("{}", l2);
+                    let new_ph_name = add_to_hole(hole_map, next_hole_id, "lhs_mismatch", l1_str, l2_str);
+                    *template_lhs = ast::Lhs::Hole(new_ph_name);
+                }
+            } else if l1.to_string() != l2.to_string() {
+                let l1_str = format!("{}", l1.clone());
+                let l2_str = format!("{}", l2);
+                let ph_name = add_to_hole(hole_map, next_hole_id, "lhs_value", l1_str, l2_str);
+                *template_lhs = ast::Lhs::Hole(ph_name);
+            }
+        }
     }
 }
 
-// メソッド呼び出しのステートメントをトポロジカルソートする関数
-fn sort_statements(stmts: &[ast::Stmt]) -> Vec<ast::Stmt> {
-    let mut result = Vec::new();
-    let mut var_decls = Vec::new();
-    let mut assignments = Vec::new();
-    let mut other_stmts = Vec::new();
-    
-    // ステートメントを種類ごとに分類
-    for stmt in stmts {
-        match stmt {
-            ast::Stmt::VarDecl { .. } => var_decls.push(stmt.clone()),
-            ast::Stmt::Assign { .. } => assignments.push(stmt.clone()),
-            _ => other_stmts.push(stmt.clone()),
+fn synchronize_and_hole_stmt(
+    template_stmt: &mut ast::Stmt,
+    target_stmt: &ast::Stmt,
+    next_hole_id: &mut usize,
+    hole_map: &mut HashMap<String, Vec<String>>, // Changed type
+) {
+    match (template_stmt.clone(), target_stmt) {
+        (
+            Stmt::VarDecl { name: name1, expr: mut expr1 },
+            Stmt::VarDecl { name: name2, expr: expr2 },
+        ) => {
+            if name1 != *name2 {
+                let stmt1_str = format!("{}", Stmt::VarDecl { name: name1.clone(), expr: expr1.clone() });
+                let stmt2_str = format!("{}", Stmt::VarDecl { name: name2.clone(), expr: expr2.clone() });
+                let ph_name = add_to_hole(hole_map, next_hole_id, "var_decl_stmt", stmt1_str, stmt2_str);
+                *template_stmt = Stmt::Hole(ph_name);
+                return;
+            }
+            synchronize_and_hole_expr(&mut expr1, expr2, next_hole_id, hole_map);
+            *template_stmt = Stmt::VarDecl { name: name1, expr: expr1 };
+        }
+        (
+            Stmt::Assign { lhs: mut lhs1, expr: mut expr1 },
+            Stmt::Assign { lhs: lhs2, expr: expr2 },
+        ) => {
+            synchronize_and_hole_lhs(&mut lhs1, lhs2, next_hole_id, hole_map);
+            synchronize_and_hole_expr(&mut expr1, expr2, next_hole_id, hole_map);
+            *template_stmt = Stmt::Assign { lhs: lhs1, expr: expr1 };
+        }
+        (Stmt::Expr(mut e1), Stmt::Expr(e2)) => {
+            synchronize_and_hole_expr(&mut e1, e2, next_hole_id, hole_map);
+            *template_stmt = Stmt::Expr(e1);
+        }
+        (s1, s2) => {
+            if let Stmt::Hole(ph_name) = &s1 {
+                let mut found_key = None;
+                for key_in_map in hole_map.keys() {
+                    if key_in_map.starts_with(ph_name) && key_in_map.contains("(") {
+                        found_key = Some(key_in_map.clone());
+                        break;
+                    }
+                }
+                if let Some(actual_hole_key) = found_key {
+                    update_hole_value(hole_map, &actual_hole_key, format!("{}", s2));
+                } else {
+                    let s1_str = format!("{}", s1);
+                    let s2_str = format!("{}", s2);
+                    let new_ph_name = add_to_hole(hole_map, next_hole_id, "stmt_mismatch", s1_str, s2_str);
+                    *template_stmt = Stmt::Hole(new_ph_name);
+                }
+            } else if s1.to_string() != s2.to_string() {
+                let s1_str = format!("{}", s1.clone());
+                let s2_str = format!("{}", s2);
+                let ph_name = add_to_hole(hole_map, next_hole_id, "stmt_value", s1_str, s2_str);
+                *template_stmt = Stmt::Hole(ph_name);
+            }
         }
     }
-    
-    // 変数宣言を最初に配置
-    result.extend(var_decls);
-    
-    // 代入を次に配置
-    result.extend(assignments);
-    
-    // その他のステートメントを最後に配置
-    result.extend(other_stmts);
-    
-    result
 }
 
-// コード行からメソッド呼び出しを抽出（より汎用的な実装）
-fn extract_method_call_from_code(line: &str) -> Option<String> {
-    // JavaScriptのメソッド呼び出しパターンを検出: obj.method(args)
-    let line = line.trim();
-    
-    // JavaScript構文をチェック
-    if let Some(dot_pos) = line.find('.') {
-        if dot_pos > 0 && dot_pos < line.len() - 1 {
-            // ドットの前の部分がオブジェクト名
-            let obj_part = &line[..dot_pos];
-            let obj_name = obj_part.trim().trim_end_matches(|c: char| !c.is_alphanumeric() && c != '_');
-            
-            // メソッド呼び出しを検出
-            if let Some(paren_open) = line[dot_pos..].find('(') {
-                let after_dot = dot_pos + 1;
-                let method_name = &line[after_dot..after_dot + paren_open - 1].trim();
-                
-                // 引数部分を抽出
-                let args_start = dot_pos + paren_open + 1;
-                if let Some(remaining) = line.get(args_start..) {
-                    if let Some(paren_close) = remaining.find(')') {
-                        let args = &remaining[..paren_close].trim();
-                        
-                        // 完全なメソッド呼び出し文字列を構築
-                        return Some(format!("{}.{}({})", 
-                            if obj_name.is_empty() { "this" } else { obj_name },
-                            method_name,
-                            args
-                        ));
-                    }
-                }
-            }
-        }
+fn find_common_pattern_and_holes(
+    programs: &[ast::Program],
+    memo_envs: &[MemoEnv], // Add MemoEnv slice as parameter
+) -> (Option<ast::Program>, HashMap<String, Vec<String>>) {
+    if programs.is_empty() {
+        return (None, HashMap::new());
     }
-    
-    None
-}
+    if programs.len() == 1 {
+        return (Some(programs[0].clone()), HashMap::new());
+    }
 
-// コメント行からより汎用的なコンテキスト情報を抽出
-fn extract_context_from_comment(line: &str) -> Option<String> {
-    let line = line.trim();
-    
-    // "コンテキスト:" パターンを検出
-    if let Some(context_pos) = line.find("コンテキスト:") {
-        let after_context = &line[context_pos + "コンテキスト:".len()..];
-        
-        // コンテキスト部分を抽出し、余分な記号を取り除く
-        let context = after_context.trim()
-            .trim_end_matches(|c| c == ')' || c == '）' || c == ',' || c == '.' || c == ':')
-            .trim();
-        
-        if !context.is_empty() {
-            // callパターンとcontextを分離
-            let mut call_pattern = "method".to_string();
-            let mut call_param = String::new();
-            
-            // "call1" や "call_1" パターンを検出
-            for (word_idx, word) in line.split_whitespace().enumerate() {
-                if word.starts_with("call") {
-                    call_pattern = word.to_string();
-                    // "call1"から数字部分を抽出
-                    let digits: String = word.chars()
-                        .filter(|c| c.is_digit(10))
-                        .collect();
-                    
-                    if !digits.is_empty() {
-                        call_param = digits;
-                    } else {
-                        call_param = (word_idx + 1).to_string();
-                    }
-                    break;
-                }
-            }
-            
-            // オブジェクト名.メソッド名(パラメータ) の形式で返す
-            return Some(format!("{}.{}({})", 
-                       if context == "main" { "Object" } else { context },
-                       call_pattern,
-                       call_param));
-        }
-    }
-    
-    None
-}
+    let mut hole_map: HashMap<String, Vec<String>> = HashMap::new(); // Changed type
+    let mut next_hole_id = 1; // Changed from 0 to 1 to start holes from Hole1
 
-// 操作データからメソッド呼び出し情報を直接抽出する関数
-fn extract_method_info_from_operations(operations: &[serde_json::Value]) -> Vec<(String, String)> {
-    let mut method_calls = Vec::new();
-    let mut method_indices = HashMap::new();
-    
-    // methodCallオペレーションを探す
-    for op in operations {
-        if let Some(edit_type) = op.get("editType").and_then(|v| v.as_str()) {
-            if edit_type == "methodCall" {
-                if let Some(label) = op.get("label").and_then(|v| v.as_str()) {
-                    if let Some(id) = op.get("id").and_then(|v| v.as_str()) {
-                        // メソッド名
-                        let method_name = if label.contains(".") {
-                            label.to_string()
-                        } else if id.contains("__") {
-                            // IDに基づいてメソッド名を構築
-                            let parts: Vec<&str> = id.split("__").collect();
-                            if parts.len() >= 2 {
-                                format!("{}.{}", parts[0], label)
-                            } else {
-                                format!("object.{}", label)
-                            }
-                        } else {
-                            format!("object.{}", label)
-                        };
-                        
-                        // パラメータ情報を抽出
-                        let mut param_value = String::new();
-                        if let Some(params) = extract_parameter_value_for_method(operations, id) {
-                            param_value = params;
-                        }
-                        
-                        // メソッド呼び出し文字列を構築
-                        let method_call = if param_value.is_empty() {
-                            method_name.clone()
-                        } else {
-                            format!("{}({})", method_name, param_value)
-                        };
-                        
-                        method_calls.push((method_call, id.to_string()));
-                        
-                        // メソッドインデックスを保存
-                        if let Some(idx) = extract_method_index(id) {
-                            method_indices.insert(id.to_string(), idx);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    // メソッドインデックスでソート
-    method_calls.sort_by_key(|(_, id)| method_indices.get(id).cloned().unwrap_or(0));
-    
-    method_calls
-}
+    let overall_min_stmts = programs.iter().map(|p| p.stmts.len()).min().unwrap_or(0);
 
-// メソッド呼び出しのパラメータ値を抽出
-fn extract_parameter_value_for_method(operations: &[serde_json::Value], method_id: &str) -> Option<String> {
-    for op in operations {
-        if let Some(is_lit) = op.get("isLiteral").and_then(|v| v.as_bool()) {
-            if is_lit {
-                if let Some(id) = op.get("id").and_then(|v| v.as_str()) {
-                    // "__temp2" のようなIDが、"__temp1" のメソッドに関連するパラメータかを確認
-                    let method_idx = extract_method_index(method_id)?;
-                    let param_idx = extract_method_index(id)?;
-                    
-                    if param_idx > method_idx && param_idx - method_idx <= 2 {
-                        if let Some(label) = op.get("label").and_then(|v| v.as_str()) {
-                            return Some(label.to_string());
-                        }
-                    }
-                }
-            }
-        }
-    }
-    None
-}
+    let mut template_program = programs[0].clone();
+    template_program.stmts.truncate(overall_min_stmts);
 
-// 操作パターンからメソッド呼び出しを推測
-fn infer_method_patterns_from_operations(operations: &[serde_json::Value]) -> Vec<String> {
-    let mut patterns = Vec::new();
-    let mut temp_ids = Vec::new();
-    let mut literal_values = HashMap::new();
-    
-    // まず全ての__tempIDとリテラル値を収集
-    for op in operations {
-        if let Some(id) = op.get("id").and_then(|v| v.as_str()) {
-            if id.starts_with("__temp") {
-                temp_ids.push(id.to_string());
-                
-                // リテラル値を記録
-                if let Some(is_lit) = op.get("isLiteral").and_then(|v| v.as_bool()) {
-                    if is_lit {
-                        if let Some(label) = op.get("label").and_then(|v| v.as_str()) {
-                            literal_values.insert(id.to_string(), label.to_string());
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    // エッジ情報を解析してオブジェクト・プロパティ関係を特定
-    let mut object_properties = HashMap::new();
-    
-    for op in operations {
-        if let Some(edit_type) = op.get("editType").and_then(|v| v.as_str()) {
-            if edit_type == "addEdge" {
-                if let Some(from) = op.get("from").and_then(|v| v.as_str()) {
-                    if let Some(to) = op.get("to").and_then(|v| v.as_str()) {
-                        if let Some(label) = op.get("label").and_then(|v| v.as_str()) {
-                            // プロパティ関係を記録 (例: __temp1.val = __temp2)
-                            object_properties.insert(
-                                (from.to_string(), label.to_string()),
-                                to.to_string()
-                            );
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    // append/addメソッド呼び出しのパターンを検出
-    // 通常、連結リストでは__tempN → __tempN+1 の関係で、Nが奇数というパターンがある
-    for i in (1..temp_ids.len()).step_by(2) {
-        if i + 1 < temp_ids.len() {
-            let current_id = &temp_ids[i];
-            let next_id = &temp_ids[i + 1];
-            
-            // 'next'関係があるかを確認
-            let has_next_relation = object_properties.contains_key(&(current_id.clone(), "next".to_string()));
-            
-            // メソッド名を推測
-            let method_name = if has_next_relation {
-                "append" // 連結リスト的なオブジェクトではappendが一般的
+    for i in 1..programs.len() {
+        let target_program = &programs[i];
+        for stmt_idx in 0..overall_min_stmts {
+            if stmt_idx < template_program.stmts.len() && stmt_idx < target_program.stmts.len() {
+                synchronize_and_hole_stmt(
+                    &mut template_program.stmts[stmt_idx],
+                    &target_program.stmts[stmt_idx],
+                    &mut next_hole_id,
+                    &mut hole_map,
+                );
             } else {
-                "add" // その他の場合はaddを仮定
-            };
-            
-            // オブジェクト名を推測
-            let object_name = if current_id.ends_with("1") {
-                "lst" // 最初のノードに関連する場合（例: __temp1）
-            } else if current_id.ends_with("3") {
-                "node" // 2番目のノード（例: __temp3）
-            } else {
-                "obj" // その他
-            };
-            
-            // パラメータ値を取得
-            let param_value = literal_values.get(next_id).cloned().unwrap_or_else(|| {
-                format!("value{}", (i / 2) + 1)
-            });
-            
-            // メソッド呼び出しパターンを構築
-            patterns.push(format!("{}.{}({})", object_name, method_name, param_value));
-        }
-    }
-    
-    // 検出できなかった場合のフォールバック
-    if patterns.is_empty() && !temp_ids.is_empty() {
-        // __tempIDの数に基づいてメソッド呼び出し回数を推測
-        let count = (temp_ids.len() + 1) / 2;
-        for i in 0..count {
-            // オブジェクト.メソッド(引数) の形式で生成
-            patterns.push(format!("obj.method({})", i + 1));
-        }
-    }
-    
-    patterns
-}
-
-// 操作データからメソッド呼び出し情報を抽出する関数
-fn extract_method_calls_from_operations(operations: &[serde_json::Value], code_lines: &[String]) -> Vec<(String, Vec<serde_json::Value>)> {
-    // 結果格納用
-    let mut method_calls = Vec::new();
-    
-    // 操作データから直接抽出できるか試みる
-    let extracted_calls = extract_method_info_from_operations(operations);
-    
-    // 成功した場合はそれを使用
-    if !extracted_calls.is_empty() {
-        println!("操作データから直接メソッド呼び出し情報を抽出しました: {:?}", extracted_calls);
-        for (call_info, group_id) in extracted_calls {
-            // グループIDに基づいて操作をフィルタリング
-            let group_ops: Vec<serde_json::Value> = operations.iter()
-                .filter(|op| belongs_to_group(op, &group_id))
-                .cloned()
-                .collect();
-            
-            if !group_ops.is_empty() {
-                method_calls.push((call_info, group_ops));
+                break; 
             }
         }
+    }
+
+    (Some(template_program), hole_map)
+}
+
+pub async fn handle_synthesis(req: SynthesisRequest) -> Result<impl warp::Reply, warp::Rejection> {
+    println!("Received synthesis request: {:?}", req);
+
+    let mut parsed_programs = Vec::new();
+    let mut all_memo_envs_for_pattern_finding = Vec::new(); // Store MemoEnv for each call
+
+    if req.method_calls.is_empty() {
+        println!("No method calls provided in the request.");
+        let response = SynthesisResponse {
+            common_pattern: Some("No method calls provided.".to_string()),
+            hole_information: None,
+            code: vec![],
+            individual_codes: vec![],
+        };
+        return Ok(warp::reply::with_status(warp::reply::json(&response), StatusCode::OK));
+    }
+
+    for (index, method_call_op) in req.method_calls.iter().enumerate() {
+        println!(
+            "Processing method call: {}, Receiver: {}, Method: {}",
+            method_call_op.call_label,
+            method_call_op.receiver_object,
+            method_call_op.method_name
+        );
+
+        let mut memo_env_for_call = MemoEnv::new();
+        // Set 'this' for the current method call context
+        memo_env_for_call.add_special_mapping(method_call_op.receiver_object.clone(), "this".to_string());
         
-        if !method_calls.is_empty() {
-            return method_calls;
-        }
-    }
-    
-    // 操作データから直接抽出できなかった場合は、コード行から抽出
-    let mut method_patterns = Vec::new();
-    
-    // コード行を解析
-    for line in code_lines {
-        // JavaScriptのメソッド呼び出しを検出 (foo.bar(args) 形式)
-        if let Some(obj_method) = extract_method_call_from_code(line) {
-            method_patterns.push(obj_method);
-        } 
-        // コメント行からのコンテキスト情報
-        else if line.contains("メソッド呼び出し") || line.contains("コンテキスト:") {
-            if let Some(context_info) = extract_context_from_comment(line) {
-                method_patterns.push(context_info);
-            }
-        }
-    }
-    
-    println!("コード行からメソッド呼び出し情報を抽出しました: {:?}", method_patterns);
-    
-    // 操作データからも抽出できなかった場合、操作パターンからの推測を試みる
-    if method_patterns.is_empty() {
-        method_patterns = infer_method_patterns_from_operations(operations);
-        println!("操作パターンから推測したメソッド呼び出し: {:?}", method_patterns);
-    }
-    
-    // それでも見つからない場合は汎用的な名前を使用
-    if method_patterns.is_empty() && operations.len() >= 4 {
-        let call_count = operations.len() / 4; // 約4つの操作で1回の呼び出しと仮定
-        for i in 0..call_count {
-            method_patterns.push(format!("object.method({})", i + 1));
-        }
-    }
-    
-    // メソッドパターンに基づいて操作をグループ化
-    let classified = classify_operations_by_ast(operations, &method_patterns);
-    if !classified.is_empty() {
-        return classified;
-    }
-    
-    // 最後の手段：均等に分割
-    split_operations_evenly(operations, &method_patterns)
-}
+        // Use a unique scope ID for each method call, e.g., based on index or callLabel
+        let scope_id = format!("method_call_{}_{}", index, method_call_op.call_label);
+        memo_env_for_call.start_method_call_scope(&scope_id);
 
-// AST情報を使って操作を分類する
-fn classify_operations_by_ast(operations: &[serde_json::Value], method_patterns: &[String]) -> Vec<(String, Vec<serde_json::Value>)> {
-    let mut result = Vec::new();
-    let pattern_count = method_patterns.len() as i32;
-    
-    if pattern_count == 0 {
-        return result;
-    }
-    
-    // 前処理で依存関係に基づいたグループを作成
-    let operation_groups = preprocess_operations(operations);
-    
-    // グループごとに操作を収集
-    let mut group_map: HashMap<i32, Vec<serde_json::Value>> = HashMap::new();
-    
-    // テンプID→一時変数名のマッピングを記録
-    let mut temp_id_mapping: HashMap<String, String> = HashMap::new();
-    let mut group_var_counters: HashMap<i32, i32> = HashMap::new();
-    
-    // 前処理：テンプIDに一貫した変数名を割り当て
-    for (op_idx, group_id) in &operation_groups {
-        if let Some(op) = operations.get(*op_idx) {
-            // ノード追加操作からテンプIDを取得
-            if let Some(edit_type) = op.get("editType").and_then(|v| v.as_str()) {
-                if edit_type == "addNode" {
-                    if let Some(id) = op.get("id").and_then(|v| v.as_str()) {
-                        if id.starts_with("__temp") {
-                            // グループごとに変数カウンターを管理
-                            let mod_group_id = group_id % pattern_count;
-                            let var_idx = group_var_counters.entry(mod_group_id).or_insert(0);
-                            let var_name = format!("v{}", *var_idx);
-                            *var_idx += 1;
-                            
-                            // テンプID→変数名のマッピングを記録
-                            temp_id_mapping.insert(id.to_string(), var_name);
-                        }
-                    }
-                }
+        match parse_operations(
+            &method_call_op.operations,
+            Some(&method_call_op.receiver_object), // Pass receiver_object as current_receiver_id
+            &mut memo_env_for_call,
+        ) {
+            Ok(program) => {
+                println!(
+                    "Parsed AST for {}: \n{}",
+                    method_call_op.call_label,
+                    program
+                );
+                parsed_programs.push(program);
+                all_memo_envs_for_pattern_finding.push(memo_env_for_call.clone()); // Clone and store
+            }
+            Err(e) => {
+                eprintln!(
+                    "Error parsing operations for {}: {}",
+                    method_call_op.call_label,
+                    e
+                );
+                // Consider how to handle partial failures. For now, return an error for the whole request.
+                let response = SynthesisResponse {
+                    common_pattern: None,
+                    hole_information: None,
+                    code: vec![format!(
+                        "Error parsing operations for {}: {}",
+                        method_call_op.call_label,
+                        e
+                    )],
+                    individual_codes: vec![],
+                };
+                return Ok(warp::reply::with_status(
+                    warp::reply::json(&response),
+                    StatusCode::BAD_REQUEST,
+                ));
             }
         }
     }
-    
-    // 操作を変換しながらグループに追加
-    for (op_idx, group_id) in &operation_groups {
-        if let Some(op) = operations.get(*op_idx) {
-            let mod_group_id = group_id % pattern_count;
-            
-            // 操作を複製して変数名を置換
-            let mut modified_op = op.clone();
-            
-            // ID置換
-            if let Some(id) = op.get("id").and_then(|v| v.as_str()) {
-                if id.starts_with("__temp") {
-                    if let Some(var_name) = temp_id_mapping.get(id) {
-                        if let Some(obj) = modified_op.as_object_mut() {
-                            obj.insert("original_id".to_string(), serde_json::Value::String(id.to_string()));
-                            obj.insert("id".to_string(), serde_json::Value::String(var_name.clone()));
-                        }
-                    }
-                }
-            }
-            
-            // from置換
-            if let Some(from) = op.get("from").and_then(|v| v.as_str()) {
-                if from.starts_with("__temp") {
-                    if let Some(var_name) = temp_id_mapping.get(from) {
-                        if let Some(obj) = modified_op.as_object_mut() {
-                            obj.insert("original_from".to_string(), serde_json::Value::String(from.to_string()));
-                            obj.insert("from".to_string(), serde_json::Value::String(var_name.clone()));
-                        }
-                    }
-                } else if from == "main-new1" {
-                    // main-new1は特殊ケース（thisの表現）
-                    if let Some(obj) = modified_op.as_object_mut() {
-                        obj.insert("original_from".to_string(), serde_json::Value::String(from.to_string()));
-                        obj.insert("from".to_string(), serde_json::Value::String("this".to_string()));
-                    }
-                }
-            }
-            
-            // to置換
-            if let Some(to) = op.get("to").and_then(|v| v.as_str()) {
-                if to.starts_with("__temp") {
-                    if let Some(var_name) = temp_id_mapping.get(to) {
-                        if let Some(obj) = modified_op.as_object_mut() {
-                            obj.insert("original_to".to_string(), serde_json::Value::String(to.to_string()));
-                            obj.insert("to".to_string(), serde_json::Value::String(var_name.clone()));
-                        }
-                    }
-                }
-            }
-            
-            // グループに追加
-            group_map.entry(mod_group_id).or_insert_with(Vec::new).push(modified_op);
-        }
-    }
-    
-    // グループ未割り当ての操作を処理
-    for (i, op) in operations.iter().enumerate() {
-        // 既にグループ化された操作はスキップ
-        if operation_groups.iter().any(|(idx, _)| *idx == i) {
-            continue;
-        }
-        
-        // グループ未割り当ての操作を直接グループ化
-        let group_idx = determine_operation_group(op, pattern_count);
-        if group_idx >= 0 {
-            // 操作を複製して変数名を置換
-            let mut modified_op = op.clone();
-            
-            // ID置換
-            if let Some(id) = op.get("id").and_then(|v| v.as_str()) {
-                if id.starts_with("__temp") {
-                    if let Some(var_name) = temp_id_mapping.get(id) {
-                        if let Some(obj) = modified_op.as_object_mut() {
-                            obj.insert("original_id".to_string(), serde_json::Value::String(id.to_string()));
-                            obj.insert("id".to_string(), serde_json::Value::String(var_name.clone()));
-                        }
-                    }
-                }
-            }
-            
-            // from置換
-            if let Some(from) = op.get("from").and_then(|v| v.as_str()) {
-                if from.starts_with("__temp") {
-                    if let Some(var_name) = temp_id_mapping.get(from) {
-                        if let Some(obj) = modified_op.as_object_mut() {
-                            obj.insert("original_from".to_string(), serde_json::Value::String(from.to_string()));
-                            obj.insert("from".to_string(), serde_json::Value::String(var_name.clone()));
-                        }
-                    }
-                }
-            }
-            
-            // to置換
-            if let Some(to) = op.get("to").and_then(|v| v.as_str()) {
-                if to.starts_with("__temp") {
-                    if let Some(var_name) = temp_id_mapping.get(to) {
-                        if let Some(obj) = modified_op.as_object_mut() {
-                            obj.insert("original_to".to_string(), serde_json::Value::String(to.to_string()));
-                            obj.insert("to".to_string(), serde_json::Value::String(var_name.clone()));
-                        }
-                    }
-                }
-            }
-            
-            group_map.entry(group_idx).or_insert_with(Vec::new).push(modified_op);
-        }
-    }
-    
-    // グループとメソッドパターンを対応付け
-    for group_id in 0..pattern_count {
-        if let Some(ops) = group_map.get(&group_id) {
-            if !ops.is_empty() && (group_id as usize) < method_patterns.len() {
-                result.push((format!("call{}", group_id + 1), ops.clone()));
-            }
-        }
-    }
-    
-    result
-}
 
-// 操作がどのグループに属するかを決定する関数
-fn determine_operation_group(op: &serde_json::Value, pattern_count: i32) -> i32 {
-    // ID、from、toフィールドを確認
-    if let Some(edit_type) = op.get("editType").and_then(|v| v.as_str()) {
-        // エッジ操作の特殊処理: fromとtoの両方が__tempで始まる場合、小さい方のIDに基づいてグループ化
-        if edit_type == "addEdge" {
-            if let (Some(from), Some(to)) = (
-                op.get("from").and_then(|v| v.as_str()),
-                op.get("to").and_then(|v| v.as_str())
-            ) {
-                if from.starts_with("__temp") && to.starts_with("__temp") {
-                    // 両方がtemp IDの場合、小さい方の数値を使用
-                    let from_num = extract_temp_id_number(from).unwrap_or(0);
-                    let to_num = extract_temp_id_number(to).unwrap_or(0);
-                    let min_num = std::cmp::min(from_num, to_num);
-                    
-                    // グループIDを計算
-                    return ((min_num - 1) / 2) % pattern_count;
-                }
-                else if from.starts_with("__temp") {
-                    // fromだけが__tempの場合
-                    if let Some(id_num) = extract_temp_id_number(from) {
-                        return ((id_num - 1) / 2) % pattern_count;
-                    }
-                }
-                else if to.starts_with("__temp") {
-                    // toだけが__tempの場合
-                    if let Some(id_num) = extract_temp_id_number(to) {
-                        return ((id_num - 1) / 2) % pattern_count;
-                    }
-                }
-                else if from == "main-new1" {
-                    // main-new1はthisを表す特殊ケース
-                    if to.starts_with("__temp") {
-                        if let Some(id_num) = extract_temp_id_number(to) {
-                            return ((id_num - 1) / 2) % pattern_count;
-                        }
-                    }
-                }
-            }
-        }
-        
-        // 通常のIDベースのグループ化
-        if let Some(id) = op.get("id").and_then(|v| v.as_str()) {
-            if id.starts_with("__temp") {
-                if let Some(id_num) = extract_temp_id_number(id) {
-                    return ((id_num - 1) / 2) % pattern_count;
-                }
-            }
-        }
+    if parsed_programs.is_empty() {
+        println!("No ASTs were parsed successfully from any method call.");
+        let response = SynthesisResponse {
+            common_pattern: Some("No operations to synthesize or error during parsing.".to_string()),
+            hole_information: None,
+            code: vec![],
+            individual_codes: vec![],
+        };
+        return Ok(warp::reply::with_status(warp::reply::json(&response), StatusCode::OK));
     }
-    
-    // グループを特定できない場合は-1を返す
-    -1
-}
 
-// 操作を均等に分割する
-fn split_operations_evenly(operations: &[serde_json::Value], method_patterns: &[String]) -> Vec<(String, Vec<serde_json::Value>)> {
-    let mut result = Vec::new();
-    let pattern_count = method_patterns.len();
+    // 4. AST のリストから共通パターンとホールを抽出
+    let (common_pattern_ast_option, hole_map) = find_common_pattern_and_holes(&parsed_programs, &all_memo_envs_for_pattern_finding);
     
-    if pattern_count == 0 || operations.is_empty() {
-        return result;
-    }
-    
-    let ops_per_pattern = operations.len() / pattern_count;
-    
-    for (i, pattern) in method_patterns.iter().enumerate() {
-        let start = i * ops_per_pattern;
-        if start < operations.len() {
-            let end = std::cmp::min((i + 1) * ops_per_pattern, operations.len());
-            let group_ops = operations[start..end].to_vec();
-            result.push((pattern.clone(), group_ops));
+    let common_pattern_ast = match common_pattern_ast_option {
+        Some(ast) => {
+            println!("Common Pattern AST: \n{}", ast);
+            ast
         }
-    }
-    
-    result
-}
-
-// グループ化の前処理として、操作間の依存関係を分析する
-fn preprocess_operations(operations: &[serde_json::Value]) -> Vec<(usize, i32)> {
-    let mut op_groups = Vec::new();
-    
-    for (i, op) in operations.iter().enumerate() {
-        if let Some(edit_type) = op.get("editType").and_then(|v| v.as_str()) {
-            if edit_type == "addEdge" {
-                if let (Some(from), Some(to), Some(label)) = (
-                    op.get("from").and_then(|v| v.as_str()),
-                    op.get("to").and_then(|v| v.as_str()),
-                    op.get("label").and_then(|v| v.as_str()),
-                ) {
-                    if from.starts_with("__temp") && to.starts_with("__temp") {
-                        if let (Some(from_num), Some(to_num)) = (
-                            extract_temp_id_number(from),
-                            extract_temp_id_number(to),
-                        ) {
-                            // next 接続は特別扱い - toのグループに割り当て
-                            if label == "next" {
-                                let group_id = (to_num - 1) / 2;
-                                op_groups.push((i, group_id));
-                            } else {
-                                // その他の接続はfromのグループに割り当て
-                                let group_id = (from_num - 1) / 2;
-                                op_groups.push((i, group_id));
-                            }
-                        }
-                    }
-                    // main-new1 は特殊処理 - thisを表すため、対象のグループに割り当て
-                    else if from == "main-new1" {
-                        if to.starts_with("__temp") {
-                            if let Some(to_num) = extract_temp_id_number(to) {
-                                let group_id = (to_num - 1) / 2;
-                                op_groups.push((i, group_id));
-                            }
-                        }
-                    }
-                    // 他のエッジ操作
-                }
-            } else if edit_type == "addNode" {
-                // ノード追加操作も対応するグループに割り当て
-                if let Some(id) = op.get("id").and_then(|v| v.as_str()) {
-                    if id.starts_with("__temp") {
-                        if let Some(id_num) = extract_temp_id_number(id) {
-                            let group_id = (id_num - 1) / 2;
-                            op_groups.push((i, group_id));
-                        }
-                    }
-                }
-            }
+        None => {
+            println!("No common pattern could be determined.");
+            Program { stmts: vec![] }
         }
-    }
+    };
     
-    op_groups
-}
+    println!("Initial Hole Map: {:?}", hole_map);
 
-// サーバー実行関数
-async fn run_server() {
-    // CORSの設定
-    let cors = warp::cors()
-        .allow_any_origin()
-        .allow_methods(&[Method::POST, Method::GET, Method::OPTIONS])
-        .allow_headers(["Content-Type"]);
+    // 5. レスポンスを生成
+    let common_pattern_str = format!("{}", common_pattern_ast);
+    let individual_codes_str: Vec<String> = parsed_programs
+        .iter()
+        .map(|p| format!("{}", p))
+        .collect();
 
-    // JSONリクエストを処理するルート
-    let synthesize = warp::post()
-        .and(warp::path("synthesize"))
-        .and(warp::body::json())
-        .map(|request: SynthesisRequest| {
-            // リクエスト内容をログに出力
-            println!("Received request with {} operations and {} lines of code", 
-                     request.operations.len(), request.code_lines.len());
-            
-            // コードの合成を実行
-            let synthesized_code = generate_code(&request.operations, &request.code_lines);
-            
-            println!("Sending response with synthesized code");
-            
-            // レスポンスを作成
-            let response = SynthesisResponse {
-                code: synthesized_code,
-            };
-            warp::reply::json(&response)
-        });
+    let formatted_hole_info = if !hole_map.is_empty() {
+        let mut info = HashMap::new();
+        for (hole_id_with_cat, values) in &hole_map { 
+            info.insert(hole_id_with_cat.clone(), values.clone());
+        }
+        Some(info)
+    } else {
+        None
+    };
+    println!("Formatted Hole Info: {:?}", formatted_hole_info);
 
-    // 比較エンドポイント
-    let compare_ast = warp::post()
-        .and(warp::path("compare"))
-        .and(warp::body::json())
-        .map(|request: SynthesisRequest| {
-            println!("Comparing AST with {} operations", request.operations.len());
-            let (_, common, differing) = parse_operations(&request.operations).unwrap();
-            let response = ComparisonResponse {
-                common: common.into_iter().map(|stmt| format!("{:?}", stmt)).collect(),
-                differing: differing.into_iter().map(|stmt| format!("{:?}", stmt)).collect(),
-            };
-            warp::reply::json(&response)
-        });
+    let response = SynthesisResponse {
+        common_pattern: Some(common_pattern_str),
+        hole_information: formatted_hole_info,
+        code: individual_codes_str.clone(),
+        individual_codes: individual_codes_str,
+    };
+    println!("Final Response: {:?}", response);
 
-    // ルートを結合して、CORSを適用
-    let routes = synthesize.or(compare_ast).with(cors);
-
-    // サーバーを起動
-    println!("refsyn サーバー起動中: http://localhost:3030");
-    warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+    Ok(warp::reply::with_status(warp::reply::json(&response), StatusCode::OK))
 }
 
 #[tokio::main]
 async fn main() {
-    println!("リファレンス合成サーバーを起動します...");
-    run_server().await;
+    println!("Starting RefSyn server...");
+    server::run_server().await;
 }

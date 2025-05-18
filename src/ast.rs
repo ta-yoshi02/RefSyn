@@ -25,6 +25,7 @@ pub enum Lhs {
     Var(String),
     ObjAccess(Box<Lhs>, String), // obj.prop ...
     Hole(Placeholder),
+    This, // New variant for 'this' keyword
 }
 
 /* ---------- Statements ---------- */
@@ -32,7 +33,8 @@ pub enum Lhs {
 pub enum Stmt {
     VarDecl { name: String, expr: Expr },
     Assign  { lhs: Lhs,     expr: Expr },
-    Expr(Expr), // 新しいバリアント
+    Expr(Expr), 
+    Hole(Placeholder), // Added
 }
 
 /* ---------- Program ---------- */
@@ -47,22 +49,16 @@ impl Display for Expr {
         use Expr::*;
         match self {
             Num(n)        => write!(f, "{n}"),
-            Str(s)        => write!(f, "{s:?}"),
+            Str(s)        => write!(f, "{s:?}"), // Strings are quoted
             Var(v)        => write!(f, "{v}"),
             New(cls)      => write!(f, "new {cls}()"),
             This          => write!(f, "this"),
             Lhs(lhs)      => write!(f, "{lhs}"),
             Hole(ph)      => write!(f, "{ph}"),
-            Literal(lit)  => write!(f, "{lit}"),
+            Literal(lit)  => write!(f, "{lit}"), // Literals (e.g. from JSON) might not need quotes here if they are already strings
             MethodCall(obj, method, args) => {
-                write!(f, "{obj}.{method}(")?;
-                for (i, arg) in args.iter().enumerate() {
-                    if i > 0 {
-                        write!(f, ", ")?;
-                    }
-                    write!(f, "{arg}")?;
-                }
-                write!(f, ")")
+                let args_str = args.iter().map(|a| format!("{}", a)).collect::<Vec<String>>().join(", ");
+                write!(f, "{}.{}({})", obj, method, args_str)
             },
         }
     }
@@ -75,6 +71,7 @@ impl Display for Lhs {
             Var(v)             => write!(f, "{v}"),
             ObjAccess(obj, p)  => write!(f, "{obj}.{p}"),
             Hole(ph)           => write!(f, "{ph}"),
+            This               => write!(f, "this"),
         }
     }
 }
@@ -83,9 +80,10 @@ impl Display for Stmt {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use Stmt::*;
         match self {
-            VarDecl { name, expr } => write!(f, "var {name} = {expr}"),
-            Assign  { lhs, expr }  => write!(f, "{lhs} = {expr}"),
-            Expr(expr)             => write!(f, "{expr}"),
+            VarDecl { name, expr } => write!(f, "var {} = {};", name, expr),
+            Assign { lhs, expr }   => write!(f, "{} = {};", lhs, expr),
+            Expr(expr)             => write!(f, "{};", expr), // Assuming expressions as statements end with a semicolon
+            Hole(ph)               => write!(f, "{};", ph), // Placeholder statement
         }
     }
 }
@@ -93,7 +91,7 @@ impl Display for Stmt {
 impl Display for Program {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for stmt in &self.stmts {
-            writeln!(f, "{stmt};")?;
+            writeln!(f, "{}", stmt)?;
         }
         Ok(())
     }

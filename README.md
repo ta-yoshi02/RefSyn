@@ -68,56 +68,57 @@ Kanonフロントエンドは、以下のカテゴリの豊富なサンプルデ
 
 ## ディレクトリ構成とモジュールの役割 (Directory Structure and Roles)
 ```
-refsyn/src/
-├── main.rs          # アプリケーションのエントリーポイント、サーバーの起動
-├── server.rs        # HTTPサーバーロジック（warp）、ルーティング、リクエスト/レスポンス処理
-├── error.rs         # プロジェクト全体で使用するエラー型定義
+refsyn/
+├── src/
+│   ├── main.rs          # アプリケーションのエントリーポイント、HTTPリクエスト処理、共通パターン抽出
+│   ├── server.rs        # HTTPサーバーロジック（warp）、ルーティング定義
+│   ├── ast.rs           # プログラムの内部表現 (AST) の定義
+│   ├── parser.rs        # KanonからのJSONをASTに変換するパーサー
+│   ├── env.rs           # 変数スコープと外部参照を管理する環境 (MemoEnv)
+│   ├── models.rs        # APIリクエスト/レスポンスのデータ構造定義 (serde)
+│   └── error.rs         # プロジェクト全体で使用するエラー型定義 (現在は未使用の可能性あり)
 │
-├── ast.rs           # プログラムの内部表現 (AST) の定義 (Program, Statement, Lhs, Exp など)
-│
-├── parser.rs        # Kanonからの operations JSON を AST に変換するパーサー
-│
-├── synthesizer/
-│   ├── mod.rs       # 合成プロセス全体を管理するモジュール
-│   ├── common.rs    # 複数のASTから共通構造と差分を抽出するロジック
-│   └── pbe.rs       # PBE (Escher-Scala) 関連の処理
-│       ├── mod.rs
-│       ├── encoder.rs # プログラム状態をEscher向け形式にエンコード (RefSyn Step 5)
-│       ├── examples.rs# Escher向け入出力例 (tests.json 形式) 生成 (RefSyn Step 6)
-│       └── client.rs  # Escher-Scalaサービスと通信するクライアント (HTTP想定)
-│   └── integrator.rs  # Escherの合成結果を共通ASTに統合 (RefSyn Step 9)
-│
-└── models.rs        # APIリクエスト/レスポンスのデータ構造定義 (serde)
+├── Kanon/               # Git submodule: Kanonフロントエンド
+├── Cargo.toml           # Rustプロジェクトの定義ファイル
+├── Cargo.lock           # 依存関係のロックファイル
+├── README.md            # このファイル
+└── target/              # ビルド成果物 (gitignore対象)
 ```
-# (Operation, SynthesisRequest, SynthesisResponse など)
-* **`main.rs`:** アプリケーションのエントリーポイント。`server.rs` の起動関数を呼び出します。
-* **`server.rs`:** Warp を使用して HTTP エンドポイント (例: `/synthesize`) を定義し、リクエストを処理します。`models.rs` で定義された構造体を使って JSON をデシリアライズ/シリアライズし、`parser.rs` や `synthesizer` モジュールの関数を呼び出します。
-* **`models.rs`:** `serde` を利用して、API で送受信される JSON データに対応する Rust の構造体を定義します。Kanon から送られる `Operation` の詳細構造もここで定義します。
-* **`error.rs`:** アプリケーション固有のエラー型を定義し、エラーハンドリングを統一します。
-* **`ast.rs`:** コードスニペットを表現するための内部的な AST データ構造 (`Program`, `Statement`, `Lhs`, `Exp` など) を定義します。これらの構造はプログラムの解析と比較の基礎となります。
-* **`parser.rs`:** Kanon フロントエンドから送られてくる `Vec<Operation>` (ユーザーの GUI 操作列) を解析し、`ast::Program` 構造体に変換するロジックを担当します。
-* **`synthesizer/`:** コアな合成ロジックを含むモジュールです。
-    * **`mod.rs`:** 合成プロセス全体を調整します。
-    * **`common.rs`:** 複数の `ast::Program` を入力として受け取り、それらに共通する構造を持つ新しい AST (差分はプレースホルダーで表現) と、差分の詳細情報リストを生成するアルゴリズムを実装します。
-    * **`pbe/`:** 外部の Escher-Scala PBE エンジンとの連携を担当します。
-        * **`encoder.rs`:** PBE エンジンに入力する前に、プログラムの状態（グラフなど）や引数を Escher が理解できる形式（例: `List[Int]`）にエンコードします。
-        * **`examples.rs`:** エンコードされた状態と各仕様における期待される値から、Escher-Scala に渡す具体的な入出力例 (`tests.json` の内容) を生成します。
-        * **`client.rs`:** Escher-Scala サービスに対してネットワークリクエスト（HTTP POST など）を送信し、合成結果を受信するクライアントロジックを実装します。
-    * **`integrator.rs`:** Escher-Scala から返された合成結果（差分部分のコード）を、`common.rs` で生成された共通構造 AST のプレースホルダー部分に埋め込み、最終的なメソッドコードを完成させます。
-* **`storage.rs` (オプション):** 仕様を一つずつ受信し、後でまとめて合成する場合に、受信した仕様 (AST と関連情報) を一時的に保存する機能を提供します (例: インメモリの `HashMap`)。
+
+* **`src/main.rs`:** アプリケーションのエントリーポイント。HTTPリクエストを処理し、`parser.rs` を使って入力をASTに変換後、複数のASTから共通パターンと差分（ホール）を抽出するコアロジックを含みます。最終的に `server.rs` を介してレスポンスを返します。
+* **`src/server.rs`:** [Warp](https://github.com/seanmonstar/warp) を使用してHTTPサーバーをセットアップし、ルーティング (例: `/synthesize`) を定義します。リクエストの受付とレスポンスの返却を担当します。
+* **`src/ast.rs`:** プログラムの内部表現であるAST (Abstract Syntax Tree) のデータ構造 (`Program`, `Stmt`, `Expr`, `Lhs` など) を定義します。
+* **`src/parser.rs`:** Kanonフロントエンドから送信されるJSON形式の操作列 (`Vec<Operation>`) を解析し、`ast.rs` で定義された `Program` 構造体に変換します。この際、`env.rs` の `MemoEnv` を利用して変数解決やスコープ管理を行います。
+* **`src/env.rs`:** `MemoEnv` 構造体を定義し、複数のメソッド呼び出しにまたがる変数のスコープ管理、IDと名前のマッピング、外部から参照される際のアクセスパスの解決など、環境関連の機能を提供します。
+* **`src/models.rs`:** `serde` を利用して、APIで送受信されるJSONデータに対応するRustの構造体 (`SynthesisRequest`, `SynthesisResponse`, `MethodCallOperation` など) を定義します。
+* **`src/error.rs`:** (現状、積極的に使用されていない可能性があります) プロジェクト全体で使用するカスタムエラー型を定義するためのファイルです。
+* **`Kanon/`:** Git submoduleとして管理されているKanonフロントエンドのコードが含まれます。
+* **`target/`:** Rustのビルドプロセスによって生成されるファイルが格納されるディレクトリで、`.gitignore` によってバージョン管理から除外されています。
 
 ## ワークフロー概要 (Workflow)
 
-1.  **仕様受信:** Kanon はユーザーが定義したメソッド仕様 (操作列、コンテキスト情報、操作前グラフ状態など) を RefSyn バックエンド (このサーバー) のエンドポイント (例: `/add_specification` または `/synthesize`) に送信します。
-2.  **解析と保存 (オプション):** RefSyn バックエンドは受信した操作列を `parser.rs` で `ast::Program` に変換し、必要に応じて `storage.rs` で一時保存します。
-3.  **合成トリガー:** Kanon から合成開始リクエストが `/synthesize` エンドポイントに送信されます (対象メソッドを指定)。
-4.  **共通化:** RefSyn バックエンドは、対象メソッドに関する保存済みの AST を取得し、`synthesizer::common.rs` を使って共通構造 AST と差分リストを生成します。
-5.  **PBE 問題生成:** 差分リストと各仕様の操作前状態に基づき、`synthesizer::pbe::encoder.rs` と `synthesizer::pbe::examples.rs` を使って、各差分に対応する PBE 問題 (`tests.json` 形式のデータ) を生成します。
-6.  **外部合成器呼び出し:** `synthesizer::pbe::client.rs` が、生成された PBE 問題を Escher-Scala サービスに送信します。
-7.  **結果受信:** Escher-Scala は PBE 合成を実行し、結果 (差分部分のコード) を RefSyn バックエンドに返します。
-8.  **結果統合:** `synthesizer::integrator.rs` が、受信した差分コードを共通構造 AST に埋め込み、最終的なメソッドコードを生成します。
-9.  **応答:** RefSyn バックエンドは、完成したメソッドコードを Kanon に返します。
+1.  **仕様受信と解析:**
+    *   Kanonフロントエンドは、ユーザーがGUIで定義した複数のメソッド呼び出しに関する情報（操作列、レシーバーオブジェクト、メソッド名などを含む `MethodCallOperation` のリスト）を、RefSynバックエンドの `/synthesize` エンドポイントに送信します。
+    *   `server.rs` がリクエストを受け付け、`main.rs` の `handle_synthesis` 関数に渡します。
+    *   `handle_synthesis` 関数は、各 `MethodCallOperation` に対して以下の処理を行います:
+        *   新しい `MemoEnv` インスタンス（`env.rs`）を作成し、現在のメソッド呼び出しのスコープとレシーバーオブジェクト (`this`) を設定します。
+        *   `parser.rs` の `parse_operations` 関数を呼び出し、操作列を `ast::Program` に変換します。この際、`MemoEnv` を使用して変数の解決やスコープ内での登録、外部参照の可能性のある割り当ての記録を行います。
+        *   変換された `ast::Program` と、その解析に使用された `MemoEnv` の状態を保存します。
 
+2.  **共通パターン抽出:**
+    *   全ての `MethodCallOperation` の解析が完了した後、`main.rs` 内の `find_common_pattern_and_holes` 関数が、生成された `ast::Program` のリストと、各解析に対応する `MemoEnv` のリストを入力として受け取ります。
+    *   この関数は、ASTの構造を比較し、共通する部分と異なる部分（ホールとして表現）を特定します。
+        *   （今後の拡張）`MemoEnv` に記録された外部参照情報 (`get_access_path`) を利用して、異なるスコープで異なる名前を持つが構造的に同じ変数を識別し、より正確なホール生成を目指します。例えば、`lst.append(0)` での `lst` と `lst.append(3)` での `lst` が、たとえ内部IDが異なっても、どちらも呼び出し元の同じ変数 `this.listField` を指している場合、それらを同一視してホール化を避ける、またはホール化する場合でもその関連性を示す情報を付加します。
+        *   リテラル値の違い（例: `0` と `3`）もホールとして識別されます。
+
+3.  **応答:**
+    *   抽出された共通パターン（ホールを含むASTとして表現）と、各ホールの具体的な値のリスト（どのメソッド呼び出しでどの値が使われたか）を含む `SynthesisResponse` を生成します。
+    *   このレスポンスをJSON形式でKanonフロントエンドに返却します。
+
+4.  **(将来展望) PBEシンセサイザとの連携:**
+    *   現状のコアロジックは共通パターンの抽出とホール化に焦点を当てています。
+    *   将来的には、`find_common_pattern_and_holes` で特定されたホール（特に複雑な式やロジックが入りうる箇所）を埋めるために、外部のPBE (Programming by Example) エンジン（例: Escher-Scala）と連携する機能が追加される可能性があります。
+    *   その場合、ホールに対応するPBE問題（入出力例）を生成し、PBEエンジンに送信、得られた解をホールに埋め込む、というステップが追加されます。
 
 ## 外部依存関係 (External Dependencies)
 
