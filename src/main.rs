@@ -2,13 +2,14 @@ mod ast;
 mod env; // env モジュールを宣言
 mod parser;
 mod server;
+mod ir; // IRモジュールを宣言
 
 use serde::{Deserialize, Serialize};
 use crate::parser::parse_operations;
 use crate::env::MemoEnv; // MemoEnv をインポート
 use std::collections::HashMap;
 use warp::http::StatusCode;
-use crate::ast::{Stmt, Placeholder, Expr, Lhs, Program}; // Program を追加
+use crate::ast::{Stmt, Placeholder, Program}; // Program を追加
 
 #[derive(Deserialize, Debug)]
 pub struct MethodCallOperation { // New struct for individual method call operations
@@ -65,6 +66,168 @@ fn update_hole_value(
     } else {
         eprintln!("Warning: Attempted to update non-existent hole with key: {}", placeholder_key);
     }
+}
+
+/// Kanonの操作ログからIR形式に変換する関数
+fn convert_operations_to_ir(operations: &[serde_json::Value]) -> anyhow::Result<Vec<ir::Op>> {
+    let mut result = Vec::new();
+    
+    for (i, op_val) in operations.iter().enumerate() {
+        let op_id = format!("op_{}", i); // 一意のID生成
+        
+        if let Ok(op) = serde_json::from_value::<parser::Operation>(op_val.clone()) {
+            match op.edit_type.as_str() {
+                "addNode" => {
+                    if let (Some(id), Some(is_literal)) = (op.id.clone(), op.is_literal) {
+                        let label = op.label.clone().unwrap_or_default();
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::AddNode {
+                                id,
+                                is_literal,
+                                label,
+                            }
+                        });
+                    }
+                },
+                "editNode" => {
+                    if let (Some(id), Some(is_literal)) = (op.id.clone(), op.is_literal) {
+                        let label = op.label.clone().unwrap_or_default();
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::EditNode {
+                                id,
+                                is_literal,
+                                label,
+                            }
+                        });
+                    }
+                },
+                "deleteNode" => {
+                    if let Some(id) = op.id.clone() {
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::DeleteNode {
+                                id,
+                            }
+                        });
+                    }
+                },
+                "addEdge" => {
+                    if let (Some(from), Some(to)) = (op.from.clone(), op.to.clone()) {
+                        let label = op.label.clone().unwrap_or_default();
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::AddEdge {
+                                from,
+                                to,
+                                label,
+                            }
+                        });
+                    }
+                },
+                "editEdge" => { // Refer (プロパティ参照の変更)
+                    if let (Some(from), Some(old_to), Some(new_to)) = 
+                        (op.from.clone(), op.to.clone(), op.new_to.clone()) {
+                        let label = op.label.clone().unwrap_or_default();
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::EditEdgeReference {
+                                from,
+                                old_to,
+                                new_to,
+                                label,
+                            }
+                        });
+                    }
+                },
+                "editEdgeLabel" => {
+                    if let (Some(from), Some(to), Some(old_label)) = 
+                        (op.from.clone(), op.to.clone(), op.label.clone()) {
+                        let new_label = op.new_to.clone().unwrap_or_default(); // 仮定：new_toがnew_labelを格納
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::EditEdgeLabel {
+                                from,
+                                to,
+                                old_label,
+                                new_label,
+                            }
+                        });
+                    }
+                },
+                "deleteEdge" => {
+                    if let (Some(from), Some(to)) = (op.from.clone(), op.to.clone()) {
+                        let label = op.label.clone().unwrap_or_default();
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::DeleteEdge {
+                                from,
+                                to,
+                                label,
+                            }
+                        });
+                    }
+                },
+                "addVariable" => {
+                    if let Some(to) = op.to.clone() {
+                        let label = op.label.clone().unwrap_or_default();
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::AddVariable {
+                                to,
+                                label,
+                            }
+                        });
+                    }
+                },
+                "editVariable" => { // Refer (変数の参照先の変更)
+                    if let Some(new_to) = op.new_to.clone() {
+                        let old_to = op.to.clone();
+                        let label = op.label.clone().unwrap_or_default();
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::EditVariableReference {
+                                old_to,
+                                new_to,
+                                label,
+                            }
+                        });
+                    }
+                },
+                "editVariableLabel" => {
+                    if let (Some(to), Some(old_label)) = (op.to.clone(), op.label.clone()) {
+                        let new_label = op.new_to.clone().unwrap_or_default(); // 仮定：new_toがnew_labelを格納
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::EditVariableLabel {
+                                to,
+                                old_label,
+                                new_label,
+                            }
+                        });
+                    }
+                },
+                "deleteVariable" => {
+                    if let Some(to) = op.to.clone() {
+                        let label = op.label.clone().unwrap_or_default();
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::DeleteVariable {
+                                to,
+                                label,
+                            }
+                        });
+                    }
+                },
+                _ => {
+                    eprintln!("未知の操作タイプ: {}", op.edit_type);
+                }
+            }
+        }
+    }
+    
+    Ok(result)
 }
 
 fn synchronize_and_hole_expr(
@@ -275,6 +438,7 @@ fn synchronize_and_hole_stmt(
 fn find_common_pattern_and_holes(
     programs: &[ast::Program],
     memo_envs: &[MemoEnv], // Add MemoEnv slice as parameter
+    operations_list: Option<&[Vec<serde_json::Value>]>, // 操作ログのリストを追加（オプショナル）
 ) -> (Option<ast::Program>, HashMap<String, Vec<String>>) {
     if programs.is_empty() {
         return (None, HashMap::new());
@@ -283,7 +447,80 @@ fn find_common_pattern_and_holes(
         return (Some(programs[0].clone()), HashMap::new());
     }
 
-    let mut hole_map: HashMap<String, Vec<String>> = HashMap::new(); // Changed type
+    // 操作ログを使用したIRベースのアプローチを試す
+    if let Some(ops_list) = operations_list {
+        if ops_list.len() >= 2 {
+            // IR操作からASTを生成する新しいアプローチを使用
+            let result = ir::find_common_pattern_from_operations(ops_list, memo_envs);
+            if result.0.is_some() {
+                return result;
+            }
+            
+            // バックアップとして以前のマッチングベースのアプローチも試みる
+            let mut ir_ops_list = Vec::new();
+            
+            // 各操作ログをIRに変換
+            for ops in ops_list {
+                match convert_operations_to_ir(ops) {
+                    Ok(ir_ops) => ir_ops_list.push(ir_ops),
+                    Err(e) => {
+                        // IR変換に失敗した場合は従来のアプローチにフォールバック
+                        eprintln!("Failed to convert operations to IR: {}, falling back to traditional approach", e);
+                        return find_common_pattern_and_holes_traditional(programs);
+                    }
+                }
+            }
+            
+            // IRを使って2つの操作グラフをマッチング
+            if ir_ops_list.len() >= 2 {
+                let match_result = ir::match_graphs(&ir_ops_list[0], &ir_ops_list[1]);
+                
+                // マッチング結果をホールマップに変換
+                let mut hole_map = HashMap::new();
+                for hole in match_result.holes {
+                    match hole {
+                        ir::Hole::Const { placeholder, values } => {
+                            hole_map.insert(format!("{} (const)", placeholder), values);
+                        },
+                        ir::Hole::Ref { placeholder, refs } => {
+                            hole_map.insert(format!("{} (ref)", placeholder), refs);
+                        }
+                    }
+                }
+                
+                // 共通パターンに基づいたプログラムを構築
+                let (traditional_ast, traditional_holes) = find_common_pattern_and_holes_traditional(programs);
+                
+                // IRベースのホール情報と従来のホール情報を統合
+                if let Some(ast) = traditional_ast {
+                    // 従来のホール情報を追加（競合する場合はIRベースを優先）
+                    for (key, values) in traditional_holes {
+                        if !hole_map.contains_key(&key) {
+                            hole_map.insert(key, values);
+                        }
+                    }
+                    return (Some(ast), hole_map);
+                }
+            }
+        }
+    }
+    
+    // IRベースのアプローチが利用できない場合は従来のアプローチを使用
+    find_common_pattern_and_holes_traditional(programs)
+}
+
+// 従来の実装をリファクタリングして別関数に移動
+pub fn find_common_pattern_and_holes_traditional(
+    programs: &[ast::Program],
+) -> (Option<ast::Program>, HashMap<String, Vec<String>>) {
+    if programs.is_empty() {
+        return (None, HashMap::new());
+    }
+    if programs.len() == 1 {
+        return (Some(programs[0].clone()), HashMap::new());
+    }
+
+    let mut hole_map: HashMap<String, Vec<String>> = HashMap::new();
     let mut next_hole_id = 1; // Changed from 0 to 1 to start holes from Hole1
 
     let overall_min_stmts = programs.iter().map(|p| p.stmts.len()).min().unwrap_or(0);
@@ -315,6 +552,7 @@ pub async fn handle_synthesis(req: SynthesisRequest) -> Result<impl warp::Reply,
 
     let mut parsed_programs = Vec::new();
     let mut all_memo_envs_for_pattern_finding = Vec::new(); // Store MemoEnv for each call
+    let mut operations_list = Vec::new(); // 操作ログのリスト
 
     if req.method_calls.is_empty() {
         println!("No method calls provided in the request.");
@@ -356,6 +594,7 @@ pub async fn handle_synthesis(req: SynthesisRequest) -> Result<impl warp::Reply,
                 );
                 parsed_programs.push(program);
                 all_memo_envs_for_pattern_finding.push(memo_env_for_call.clone()); // Clone and store
+                operations_list.push(method_call_op.operations.clone()); // 操作ログを追加
             }
             Err(e) => {
                 eprintln!(
@@ -394,7 +633,7 @@ pub async fn handle_synthesis(req: SynthesisRequest) -> Result<impl warp::Reply,
     }
 
     // 4. AST のリストから共通パターンとホールを抽出
-    let (common_pattern_ast_option, hole_map) = find_common_pattern_and_holes(&parsed_programs, &all_memo_envs_for_pattern_finding);
+    let (common_pattern_ast_option, hole_map) = find_common_pattern_and_holes(&parsed_programs, &all_memo_envs_for_pattern_finding, Some(&operations_list));
     
     let common_pattern_ast = match common_pattern_ast_option {
         Some(ast) => {
