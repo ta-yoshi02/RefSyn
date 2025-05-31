@@ -14,7 +14,7 @@ pub enum Expr {
     New(String),   // new <Class>()
     This,
     Lhs(Box<Lhs>),
-    Hole(Placeholder),
+    Hole(Placeholder), // ホール表現
     Literal(String), // 新しいバリアント
     MethodCall(Box<Lhs>, String, Vec<Expr>), // obj.method(args)
 }
@@ -24,7 +24,7 @@ pub enum Expr {
 pub enum Lhs {
     Var(String),
     ObjAccess(Box<Lhs>, String), // obj.prop ...
-    Hole(Placeholder),
+    Hole(Placeholder), // ホール表現
     This, // New variant for 'this' keyword
 }
 

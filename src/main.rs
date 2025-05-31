@@ -565,6 +565,9 @@ pub async fn handle_synthesis(req: SynthesisRequest) -> Result<impl warp::Reply,
         return Ok(warp::reply::with_status(warp::reply::json(&response), StatusCode::OK));
     }
 
+    // 全てのメソッド呼び出し間で状態を共有するMemoEnvと、各呼び出しで独立したローカルMemoEnv
+    let mut global_memo_env = MemoEnv::new(); // グローバルな状態管理用
+    
     for (index, method_call_op) in req.method_calls.iter().enumerate() {
         println!(
             "Processing method call: {}, Receiver: {}, Method: {}",
@@ -573,18 +576,25 @@ pub async fn handle_synthesis(req: SynthesisRequest) -> Result<impl warp::Reply,
             method_call_op.method_name
         );
 
-        let mut memo_env_for_call = MemoEnv::new();
-        // Set 'this' for the current method call context
-        memo_env_for_call.add_special_mapping(method_call_op.receiver_object.clone(), "this".to_string());
+        // 各メソッド呼び出しで新しい独立したMemoEnvを作成
+        let mut local_memo_env = MemoEnv::new();
         
-        // Use a unique scope ID for each method call, e.g., based on index or callLabel
+        // レシーバーオブジェクトをthisとして設定
+        local_memo_env.add_special_mapping(method_call_op.receiver_object.clone(), "this".to_string());
+        
+        // 前のメソッド呼び出しの結果を外部参照として設定
+        // グローバル状態から外部参照パスを設定
+        if index > 0 {
+            local_memo_env.setup_cross_scope_references(&global_memo_env);
+        }
+        
         let scope_id = format!("method_call_{}_{}", index, method_call_op.call_label);
-        memo_env_for_call.start_method_call_scope(&scope_id);
+        local_memo_env.start_method_call_scope(&scope_id);
 
         match parse_operations(
             &method_call_op.operations,
             Some(&method_call_op.receiver_object), // Pass receiver_object as current_receiver_id
-            &mut memo_env_for_call,
+            &mut local_memo_env,
         ) {
             Ok(program) => {
                 println!(
@@ -593,7 +603,11 @@ pub async fn handle_synthesis(req: SynthesisRequest) -> Result<impl warp::Reply,
                     program
                 );
                 parsed_programs.push(program);
-                all_memo_envs_for_pattern_finding.push(memo_env_for_call.clone()); // Clone and store
+                
+                // ローカル環境の状態をグローバル環境に統合
+                global_memo_env.merge_from(&local_memo_env);
+                
+                all_memo_envs_for_pattern_finding.push(local_memo_env.clone()); // Clone and store
                 operations_list.push(method_call_op.operations.clone()); // 操作ログを追加
             }
             Err(e) => {

@@ -79,6 +79,11 @@ impl MemoEnv {
             return "this".to_string();
         }
 
+        // 外部参照パスがある場合はそれを返す（優先）
+        if let Some(external_path) = self.get_external_reference_path(id) {
+            return external_path;
+        }
+
         if let Some(name) = self.id_to_name.get(id) {
             return name.clone();
         }
@@ -153,6 +158,8 @@ impl MemoEnv {
     pub fn start_method_call_scope(&mut self, method_call_id: &str) {
         self.current_method_call = Some(method_call_id.to_string());
         self.method_call_vars.insert(method_call_id.to_string(), Vec::new());
+        // 新しいメソッド呼び出しスコープで変数カウンターをリセット
+        self.next_var_id = 0;
     }
 
     /// 現在のメソッド呼び出しスコープを終了します。
@@ -196,5 +203,44 @@ impl MemoEnv {
         }
         
         None
+    }
+
+    /// 他のMemoEnvの状態をこの環境に統合します。
+    /// これはグローバル状態管理に使用されます。
+    pub fn merge_from(&mut self, other: &MemoEnv) {
+        // プロパティ割り当てを統合
+        for (var_id, (owner_id, prop_name)) in &other.property_of {
+            self.property_of.insert(var_id.clone(), (owner_id.clone(), prop_name.clone()));
+        }
+        
+        // 外部参照を統合
+        for (var_id, ref_path) in &other.external_refs {
+            self.external_refs.insert(var_id.clone(), ref_path.clone());
+        }
+        
+        // ID-名前マッピングを統合（重複がある場合は既存を保持）
+        for (id, name) in &other.id_to_name {
+            if !self.id_to_name.contains_key(id) {
+                self.id_to_name.insert(id.clone(), name.clone());
+                self.name_to_id.insert(name.clone(), id.clone());
+            }
+        }
+    }
+    
+    /// グローバルな外部参照を設定します。
+    /// 前のメソッド呼び出しの結果を次のメソッド呼び出しで参照するために使用されます。
+    pub fn setup_cross_scope_references(&mut self, global_env: &MemoEnv) {
+        // プロパティ割り当てから外部参照パスを推定
+        for (var_id, (owner_id, prop_name)) in &global_env.property_of {
+            if let Some(owner_name) = global_env.get_name_by_id(owner_id) {
+                if owner_name == "this" {
+                    let ref_path = format!("this.{}", prop_name);
+                    self.register_external_reference(var_id, &ref_path);
+                } else if let Some(owner_ref_path) = global_env.get_external_reference_path(owner_id) {
+                    let ref_path = format!("{}.{}", owner_ref_path, prop_name);
+                    self.register_external_reference(var_id, &ref_path);
+                }
+            }
+        }
     }
 }
