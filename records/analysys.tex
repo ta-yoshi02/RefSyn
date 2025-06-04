@@ -956,262 +956,7 @@ swap(i,j) {
 
 % \clearpage
 
-\section{対象関数: \texttt{indexOf(arg)}}
-連結リスト内で指定された値を持つノードのインデックスを返すメソッド。
 
-\subsection{初期プログラム}
-
-\begin{lstlisting}[language=JavaScript]
-class Node {
- indexOf(arg) { /* TBD */ }
-}
-var lst = new Node(); 
-lst.val = 2;
-lst.next = new Node();
-lst.next.val = 0;
-lst.next.next = new Node();
-lst.next.next.val = 3;
-var index0 = lst.indexOf(0);
-var index3 = lst.indexOf(3);
-var indexNotFound = lst.indexOf(99);
-\end{lstlisting}
-
-\subsection{操作ログ}
-
-\subsubsection{\texttt{lst.indexOf(0)} に対する操作}
-\begin{itemize}
-  \item \texttt{addVariable}: main-new2, return
-\end{itemize}
-
-\subsubsection{\texttt{lst.indexOf(3)} に対する操作}
-\begin{itemize}
-  \item \texttt{addVariable}: main-new3, return
-\end{itemize}
-
-\subsubsection{\texttt{lst.indexOf(99)} に対する操作}
-\begin{itemize}
-  \item \texttt{addVariable}: null, return
-\end{itemize}
-
-\subsection{手動で復元したコード}
-
-\subsubsection{\texttt{lst.indexOf(0)}}
-\begin{lstlisting}[language=JavaScript]
-if (this.val === 0) return 0;
-if (this.next.val === 0) return 1;
-// ...
-\end{lstlisting}
-
-\subsubsection{\texttt{lst.indexOf(3)}}
-\begin{lstlisting}[language=JavaScript]
-if (this.val === 3) return 0;
-if (this.next.val === 3) return 1;
-if (this.next.next.val === 3) return 2;
-// ...
-\end{lstlisting}
-
-\subsection{一般化と部分関数の推定}
-
-\begin{lstlisting}[language=JavaScript]
-// f() = 現在のノードからargを探し、インデックスを返す関数
-return f();
-\end{lstlisting}
-
-\subsection{想定の合成された関数}
-\begin{lstlisting}
-indexOf(arg) {
-  let currentIndex = 0;
-  let currentNode = this;
-  while (currentNode !== null) {
-    if (currentNode.val === arg) {
-      return currentIndex;
-    }
-    currentNode = currentNode.next;
-    currentIndex++;
-  }
-  return -1; // Not found
-}
-\end{lstlisting}
-
-\subsection{oracleの関数}
-\begin{lstlisting}[language=JavaScript]
-indexOf(arg, current=this, index=0) {
-  if (current === null) {
-    return -1;
-  }
-  if (current.val === arg) {
-    return index;
-  }
-  return this.indexOf(arg, current.next, index + 1);
-}
-\end{lstlisting}
-
-% \clearpage
-
-\section{対象関数: \texttt{size()}}
-連結リストのノード数を返すメソッド。
-
-\subsection{初期プログラム}
-
-\begin{lstlisting}[language=JavaScript]
-class Node {
-  size() { /* TBD */ }
-}
-var lst = new Node(); 
-lst.val = 2;
-lst.next = new Node();
-lst.next.val = 0;
-lst.next.next = new Node();
-lst.next.next.val = 3;
-var s1 = lst.size();
-var emptyLst = new Node();
-var s2 = emptyLst.size();
-\end{lstlisting}
-
-\subsection{操作ログ}
-
-\subsubsection{\texttt{lst.size()} に対する操作}
-\begin{itemize}
-  \item \texttt{addVariable}: \_\_temp1, 3, true, number
-  \item \texttt{addVariable}: \_\_temp1, return
-\end{itemize}
-
-\subsubsection{\texttt{emptyLst.size()} に対する操作}
-\begin{itemize}
-  \item \texttt{addVariable}: \_\_temp2, 1, true, number
-  \item \texttt{addVariable}: \_\_temp2, return
-\end{itemize}
-
-\subsection{手動で復元したコード}
-
-\subsubsection{\texttt{lst.size()}}
-\begin{lstlisting}[language=JavaScript]
-var count = 0;
-var current = this;
-while (current !== null) {
-  count++;
-  current = current.next;
-}
-return count;
-\end{lstlisting}
-
-\subsubsection{\texttt{emptyLst.size()}}
-\begin{lstlisting}[language=JavaScript]
-  return 1; // Assuming initial node counts as 1 even if val is undefined
-\end{lstlisting}
-
-\subsection{一般化と部分関数の推定}
-
-\begin{lstlisting}[language=JavaScript]
-// f() = リストを走査してノード数を数える関数
-return f();
-\end{lstlisting}
-
-\subsection{想定の合成された関数}
-\begin{lstlisting}
-size() {
-  let count = 0;
-  let current = this;
-  while (current !== null) {
-    count++;
-    current = current.next;
-  }
-  return count;
-}
-\end{lstlisting}
-
-\subsection{oracleの関数}
-\begin{lstlisting}[language=JavaScript]
-size(node = this) {
-  if (node === null) {
-    return 0;
-  }
-  return 1 + this.size(node.next);
-}
-\end{lstlisting}
-
-% \clearpage
-
-\section{対象関数: \texttt{get(i)}}
-連結リストのi番目のノードの\texttt{val}フィールドを返すメソッド。
-
-\subsection{初期プログラム}
-
-\begin{lstlisting}[language=JavaScript]
-class Node {
-  get(i) { /* TBD */ }
-}
-var lst = new Node(); 
-lst.val = 2;
-lst.next = new Node();
-lst.next.val = 0;
-lst.next.next = new Node();
-lst.next.next.val = 3;
-var val0 = lst.get(0);
-var val2 = lst.get(2);
-\end{lstlisting}
-
-\subsection{操作ログ}
-
-\subsubsection{\texttt{lst.get(0)} に対する操作}
-\begin{itemize}
-  \item \texttt{addVariable}: main-new1-val, return
-\end{itemize}
-
-\subsubsection{\texttt{lst.get(2)} に対する操作}
-\begin{itemize}
-  \item \texttt{addVariable}: main-new3-val, return
-\end{itemize}
-
-\subsection{手動で復元したコード}
-
-\subsubsection{\texttt{lst.get(0)}}
-\begin{lstlisting}[language=JavaScript]
-return this.val;
-\end{lstlisting}
-
-\subsubsection{\texttt{lst.get(2)}}
-\begin{lstlisting}[language=JavaScript]
-return this.next.next.val;
-\end{lstlisting}
-
-\subsection{一般化と部分関数の推定}
-
-\begin{lstlisting}[language=JavaScript]
-// f() = i番目のノードのvalフィールドを返す関数
-return f();
-\end{lstlisting}
-
-\subsection{想定の合成された関数}
-\begin{lstlisting}
-get(i) {
-  let currentIndex = 0;
-  let currentNode = this;
-  while (currentNode !== null && currentIndex < i) {
-    currentNode = currentNode.next;
-    currentIndex++;
-  }
-  if (currentNode !== null) {
-    return currentNode.val;
-  }
-  return undefined; // Or throw error
-}
-\end{lstlisting}
-
-\subsection{oracleの関数}
-\begin{lstlisting}[language=JavaScript]
-get(i, node = this) {
-  if (node === null) {
-    return undefined; // Or throw error
-  }
-  if (i === 0) {
-    return node.val;
-  }
-  return this.get(i - 1, node.next);
-}
-\end{lstlisting}
-
-% \clearpage
 
 \section{対象関数: \texttt{clear()}}
 連結リストのすべてのノードを削除するメソッド。
@@ -1229,58 +974,48 @@ lst.next.val = 0;
 lst.next.next = new Node();
 lst.next.next.val = 3;
 lst.clear();
-var emptyLst = new Node();
-emptyLst.clear();
+var lst2 = new Node();
+lst2.val = 4;
+lst2.clear();
 \end{lstlisting}
 
 \subsection{操作ログ}
 
 \subsubsection{\texttt{lst.clear()} に対する操作}
 \begin{itemize}
-  \item \texttt{deleteNode}: main-new3
-  \item \texttt{deleteNode}: main-new2
-  \item \texttt{deleteNode}: main-new1
+  \item \texttt{editEdge}: main-new1, main-new1-val, null, val
+  \item \texttt{editEdge}: main-new1, main-new2, null, next
 \end{itemize}
 
-\subsubsection{\texttt{emptyLst.clear()} に対する操作}
+\subsubsection{\texttt{lst2.clear()} に対する操作}
 \begin{itemize}
-  \item (No explicit deleteNode operations if the initial node is considered the list itself and its next is null)
+  \item \texttt{editEdge}: main-new4, main-new4-val, null, val
 \end{itemize}
 
 \subsection{手動で復元したコード}
 
 \subsubsection{\texttt{lst.clear()}}
 \begin{lstlisting}[language=JavaScript]
-this.val = undefined; // Or some default value
-this.next = undefined;
+this.val = null;
+this.next = null;
 \end{lstlisting}
 
-\subsubsection{\texttt{emptyLst.clear()}}
+\subsubsection{\texttt{lst2.clear()}}
 \begin{lstlisting}[language=JavaScript]
-// No change if already effectively empty
+this.val = null;
 \end{lstlisting}
 
 \subsection{一般化と部分関数の推定}
 
 \begin{lstlisting}[language=JavaScript]
-// f() = リストを走査してノードを削除する関数
-f();
+this.val = null;
 \end{lstlisting}
 
 \subsection{想定の合成された関数}
 \begin{lstlisting}
 clear() {
-  // In JavaScript, setting next to null effectively "clears" the list
-  // if you assume the current node remains the head.
-  // If the head itself should be "emptied", then its val should be reset.
-  if (this.next) {
-    // Recursively clear the rest of the list
-    this.next.clear();
-    // Then remove the reference to the cleared tail
-    this.next = undefined;
-  }
-  // Reset the current node's value
-  this.val = undefined;
+  this.val = null;
+  this.next = null;
 }
 \end{lstlisting}
 
@@ -1291,170 +1026,12 @@ clear() {
     this.next.clear();
     this.next = null;
   }
-  this.val = undefined; // Or some default value
+  this.val = undefined; 
 }
 \end{lstlisting}
 
 % \clearpage
 
-\section{対象関数: \texttt{contains(arg)}}
-連結リスト内に指定された値を持つノードが存在するかどうかを返すメソッド。
-
-\subsection{初期プログラム}
-
-\begin{lstlisting}[language=JavaScript]
-class Node {
-  contains(arg) { /* TBD */ }
-}
-var lst = new Node(); 
-lst.val = 2;
-lst.next = new Node();
-lst.next.val = 0;
-lst.next.next = new Node();
-lst.next.next.val = 3;
-var c1 = lst.contains(0);
-var c2 = lst.contains(99);
-\end{lstlisting}
-
-\subsection{操作ログ}
-
-\subsubsection{\texttt{lst.contains(0)} に対する操作}
-\begin{itemize}
-  \item \texttt{addVariable}: \_\_temp1, true, true, boolean
-  \item \texttt{addVariable}: \_\_temp1, return
-\end{itemize}
-
-\subsubsection{\texttt{lst.contains(99)} に対する操作}
-\begin{itemize}
-  \item \texttt{addVariable}: \_\_temp2, false, true, boolean
-  \item \texttt{addVariable}: \_\_temp2, return
-\end{itemize}
-
-\subsection{手動で復元したコード}
-
-\subsubsection{\texttt{lst.contains(0)}}
-\begin{lstlisting}[language=JavaScript]
-if (this.val === 0) return true;
-if (this.next && this.next.val === 0) return true;
-return false;
-\end{lstlisting}
-
-\subsubsection{\texttt{lst.contains(99)}}
-\begin{lstlisting}[language=JavaScript]
-var current = this;
-while (current !== null) {
-  if (current.val === 99) return true;
-  current = current.next;
-}
-return false;
-\end{lstlisting}
-
-\subsection{一般化と部分関数の推定}
-
-\begin{lstlisting}[language=JavaScript]
-// f() = リストを走査してargを探し、見つかればtrue、そうでなければfalseを返す関数
-return f();
-\end{lstlisting}
-
-\subsection{想定の合成された関数}
-\begin{lstlisting}
-contains(arg) {
-  let current = this;
-  while (current !== null) {
-    if (current.val === arg) {
-      return true;
-    }
-    current = current.next;
-  }
-  return false;
-}
-\end{lstlisting}
-
-\subsection{oracleの関数}
-\begin{lstlisting}[language=JavaScript]
-contains(arg) {
-  if (this === null) {
-    return false;
-  }
-  if (this.val === arg) {
-    return true;
-  }
-  if (this.next !== null) {
-    return this.next.contains(arg);
-  }
-  return false;
-}
-\end{lstlisting}
-
-% \clearpage
-
-\section{対象関数: \texttt{isEmpty()}}
-連結リストが空かどうかを返すメソッド。
-
-\subsection{初期プログラム}
-
-\begin{lstlisting}[language=JavaScript]
-class Node {
-  isEmpty() { /* TBD */ }
-}
-var lst = new Node(); 
-lst.val = 2;
-lst.next = new Node();
-lst.next.val = 0;
-var e1 = lst.isEmpty();
-var emptyLst = new Node();
-var e2 = emptyLst.isEmpty();
-\end{lstlisting}
-
-\subsection{操作ログ}
-
-\subsubsection{\texttt{lst.isEmpty()} に対する操作}
-\begin{itemize}
-  \item \texttt{addVariable}: \_\_temp1, false, true, boolean
-  \item \texttt{addVariable}: \_\_temp1, return
-\end{itemize}
-
-\subsubsection{\texttt{emptyLst.isEmpty()} に対する操作}
-\begin{itemize}
-  \item \texttt{addVariable}: \_\_temp2, true, true, boolean
-  \item \texttt{addVariable}: \_\_temp2, return
-\end{itemize}
-
-\subsection{手動で復元したコード}
-
-\subsubsection{\texttt{lst.isEmpty()}}
-\begin{lstlisting}[language=JavaScript]
-return this.val === undefined && this.next === undefined; // Or check for specific initial state
-\end{lstlisting}
-
-\subsubsection{\texttt{emptyLst.isEmpty()}}
-\begin{lstlisting}[language=JavaScript]
-return true;
-\end{lstlisting}
-
-\subsection{一般化と部分関数の推定}
-
-\begin{lstlisting}[language=JavaScript]
-// f() = リストが空かどうかを判定する関数
-return f();
-\end{lstlisting}
-
-\subsection{想定の合成された関数}
-\begin{lstlisting}
-isEmpty() {
-  // Assuming an "empty" list has a null 'next' and potentially an undefined 'val'
-  return this.next === null && this.val === undefined;
-}
-\end{lstlisting}
-
-\subsection{oracleの関数}
-\begin{lstlisting}[language=JavaScript]
-isEmpty() {
-  return this.next === null && this.val === undefined;
-}
-\end{lstlisting}
-
-% \clearpage
 
 \section{対象関数: \texttt{update(oldVal, newVal)}}
 連結リスト内で\texttt{oldVal}を持つすべてのノードの値を\texttt{newVal}に変更するメソッド。
@@ -1472,37 +1049,40 @@ lst.next.val = 0;
 lst.next.next = new Node();
 lst.next.next.val = 3;
 lst.next.next.next = new Node();
-lst.next.next.next.val = 0; // Another 0
-lst.update(0, 99);
-lst.update(5, 100); // Not found
+lst.next.next.next.val = 0;
+lst.update(0, 10);
+lst.update(3, 100);
 \end{lstlisting}
 
 \subsection{操作ログ}
 
-\subsubsection{\texttt{lst.update(0, 99)} に対する操作}
+\subsubsection{\texttt{lst.update(0, 10)} に対する操作}
 \begin{itemize}
-  \item \texttt{addNode}: \_\_temp1, 99, true, string
+  \item \texttt{addNode}: \_\_temp1, 10, true, string
   \item \texttt{editEdgeReference}: main-new2, main-new2-val, \_\_temp1, val
-  \item \texttt{addNode}: \_\_temp2, 99, true, string
+  \item \texttt{addNode}: \_\_temp2, 10, true, string
   \item \texttt{editEdgeReference}: main-new4, main-new4-val, \_\_temp2, val
 \end{itemize}
 
-\subsubsection{\texttt{lst.update(5, 100)} に対する操作}
+\subsubsection{\texttt{lst.update(3, 100)} に対する操作}
 \begin{itemize}
-  \item (No operations if value not found)
+  \item \texttt{addNode}: \_\_temp3, 100, true, string
+  \item \texttt{editEdgeReference}: main-new3, main-new3-val, \_\_temp3, val
 \end{itemize}
 
 \subsection{手動で復元したコード}
 
-\subsubsection{\texttt{lst.update(0, 99)}}
+\subsubsection{\texttt{lst.update(0, 10)}}
 \begin{lstlisting}[language=JavaScript]
-var current = this;
-while (current !== null) {
-  if (current.val === 0) {
-    current.val = 99;
-  }
-  current = current.next;
-}
+var temp1 = 10;
+this.next.val = temp1;
+var temp2 = 10;
+this.next.next.next.val = temp2;
+\end{lstlisting}
+
+\subsubsection{\texttt{lst.update(3, 100)}}
+\begin{lstlisting}[language=JavaScript]
+
 \end{lstlisting}
 
 \subsection{一般化と部分関数の推定}
@@ -1785,7 +1365,7 @@ while (current !== null) {
     current = current.next;
   }
 }
-\end{lstlisting>
+\end{lstlisting}
 
 % \clearpage
 
@@ -1920,7 +1500,7 @@ do {
     current = current.next;
   }
 } while (swapped);
-\end{lstlisting}
+\end{lstlisting>
 
 \subsection{一般化と部分関数の推定}
 
