@@ -1,1 +1,26 @@
 /target
+
+# LaTeX 中間ファイル（PDFは除く）
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.lof
+*.lot
+*.dvi
+
+# TeXエディタの一時ファイル
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# VSCodeやJetBrainsなどの設定ファイル
+.vscode/
+.idea/
+
+# 環境変数ファイル（万が一あれば）
+.env
