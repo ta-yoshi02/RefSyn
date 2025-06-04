@@ -60,7 +60,7 @@
         },
         {
           "editType": "addEdge",
-          "from": "main-new2",
+          "from": "__temp1",
           "label": "next",
           "to": "__temp3"
         }

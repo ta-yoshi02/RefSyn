@@ -1,5 +1,5 @@
 use warp::Filter;
-use super::{handle_synthesis, SynthesisRequest}; // Import from main.rs (super)
+use crate::{SynthesisRequest, handle_synthesis};
 
 pub async fn run_server() {
     let hello = warp::path("hello").map(|| "Hello from RefSyn!");
