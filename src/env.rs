@@ -44,6 +44,12 @@ impl MemoEnv {
         self.name_to_id.get(name)
     }
 
+    /// テスト用のIDと名前のマッピングを追加します。
+    pub fn add_name_id_mapping(&mut self, id: String, name: String) {
+        self.id_to_name.insert(id.clone(), name.clone());
+        self.name_to_id.insert(name, id);
+    }
+
     /// プロパティの割り当てを登録します。
     /// `value_id` が `owner_id` の `property_name` プロパティであることを記録します。
     pub fn register_property_assignment(

@@ -20,6 +20,9 @@ pub struct Operation {
     pub label: Option<String>,
     pub from: Option<String>,
     pub to: Option<String>,
+    #[serde(rename = "oldTo")]
+    pub old_to: Option<String>, // Added for editEdgeReference
+    #[serde(rename = "newTo")]
     pub new_to: Option<String>, // Added
     pub value: Option<Value>,   // Added for addNode literal, addVariable value
     pub is_literal: Option<bool>, // 既存だが、addNodeでのリテラル判定に引き続き使用
@@ -175,7 +178,9 @@ pub fn parse_operations(
                 stmts.push(Stmt::Assign { lhs, expr });
             }
             "addVariable" => {
-                let var_id = op.id.as_ref().ok_or_else(|| anyhow::anyhow!("addVariable operation missing id"))?;
+                // toフィールドを優先し、なければidフィールドを使用
+                let var_id = op.to.as_ref().or_else(|| op.id.as_ref())
+                    .ok_or_else(|| anyhow::anyhow!("addVariable operation missing id/to field"))?;
                 let var_name_hint = op.label.as_deref();
 
                 // For addVariable, is_receiver should be false.

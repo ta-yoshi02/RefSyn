@@ -80,16 +80,16 @@ fn find_common_pattern_and_holes(
         return (Some(programs[0].clone()), HashMap::new());
     }
 
-    // 操作ログを使用したIRベースのアプローチを試す
+    // 操作ログを使用した改良されたIRベースのアプローチを試す
     if let Some(ops_list) = operations_list {
         if ops_list.len() >= 2 {
-            // IR操作からASTを生成する新しいアプローチを使用
+            // 新しい依存関係に基づく正規化アプローチを使用
             let result = ir::find_common_pattern_from_operations(ops_list, memo_envs);
             if result.0.is_some() {
                 return result;
             }
             
-            // バックアップとして以前のマッチングベースのアプローチも試みる
+            // バックアップとして従来のペアワイズマッチングも試みる
             let mut ir_ops_list = Vec::new();
             
             // 各操作ログをIRに変換
@@ -216,14 +216,80 @@ pub fn convert_operations_to_ir(operations: &[serde_json::Value]) -> anyhow::Res
                     }
                 },
                 "editEdgeReference" => {
-                    if let (Some(from), Some(to), Some(new_to), Some(label)) = 
-                        (op.from.clone(), op.to.clone(), op.new_to.clone(), op.label.clone()) {
+                    if let (Some(from), Some(old_to), Some(new_to), Some(label)) = 
+                        (op.from.clone(), op.old_to.clone(), op.new_to.clone(), op.label.clone()) {
                         result.push(ir::Op {
                             id: op_id,
                             kind: ir::OpKind::EditEdgeReference {
                                 from,
-                                old_to: to,
+                                old_to,
                                 new_to,
+                                label,
+                            }
+                        });
+                    }
+                },
+                "deleteNode" => {
+                    if let Some(id) = op.id.clone() {
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::DeleteNode {
+                                id,
+                            }
+                        });
+                    }
+                },
+                "deleteEdge" => {
+                    if let (Some(from), Some(to)) = (op.from.clone(), op.to.clone()) {
+                        let label = op.label.clone().unwrap_or_default();
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::DeleteEdge {
+                                from,
+                                to,
+                                label,
+                            }
+                        });
+                    }
+                },
+                "addVariable" => {
+                    // toフィールドを優先し、なければidフィールドを使用
+                    let target_id = op.to.clone().or_else(|| op.id.clone());
+                    if let Some(to) = target_id {
+                        let label = op.label.clone().unwrap_or_default();
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::AddVariable {
+                                to,
+                                label,
+                            }
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("addVariable operation missing id"));
+                    }
+                },
+                "editVariable" => {
+                    if let Some(new_to) = op.new_to.clone() {
+                        let old_to = op.to.clone();
+                        let label = op.label.clone().unwrap_or_default();
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::EditVariableReference {
+                                old_to,
+                                new_to,
+                                label,
+                            }
+                        });
+                    }
+                },
+                "editNode" => {
+                    if let (Some(id), Some(is_literal)) = (op.id.clone(), op.is_literal) {
+                        let label = op.label.clone().unwrap_or_default();
+                        result.push(ir::Op {
+                            id: op_id,
+                            kind: ir::OpKind::EditNode {
+                                id,
+                                is_literal,
                                 label,
                             }
                         });
