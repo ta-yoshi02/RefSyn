@@ -6,6 +6,7 @@ pub mod models;
 pub mod parser;
 pub mod server;
 pub mod is_structurally_equivalent_option;
+pub mod program_analyzer;
 
 use serde::{Deserialize, Serialize};
 use serde_json;

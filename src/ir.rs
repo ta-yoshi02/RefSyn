@@ -133,6 +133,8 @@ pub fn build_graph(ops: &[Op]) -> (DiGraph<OpId, EdgeTag>, HashMap<OpId, NodeInd
                     }
                 },
                 
+                // 他の一致ケースは上でカバー済み
+                
                 // その他の依存関係は順序なし（独立）
                 _ => {}
             }
@@ -161,11 +163,26 @@ fn references_id(op: &Op, id: &OpId) -> bool {
     }
 }
 
-/// 正規トポロジカル順序を計算
+// 操作の種類からラベル優先度を取得する関数
+fn get_label_priority(op: &Op) -> (i32, &str) {
+    match &op.kind {
+        OpKind::AddNode { .. } => (0, ""),
+        OpKind::AddEdge { .. } => (1, ""),
+        OpKind::EditEdgeReference { .. } => (1, ""),
+        OpKind::AddVariable { .. } => (2, ""),
+        OpKind::EditVariableReference { .. } => (2, ""),
+        _ => (3, ""),
+    }
+}
+
+/// 正規トポロジカル順序を計算（ラベルの優先度を考慮）
 pub fn canonical_order(ops: &[Op]) -> Vec<OpId> {
     let (graph, node_indices) = build_graph(ops);
     let mut result = Vec::new();
     let mut in_degree = HashMap::new();
+    
+    // 各操作のIDとインデックスのマッピングを作成
+    let op_map: HashMap<&str, &Op> = ops.iter().map(|op| (op.id.as_str(), op)).collect();
     
     // 入次数を計算
     for node_idx in graph.node_indices() {
@@ -179,31 +196,44 @@ pub fn canonical_order(ops: &[Op]) -> Vec<OpId> {
         *in_degree.entry(target_id.clone()).or_insert(0) += 1;
     }
     
-    // 入次数0のノードを優先度付きキューに入れる
+    // 入次数0のノードを優先度付きキューに入れる（ラベルによってソート）
     let mut queue = std::collections::BinaryHeap::new();
     for (node_id, &degree) in &in_degree {
         if degree == 0 {
-            queue.push(std::cmp::Reverse(node_id.clone()));
+            if let Some(op) = op_map.get(node_id.as_str()) {
+                let (priority, label) = get_label_priority(op);
+                queue.push(std::cmp::Reverse((priority, label, node_id.clone())));
+            } else {
+                queue.push(std::cmp::Reverse((999, "", node_id.clone())));
+            }
         }
     }
     
-    // Kahn のアルゴリズムでトポロジカルソート
-    while let Some(std::cmp::Reverse(node_id)) = queue.pop() {
+    // Kahn のアルゴリズムでトポロジカルソート（ラベル優先度を考慮）
+    while let Some(std::cmp::Reverse((_, _, node_id))) = queue.pop() {
         result.push(node_id.clone());
         
         if let Some(&node_idx) = node_indices.get(&node_id) {
-            let mut outgoing_edges = Vec::new();
+            let mut new_candidates = Vec::new();
+            
             for edge in graph.edges_directed(node_idx, Direction::Outgoing) {
                 let target = edge.target();
                 let target_id = graph.node_weight(target).unwrap().clone();
-                outgoing_edges.push(target_id);
-            }
-            
-            for target_id in outgoing_edges {
+                
                 let count = in_degree.get_mut(&target_id).unwrap();
                 *count -= 1;
                 if *count == 0 {
-                    queue.push(std::cmp::Reverse(target_id.clone()));
+                    new_candidates.push(target_id);
+                }
+            }
+            
+            // 優先度付きキューに新しい候補を追加
+            for candidate_id in new_candidates {
+                if let Some(op) = op_map.get(candidate_id.as_str()) {
+                    let (priority, label) = get_label_priority(op);
+                    queue.push(std::cmp::Reverse((priority, label, candidate_id)));
+                } else {
+                    queue.push(std::cmp::Reverse((999, "", candidate_id)));
                 }
             }
         }
@@ -249,6 +279,31 @@ pub enum SemanticGroup {
     },
 }
 
+impl SemanticGroup {
+    /// セマンティック・グループの優先度を取得
+    /// 低い数字ほど優先度が高い
+    pub fn get_priority(&self) -> (i32, &str) {
+        match self {
+            // ObjectCreationは最も優先度が高い
+            SemanticGroup::ObjectCreation { .. } => (0, ""),
+            
+            // PropertyAssignmentはプロパティ名で順序付け
+            SemanticGroup::PropertyAssignment { property, .. } => {
+                // valは常にnextより前に来るようにする
+                let property_priority = match property.as_str() {
+                    "val" => 1,
+                    "next" => 2,
+                    _ => 3,
+                };
+                (property_priority, property)
+            },
+            
+            // VariableDeclarationはそれ以降
+            SemanticGroup::VariableDeclaration { .. } => (4, ""),
+        }
+    }
+}
+
 /// セマンティック・パターンの結果
 #[derive(Debug, Clone)]
 pub struct SemanticMatchResult {
@@ -263,46 +318,79 @@ pub struct MultiMatchResult {
     pub holes: Vec<Hole>,
 }
 
-/// 操作列をセマンティック・グループに変換
+// セマンティックグループの優先度を計算
+fn get_semantic_group_priority(group: &SemanticGroup) -> (i32, &str) {
+    match group {
+        SemanticGroup::ObjectCreation { .. } => (0, ""), // オブジェクト作成が最優先
+        SemanticGroup::VariableDeclaration { .. } => (1, ""), // 次に変数宣言
+        SemanticGroup::PropertyAssignment { property, .. } => {
+            // プロパティ名によるさらなる優先順位付け
+            // よく使われるプロパティ別に優先度を設定
+            match property.as_str() {
+                "val" | "value" => (2, "val"), // val/valueプロパティを優先
+                "next" => (3, "next"),         // nextは次の優先度
+                "prev" | "previous" => (4, "prev"),
+                "parent" => (5, "parent"),
+                "child" | "children" => (6, "child"),
+                _ => (10, property), // その他のプロパティは名前でソート
+            }
+        }
+    }
+}
+
+/// 操作列をセマンティック・グループに変換（改良版）
 fn group_operations_semantically(ops: &[Op]) -> Vec<SemanticGroup> {
     let mut groups = Vec::new();
     let mut used_ops = std::collections::HashSet::new();
     
     eprintln!("=== Starting semantic grouping for {} operations ===", ops.len());
     
-    // オブジェクト作成パターンを検出 (AddNode + 関連するAddVariable)
+    // オブジェクト作成パターンを検出 (AddNode)
     for (i, op) in ops.iter().enumerate() {
         if used_ops.contains(&i) {
             continue;
         }
         
-        if let OpKind::AddNode { id: node_id, is_literal: false, label: class_name } = &op.kind {
-            eprintln!("Found object creation node: {} -> {}", node_id, class_name);
+        if let OpKind::AddNode { id: node_id, is_literal, label } = &op.kind {
+            eprintln!("Found node creation: {} -> {} (literal: {})", node_id, label, is_literal);
             
-            // 関連するAddVariableを探す
-            if let Some((var_idx, var_name)) = find_variable_for_node(ops, node_id, &used_ops) {
-                eprintln!("Found associated variable: {} for node {}", var_name, node_id);
-                
+            if *is_literal {
+                // リテラルノードは単純にオブジェクト作成として扱う
                 groups.push(SemanticGroup::ObjectCreation {
-                    var_name: var_name.clone(),
-                    class_name: class_name.clone(),
+                    var_name: label.clone(), // リテラル値を変数名として使用
+                    class_name: "literal".to_string(),
                     node_id: node_id.clone(),
                 });
-                
                 used_ops.insert(i);
-                used_ops.insert(var_idx);
             } else {
-                // 変数が見つからない場合は、デフォルトの変数名を使用
-                let var_name = format!("v{}", groups.len());
-                eprintln!("No variable found for node {}, using default: {}", node_id, var_name);
+                // 非リテラルノード（通常のオブジェクト）の処理
+                eprintln!("Found object creation node: {} -> {}", node_id, label);
                 
-                groups.push(SemanticGroup::ObjectCreation {
-                    var_name,
-                    class_name: class_name.clone(),
-                    node_id: node_id.clone(),
-                });
-                
-                used_ops.insert(i);
+                // 関連するAddVariableを探す
+                if let Some((var_idx, var_name)) = find_variable_for_node(ops, node_id, &used_ops) {
+                    eprintln!("Found associated variable: {} for node {}", var_name, node_id);
+                    
+                    groups.push(SemanticGroup::ObjectCreation {
+                        var_name: var_name.clone(),
+                        class_name: label.clone(),
+                        node_id: node_id.clone(),
+                    });
+                    
+                    used_ops.insert(i);
+                    used_ops.insert(var_idx);
+                } else {
+                    // 変数が見つからない場合は、デフォルトの変数名を使用
+                    let var_name = format!("v{}", groups.len());
+                    eprintln!("No variable found for node {}, using default: {}", node_id, var_name);
+                    
+                    groups.push(SemanticGroup::ObjectCreation {
+                        var_name,
+                        class_name: label.clone(),
+                        node_id: node_id.clone(),
+                    });
+                    
+                    used_ops.insert(i);
+                }
             }
         }
     }
@@ -348,6 +436,38 @@ fn group_operations_semantically(ops: &[Op]) -> Vec<SemanticGroup> {
             used_ops.insert(i);
         }
     }
+
+    // EditEdgeReference操作を処理（プロパティ変更として扱う）
+    for (i, op) in ops.iter().enumerate() {
+        if used_ops.contains(&i) {
+            continue;
+        }
+        
+        if let OpKind::EditEdgeReference { from, new_to, label, .. } = &op.kind {
+            eprintln!("Found edge reference edit: {}.{} = {} (property modification)", from, label, new_to);
+            
+            let object_var = find_variable_name_for_id(from);
+            let value_var = find_variable_name_for_id(new_to);
+            
+            groups.push(SemanticGroup::PropertyAssignment {
+                object_var,
+                property: label.clone(),
+                value_var,
+                from_id: from.clone(),
+                to_id: new_to.clone(),
+            });
+            
+            used_ops.insert(i);
+        }
+    }
+    
+    // セマンティック優先度でソート
+    groups.sort_by(|a, b| {
+        let (a_pri, a_label) = get_semantic_group_priority(a);
+        let (b_pri, b_label) = get_semantic_group_priority(b);
+        
+        a_pri.cmp(&b_pri).then_with(|| a_label.cmp(b_label))
+    });
     
     eprintln!("=== Semantic grouping complete: {} groups ===", groups.len());
     for (i, group) in groups.iter().enumerate() {
@@ -560,23 +680,15 @@ fn convert_semantic_patterns_to_operations(semantic_result: SemanticMatchResult)
     
     for pattern in semantic_result.semantic_patterns {
         match pattern {
-            SemanticGroup::ObjectCreation { var_name, class_name, node_id } => {
-                // AddNode操作を生成
+            SemanticGroup::ObjectCreation { var_name: _, class_name, node_id } => {
+                // AddNode操作を生成（リテラルかどうかを判定）
+                let is_literal = class_name == "literal";
                 operations.push(Op {
                     id: format!("semantic_node_{}", operations.len()),
                     kind: OpKind::AddNode {
                         id: node_id.clone(),
-                        is_literal: false,
+                        is_literal,
                         label: class_name.clone(),
-                    },
-                });
-                
-                // AddVariable操作を生成
-                operations.push(Op {
-                    id: format!("semantic_var_{}", operations.len()),
-                    kind: OpKind::AddVariable {
-                        to: node_id,
-                        label: var_name,
                     },
                 });
             },
@@ -1262,7 +1374,7 @@ pub fn match_graphs(a: &[Op], b: &[Op]) -> MatchResult {
                                     placeholder: placeholder.clone(), 
                                     refs: vec![a_to.clone(), b_to.clone()] 
                                 });
-                                created_holes.insert(hole_key, placeholder.clone());
+                                created_holes.insert(hole_key, placeholder);
                             }
                         }
                     }
@@ -1457,7 +1569,7 @@ pub fn generate_ast_from_sorted_ops(ops: &[Op], env: &MemoEnv) -> ast::Program {
             },
             
             // エッジ参照先変更操作の場合
-            OpKind::EditEdgeReference { from, old_to: _, new_to, label } => {
+            OpKind::EditEdgeReference { from, new_to, label, .. } => {
                 let from_lhs = get_lhs_for_id(from, &local_env);
                 let new_to_expr = if new_to == "undefined" {
                     ast::Expr::Literal("null".to_string())
