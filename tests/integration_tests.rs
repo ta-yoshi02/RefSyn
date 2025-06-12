@@ -341,13 +341,13 @@ fn test_insert_after_method_synthesis() {
 /// 実際のJSONファイルを使ったテスト
 #[test]
 fn test_with_actual_json_files() {
-    // ワークスペースにあるtest_operations.jsonを使用
-    let test_file_content = std::fs::read_to_string("test_operations.json");
+    // ワークスペースにあるtests/data/operations.jsonを使用
+    let test_file_content = std::fs::read_to_string("tests/data/operations.json");
     
     if let Ok(content) = test_file_content {
         let json_data: serde_json::Value = serde_json::from_str(&content).unwrap();
         
-        if let Some(method_calls) = json_data.get("method_calls").and_then(|v| v.as_array()) {
+        if let Some(method_calls) = json_data.get("methodCalls").and_then(|v| v.as_array()) {
             // 各メソッド呼び出しの操作を抽出
             let mut operations_list = Vec::new();
             
@@ -378,7 +378,7 @@ fn test_with_actual_json_files() {
             }
         }
     } else {
-        println!("test_operations.json not found, skipping actual file test");
+        println!("tests/data/operations.json not found, skipping actual file test");
     }
 }
 

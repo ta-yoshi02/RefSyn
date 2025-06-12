@@ -1,0 +1,186 @@
+{
+  "methodCalls": [
+    {
+      "callLabel": "append",
+      "contextSensitiveID": "call1",
+      "receiverObject": "main-new1",
+      "methodName": "append",
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "__temp1",
+          "isLiteral": false,
+          "label": "Node"
+        },
+        {
+          "editType": "addNode",
+          "id": "__temp2",
+          "isLiteral": true,
+          "label": "0",
+          "type": "string"
+        },
+        {
+          "editType": "addEdge",
+          "from": "__temp1",
+          "label": "val",
+          "to": "__temp2"
+        },
+        {
+          "editType": "addEdge",
+          "from": "main-new1",
+          "label": "next",
+          "to": "__temp1"
+        }
+      ]
+    },
+    {
+      "callLabel": "append",
+      "contextSensitiveID": "call2",
+      "receiverObject": "main-new1",
+      "methodName": "append",
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "__temp3",
+          "isLiteral": false,
+          "label": "Node"
+        },
+        {
+          "editType": "addNode",
+          "id": "__temp4",
+          "isLiteral": true,
+          "label": "3",
+          "type": "string"
+        },
+        {
+          "editType": "addEdge",
+          "from": "__temp3",
+          "label": "val",
+          "to": "__temp4"
+        },
+        {
+          "editType": "addEdge",
+          "from": "__temp1",
+          "label": "next",
+          "to": "__temp3"
+        }
+      ]
+    },
+    {
+      "callLabel": "removeVal",
+      "contextSensitiveID": "call15",
+      "receiverObject": "main-new1",
+      "methodName": "removeVal",
+      "operations": [
+        {
+          "editType": "editEdgeReference",
+          "from": "main-new1",
+          "oldTo": "main-new2",
+          "newTo": "main-new3",
+          "label": "next"
+        }
+      ]
+    },
+    {
+      "callLabel": "removeVal",
+      "contextSensitiveID": "call16",
+      "receiverObject": "main-new1",
+      "methodName": "removeVal",
+      "operations": [
+        {
+          "editType": "deleteEdge",
+          "from": "main-new3",
+          "to": "main-new4",
+          "label": "next"
+        }
+      ]
+    },
+    {
+      "callLabel": "swap",
+      "contextSensitiveID": "call17",
+      "receiverObject": "main-new1",
+      "methodName": "swap",
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "__temp1",
+          "isLiteral": true,
+          "label": "2",
+          "type": "string"
+        },
+        {
+          "editType": "addNode",
+          "id": "__temp2",
+          "isLiteral": true,
+          "label": "1",
+          "type": "string"
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "main-new1",
+          "oldTo": "main-new1-val",
+          "newTo": "__temp1",
+          "label": "val"
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "main-new4",
+          "oldTo": "main-new4-val",
+          "newTo": "__temp2",
+          "label": "val"
+        }
+      ]
+    },
+    {
+      "callLabel": "set",
+      "contextSensitiveID": "call18",
+      "receiverObject": "main-new1",
+      "methodName": "set",
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "__temp1",
+          "isLiteral": true,
+          "label": "10",
+          "type": "string"
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "main-new2",
+          "oldTo": "main-new2-val",
+          "newTo": "__temp1",
+          "label": "val"
+        }
+      ]
+    },
+    {
+      "callLabel": "reverse",
+      "contextSensitiveID": "call19",
+      "receiverObject": "main-new1",
+      "methodName": "reverse",
+      "operations": [
+        {
+          "editType": "editEdgeReference",
+          "from": "main-new3",
+          "oldTo": "null",
+          "newTo": "main-new2",
+          "label": "next"
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "main-new2",
+          "oldTo": "main-new3",
+          "newTo": "main-new1",
+          "label": "next"
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "main-new1",
+          "oldTo": "main-new2",
+          "newTo": "null",
+          "label": "next"
+        }
+      ]
+    }
+  ]
+}
