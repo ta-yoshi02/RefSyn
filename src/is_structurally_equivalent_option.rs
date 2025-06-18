@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-/// Option<OpId>型の2つの値が構造的に同等かを判定するヘルパー関数
+/// Option<NodeId>型の2つの値が構造的に同等かを判定するヘルパー関数
 pub fn is_structurally_equivalent_option(
     id_a: &Option<String>, 
     id_b: &Option<String>, 

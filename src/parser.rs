@@ -42,21 +42,9 @@ pub fn parse_operations(
     let mut stmts = Vec::<Stmt>::new();
     let mut literal_nodes: HashMap<String, Expr> = HashMap::new(); // 値をExprとして保持
 
-    // receiver_object_id が None の場合、main-new* で始まるIDを自動的にthisとして設定
-    if current_receiver_id_as_this.is_none() {
-        for op_val in ops {
-            if let Some(op) = get_operation(op_val) {
-                if let Some(from_id) = &op.from {
-                    if from_id.starts_with("main-new") {
-                        memo_env.add_special_mapping(from_id.clone(), "this".to_string());
-                        println!("Auto-detected receiver_object_id: {}", from_id);
-                        break;
-                    }
-                }
-            }
-        }
-    } else if let Some(receiver_id) = current_receiver_id_as_this {
-        memo_env.add_special_mapping(receiver_id.clone(), "this".to_string());
+    // レシーバーが明示的に指定されている場合はそれを設定
+    if let Some(receiver_id) = current_receiver_id_as_this {
+        memo_env.set_current_receiver(receiver_id);
     }
 
     for op_val in ops {
@@ -291,10 +279,14 @@ fn resolve_id_to_expr(
     literal_nodes: &HashMap<String, Expr>,
     current_receiver_id_as_this: Option<&String>,
 ) -> anyhow::Result<Expr> {
+    // 現在のレシーバーかどうかをチェック
+    if memo_env.is_current_receiver(id) {
+        return Ok(Expr::This);
+    }
+
+    // 明示的に指定されたレシーバーかどうかをチェック
     if current_receiver_id_as_this.map_or(false, |s| s == id) {
-        if memo_env.get_name_by_id(id).map_or(false, |name| name == "this") {
-            return Ok(Expr::This);
-        }
+        return Ok(Expr::This);
     }
 
     if let Some(access_path) = memo_env.get_access_path(id) {
@@ -312,6 +304,9 @@ fn resolve_id_to_expr(
             
             return Ok(Expr::Lhs(Box::new(lhs)));
         }
+        
+        // その他のアクセスパス（obj_0など）
+        return Ok(Expr::Var(access_path));
     }
 
     let property_access_info = memo_env.get_property_access_for_id(id).cloned();

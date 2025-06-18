@@ -7,26 +7,29 @@ use crate::ast;
 use crate::env::MemoEnv;
 use crate::convert_operations_to_ir;
 
-/// 操作ID
+/// 操作ID（各操作を一意に識別）
 pub type OpId = String;
+
+/// ノードID（グラフ内のオブジェクト/値を識別）
+pub type NodeId = String;
 
 /// 操作の種類
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum OpKind {
     // ノード操作
-    AddNode { id: OpId, is_literal: bool, label: String },
-    EditNode { id: OpId, is_literal: bool, label: String },
-    DeleteNode { id: OpId },
+    AddNode { id: NodeId, is_literal: bool, label: String },
+    EditNode { id: NodeId, is_literal: bool, label: String },
+    DeleteNode { id: NodeId },
     
     // エッジ操作
-    AddEdge { from: OpId, to: OpId, label: String },
-    EditEdgeReference { from: OpId, old_to: OpId, new_to: OpId, label: String },
-    EditEdgeLabel { from: OpId, to: OpId, old_label: String, new_label: String },
-    DeleteEdge { from: OpId, to: OpId, label: String },
+    AddEdge { from: NodeId, to: NodeId, label: String },
+    EditEdgeReference { from: NodeId, old_to: NodeId, new_to: NodeId, label: String },
+    EditEdgeLabel { from: NodeId, to: NodeId, old_label: String, new_label: String },
+    DeleteEdge { from: NodeId, to: NodeId, label: String },
     
     // 変数操作
-    AddVariable { to: OpId, label: String },
-    EditVariableReference { old_to: Option<OpId>, new_to: OpId, label: String },
+    AddVariable { to: NodeId, label: String },
+    EditVariableReference { old_to: NodeId, new_to: NodeId, label: String },
     EditVariableLabel { to: OpId, old_label: String, new_label: String },
     DeleteVariable { to: OpId, label: String }
 }
@@ -144,22 +147,22 @@ pub fn build_graph(ops: &[Op]) -> (DiGraph<OpId, EdgeTag>, HashMap<OpId, NodeInd
     (graph, node_indices)
 }
 
-/// 操作が特定のIDを参照しているかを判定
-fn references_id(op: &Op, id: &OpId) -> bool {
+/// 操作が特定のNodeIDを参照しているかを判定
+fn references_id(op: &Op, node_id: &NodeId) -> bool {
     match &op.kind {
         OpKind::AddNode { .. } => false,
-        OpKind::EditNode { id: node_id, .. } => node_id == id,
-        OpKind::DeleteNode { id: node_id } => node_id == id,
-        OpKind::AddEdge { from, to, .. } => from == id || to == id,
+        OpKind::EditNode { id, .. } => id == node_id,
+        OpKind::DeleteNode { id } => id == node_id,
+        OpKind::AddEdge { from, to, .. } => from == node_id || to == node_id,
         OpKind::EditEdgeReference { from, old_to, new_to, .. } => 
-            from == id || old_to == id || new_to == id,
-        OpKind::EditEdgeLabel { from, to, .. } => from == id || to == id,
-        OpKind::DeleteEdge { from, to, .. } => from == id || to == id,
-        OpKind::AddVariable { to, .. } => to == id,
+            from == node_id || old_to == node_id || new_to == node_id,
+        OpKind::EditEdgeLabel { from, to, .. } => from == node_id || to == node_id,
+        OpKind::DeleteEdge { from, to, .. } => from == node_id || to == node_id,
+        OpKind::AddVariable { to, .. } => to == node_id,
         OpKind::EditVariableReference { old_to, new_to, .. } => 
-            old_to.as_ref().map_or(false, |ot| ot == id) || new_to == id,
-        OpKind::EditVariableLabel { to, .. } => to == id,
-        OpKind::DeleteVariable { to, .. } => to == id,
+            old_to == node_id || new_to == node_id,
+        OpKind::EditVariableLabel { to, .. } => to == node_id,
+        OpKind::DeleteVariable { to, .. } => to == node_id,
     }
 }
 
@@ -258,472 +261,11 @@ pub struct MatchResult {
     pub holes: Vec<Hole>,
 }
 
-/// セマンティック・グループの定義
-#[derive(Debug, Clone)]
-pub enum SemanticGroup {
-    ObjectCreation {
-        var_name: String,
-        class_name: String,
-        node_id: String,
-    },
-    PropertyAssignment {
-        object_var: String,
-        property: String,
-        value_var: String,
-        from_id: String,
-        to_id: String,
-    },
-    VariableDeclaration {
-        var_name: String,
-        target_id: String,
-    },
-}
-
-impl SemanticGroup {
-    /// セマンティック・グループの優先度を取得
-    /// 低い数字ほど優先度が高い
-    pub fn get_priority(&self) -> (i32, &str) {
-        match self {
-            // ObjectCreationは最も優先度が高い
-            SemanticGroup::ObjectCreation { .. } => (0, ""),
-            
-            // PropertyAssignmentはプロパティ名で順序付け
-            SemanticGroup::PropertyAssignment { property, .. } => {
-                // valは常にnextより前に来るようにする
-                let property_priority = match property.as_str() {
-                    "val" => 1,
-                    "next" => 2,
-                    _ => 3,
-                };
-                (property_priority, property)
-            },
-            
-            // VariableDeclarationはそれ以降
-            SemanticGroup::VariableDeclaration { .. } => (4, ""),
-        }
-    }
-}
-
-/// セマンティック・パターンの結果
-#[derive(Debug, Clone)]
-pub struct SemanticMatchResult {
-    pub semantic_patterns: Vec<SemanticGroup>,
-    pub holes: Vec<Hole>,
-}
-
 /// 複数の操作列をマッチングしてパターンを抽出するための結果構造体
 #[derive(Debug, Clone)]
 pub struct MultiMatchResult {
     pub common_patterns: Vec<Op>,
     pub holes: Vec<Hole>,
-}
-
-// セマンティックグループの優先度を計算
-fn get_semantic_group_priority(group: &SemanticGroup) -> (i32, &str) {
-    match group {
-        SemanticGroup::ObjectCreation { .. } => (0, ""), // オブジェクト作成が最優先
-        SemanticGroup::VariableDeclaration { .. } => (1, ""), // 次に変数宣言
-        SemanticGroup::PropertyAssignment { property, .. } => {
-            // プロパティ名によるさらなる優先順位付け
-            // よく使われるプロパティ別に優先度を設定
-            match property.as_str() {
-                "val" | "value" => (2, "val"), // val/valueプロパティを優先
-                "next" => (3, "next"),         // nextは次の優先度
-                "prev" | "previous" => (4, "prev"),
-                "parent" => (5, "parent"),
-                "child" | "children" => (6, "child"),
-                _ => (10, property), // その他のプロパティは名前でソート
-            }
-        }
-    }
-}
-
-/// 操作列をセマンティック・グループに変換（改良版）
-fn group_operations_semantically(ops: &[Op]) -> Vec<SemanticGroup> {
-    let mut groups = Vec::new();
-    let mut used_ops = std::collections::HashSet::new();
-    
-    eprintln!("=== Starting semantic grouping for {} operations ===", ops.len());
-    
-    // オブジェクト作成パターンを検出 (AddNode)
-    for (i, op) in ops.iter().enumerate() {
-        if used_ops.contains(&i) {
-            continue;
-        }
-        
-        if let OpKind::AddNode { id: node_id, is_literal, label } = &op.kind {
-            eprintln!("Found node creation: {} -> {} (literal: {})", node_id, label, is_literal);
-            
-            if *is_literal {
-                // リテラルノードは単純にオブジェクト作成として扱う
-                groups.push(SemanticGroup::ObjectCreation {
-                    var_name: label.clone(), // リテラル値を変数名として使用
-                    class_name: "literal".to_string(),
-                    node_id: node_id.clone(),
-                });
-                used_ops.insert(i);
-            } else {
-                // 非リテラルノード（通常のオブジェクト）の処理
-                eprintln!("Found object creation node: {} -> {}", node_id, label);
-                
-                // 関連するAddVariableを探す
-                if let Some((var_idx, var_name)) = find_variable_for_node(ops, node_id, &used_ops) {
-                    eprintln!("Found associated variable: {} for node {}", var_name, node_id);
-                    
-                    groups.push(SemanticGroup::ObjectCreation {
-                        var_name: var_name.clone(),
-                        class_name: label.clone(),
-                        node_id: node_id.clone(),
-                    });
-                    
-                    used_ops.insert(i);
-                    used_ops.insert(var_idx);
-                } else {
-                    // 変数が見つからない場合は、デフォルトの変数名を使用
-                    let var_name = format!("v{}", groups.len());
-                    eprintln!("No variable found for node {}, using default: {}", node_id, var_name);
-                    
-                    groups.push(SemanticGroup::ObjectCreation {
-                        var_name,
-                        class_name: label.clone(),
-                        node_id: node_id.clone(),
-                    });
-                    
-                    used_ops.insert(i);
-                }
-            }
-        }
-    }
-    
-    // プロパティ割り当てパターンを検出 (AddEdge)
-    for (i, op) in ops.iter().enumerate() {
-        if used_ops.contains(&i) {
-            continue;
-        }
-        
-        if let OpKind::AddEdge { from, to, label } = &op.kind {
-            eprintln!("Found property assignment: {}.{} = {}", from, label, to);
-            
-            let object_var = find_variable_name_for_id(from);
-            let value_var = find_variable_name_for_id(to);
-            
-            groups.push(SemanticGroup::PropertyAssignment {
-                object_var,
-                property: label.clone(),
-                value_var,
-                from_id: from.clone(),
-                to_id: to.clone(),
-            });
-            
-            used_ops.insert(i);
-        }
-    }
-    
-    // 残りの変数宣言を処理
-    for (i, op) in ops.iter().enumerate() {
-        if used_ops.contains(&i) {
-            continue;
-        }
-        
-        if let OpKind::AddVariable { to, label } = &op.kind {
-            eprintln!("Found standalone variable declaration: {} -> {}", label, to);
-            
-            groups.push(SemanticGroup::VariableDeclaration {
-                var_name: label.clone(),
-                target_id: to.clone(),
-            });
-            
-            used_ops.insert(i);
-        }
-    }
-
-    // EditEdgeReference操作を処理（プロパティ変更として扱う）
-    for (i, op) in ops.iter().enumerate() {
-        if used_ops.contains(&i) {
-            continue;
-        }
-        
-        if let OpKind::EditEdgeReference { from, new_to, label, .. } = &op.kind {
-            eprintln!("Found edge reference edit: {}.{} = {} (property modification)", from, label, new_to);
-            
-            let object_var = find_variable_name_for_id(from);
-            let value_var = find_variable_name_for_id(new_to);
-            
-            groups.push(SemanticGroup::PropertyAssignment {
-                object_var,
-                property: label.clone(),
-                value_var,
-                from_id: from.clone(),
-                to_id: new_to.clone(),
-            });
-            
-            used_ops.insert(i);
-        }
-    }
-    
-    // セマンティック優先度でソート
-    groups.sort_by(|a, b| {
-        let (a_pri, a_label) = get_semantic_group_priority(a);
-        let (b_pri, b_label) = get_semantic_group_priority(b);
-        
-        a_pri.cmp(&b_pri).then_with(|| a_label.cmp(b_label))
-    });
-    
-    eprintln!("=== Semantic grouping complete: {} groups ===", groups.len());
-    for (i, group) in groups.iter().enumerate() {
-        eprintln!("  Group {}: {:?}", i, group);
-    }
-    
-    groups
-}
-
-/// ノードIDに対応する変数を見つける
-fn find_variable_for_node(ops: &[Op], node_id: &str, used_ops: &std::collections::HashSet<usize>) -> Option<(usize, String)> {
-    for (i, op) in ops.iter().enumerate() {
-        if used_ops.contains(&i) {
-            continue;
-        }
-        
-        if let OpKind::AddVariable { to, label } = &op.kind {
-            if to == node_id {
-                return Some((i, label.clone()));
-            }
-        }
-    }
-    None
-}
-
-/// IDに対応する変数名を推測
-fn find_variable_name_for_id(id: &str) -> String {
-    // this参照の場合
-    if id.contains("main-new") || id == "this" {
-        return "this".to_string();
-    }
-    
-    // デフォルトの変数名を生成
-    format!("v_{}", id.chars().filter(|c| c.is_numeric()).collect::<String>())
-}
-
-/// セマンティック・グループ間のマッチング
-fn match_semantic_groups(groups_list: &[Vec<SemanticGroup>]) -> SemanticMatchResult {
-    eprintln!("=== Matching semantic groups ===");
-    
-    let min_groups = groups_list.iter().map(|g| g.len()).min().unwrap_or(0);
-    eprintln!("Minimum group count: {}", min_groups);
-    
-    let mut semantic_patterns = Vec::new();
-    let mut holes = Vec::new();
-    let mut hole_counter = 1;
-    
-    for group_idx in 0..min_groups {
-        eprintln!("Processing group position {}", group_idx);
-        
-        let groups_at_position: Vec<&SemanticGroup> = groups_list.iter()
-            .map(|groups| &groups[group_idx])
-            .collect();
-        
-        // グループ型が同じかチェック
-        let first_group = groups_at_position[0];
-        let all_same_type = groups_at_position.iter()
-            .all(|g| std::mem::discriminant(*g) == std::mem::discriminant(first_group));
-        
-        if all_same_type {
-            let (pattern_group, group_holes) = extract_semantic_pattern_and_holes(&groups_at_position, &mut hole_counter);
-            if let Some(pattern) = pattern_group {
-                semantic_patterns.push(pattern);
-                holes.extend(group_holes);
-            }
-        } else {
-            eprintln!("Groups at position {} have different types, stopping", group_idx);
-            break;
-        }
-    }
-    
-    SemanticMatchResult {
-        semantic_patterns,
-        holes,
-    }
-}
-
-/// セマンティック・グループからパターンとホールを抽出
-fn extract_semantic_pattern_and_holes(groups: &[&SemanticGroup], hole_counter: &mut usize) -> (Option<SemanticGroup>, Vec<Hole>) {
-    if groups.is_empty() {
-        return (None, Vec::new());
-    }
-    
-    let mut holes = Vec::new();
-    
-    match groups[0] {
-        SemanticGroup::ObjectCreation { var_name: _, class_name: _, node_id } => {
-            // 変数名の違いをチェック
-            let var_names: Vec<String> = groups.iter().filter_map(|g| {
-                if let SemanticGroup::ObjectCreation { var_name, .. } = g {
-                    Some(var_name.clone())
-                } else {
-                    None
-                }
-            }).collect();
-            
-            let (final_var_name, var_hole) = if var_names.iter().all(|v| v == &var_names[0]) {
-                (var_names[0].clone(), None)
-            } else {
-                let placeholder = format!("Hole{}", hole_counter);
-                *hole_counter += 1;
-                (placeholder.clone(), Some(Hole::Const { placeholder, values: var_names }))
-            };
-            
-            // クラス名の違いをチェック
-            let class_names: Vec<String> = groups.iter().filter_map(|g| {
-                if let SemanticGroup::ObjectCreation { class_name, .. } = g {
-                    Some(class_name.clone())
-                } else {
-                    None
-                }
-            }).collect();
-            
-            let (final_class_name, class_hole) = if class_names.iter().all(|c| c == &class_names[0]) {
-                (class_names[0].clone(), None)
-            } else {
-                let placeholder = format!("Hole{}", hole_counter);
-                *hole_counter += 1;
-                (placeholder.clone(), Some(Hole::Const { placeholder, values: class_names }))
-            };
-            
-            if let Some(hole) = var_hole { holes.push(hole); }
-            if let Some(hole) = class_hole { holes.push(hole); }
-            
-            (Some(SemanticGroup::ObjectCreation {
-                var_name: final_var_name,
-                class_name: final_class_name,
-                node_id: node_id.clone(),
-            }), holes)
-        },
-        
-        SemanticGroup::PropertyAssignment { object_var, property: _, value_var: _, from_id, to_id } => {
-            // プロパティ名の違いをチェック
-            let properties: Vec<String> = groups.iter().filter_map(|g| {
-                if let SemanticGroup::PropertyAssignment { property, .. } = g {
-                    Some(property.clone())
-                } else {
-                    None
-                }
-            }).collect();
-            
-            let (final_property, prop_hole) = if properties.iter().all(|p| p == &properties[0]) {
-                (properties[0].clone(), None)
-            } else {
-                let placeholder = format!("Hole{}", hole_counter);
-                *hole_counter += 1;
-                (placeholder.clone(), Some(Hole::Const { placeholder, values: properties }))
-            };
-            
-            // 値変数の違いをチェック
-            let value_vars: Vec<String> = groups.iter().filter_map(|g| {
-                if let SemanticGroup::PropertyAssignment { value_var, .. } = g {
-                    Some(value_var.clone())
-                } else {
-                    None
-                }
-            }).collect();
-            
-            let (final_value_var, value_hole) = if value_vars.iter().all(|v| v == &value_vars[0]) {
-                (value_vars[0].clone(), None)
-            } else {
-                let placeholder = format!("Hole{}", hole_counter);
-                *hole_counter += 1;
-                (placeholder.clone(), Some(Hole::Const { placeholder, values: value_vars }))
-            };
-            
-            if let Some(hole) = prop_hole { holes.push(hole); }
-            if let Some(hole) = value_hole { holes.push(hole); }
-            
-            (Some(SemanticGroup::PropertyAssignment {
-                object_var: object_var.clone(),
-                property: final_property,
-                value_var: final_value_var,
-                from_id: from_id.clone(),
-                to_id: to_id.clone(),
-            }), holes)
-        },
-        
-        SemanticGroup::VariableDeclaration { var_name: _, target_id } => {
-            // 変数名の違いをチェック
-            let var_names: Vec<String> = groups.iter().filter_map(|g| {
-                if let SemanticGroup::VariableDeclaration { var_name, .. } = g {
-                    Some(var_name.clone())
-                } else {
-                    None
-                }
-            }).collect();
-            
-            let (final_var_name, var_hole) = if var_names.iter().all(|v| v == &var_names[0]) {
-                (var_names[0].clone(), None)
-            } else {
-                let placeholder = format!("Hole{}", hole_counter);
-                *hole_counter += 1;
-                (placeholder.clone(), Some(Hole::Const { placeholder, values: var_names }))
-            };
-            
-            if let Some(hole) = var_hole { holes.push(hole); }
-            
-            (Some(SemanticGroup::VariableDeclaration {
-                var_name: final_var_name,
-                target_id: target_id.clone(),
-            }), holes)
-        },
-    }
-}
-
-/// セマンティック・パターンを操作に変換
-fn convert_semantic_patterns_to_operations(semantic_result: SemanticMatchResult) -> MultiMatchResult {
-    let mut operations = Vec::new();
-    
-    for pattern in semantic_result.semantic_patterns {
-        match pattern {
-            SemanticGroup::ObjectCreation { var_name: _, class_name, node_id } => {
-                // AddNode操作を生成（リテラルかどうかを判定）
-                let is_literal = class_name == "literal";
-                operations.push(Op {
-                    id: format!("semantic_node_{}", operations.len()),
-                    kind: OpKind::AddNode {
-                        id: node_id.clone(),
-                        is_literal,
-                        label: class_name.clone(),
-                    },
-                });
-            },
-            
-            SemanticGroup::PropertyAssignment { from_id, to_id, property, .. } => {
-                // AddEdge操作を生成
-                operations.push(Op {
-                    id: format!("semantic_edge_{}", operations.len()),
-                    kind: OpKind::AddEdge {
-                        from: from_id,
-                        to: to_id,
-                        label: property,
-                    },
-                });
-            },
-            
-            SemanticGroup::VariableDeclaration { var_name, target_id } => {
-                // AddVariable操作を生成
-                operations.push(Op {
-                    id: format!("semantic_var_{}", operations.len()),
-                    kind: OpKind::AddVariable {
-                        to: target_id,
-                        label: var_name,
-                    },
-                });
-            },
-        }
-    }
-    
-    eprintln!("=== Converted semantic patterns to {} operations ===", operations.len());
-    
-    MultiMatchResult {
-        common_patterns: operations,
-        holes: semantic_result.holes,
-    }
 }
 
 /// 操作を依存関係に基づいて正規化
@@ -735,7 +277,7 @@ fn normalize_operations_by_dependencies(ops: &[Op]) -> Vec<Op> {
         .collect()
 }
 
-/// 複数の操作列をマッチングしてパターンを抽出（セマンティック・レベル改良版）
+/// 複数の操作列をマッチングしてパターンを抽出
 fn match_multiple_operation_sequences(ops_list: &[Vec<Op>]) -> MultiMatchResult {
     if ops_list.is_empty() {
         return MultiMatchResult {
@@ -744,10 +286,10 @@ fn match_multiple_operation_sequences(ops_list: &[Vec<Op>]) -> MultiMatchResult 
         };
     }
     
-    eprintln!("=== Starting semantic-level matching ===");
+    eprintln!("=== Starting operation-level matching ===");
     eprintln!("Input operation lists count: {}", ops_list.len());
     
-    // まず各操作列を正規化
+    // 各操作列を依存関係に基づいて正規化
     let mut normalized_ops_list = Vec::new();
     for (list_idx, ops) in ops_list.iter().enumerate() {
         eprintln!("Normalizing operation list {}: {} operations", list_idx, ops.len());
@@ -756,167 +298,30 @@ fn match_multiple_operation_sequences(ops_list: &[Vec<Op>]) -> MultiMatchResult 
         normalized_ops_list.push(normalized);
     }
     
-    // 各操作列をセマンティック・グループに変換
-    let mut semantic_groups_list = Vec::new();
-    for (list_idx, ops) in normalized_ops_list.iter().enumerate() {
-        eprintln!("Converting operation list {} to semantic groups", list_idx);
-        let groups = group_operations_semantically(ops);
-        semantic_groups_list.push(groups);
-    }
-    
-    // セマンティック・グループをマッチング
-    let semantic_result = match_semantic_groups(&semantic_groups_list);
-    
-    // セマンティック・パターンを操作に戻す
-    convert_semantic_patterns_to_operations(semantic_result)
-}
-
-/// 同じ位置の操作群から共通パターンとホールを抽出する関数
-/*
-fn extract_common_pattern_and_holes(ops: &[&Op], hole_counter: &mut usize) -> (Option<Op>, Vec<Hole>) {
-    if ops.is_empty() {
-        return (None, Vec::new());
-    }
-    
-    let first_op = ops[0];
-    let mut holes = Vec::new();
-    
-    // 操作種類に応じた詳細比較
-    match &first_op.kind {
-        OpKind::AddNode { id, is_literal, label } => {
-            // is_literalの差異をチェック
-            let is_literals: Vec<bool> = ops.iter().filter_map(|op| {
-                if let OpKind::AddNode { is_literal: op_is_literal, .. } = &op.kind {
-                    Some(*op_is_literal)
-                } else {
-                    None
-                }
-            }).collect();
-            
-            let (final_is_literal, is_literal_hole) = if is_literals.iter().all(|l| l == &is_literals[0]) {
-                // すべて同じis_literal
-                (is_literals[0], None)
-            } else {
-                // is_literalが異なる場合はホールを作成（便宜的にfalseを使用）
-                let placeholder = format!("PH{}", hole_counter);
-                *hole_counter += 1;
-                let bool_strings: Vec<String> = is_literals.iter().map(|b| b.to_string()).collect();
-                (false, Some(Hole::Const { placeholder, values: bool_strings }))
-            };
-            
-            // ラベルの差異をチェック
-            let labels: Vec<String> = ops.iter().filter_map(|op| {
-                if let OpKind::AddNode { label: op_label, .. } = &op.kind {
-                    Some(op_label.clone())
-                } else {
-                    None
-                }
-            }).collect();
-            
-            let (final_label, label_hole) = if labels.iter().all(|l| l == &labels[0]) {
-                // すべて同じラベル
-                (labels[0].clone(), None)
-            } else {
-                // ラベルが異なる場合はホールを作成
-                let placeholder = format!("PH{}", hole_counter);
-                *hole_counter += 1;
-                (placeholder.clone(), Some(Hole::Const { placeholder, values: labels }))
-            };
-            
-            if let Some(hole) = is_literal_hole {
-                holes.push(hole);
-            }
-            if let Some(hole) = label_hole {
-                holes.push(hole);
-            }
-            
-            let pattern_op = Op {
-                id: format!("pattern_op_{}", hole_counter),
-                kind: OpKind::AddNode {
-                    id: id.clone(), // これも必要に応じてホール化できる
-                    is_literal: final_is_literal,
-                    label: final_label,
-                },
-            };
-            
-            (Some(pattern_op), holes)
-        },
+    // 2つの操作列をペアワイズマッチング（最初の2つのリストを使用）
+    if normalized_ops_list.len() >= 2 {
+        let match_result = match_graphs(&normalized_ops_list[0], &normalized_ops_list[1]);
         
-        OpKind::AddEdge { from, to, label } => {
-            // エッジの各要素を比較
-            let froms: Vec<String> = ops.iter().filter_map(|op| {
-                if let OpKind::AddEdge { from: op_from, .. } = &op.kind {
-                    Some(op_from.clone())
-                } else {
-                    None
-                }
-            }).collect();
-            
-            let tos: Vec<String> = ops.iter().filter_map(|op| {
-                if let OpKind::AddEdge { to: op_to, .. } = &op.kind {
-                    Some(op_to.clone())
-                } else {
-                    None
-                }
-            }).collect();
-            
-            let labels: Vec<String> = ops.iter().filter_map(|op| {
-                if let OpKind::AddEdge { label: op_label, .. } = &op.kind {
-                    Some(op_label.clone())
-                } else {
-                    None
-                }
-            }).collect();
-            
-            // from, to, labelそれぞれについてホール判定
-            let (final_from, from_hole) = if froms.iter().all(|f| f == &froms[0]) {
-                (froms[0].clone(), None)
-            } else {
-                let placeholder = format!("PH{}", hole_counter);
-                *hole_counter += 1;
-                (placeholder.clone(), Some(Hole::Ref { placeholder, refs: froms }))
-            };
-            
-            let (final_to, to_hole) = if tos.iter().all(|t| t == &tos[0]) {
-                (tos[0].clone(), None)
-            } else {
-                let placeholder = format!("PH{}", hole_counter);
-                *hole_counter += 1;
-                (placeholder.clone(), Some(Hole::Ref { placeholder, refs: tos }))
-            };
-            
-            let (final_label, label_hole) = if labels.iter().all(|l| l == &labels[0]) {
-                (labels[0].clone(), None)
-            } else {
-                let placeholder = format!("PH{}", hole_counter);
-                *hole_counter += 1;
-                (placeholder.clone(), Some(Hole::Const { placeholder, values: labels }))
-            };
-            
-            if let Some(hole) = from_hole { holes.push(hole); }
-            if let Some(hole) = to_hole { holes.push(hole); }
-            if let Some(hole) = label_hole { holes.push(hole); }
-            
-            let pattern_op = Op {
-                id: format!("pattern_op_{}", hole_counter),
-                kind: OpKind::AddEdge {
-                    from: final_from,
-                    to: final_to,
-                    label: final_label,
-                },
-            };
-            
-            (Some(pattern_op), holes)
-        },
+        // マッチング結果から共通パターンを抽出
+        let mut common_patterns = Vec::new();
+        for (a_id, _b_id) in &match_result.common_ops {
+            if let Some(op) = normalized_ops_list[0].iter().find(|o| o.id == *a_id) {
+                common_patterns.push(op.clone());
+            }
+        }
         
-        // 他の操作種類についても同様に実装可能
-        _ => {
-            eprintln!("Operation type {:?} not yet supported in pattern extraction", first_op.kind);
-            (Some(first_op.clone()), Vec::new())
+        MultiMatchResult {
+            common_patterns,
+            holes: match_result.holes,
+        }
+    } else {
+        // 1つのリストしかない場合はそのまま返す
+        MultiMatchResult {
+            common_patterns: normalized_ops_list.into_iter().next().unwrap_or_default(),
+            holes: Vec::new(),
         }
     }
 }
-*/
 
 /// マッチング結果からホール情報を抽出し、重複を統合、番号を正規化
 fn extract_holes_from_match_result(match_result: &MultiMatchResult) -> HashMap<String, Vec<String>> {

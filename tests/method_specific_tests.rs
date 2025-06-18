@@ -7,7 +7,8 @@ use serde_json;
 
 fn create_basic_memo_env() -> MemoEnv {
     let mut env = MemoEnv::new();
-    env.add_name_id_mapping("main-new1".to_string(), "this".to_string());
+    // 新しいアプローチでは明示的なレシーバー設定を使用
+    env.set_current_receiver("main-new1");
     env.add_name_id_mapping("main-new2".to_string(), "lst".to_string());
     env.add_name_id_mapping("main-new3".to_string(), "node1".to_string());
     env

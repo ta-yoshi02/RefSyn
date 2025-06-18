@@ -270,8 +270,7 @@ pub fn convert_operations_to_ir(operations: &[serde_json::Value]) -> anyhow::Res
                     }
                 },
                 "editVariable" => {
-                    if let Some(new_to) = op.new_to.clone() {
-                        let old_to = op.to.clone();
+                    if let (Some(old_to), Some(new_to)) = (op.old_to.clone(), op.new_to.clone()) {
                         let label = op.label.clone().unwrap_or_default();
                         result.push(ir::Op {
                             id: op_id,
@@ -337,14 +336,13 @@ pub async fn handle_synthesis(req: SynthesisRequest) -> Result<impl warp::Reply,
 
         let mut local_memo_env = MemoEnv::new();
         
-        local_memo_env.add_special_mapping(method_call_op.receiver_object.clone(), "this".to_string());
+        // メソッド呼び出しのスコープを開始し、レシーバーを設定
+        let scope_id = format!("method_call_{}_{}", index, method_call_op.call_label);
+        local_memo_env.start_method_call_scope_with_receiver(&scope_id, &method_call_op.receiver_object);
         
         if index > 0 {
             local_memo_env.setup_cross_scope_references(&global_memo_env);
         }
-        
-        let scope_id = format!("method_call_{}_{}", index, method_call_op.call_label);
-        local_memo_env.start_method_call_scope(&scope_id);
 
         match parse_operations(
             &method_call_op.operations,

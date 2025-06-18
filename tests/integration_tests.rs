@@ -6,7 +6,7 @@ use serde_json;
 /// テスト用のMemoEnvを作成
 fn create_test_memo_env() -> MemoEnv {
     let mut env = MemoEnv::new();
-    env.add_name_id_mapping("main-new1".to_string(), "this".to_string());
+    env.set_current_receiver("main-new1");
     env.add_name_id_mapping("main-new2".to_string(), "lst2".to_string());
     env.add_name_id_mapping("main-new3".to_string(), "lst3".to_string());
     env

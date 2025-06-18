@@ -4,7 +4,7 @@
 //! 主に以下の3つのコンポーネントから構成されています：
 //!
 //! 1. `VarEnv` - メソッド呼び出し内の局所的な変数環境を管理します
-//! 2. `MemoEnv` - メソッド間で共有される重要な変数と関係性を管理します
+//! 2. `MemoEnv` - プログラムのコンテクストを管理します
 //! 3. `EnvManager` - 上記2つのコンポーネントを統合し、コンテキストに応じた環境アクセスを提供します
 //!
 //! このモジュールは特に異なるメソッド呼び出し間で変数を適切に共有し、
@@ -21,6 +21,8 @@ pub struct MemoEnv {
     current_method_call: Option<String>,            // 現在処理中のメソッド呼び出しID
     method_call_vars: HashMap<String, Vec<String>>, // メソッド呼び出しIDごとの変数ID一覧
     external_refs: HashMap<String, String>,         // 変数IDの外部参照パス (例: obj_0 -> "this.next")
+    method_receivers: HashMap<String, String>,      // メソッド呼び出しID -> レシーバーオブジェクトID
+    current_receiver: Option<String>,               // 現在のメソッド呼び出しのレシーバーID
 }
 
 impl MemoEnv {
@@ -70,19 +72,10 @@ impl MemoEnv {
     /// IDに対応する変数名を解決または生成します。
     /// 既にマッピングが存在する場合はその名前を返します。
     /// 存在しない場合は、新しい一意な変数名を生成してマッピングし、その名前を返します。
-    /// receiver_object_id に一致する場合は特別な名前 (例: "this") を返します。
     pub fn resolve_or_create_var_name_for_id(&mut self, id: &str, is_receiver: bool) -> String {
-        if is_receiver {
-            // receiver_object_id に一致する場合は "this" を返す
-            return "this".to_string();
-        }
-
-        // main-new* パターンのIDを自動的に "this" として認識
-        if id.starts_with("main-new") {
-            if !self.id_to_name.contains_key(id) {
-                self.add_special_mapping(id.to_string(), "this".to_string());
-            }
-            return "this".to_string();
+        // 既存のマッピングがある場合はそれを使用
+        if let Some(name) = self.id_to_name.get(id) {
+            return name.clone();
         }
 
         // 外部参照パスがある場合はそれを返す（優先）
@@ -90,10 +83,14 @@ impl MemoEnv {
             return external_path;
         }
 
-        if let Some(name) = self.id_to_name.get(id) {
-            return name.clone();
+        // レシーバーとして明示的に指定された場合のみ "this" を返す
+        if is_receiver {
+            // 現在のメソッド呼び出しコンテキストでのレシーバーとして登録
+            self.register_method_receiver(id);
+            return "this".to_string();
         }
 
+        // 通常の変数として新しい名前を生成
         let new_name = format!("obj_{}", self.next_var_id);
         self.next_var_id += 1;
         self.id_to_name.insert(id.to_string(), new_name.clone());
@@ -109,7 +106,11 @@ impl MemoEnv {
             return Some(path.clone());
         }
 
-        // 2. IDが "this" 自身を指す場合 (main-new* パターンなど、特殊マッピングで "this" になっている場合も含む)
+        // 2. 現在のレシーバーまたはthisとしてマッピングされているかチェック
+        if self.is_current_receiver(id) {
+            return Some("this".to_string());
+        }
+        
         if let Some(name) = self.id_to_name.get(id) {
             if name == "this" {
                 return Some("this".to_string());
@@ -125,7 +126,12 @@ impl MemoEnv {
             if let Some((owner_id, prop_name)) = self.property_of.get(&current_id_for_prop_chain) {
                 path_components.push(prop_name.clone());
                 
-                // 所有者が "this" (特殊マッピング含む) ならパスを構築して返す
+                // 所有者が現在のレシーバーまたは "this" ならパスを構築して返す
+                if self.is_current_receiver(owner_id) {
+                    path_components.reverse();
+                    return Some(format!("this.{}", path_components.join(".")));
+                }
+                
                 if let Some(owner_name) = self.id_to_name.get(owner_id) {
                     if owner_name == "this" {
                         path_components.reverse();
@@ -138,19 +144,9 @@ impl MemoEnv {
             }
         }
         
-        // 4. 上記で見つからなければ、IDに紐づくローカル名 (obj_Xなど) を返す (存在すれば)
-        //    これは、メソッドスコープ内で完結し、外部参照もthisからのプロパティでもない場合。
-        //    ただし、この関数は「アクセスパス」を求めるものなので、ローカル名を返すのが適切かは検討の余地あり。
-        //    現状の resolve_or_create_var_name_for_id がローカル名を生成するので、ここではNoneを返す方が一貫性があるかもしれない。
-        //    一旦、get_name_by_idで取得できる名前を返すようにしてみる。
-        //    ただし、それが "this" でないことを確認する（ステップ2で処理済みのため）。
+        // 4. ローカル変数名を返す（thisでない場合）
         if let Some(name) = self.id_to_name.get(id) {
-            if name != "this" { // "this" は既に処理済み
-                 // ここで `obj_N` のような名前が返ることを期待。
-                 // ただし、これが本当に「アクセスパス」と言えるかは文脈による。
-                 // 例えば、`let obj_0 = new Foo();` の `obj_0` はこの段階では `obj_0`。
-                 // `this.bar = obj_0;` となった後、`obj_0` の外部参照は `this.bar` になるべき。
-                 // `external_refs` やプロパティチェーンで解決できない場合のフォールバックとして機能する。
+            if name != "this" {
                 return Some(name.clone());
             }
         }
@@ -168,9 +164,16 @@ impl MemoEnv {
         self.next_var_id = 0;
     }
 
+    /// メソッド呼び出しのスコープを開始し、レシーバーを設定します。
+    pub fn start_method_call_scope_with_receiver(&mut self, method_call_id: &str, receiver_id: &str) {
+        self.start_method_call_scope(method_call_id);
+        self.set_current_receiver(receiver_id);
+    }
+
     /// 現在のメソッド呼び出しスコープを終了します。
     pub fn end_method_call_scope(&mut self) {
         self.current_method_call = None;
+        self.current_receiver = None; // レシーバーコンテキストもクリア
     }
 
     /// 変数IDを現在のメソッド呼び出しスコープに登録します。
@@ -248,5 +251,38 @@ impl MemoEnv {
                 }
             }
         }
+    }
+
+    /// メソッド呼び出しのレシーバーを登録します。
+    /// レシーバーオブジェクトIDを現在のメソッド呼び出しコンテキストに関連付けます。
+    pub fn register_method_receiver(&mut self, receiver_id: &str) {
+        self.current_receiver = Some(receiver_id.to_string());
+        if let Some(method_call_id) = &self.current_method_call {
+            self.method_receivers.insert(method_call_id.clone(), receiver_id.to_string());
+        }
+        // レシーバーを "this" として登録
+        self.add_special_mapping(receiver_id.to_string(), "this".to_string());
+    }
+
+    /// 現在のメソッド呼び出しコンテキストでレシーバーIDを設定します。
+    pub fn set_current_receiver(&mut self, receiver_id: &str) {
+        self.current_receiver = Some(receiver_id.to_string());
+        // レシーバーを "this" として登録
+        self.add_special_mapping(receiver_id.to_string(), "this".to_string());
+    }
+
+    /// 指定されたIDが現在のレシーバーかどうかを判定します。
+    pub fn is_current_receiver(&self, id: &str) -> bool {
+        self.current_receiver.as_ref().map_or(false, |receiver| receiver == id)
+    }
+
+    /// 指定されたメソッド呼び出しのレシーバーIDを取得します。
+    pub fn get_method_receiver(&self, method_call_id: &str) -> Option<&String> {
+        self.method_receivers.get(method_call_id)
+    }
+
+    /// 現在のレシーバーIDを取得します。
+    pub fn get_current_receiver(&self) -> Option<&String> {
+        self.current_receiver.as_ref()
     }
 }
