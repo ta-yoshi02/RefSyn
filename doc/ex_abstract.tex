@@ -1,0 +1,572 @@
+\documentclass[11pt, a4paper, oneside, twocolumn]{jsarticle}
+\usepackage{url}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{geometry}
+\usepackage{comment}
+\usepackage[dvipdfmx]{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage{bxjalipsum}
+\usepackage[dvipdfmx]{hyperref}
+\usepackage{pxjahyper} %%hyperref読み込みの直後に
+\hypersetup{
+  hidelinks
+}
+\usepackage{listings}
+\usepackage{subcaption}
+\usepackage{minted}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows, arrows.meta, decorations.markings, shapes.geometric, shapes.misc, calc, fit}
+\definecolor{LightGray}{gray}{0.9}
+% \definecolor{LightGreen}{green}{0.9}
+\setminted[javascript]{
+  frame=lines,
+  % framesep=2mm,
+  baselinestretch=0.9,
+  % bgcolor=LightGray,
+  fontsize=\scriptsize,
+  escapeinside=@@
+}
+
+% 図と図の間のスペース
+\setlength\floatsep{2truemm}
+% 本文と図の間のスペース
+\setlength\textfloatsep{2truemm}
+% 本文中の図のスペース
+\setlength\intextsep{0pt}
+% 図とキャプションの間のスペース
+\setlength\abovecaptionskip{1truemm}
+
+\lstdefinelanguage{JavaScript}{
+  keywords={break, case, catch, continue, debugger, default, delete, do, else, finally, for, function, if, in, instanceof, new, return, switch, this, throw, try, typeof, var, void, while, with, let, const, await, async, class, export, extends, import, super}, % JavaScriptの予約語（キーワード）を指定
+  keywordstyle=\color{blue}\bfseries, % キーワードを青色で太字に設定
+  ndkeywords={true, false, null, undefined, NaN, Infinity, console, window, document, Math, JSON, Array, Object}, % JavaScriptの特定の識別子（非予約語）を指定
+  ndkeywordstyle=\color{green}\bfseries,  % 非予約語を緑色で太字に設定
+  identifierstyle=\color{black},  % 通常の識別子（変数名など）のスタイルを黒に設定
+  sensitive=true, % 識別子の大文字小文字を区別する
+  comment=[l]//,  % 行コメント（`//`）を指定
+  morecomment=[s]{/*}{*/},  % ブロックコメント（`/* ... */`）を指定
+  commentstyle=\color{gray}\ttfamily, % コメントを灰色で等幅フォントに設定
+  stringstyle=\color{red}\ttfamily, % 文字列を赤色で等幅フォントに設定
+  morestring=[b]',  % シングルクォート文字列を指定
+  morestring=[b]" % ダブルクォート文字列を指定
+}
+
+\lstset{
+  language=JavaScript,  % 言語としてJavaScriptを使用
+  basicstyle=\linespread{0.75}\ttfamily\footnotesize, % コード全体を等幅フォントで小さく表示
+  numbers=left, % 行番号を左側に表示
+  numberstyle=\tiny,  % 行番号を小さいフォントで表示
+  frame=single, % コード全体を枠線で囲む
+  breaklines=true, % 長い行を自動的に折り返す
+  escapeinside={(*@}{@*)}, % 特殊なコメントを挿入するためのエスケープ文字
+}
+
+% カスタムコマンド
+\newcommand{\tightcolorbox}[2]{%
+  \setlength{\fboxsep}{0.4pt}% 余白を調整
+  \colorbox{#1}{#2}%
+}
+
+
+%%%% macros to add comments
+\newif\ifdraftComments
+\draftCommentsfalse
+\def\mkDraftFn#1#2{%
+  \expandafter\def\csname #1\endcsname##1{\ifdraftComments\textcolor{#2}{[#1: ##1]}\marginpar[$\longrightarrow$]{$\longleftarrow$}\fi}%
+}
+\mkDraftFn{MY}{blue}
+\mkDraftFn{YT}{red}
+\mkDraftFn{YC}{red}
+\mkDraftFn{HM}{red}
+\mkDraftFn{ST}{red}
+\draftCommentstrue
+
+\geometry{top=1cm, bottom=2cm, left=1.5cm, right=1.5cm}
+
+
+
+\pagestyle{empty}
+
+\title{%
+可視化されたオブジェクトの編集による  \\
+対話的プログラム合成手法\mysys{}の提案
+}
+
+\newcommand{\mysys}{\textsc{RefSyn}}
+
+
+% 設定
+\newcommand{\authorname}{%
+吉尾拓真
+}
+\newcommand{\studentID}{%
+21B30959
+}
+\newcommand{\supervisor}{
+% 指導教官 
+増原英彦 教授
+% 叢悠悠 助教
+}
+
+\author{%
+東京科学大学 情報理工学院 数理・計算科学系\\
+\studentID \ 
+\authorname \\
+指導教員 \supervisor
+}
+
+% 提出日？発表日？
+% 無くても良い。空欄にすれば省略される。
+\date{}
+
+\begin{document}
+\maketitle
+
+% 標準的な構成を下書きとして配置した。
+% 必ずしも下書きの構成に従う必要はないが、一読した際に以下に記載された項目が読み取りにくい構成は避けることが望ましい。
+
+\section{はじめに}
+% \begin{itemize}
+% \item \textbf{どの分野}の\textbf{どのような課題}が研究を動機付けていますか？
+% \item 研究はその\textbf{課題にどのように関連}していますか？
+% \item \textbf{研究の目的}はなんですか？
+% \end{itemize}
+% 関連性の強い既存研究が後に言及される場合、本節にも短い説明があると読者の理解を助ける。
+% また、上記の箇条書きの内容に加え、通常の研究論文では新規性（なぜ画期的か、技術的に重要か）を主張する必要があるが、卒論では特にその必要はないと考えられている。
+% 世の中の課題を切り分け、その課題を正しく分析し、卒業研究で行ったことが妥当な手続きであると説明できることが重要。
+
+% 稀ではあるが、卒業研究が問題や課題に駆動されていない場合は、指導教員に相談すること。
+
+% 背景1: プログラム合成
+プログラム合成とは、与えられた仕様を満たすプログラムを探索・生成する技術である。
+既存の合成手法には論理述語~\cite{first order,temporal logic}の他、関数の入出力(\textbf{\emph{Programming by Example}, PBE})~\cite{smallstep, escher}やユーザーの操作(\textbf{\emph{Programming by Demonstration}, PBD})~\cite{pbd}を仕様に使う手法が存在する。
+PBEはユーザーにプログラミング知識を要求しない点で有用であり、Excel~\cite{flash fill}への実装で注目を集めている。
+% \YT{Flash fillは沢山論文があるので、そっちをciteしましょう。\href{https://blog.sigplan.org/2021/09/14/the-story-of-the-flash-fill-feature-in-excel/}{このMSブログ}に歴史が書いてあります。}
+
+% 背景2: Kanon
+% ライブプログラミング(LP)は，プログラムの実行結果を即座にフィードバックすることが可能なプログラミングスタイルである。
+% LPの即時フィードバックは、コードを書く作業と実行結果の確認という作業の間の遷移を短縮し、より簡便なデバッグを支援する~\cite{kanon}。
+% \ST{なぜここでkanonの話をしたのか。後の文からkanonの関連性が見えない}
+% \YT{↑その通りなので、第四段落でKanonの何がどう提案手法に効いているのか、一言だけ触れた方が良いと思う。（説明しすぎると「はじめに」の領分を超えるので注意）}
+
+% 動機や既存研究の課題
+PBEプログラム合成の研究領域の課題として、\emph{破壊的更新}を含む関数の効率的な合成の困難性が知られている。
+RbSyn~\cite{rbsyn}は多量の型を用いた仕様を与えることでプログラム空間を効率的に探索する手法を取っている。
+しかし、この仕様はPBEのような単純な入出力ではなく、複雑な型・エフェクト・ユニットテストの記述を前提とし、ユーザーにプログラミング知識を要求する問題がある。
+
+% ライブプログラミングは現在の実行状態に関する即時のフィードバックを提供するが、ユーザーが目標を達成するために次に記述すべきコードを明示的に発見する手助けをするわけではない。
+% 一方で、プログラム合成は与えられた仕様を満たすプログラムを自動生成するので、ユーザーを明示的に支援する。
+% しかし、プログラム合成では、合成が完了すると必ず与えた仕様を満たしているプログラムを出力するが、プログラムの探索に時間がかかってしまう。
+% したがって、ライブプログラミングの特徴である実行結果を即時にフィードバックすることが困難である。
+
+% 本研究の提案とアイディア
+この課題の解決のため、本研究では対話的プログラム合成手法\mysys{}を提案する。
+\mysys{}の特徴は、ユーザーの簡便性のために、参照関係を可視化するライブプログラミング環境Kanon~\cite{kanon}のテスト機能を仕様記述に用いる点である。
+% Kanonでは、実行環境中の各変数に束縛されたデータ構造をグラフとして即座に可視化することで、プログラムの編集と実行という作業間の遷移を短縮し、プログラミングを支援する。
+% また、Kanonはメソッド呼び出しのテスト機能を提供しており、GUI上でグラフを編集することでテストの期待値を設定できる。
+% \mysys{}は、Kanonのテスト機能を利用して、ユーザーの操作を仕様とするので非プログラマーでも簡単に合成を行うことができる。
+% また、ユーザーによる操作は文として合成対象の関数定義に含まれていて、破壊的更新もユーザーの操作に含まれているという本研究の直観から、探索の優先度を高めることで効率的に合成することができると考える。\MY{破壊的更新は雛形を作るときに取り除かれているから探索しているわけではないので正しくない表現？}
+% 本研究の直観は、Kanonで出力値の構成に用いたユーザー操作は、文として合成対象の関数定義に含まれる可能性が高いという推測である。
+% \YT{この直観は事実だが、前の段落に対応しておらず、破壊的更新がどう取り除かれるのかという課題に対する直観になっていない（ので説明として座りが悪い）。}
+GUI上のグラフ操作から得られる情報を利用することで、既存のPBE合成手法では困難な、データ構造に対する破壊的更新を含む関数の効率的な合成を目指す。
+
+% \textcolor{red}{本手法により、既存のPBE合成手法では困難だったデータ構造プログラムの合成を、効率的に行うことを目指す。}
+% さらに、ユーザーの望むプログラムには副作用の伴うメソッドが含まれるが、各仕様において副作用が伴わないと仮定した合成問題に分割することで解くことことが可能であると考える。
+
+
+% \begin{table}[h]
+%   \centering
+%   \footnotesize
+%   \begin{tabular}{rcl}
+%     $\mathit{VEnv}$ & $::=$ & $\{\overline{x_i \rightarrow (\% n)'}\}$ \\
+%     $\mathit{MEnv}$ & $::=$ & $\{\overline{(\% n) \rightarrow \mathit{Obj}}\}$ \\
+%     $\mathit{Obj}$ & $::=$ & $l \quad | \quad C\{\overline{f_i = (\% n)'}\}$ \\
+%     $\mathit{l}$ & $::=$ & $n$ \quad | \quad $null$ \\
+%     $\mathit{\% n}$ & $::=$ & $"\%" + n$ \\
+%     $\mathit{(\% n)'}$ & $::=$ & $\% n \quad | \quad null$ \\
+%     $\mathit{C}$ & $::=$ & $\text{Class names}$ \\
+%     $\mathit{f_i}$ & $::=$ & $\text{field names of Class C}$ \\
+%     $\mathit{x_i}$ & $::=$ & $\text{variable names}$ \\
+%   \end{tabular}
+
+% \end{table}
+
+\section{本研究の背景}
+
+% \begin{itemize}
+% \item この研究を理解するために必要な概念はなんですか？
+% \item 提示された課題はなぜ問題なのですか？
+% \end{itemize}
+% 必要であれば、既存研究の技術やアイデアについても記述する。
+% ただし、重要な概念の説明にとどめ、次節以降の内容を圧迫するほど長くなるべきではない。
+
+\subsection{Kanonのグラフ操作を用いたテスト機能}
+\label{sec:test}
+% \YT{全体的に説明不足。後の節のために、読者はKanonの何の側面を知っている必要がある？}
+% Kanon~\cite{kanon}は、実行環境中の各変数に束縛されたデータ構造をグラフとして即座に可視化するライブプログラミング環境である。
+Kanon~\cite{kanon}はオブジェクトの参照関係をグラフとして可視化するライブプログラミング環境である。
+実行時情報を収集しカーソル位置に応じたグラフを表示することで、実行状態をユーザーに提供している。
+また、メソッド呼び出し前のグラフをユーザーが操作することで、不完全なメソッドに対するメソッド呼び出しの入出力のテストを設定できる。
+% また、可視化されたグラフをユーザーが操作することで、その出力値のグラフをメソッド呼び出しのテストケースとして利用することができる。
+% 本機能はまた、メソッド呼び出し後の返り値を以後の実行に利用し、不完全なメソッド定義を含むプログラムの可視化を提供している。
+% また、テストの際のユーザーによるオブジェクト操作は一手ずつイベントとして記録されている。
+
+双方向リスト末尾に要素を追加する\texttt{add}の合成を例にKanonの動作を説明する。
+図\ref{lst:code}は\texttt{list}に対し2回\texttt{add}を呼び出すプログラムである。
+テスト設定前にエディターの4行目末尾にカーソルを置くと、図\ref{fig:graphexample}左が描画される。
+% \ST{アイデアを理解してようやくkanonとの関連性を理解できるのだとしたら、はじめにの流れとしては、アイデアの話から、そのサポートorアプリケーションとしてkanonを使うという感じか？}
+% 現在、\texttt{add}関数は空なので、7行目や8行目を呼び出しても同一のグラフを表示する。\YT{そもそも、この7,8,9行目の可視化の話、今後の話に関係ある？}
+% \ST{「において」を多用する人が多いが、99パーセント別の1文字か2文字の助詞に置き換えられる}
+
+% \YT{仕様を与える話に変わったので改行した}
+% \YT{この話を全て日本語で説明するのは、少なくとも2p概要では無理だと思う。「Xをする。」「この際にユーザーが行う操作に対応するイベントは図Xに示す。」「これに対応するプログラムはYである。」と図を使ってうまく列挙することで説明を短縮できないかな？}
+ユーザーは、各メソッド呼び出しに対し、グラフを操作してテストの期待値を設定する。
+% グラフの操作はオブジェクトの追加や参照の追加・張り替えが可能である。
+% \ST{Kanonの操作がまだブラックボックス感がある。テスト機能であるという点も本概要だけではよく理解できなかった。(テスト機能であるところをよく理解する必要はないかもしれないが)}
+% \YT{一行くらいどんなイベント列なのか言ったほうが良いかも。でもちょっとで十分}
+例えば\texttt{list.add(0)}に対し、ユーザーはオブジェクトの追加や参照の追加・張り替えを行うことで図\ref{fig:graphexample}左から図\ref{fig:graphexample}右へ編集できる。
+Kanonはこのグラフ操作を\emph{操作列}として記録する。
+
+\begin{figure}[tbp]
+\begin{lstlisting}
+class Node{ add(arg){...} }
+var list = new Node();
+list.val = 2;
+list.add(*@\tightcolorbox{pink}{(0)}@*);(*@\texttt{|}@*) // (*@\tightcolorbox{pink}{(0)}@*)はテストが設定されていることを示す
+list.add(3);
+\end{lstlisting}
+\caption{JavaScriptの\texttt{Node}の定義と\texttt{add}メソッド呼び出し}
+\label{lst:code}
+\end{figure}
+  
+\begin{figure}[tbp]
+  \centering
+  % 1つ目の図
+  \begin{subfigure}[b]{0.4\linewidth}
+    \centering
+    \includegraphics[width=\textwidth]{graph_example0.png}
+    % \caption{\texttt{list.val(0)}の後のグラフ}
+    % \caption{}
+    \label{fig:graphexample0}
+  \end{subfigure}
+  \hfill
+  % 2つ目の図
+  \begin{subfigure}[b]{0.58\linewidth}
+    \centering
+    \includegraphics[width=\textwidth]{graph_example1.png}
+    % \caption{\texttt{list.add(1)}の後のグラフ}
+    % \caption{}
+    \label{fig:graphexample1}
+  \end{subfigure}
+  \caption{図\ref{lst:code}の(左)テスト設定前(右)後のKanonの可視化}
+  \label{fig:graphexample}
+\end{figure}
+
+% \begin{figure*}[t]
+%   \centering
+  % \hspace{-1.2cm}
+\input{fig.tex}
+% \caption{\mysys{}の合成アルゴリズム。$N$はKanonのテスト数, $E(p)$はプログラム$p$の評価結果を示す。}
+% \label{fig:operations}
+% \end{figure*}
+
+\subsection{PBEプログラム合成の課題}
+% \YT{説明が悪い。何故"破壊的更新がある合成問題"で多くの計算時間が必要なのかの説明になっていない。(1)PBE合成既存手法の共通点(2)この共通点に破壊的更新があると、合成問題が難しくなる理由 の順番で説明すると良い。}
+
+効率的なPBE合成にはプログラム探索空間の枝狩りが必要な一方で、既存の枝狩り手法は破壊的更新を含むプログラムのPBE合成には適用できない。
+純粋関数を対象とする既存研究~\cite{escher}では、\emph{観測的等価性}を用いた枝狩りが効率性に強く寄与することが知られている。
+この枝狩り手法では、より大きな式の探索中に評価結果が同じ部分式を同一視することで探索空間の削減を達成する。
+一方で破壊的更新を考慮すると、副作用が異なる部分式の選択は式全体の評価結果(及びPBE仕様の満足性)を変更しうるため、このような同一視はできない。
+したがって、効率的なPBE合成のために新たな枝狩り手法が必要となる。
+% 純粋関数を対象とする既存研究~\cite{escher}では、\emph{観測的等価性}を用いた枝狩り(より大きな式の探索中に評価結果が同一の部分式を無視する)が効率性に強く寄与することが知られている。
+% 一方で破壊的更新を含むPBE合成では、副作用が異なる部分式の選択は式全体の評価結果(及びPBE仕様の満足性)を変更しうるため、観測的透過性以外の新たな枝狩り手法が必要になる。
+
+% PBEプログラム合成問題では、破壊的更新などの副作用を含む関数の探索空間は膨大であり、多くの計算時間が必要となる。
+% なぜなら解候補を全て列挙することで仕様を満たすプログラムを探索しているからである。
+% % \YT{citeあるとよい。}
+% 既存手法には、副作用を含まないPBEプログラム合成問題で、\emph{観測的等価性}(評価結果が同じプログラムを同一視すること)を用いて探索空間を削減している~\cite{escher}ものがある。
+% しかし、観測的等価性は純粋関数の合成問題でのみ有効であり、破壊的更新を含む関数の合成問題には適用できない。
+% % 卒論本体には純粋関数の合成の例と、破壊的更新を含む関数の合成の例を入れるべき。
+% そのため、仕様の与え方や探索空間の制限のための別の手法が必要になる。
+% \ST{だから、本研究では〇〇をします。というのが必要？}
+% \YT{↑のSTコメントは反映するべきではない。「PBEプログラム合成の課題」の範囲を超えるため。全体を読んでこれに対応する内容が理解できないなら3節が悪い。(そうでない書き方もあり得ると思うが、まずは厳密に標準的な書き方が出来るようになってください)}
+
+% \YT{↓卒論本体に役立ててください。}
+% \YT{
+% 従来のPBEプログラム合成では、構文的に妥当なプログラムを全列挙・評価を繰り返して仕様を満たすプログラムを探索する。
+% % 従来のPBEプログラム合成~\cite{escher}では\emph{観測的等価性}: 入出力仕様に基づく純粋関数的プログラムでは、式の一部を評価結果が同じ別の式に置き換えても入出力仕様の満足に影響しない性質 を利用し、探索空間を削減している。
+% 既存手法~\cite{escher}は\emph{観測的等価性}を利用し、探索空間を削減している。
+% 例として、$(\mathrm{in}: 1, \mathrm{out}: 3)$を仕様に持つ関数の合成問題を考えよう。
+% \texttt{1 + []}型を持つプログラムの列挙において、\texttt{[]}が\texttt{2}と\texttt{1+1}のいずれであっても\texttt{1 + []}の結果は同一なため、合成問題の観点からは\texttt{1 + 2}のみを検査すれば十分である。}
+% \YT{
+% % 効率的なPBEプログラム合成には探索プログラムの枝狩りを要する
+% 一方で、既存の枝狩り手法は破壊的更新を含む関数の合成問題には適用できない。
+% しかし破壊的更新を含むプログラムでは観測的等価性による削減手法は機能しない。例えば
+% \texttt{a = {x: 0}; []; a.x}型を持つプログラムの列挙において、部分式\texttt{a.x += 1}と\texttt{a.x += 2}はいずれも評価結果は\texttt{undefined}であるが、\texttt{[]}にどちらを選択するかによって全体の式の結果が変わる。
+% }
+% \YT{RbSynはこの問題に対し...}
+
+% プログラム合成の利点として仕様を満たす点での正確性は保証されるが、仕様を満たす解が見つかったとしてもユーザーの望むプログラムが得られない場合が多々あるというのは問題である。
+
+\section{\mysys{}による対話的PBEプログラム合成}
+% \YT{課題に対してどういうアプローチを取って、それが何故課題に対して効きそうなのかをまず説明すること。以下の説明は\mysys{}のシステムの構成に過ぎない。卒論本体には書くべきだが、この概要の読者は研究として有用なのかに興味があり、システム構成や実装レベルの説明から入るべきではない。}
+% \YT{この節の↓の方にはそのような解決手法として確かに有用であるという説明が含まれているので、説明の順番が悪いと思う。並び替えましょう。}
+% \YT{適切に段落分けをしてください。一段落が長すぎて何が重要なのか全くわからない。}
+% \YT{具体例が一つも無いため、アプローチの具体的なイメージに共感できない。最低一つ（二つは恐らく入らない）は具体例を入れること。}
+\paragraph*{概要}
+% 本研究では破壊的更新を含むプログラムを、副作用の持たない部分問題に分割して合成することで、結果として主問題の合成を可能にすることを提案する。
+% 破壊的更新はユーザーの操作に含まれていて、操作に対応したプログラムで表現することができるという直感から分割可能であると考える。
+\mysys{}はKanon上のユーザー操作を用い、破壊的更新を含むプログラムのPBE合成問題を純粋関数の合成問題へと帰着するヒューリスティクスを用いる。
+% 本手法は、Kanonのテスト機能で用いたユーザー操作から、破壊的更新を含む式を合成するヒューリスティクスを用いる。
+破壊的更新を含む部分式を事前に探索空間から取り除き、残りの純粋な部分式を独立に合成することで、破壊的更新の存在下でも効率的な合成が期待できる。
+% \mysys{}はユーザーによる\emph{操作}を関数のPBD仕様と見做し、いくつかの操作に対応する仕様の共通部分をとって雛形とする。
+% また、非共通部分を新たに部分問題として考え、仕様ごとの値を新たな出力の仕様として解くことで、その解を雛形と組み合わせて最終的な合成結果を得る。
+また、本手法ではユーザーはKanonのテスト機能のみを通じて\mysys{}に仕様を与えるので、特別なプログラミング知識を必要としない。
+% \YT{以前もいったが、まず前節で提示された課題がどう解決されたのかを示し、その後恩恵（プログラマーに知識を仮定しない事）を述べるべき。つまりこの文は後回しにした方がよさそう。}
+% ユーザーによる操作は文として合成対象の関数定義に含まれているという本研究の直観
+
+\paragraph*{用例}
+% \YT{パラグラフタイトルが良くない。}
+\mysys{}を使用するには、\ref{sec:test}節で述べたように、Kanonのテスト機能を用いる。
+\mysys{}はメソッド呼び出しテストの入出力(PBE仕様)・操作列(PBD仕様)・環境情報を受け取り、図\ref{lst:code}内の\texttt{...}に合成結果を出力する。
+
+プログラム合成は探索中に仕様を満たした最初のプログラムを出力するため、仕様が少ないときの合成結果はユーザーの望むプログラムと異なることがある。
+\mysys{}では、ユーザーは図\ref{lst:code}の5行目のメソッド呼び出しに追加のテストを与えることで、対話的に\texttt{add}の合成結果を改善できる。
+
+
+\section{\mysys{}の合成アルゴリズム}
+図\ref{fig:operations}に\mysys{}の合成アルゴリズムを示す。
+\mysys{}は\textcircled{\scriptsize 3}までの処理でメソッドの入出力(PBE仕様)・操作列(PBD仕様)・環境情報を入力として主問題を純粋関数の部分PBE合成問題へと帰着し、続く\textcircled{\scriptsize 5}までの処理で主問題のメソッド定義を合成する。
+
+まず、\textcircled{\scriptsize 1}各仕様の操作列を破壊的更新を含むプログラムにコンパイルし、\textcircled{\scriptsize 2}コンパイル後の操作列の共通部分と差分をとる。
+共通部分は破壊的更新を含み、この後の処理で主問題の解の雛形として使用される。
+また、差分(図中\tightcolorbox{pink}{\texttt{0}}, \tightcolorbox{pink}{\texttt{this}}, \tightcolorbox{pink}{\texttt{this}})はその評価値を純粋関数(図中\tightcolorbox{pink}{\texttt{f}}, \tightcolorbox{pink}{\texttt{g}}, \tightcolorbox{pink}{\texttt{h}})のPBE仕様(出力)と見做す新たな部分問題の作成に使用される。
+次に\textcircled{\scriptsize 3}部分問題のPBE仕様(入力)を得るため\textcircled{\scriptsize 1}で得られたプログラムを実行し、環境情報を生成する。
+最後に\textcircled{\scriptsize 4}得られたPBE仕様から部分問題を既存合成器で解き、\textcircled{\scriptsize 5}合成結果を雛形に当てはめることで主問題の合成結果を得る。
+
+% \paragraph*{Limitations}
+% 任意の副作用について合成を行うわけではなく、破壊的更新をもつプログラムの合成を目指している。
+
+% \jalipsum[1-2]{wagahai}
+
+
+
+% \vspace{-1em}
+
+% \section{\mysys{}の実装}
+% \YT{重要なのはこれが実現可能なアプローチだと示せているかだが、以下の説明は図1の直訳に過ぎない。(1)文章としてこれを全て説明すべきか？(2)"合成器"と単に言っている部分は何？}
+% \YT{"設計"だけで1節割く必要があるか再検討せよ。3節で具体的な手法を論じていて、5節で実装を論じている。追いまは単に3節と全く同じ文章を書いているだけにしか見えない。}
+% % \begin{itemize}
+% % \item 研究目的の達成のため、あなたは何をしましたか？
+% % \end{itemize}
+% % この節は、多くの研究で以下の構成となる。
+% % \begin{enumerate}
+% % \item 目的達成のための方針やアイデアを提示する。
+% % \item 1が何故研究目的の達成に貢献するのかを説明する。
+% % \end{enumerate}
+% % 上記の二項目より先に、技術の詳細（Completeな実装方法や言語定義）を書くべきではない。
+
+% % \begin{figure}[tbp]
+% %   % \includepraphic[width=5cm]{***.fig}
+% %   \centering
+% %   \begin{tikzpicture}[node distance=1cm and 2cm, every node/.style={fill=white, font=\sffamily}, align=center]
+
+% %     % Node styles
+% %     \tikzstyle{lang} = [rectangle, minimum width=2.2cm, minimum height=0.9cm, rounded corners, text centered, draw=black]
+% %     \tikzstyle{vspace} = [rectangle, minimum width=2.2cm, minimum height=0.9cm, text centered, draw=black, fill=green!30]
+% %     \tikzstyle{arrow} = [thick,->,>=stealth]
+    
+% %     % Nodes
+% %     \node (refsyn) [lang] {\mysys{}\\Program};
+% %     \node (refsyn_ast) [lang, below=of refsyn] {\mysys{}\\AST}; 
+% %     \node (vspace) [vspace, left=of refsyn] {Version\\Space};
+% %     \node (limited_vspace) [vspace, below=of vspace] {Limited\\Version Space};
+% %     \node (python_ast) [lang, below=of refsyn_ast] {Python AST\\w/ DVC Functions};
+% %     \node (dvc_func) [lang, below=of limited_vspace] {DVC\\Functions};
+% %     % \node (python) [lang, below=of python_ast] {Python\\Program};
+    
+% %     % Arrows
+% %     \draw[->] (refsyn) -- node[label](parse_refsyn){Parse} (refsyn_ast);
+% %     \draw[->] (refsyn_ast) -- node[label](transpile){Compile} (python_ast);
+% %     \draw (dvc_func.east) -- ++(1.25,0) |- (transpile);
+% %     % \draw (limited_vspace.east) -- ++(.6,0) |- node[near start, right] {Insert} (transpile);
+% %     \draw[->] (limited_vspace) -- node[label]{Generate \& optimize} (dvc_func);
+% %     \draw[->] (vspace) -- node[label]{Restrict by user intention} (limited_vspace);
+% %     \draw[<-] (vspace.east) -- ++(1.25,0) |- (parse_refsyn.west);
+% %     % \draw[->] (python_ast) -- (python);
+
+% %   \end{tikzpicture}
+
+
+% %   \caption{\mysys{}の構成図}
+% % \end{figure}
+  
+
+% % ここはシステムの中だけの話をする。実装は全部終わってる体で書く。
+
+% \mysys{}は合成したいメソッドについての操作イベントとその操作時の環境情報を複数受け取る。
+% 次に、受け取った操作イベントをそれぞれ操作列にコンパイルする。
+% コンパイルした操作列から最大部分被覆を特定し、各仕様の差異部分を仮の不完全なプログラムで置くことで、操作列に共通する表現を見つける。
+% この共通する表現を雛形として、不完全なプログラムと各仕様ごとの環境情報を新たな部分合成問題の仕様として定義する。
+% 部分合成問題を解くための仕様を合成器に渡すことで、部分合成問題を解く。
+% 解いた部分合成問題の結果を元の問題に当てはめることで、仕様を満たすプログラムを合成したことになる。
+
+% 本提案の使い方とか操作の仕方とか動作の流れなど
+% ユーザーがオブジェクトを操作することで、Kanonから操作イベントを受け取り、\mysys{}は操作列へコンパイルする。
+% \mysys{}は、操作列から最大部分被覆の特定と、合成問題を解くための部分合成問題の定義を行う。
+% 部分合成問題を定義したのち、既存の合成器に仕様を渡すことで問題を解く。
+% 解いた合成結果をもとの問題に当てはめることで、ユーザーが求めるプログラムを合成したことになる。
+
+% システム構成図(仮)
+% \begin{figure}[tbp]
+%   \centering
+%   \begin{tikzpicture}[node distance=1.5cm, every node/.style={font=\sffamily}, align=center, scale=0.75, transform shape]
+
+%     % Node styles
+%     \tikzstyle{lang} = [rectangle, minimum width=2.2cm, minimum height=0.9cm, rounded corners, text centered, draw=black]
+%     \tikzstyle{smallbox} = [rectangle, draw=black, rounded corners, minimum width=2cm, minimum height=1cm, text centered, fill=blue!10]
+%     \tikzstyle{box} = [rectangle, draw=black, rounded corners, minimum width=2.5cm, minimum height=3cm, text centered, fill=blue!10]
+%     \tikzstyle{arrow} = [thick,->,>=stealth]
+
+%     % Nodes
+%     \node (Kanon) [lang, draw=none] {};
+%     \node (spec1) [smallbox, below=of Kanon, xshift=-2cm] {イベント列1 \\ 環境情報1};
+%     \node (spec2) [smallbox, right=of spec1] {イベント列2 \\ 環境情報2};
+%     \node (ops1) [smallbox, below=of spec1] {操作列1};
+%     \node (ops2) [smallbox, below=of spec2] {操作列2};
+%     \node (merge) [smallbox, below=of ops1, xshift=1.5cm] {最大部分被覆};
+%     \node (common) [smallbox, below=of merge] {雛形 \\ with 不完全プログラム};
+%     \node (subspec) [smallbox, right=of common, xshift=1.5cm] {部分合成問題};
+%     \node (Escher) [smallbox, above=of subspec] {合成器};
+%     \node (program) [smallbox, above=of Escher] {合成結果};
+%     \node (user) [lang, above=of program, draw=none, yshift=2cm] {};
+
+%     % Arrows
+%     \draw [arrow] (Kanon) -- node[above] {入力1} (spec1);
+%     \draw [arrow] (Kanon) -- node[above] {入力2} (spec2);
+%     \draw [arrow] (spec1) -- node[label] {compile} (ops1);
+%     \draw [arrow] (spec2) -- node[label] {compile} (ops2);
+%     \draw (ops1) -- (merge);
+%     \draw (ops2) -- (merge);
+%     \draw [arrow] (merge) -- (common);
+%     \draw [arrow] (common) -- (subspec);
+%     \draw [arrow] (subspec) -- node[above] {subspec} (Escher);
+%     \draw [arrow] (spec1) -- node[above, xshift=-2cm, yshift=1cm] {subinput1} (Escher);
+%     \draw [arrow] (spec2) -- node[above] {subinput2} (Escher);
+%     \draw [arrow] (Escher) -- node[above] {solve} (program);
+%     \draw [arrow] (program) -- node[above] {出力} (user);
+
+%   \end{tikzpicture}
+%   \caption{\mysys{}のシステム構成図}
+% \end{figure}
+
+\section{提案アルゴリズムの評価}
+% \begin{itemize}
+% \item 前節（研究内容）の研究目的に対する妥当性は、どう担保されていますか？
+% \end{itemize}
+% 卒論執筆時点で評価が終わっていない場合でも、計画している内容を記述するべきである。
+% 代表的なプログラミング言語研究やソフトウェア工学の評価は以下のようなものとなる。
+% \begin{itemize}
+% \item (研究目的に合致した言語の性質)を満たす言語なことを確かめるために定理を証明した。定理の主張は〜である。証明方法は〜を使った。
+% \item (研究目的に対応したResearch Question (RQ))を確かめるために事例研究・ユーザー実験を行った。事例研究・ユーザー実験は研究目的に対応して〜のように設計した。その結果は〜だった。考察。
+% \item (研究目的に合致した実装の改善)を確かめるために性能測定をした。ベンチマークは研究目的を反映して〜のように設計した。その結果は〜だった。考察。
+% \end{itemize}
+% これらに当てはまらない場合、既存研究が何をしたかを参考にするとよい。
+
+% PBD仕様を受け取って、操作列へコンパイルを行う機能を実装する。
+% 具体的には図\ref{fig:opevents}を受け取って、図\ref{fig:operations}へコンパイルしている。
+% また、2種類の操作列を受け取った後の最大部分被覆の特定とプログラムの雛形を生成する機能を実装する。
+% \textsf{Escher}~\cite{escher}を使って部分合成問題を解く。
+% そのため、\textsf{Escher}が合成できるような仕様に翻訳する実装を予定している。
+% \YT{単に～を使った実装を予定している、で良い。同じことは必要が無い限り二度と書かないこと。}
+
+% \YT{前の節の「具体例」の次にもう一つparagraph*\{合成アルゴリズム\}を追加し、この段落をそちらに移動したほうが良いと思う。ユーザーサイドの話ではなくなるので当初の相談とは違う節構成なのだが、そのほうが提案が一纏まりになり読みやすい}あるメソッドに対して、複数回のメソッド呼び出しに対応する操作をユーザーが行い、その操作イベントをPBD仕様として\mysys{}に渡す。
+% PBD仕様を受け取り、操作列にコンパイルして、プログラムの最大部分被覆をとる。
+% 各仕様の最大部分被覆を合成問題の雛形として、差異を部分問題の求める解とすることで、合成問題を分割する。
+% 次に、部分問題を解くための仕様はPBE仕様として定義し、既存の合成器(\textsf{Escher})に渡す。
+% \textsf{Escher}が解いた部分問題の結果を受け取り、元の問題に当てはめることでユーザーが求めるプログラムを合成する。
+% \textsf{Escher}では副作用を持つメソッドの合成は困難であるが、\mysys{}は副作用を持つプログラムでも、副作用を持たない部分問題に分割することで合成を可能にする。
+
+% \YT{この段落の話はユーザーサイドの話なので、今の前の節の具体例paragraphの最後に追加したほうが良いと思う}プログラム合成は仕様を満たすプログラムの中で、探索して一番最初に見つけたプログラムを出力するため、ユーザーの望むプログラムと異なることがある。
+% その場合、ユーザーがさらに操作を行い、新たな仕様を追加で与えることで対話的にプログラム合成を行うことができる。
+
+% \YT{五月雨式に一文で書くのはやめること。\mysys{}の"何"(対象言語の表現力, 可用性など。既存の文献には必ず書いてあるはず)を評価する目的なのかを明示する事。}
+% 合成結果を元にユーザーが求めるプログラムを合成できたかどうかを評価していきたい。
+% また、いくつかのメソッドに対して合成可能か否か、時間はどのくらいかかるのかの実験も行っていきたい。
+% さらに、既存研究のベンチマーク\YT{"既存研究のベンチマーク"とは具体的に何？}を使って比較することで、\mysys{}の合成器の性能\YT{"性能"は多義語。本段落の一番上でコメントした「評価の目的を明示せよ」と合わせ、再検討すること。}を評価することも考えている
+% \MY{もう少し具体的に何やったかを書くこと。}
+\mysys{}の部分問題分割の機能性を評価する。
+破壊的更新を含む5種類のプログラムを用い、純粋関数の部分問題へと分割できることを確認した。
+
+% \mysys{}が仕様を簡単に与えることができることを示す。
+
+
+\section{結論, 関連研究, 今後の課題}
+% \begin{itemize}
+% \item この研究は何を明らかにしましたか？
+% \item この研究はどのような新たな研究を可能にしますか？
+% \item この研究は他の研究と比較してどのような違いがありますか？
+% \end{itemize}
+% 卒論本体では関連研究・Future work・結論をすべて記述するべきだが、この2ページの概要では余白が不足することが多い。
+% 何を優先するのかは研究内容次第だが、結論（第一項目）はイントロの繰り返しになりがちなので、他の内容を優先するといいだろう。
+本研究は対話的PBE合成手法\mysys{}を提案した。
+今後実装と、合成効率・仕様の記述容易性の観点でのRbSynとの比較評価を計画している。
+
+\paragraph*{実装計画}
+% ユーザーによるオブジェクトの操作や参照の張り替えの順番は必ずしも正確なプログラムの構成手順とは限らないが、今回は恣意的に操作を行なったものとする。
+% \YT{これはここでいう必要ないかな...footnoteか、future workで。}
+% 本研究の実装は(1)操作列の文へのコンパイル(2)最大部分被覆による雛形生成(3)部分問題のPBE仕様の生成(4)既存の合成器との統合(5)Kanonとの統合 によって達成される。
+図\ref{fig:operations}中\textcircled{\scriptsize 3}までが\mysys{}の実装であり、\textcircled{\scriptsize 4}\textcircled{\scriptsize 5}は\mysys{}を合成器として利用可能にするための実装である。
+\textcircled{\scriptsize 4}としてEscher~\cite{escher}の採用を予定している。
+合成器のレスポンスの即時性の担保のため、コンパイルターゲットにWebAssemblyを持つ言語での実装を予定している。
+
+\paragraph*{PBEプログラム合成}
+% \YT{スペースが許すなら、対話的プログラム合成とPBE合成は分けた方がよさそう。}
+\textsf{SnipPy}~\cite{smallstep}は本研究同様の対話的なPBE合成器である。
+\textsf{SnipPy}ではユーザーに入出力仕様を一行ずつ与えさせることで、対話性と探索空間の削減を実現する。
+% 各行ごとに合成したい対象の仕様を与えることで、ライブプログラミングの特徴を活かしつつ、プログラム合成を支援する手法が既存研究で存在している。
+% 合成器は与えられた仕様を満たしているプログラムを出力するが、ユーザーが求めるプログラムと異なる場合がある。
+% ユーザーが対話的に仕様を渡すことで、ユーザーが求めるプログラムを合成することが可能にしようとしている。
+%
+% 後で考えること
+% プログラム合成の利点として仕様を満たす点での正確性は保証されるが、仕様を満たす解が見つかったとしてもユーザーの望むプログラムが得られない場合が多々あるというのは問題である。
+%
+% \YT{こちらはPBE合成アルゴリズム、説明不足}
+% \paragraph*{PBE合成アルゴリズム}
+\textsf{Escher}~\cite{escher}はユーザーが提供したPBE仕様から、条件式と再帰を含むプログラムを合成する帰納的アルゴリズムであり、観測的等価性を用いた効率的な合成を行う。
+しかし、これらはいずれも破壊的更新には対応していない。
+% \YT{特殊なデータ構造とは？説明すると長くなるなら、言及しないほうがいいかも。ゴールグラフの話を書くにしても、卒論本体かな。}
+
+
+\paragraph*{今後の課題}
+
+現在のアルゴリズムはユーザーの操作に幾つかの仮定を置いている。
+例えばユーザーの操作は合成対象のプログラムの想定する順番・数と同じでなければならない。
+これらの制約の解消は今後の課題である。
+% これは現実的な合成ではやや厳しい仮定だ
+% そのため最大部分被覆を取る際に、ユーザーの操作順がプログラムの構成手順と異なる場合、部分合成問題の定義が難しくなる可能性がある。
+% また、現在対話的プログラム合成を行うために、操作イベントを2つ与えたときの最大部分被覆を考えて雛形を生成しているが、3つ以上与えた際の最大部分被覆からの雛形の生成をどのようにして取るのか検討していきたい。
+% \YT{(読者にとって)意味不明, 説明不足}
+
+
+{\scriptsize
+% \YT{(1)全てURL不要 (2)「第一著者 et al. \emph{title}. (会議名'xx)」に統一せよ（スペース不足の為） <- 統一されてれば書式は何でもいい。会議名は年号だけでもOK。}
+% \renewcommand{\refname}{} % 「参考文献」の見出しの文字を空白にする場合はコメントを外す
+\begin{thebibliography}{9} 
+ \bibitem{smallstep} Kasra Ferdowsifard et al. \emph{Small-Step Live Programming by Example}. (UIST'20) %\url{https://dl.acm.org/doi/10.1145/3379337.3415869}.
+ \bibitem{escher} Aws Albarghouthi et al. \emph{Recursive Program Synthesis}. (CAV'13)% \MY{ジャーナル誌の一節？}'18 \url{https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/cav13.pdf}.
+ \bibitem{kanon} Akio Oka et al. \emph{Live, synchronized, and mental map preserving visualization for data structure programming}. (Onward'18) %\url{https://dl.acm.org/doi/10.1145/3276954.3276962}.
+%  \bibitem{trio} Woosuk Lee et al. \emph{Inductive Synthesis of Structurally Recursive Functional Programs from Non-recursive Expressions}. (POPL'23) %\url{https://dl.acm.org/doi/10.1145/3571263}.
+ \bibitem{pbd} Tessa Lau. \emph{Programming by demonstration: a machine learning approach}. (PhD thesis)
+ \bibitem{first order} Zohar Manna et al. \emph{A deductive approach to program synthesis}.  (TOPLAS'80) %\url{https://dl.acm.org/doi/10.1145/357084.357090}.
+ \bibitem{temporal logic} Zohar Manna et al. \emph{Synthesis of communicating processes from temporal logic specifications}. (TOPLAS'84) %\url{https://dl.acm.org/doi/10.1145/357233.357237}.
+ \bibitem{flash fill} Sumit Gulwani et al. \emph{Automating string processing in spreadsheets using input-output examples}. (POPL'11) %\url{https://dl.acm.org/doi/10.1145/1926385.1926423}.
+ \bibitem{rbsyn} Sankha Narayan Guria et al. \emph{RbSyn: type- and effect-guided program synthesis}. (PLDI'21) %\url{https://dl.acm.org/doi/10.1145/3453483.3454048}.
+\end{thebibliography}
+}
+
+% {\scriptsize
+% \bibliography{ex-abstract}
+% }
+
+\end{document}
