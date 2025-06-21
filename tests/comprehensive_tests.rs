@@ -2,6 +2,7 @@ use refsyn::ir::*;
 use refsyn::ast;
 use refsyn::env::MemoEnv;
 use refsyn::convert_operations_to_ir;
+use refsyn::program_analyzer::ProgramAnalysis;
 use serde_json;
 
 /// tex解析記録に基づく実際のテストケース作成
@@ -9,7 +10,29 @@ use serde_json;
 /// これらのテストは`records/analysys.tex`に記録された手動解析結果を基に、
 /// 各メソッドが正しく合成されることを検証します。
 
-/// テスト用ユーティリティ関数
+/// テスト用ユーティリティ関数 - 動的なthis決定版
+fn create_env_for_method_call(js_program: &str, call_index: usize) -> MemoEnv {
+    let analysis = ProgramAnalysis::analyze_program(js_program)
+        .expect("Failed to analyze JavaScript program");
+    
+    let mut env = MemoEnv::new();
+    
+    // 指定されたメソッド呼び出しのレシーバーをthisにマッピング
+    if let Some(receiver_id) = analysis.get_receiver_id_for_call(call_index) {
+        env.add_name_id_mapping(receiver_id.to_string(), "this".to_string());
+    }
+    
+    // その他のオブジェクトIDも適切にマッピング
+    for (var_name, object_id) in &analysis.object_declarations {
+        if !env.get_name_by_id(object_id).is_some() {
+            env.add_name_id_mapping(object_id.clone(), var_name.clone());
+        }
+    }
+    
+    env
+}
+
+/// 従来版（決め打ち）- 非推奨
 fn create_comprehensive_memo_env() -> MemoEnv {
     let mut env = MemoEnv::new();
     env.add_name_id_mapping("main-new1".to_string(), "this".to_string());
@@ -82,7 +105,18 @@ fn test_append_comprehensive() {
     ];
 
     let operations_list = vec![append_0_ops, append_3_ops];
-    let memo_envs = vec![create_comprehensive_memo_env(), create_comprehensive_memo_env()];
+    
+    // 動的な環境構築を使用
+    let js_program = r#"
+        var lst = new Node();   // main-new1
+        lst.append(0);          // call1: receiver = main-new1
+        lst.append(3);          // call2: receiver = main-new1（同じオブジェクト）
+    "#;
+    
+    let memo_envs = vec![
+        create_env_for_method_call(js_program, 0),  // call1
+        create_env_for_method_call(js_program, 1),  // call2
+    ];
 
     let (program_opt, holes) = find_common_pattern_from_operations(&operations_list, &memo_envs);
 

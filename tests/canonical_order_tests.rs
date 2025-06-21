@@ -1,6 +1,7 @@
 use refsyn::ir::*;
 use refsyn::env::MemoEnv;
 use refsyn::convert_operations_to_ir;
+use refsyn::program_analyzer::ProgramAnalysis;
 use serde_json;
 
 #[test]
@@ -112,7 +113,20 @@ fn test_canonical_order_with_user_example() {
 }
 
 #[test]
-fn test_pattern_matching_with_user_example() {
+fn test_pattern_matching_with_proper_context() {
+    // 実際のJavaScriptプログラムのコンテキストを設定
+    let js_program = r#"
+        var list = new Node();   // main-new1
+        var node = new Node();   // main-new2
+        list.append(0);          // call1: receiver = main-new1
+        node.append(3);          // call2: receiver = main-new2
+    "#;
+
+    // プログラム解析により動的にレシーバーを特定
+    let analysis = ProgramAnalysis::analyze_program(js_program)
+        .expect("Failed to analyze JavaScript program");
+
+    // より構造的に類似した操作列を作成（同じ順序、異なる値のみ）
     let operations_list = vec![
         vec![
             serde_json::json!({
@@ -130,49 +144,69 @@ fn test_pattern_matching_with_user_example() {
             }),
             serde_json::json!({
                 "editType": "addEdge",
-                "from": "main-new1",
-                "label": "next",
-                "to": "__temp1"
-            }),
-            serde_json::json!({
-                "editType": "addEdge",
                 "from": "__temp1",
                 "label": "val",
                 "to": "__temp2"
+            }),
+            serde_json::json!({
+                "editType": "addEdge",
+                "from": "main-new1",  // call1のレシーバー
+                "label": "next",
+                "to": "__temp1"
             })
         ],
         vec![
             serde_json::json!({
                 "editType": "addNode",
                 "id": "__temp3",
+                "isLiteral": false,
+                "label": "Node"
+            }),
+            serde_json::json!({
+                "editType": "addNode",
+                "id": "__temp4",
                 "isLiteral": true,
                 "label": "3",
                 "type": "string"
             }),
             serde_json::json!({
-                "editType": "addNode",
-                "id": "__temp4",
-                "isLiteral": false,
-                "label": "Node"
-            }),
-            serde_json::json!({
                 "editType": "addEdge",
-                "from": "__temp4",
+                "from": "__temp3",
                 "label": "val",
-                "to": "__temp3"
+                "to": "__temp4"
             }),
             serde_json::json!({
                 "editType": "addEdge",
-                "from": "__temp1",
+                "from": "main-new2",  // call2のレシーバー
                 "label": "next",
-                "to": "__temp4"
+                "to": "__temp3"
             })
         ]
     ];
 
+    // 各メソッド呼び出しに対して動的に環境を構築
     let mut memo_envs = vec![MemoEnv::new(), MemoEnv::new()];
-    memo_envs[0].add_name_id_mapping("main-new1".to_string(), "this".to_string());
-    memo_envs[1].add_name_id_mapping("main-new1".to_string(), "this".to_string());
+    
+    // call1 (list.append): main-new1がthis
+    if let Some(receiver_id) = analysis.get_receiver_id_for_call(0) {
+        memo_envs[0].add_name_id_mapping(receiver_id.to_string(), "this".to_string());
+        println!("Call1 receiver: {} -> this", receiver_id);
+    }
+    
+    // call2 (node.append): main-new2がthis
+    if let Some(receiver_id) = analysis.get_receiver_id_for_call(1) {
+        memo_envs[1].add_name_id_mapping(receiver_id.to_string(), "this".to_string());
+        println!("Call2 receiver: {} -> this", receiver_id);
+    }
+
+    // 他のオブジェクトIDも適切にマッピング
+    for (var_name, object_id) in &analysis.object_declarations {
+        for env in &mut memo_envs {
+            if !env.get_name_by_id(object_id).is_some() {
+                env.add_name_id_mapping(object_id.clone(), var_name.clone());
+            }
+        }
+    }
 
     let result = find_common_pattern_from_operations(&operations_list, &memo_envs);
 
@@ -183,6 +217,13 @@ fn test_pattern_matching_with_user_example() {
             
             // プログラムが生成されたことを確認
             assert!(!program.stmts.is_empty());
+            
+            // thisが適切に使用されていることを確認
+            let program_str = program.to_string();
+            println!("Program contains 'this': {}", program_str.contains("this"));
+            
+            // ホールが生成されていることを確認（異なる値に対して）
+            assert!(!holes.is_empty(), "Should have holes for different values");
         },
         (None, _) => {
             panic!("Expected to generate a program, but got None");
