@@ -317,9 +317,9 @@ fn test_complex_dependency_ordering() {
             // プログラムが生成されたことを確認
             assert!(!program.stmts.is_empty());
             
-            // 5つの操作すべてが共通パターンとして抽出されることを期待
-            // （同じ構造的依存関係を持つため）
-            assert_eq!(program.stmts.len(), 5);
+            // 構造的に同じ操作のみが共通パターンとして抽出される
+            // この場合：AddNode(Node), AddEdge(next), AddEdge(val) の3つ
+            assert_eq!(program.stmts.len(), 3);
         },
         (None, _) => {
             panic!("Expected to generate a program, but got None");
