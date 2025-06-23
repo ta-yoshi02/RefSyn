@@ -41,19 +41,8 @@ pub struct Op {
     pub kind: OpKind,
 }
 
-/// 依存辺のタグ
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum EdgeTag {
-    /// 生成-使用の依存関係
-    GenUse,
-    /// 上書きの依存関係
-    Overwrite,
-    /// 戻り値の依存関係
-    ReturnDep,
-}
-
 /// 操作列から依存グラフを構築
-pub fn build_graph(ops: &[Op]) -> (DiGraph<OpId, EdgeTag>, HashMap<OpId, NodeIndex>) {
+pub fn build_graph(ops: &[Op]) -> (DiGraph<OpId, ()>, HashMap<OpId, NodeIndex>) {
     let mut graph = DiGraph::new();
     let mut node_indices = HashMap::new();
     
@@ -71,7 +60,7 @@ pub fn build_graph(ops: &[Op]) -> (DiGraph<OpId, EdgeTag>, HashMap<OpId, NodeInd
                 (OpKind::AddNode { id: id1, .. }, _) => {
                     if references_id(v, id1) {
                         if let (Some(&u_idx), Some(&v_idx)) = (node_indices.get(&u.id), node_indices.get(&v.id)) {
-                            graph.add_edge(u_idx, v_idx, EdgeTag::GenUse);
+                            graph.add_edge(u_idx, v_idx, ());
                         }
                     }
                 },
@@ -81,7 +70,7 @@ pub fn build_graph(ops: &[Op]) -> (DiGraph<OpId, EdgeTag>, HashMap<OpId, NodeInd
                  OpKind::AddEdge { from: from2, label: label2, .. }) => {
                     if from1 == from2 && label1 == label2 {
                         if let (Some(&u_idx), Some(&v_idx)) = (node_indices.get(&u.id), node_indices.get(&v.id)) {
-                            graph.add_edge(u_idx, v_idx, EdgeTag::Overwrite);
+                            graph.add_edge(u_idx, v_idx, ());
                         }
                     }
                 },
@@ -91,7 +80,7 @@ pub fn build_graph(ops: &[Op]) -> (DiGraph<OpId, EdgeTag>, HashMap<OpId, NodeInd
                  OpKind::EditEdgeReference { from: from2, label: label2, .. }) => {
                     if from1 == from2 && label1 == label2 {
                         if let (Some(&u_idx), Some(&v_idx)) = (node_indices.get(&u.id), node_indices.get(&v.id)) {
-                            graph.add_edge(u_idx, v_idx, EdgeTag::Overwrite);
+                            graph.add_edge(u_idx, v_idx, ());
                         }
                     }
                 },
@@ -101,7 +90,7 @@ pub fn build_graph(ops: &[Op]) -> (DiGraph<OpId, EdgeTag>, HashMap<OpId, NodeInd
                  OpKind::EditEdgeReference { from: from2, label: label2, .. }) => {
                     if from1 == from2 && label1 == label2 {
                         if let (Some(&u_idx), Some(&v_idx)) = (node_indices.get(&u.id), node_indices.get(&v.id)) {
-                            graph.add_edge(u_idx, v_idx, EdgeTag::Overwrite);
+                            graph.add_edge(u_idx, v_idx, ());
                         }
                     }
                 },
@@ -111,7 +100,7 @@ pub fn build_graph(ops: &[Op]) -> (DiGraph<OpId, EdgeTag>, HashMap<OpId, NodeInd
                  OpKind::AddVariable { label: label2, .. }) => {
                     if label1 == label2 {
                         if let (Some(&u_idx), Some(&v_idx)) = (node_indices.get(&u.id), node_indices.get(&v.id)) {
-                            graph.add_edge(u_idx, v_idx, EdgeTag::Overwrite);
+                            graph.add_edge(u_idx, v_idx, ());
                         }
                     }
                 },
@@ -121,7 +110,7 @@ pub fn build_graph(ops: &[Op]) -> (DiGraph<OpId, EdgeTag>, HashMap<OpId, NodeInd
                  OpKind::EditVariableReference { label: label2, .. }) => {
                     if label1 == label2 {
                         if let (Some(&u_idx), Some(&v_idx)) = (node_indices.get(&u.id), node_indices.get(&v.id)) {
-                            graph.add_edge(u_idx, v_idx, EdgeTag::Overwrite);
+                            graph.add_edge(u_idx, v_idx, ());
                         }
                     }
                 },
@@ -131,7 +120,7 @@ pub fn build_graph(ops: &[Op]) -> (DiGraph<OpId, EdgeTag>, HashMap<OpId, NodeInd
                  OpKind::EditVariableReference { label: label2, .. }) => {
                     if label1 == label2 {
                         if let (Some(&u_idx), Some(&v_idx)) = (node_indices.get(&u.id), node_indices.get(&v.id)) {
-                            graph.add_edge(u_idx, v_idx, EdgeTag::Overwrite);
+                            graph.add_edge(u_idx, v_idx, ());
                         }
                     }
                 },
