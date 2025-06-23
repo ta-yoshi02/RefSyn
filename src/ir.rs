@@ -619,10 +619,10 @@ fn get_normalized_expr_for_id_with_mapping_and_holes(
 /// IDマッピングとホール情報を考慮した正規化された左辺式を取得（ホール番号正規化対応）
 /// 2つのIDが構造的に同等かを判定する関数
 fn is_structurally_equivalent(
-    id_a: &str, 
-    id_b: &str, 
-    a_ops: &[Op], 
-    b_ops: &[Op], 
+    id_a: &str,
+    id_b: &str,
+    a_ops: &[Op],
+    b_ops: &[Op],
     id_mapping: &HashMap<String, String>
 ) -> bool {
     // 同じIDの場合は同等
@@ -684,6 +684,47 @@ fn is_structurally_equivalent(
         },
         _ => false
     }
+}
+
+/// 依存グラフを用いて2つの操作列が同型かを判定する
+pub fn match_graphs_with_isomorphism(a: &[Op], b: &[Op]) -> bool {
+    use petgraph::algo::is_isomorphic_matching;
+
+    let (graph_a, _idx_a) = build_graph(a);
+    let (graph_b, _idx_b) = build_graph(b);
+
+    let map_a: std::collections::HashMap<&String, &Op> = a.iter().map(|op| (&op.id, op)).collect();
+    let map_b: std::collections::HashMap<&String, &Op> = b.iter().map(|op| (&op.id, op)).collect();
+
+    is_isomorphic_matching(
+        &graph_a,
+        &graph_b,
+        |id_a, id_b| {
+            let op_a = map_a.get(id_a).unwrap();
+            let op_b = map_b.get(id_b).unwrap();
+
+            match (&op_a.kind, &op_b.kind) {
+                (OpKind::AddNode { is_literal: lit_a, .. },
+                 OpKind::AddNode { is_literal: lit_b, .. }) => lit_a == lit_b,
+                (OpKind::AddEdge { label: l_a, .. },
+                 OpKind::AddEdge { label: l_b, .. }) => l_a == l_b,
+                (OpKind::EditEdgeReference { label: l_a, .. },
+                 OpKind::EditEdgeReference { label: l_b, .. }) => l_a == l_b,
+                (OpKind::AddVariable { label: l_a, .. },
+                 OpKind::AddVariable { label: l_b, .. }) => l_a == l_b,
+                (OpKind::EditVariableReference { label: l_a, .. },
+                 OpKind::EditVariableReference { label: l_b, .. }) => l_a == l_b,
+                (OpKind::DeleteEdge { label: l_a, .. },
+                 OpKind::DeleteEdge { label: l_b, .. }) => l_a == l_b,
+                (OpKind::EditEdgeLabel { old_label: o_a, new_label: n_a, .. },
+                 OpKind::EditEdgeLabel { old_label: o_b, new_label: n_b, .. }) => {
+                    o_a == o_b && n_a == n_b
+                }
+                _ => std::mem::discriminant(&op_a.kind) == std::mem::discriminant(&op_b.kind),
+            }
+        },
+        |edge_a, edge_b| edge_a == edge_b,
+    )
 }
 
 pub fn match_graphs(a: &[Op], b: &[Op]) -> MatchResult {
