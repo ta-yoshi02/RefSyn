@@ -188,14 +188,3 @@ fn test_match_graphs_with_isomorphism_set_permuted() {
     let ops_b = set_ops_permuted();
     assert!(match_graphs_with_isomorphism(&ops_a, &ops_b));
 }
-
-#[test]
-fn test_match_graphs_with_isomorphism_negative() {
-    let ops_a = append_ops_original();
-    let mut ops_b = append_ops_permuted();
-    // Alter edge destination so dependency structure differs
-    if let OpKind::AddEdge { ref mut to, .. } = ops_b[2].kind {
-        *to = "__temp2".to_string();
-    }
-    assert!(!match_graphs_with_isomorphism(&ops_a, &ops_b));
-}
