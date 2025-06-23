@@ -48,13 +48,8 @@ pub enum OpKind {
 for 各操作 u in ops:
     for 各後続操作 v in ops[u+1..]:
         if u と v に依存関係がある:
-            グラフに辺を追加 (u → v, EdgeTag)
+            グラフに辺を追加 (u → v)
 ```
-
-#### 依存関係の種類
-- **GenUse**: 生成-使用の依存関係（AddNode → その他の操作）
-- **Overwrite**: 上書きの依存関係（同じプロパティへの操作）
-
 #### 依存関係判定ルール
 1. `AddNode → 任意の操作`: 後続操作がそのNodeIDを参照する場合
 2. `AddEdge → AddEdge`: 同じfromとlabelを持つ場合
