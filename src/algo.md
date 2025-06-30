@@ -741,47 +741,16 @@ graph TD
     classDef label fill:#fff3e0,stroke:#e65100,stroke-width:2px
     classDef literal fill:#fce4ec,stroke:#880e4f,stroke-width:2px
 ```
-### 柔軟な構造マッチングによる対応関係
-
-`match_graphs_with_flexible_structure`による同型判定では、以下の対応関係が確立されます：
-
-#### ノード対応表
-
-| グラフA | グラフB | ノード種別 | マッチング理由 |
-|---------|---------|------------|----------------|
-| op_0 | op_1 | Operation | 両方ともAddNode操作 |
-| op_1 | op_0 | Operation | 両方ともAddNode操作 |
-| op_2 | op_3 | Operation | 両方ともAddEdge操作 |
-| op_3 | op_2 | Operation | 両方ともAddEdge操作 |
-| __temp1 | __temp4 | NodeId | ホールとして扱い（値は異なるが構造的役割は同じ） |
-| __temp2 | __temp3 | NodeId | ホールとして扱い（値は異なるが構造的役割は同じ） |
-| main-new1 | __temp1 | NodeId | ホールとして扱い（値は異なるが構造的役割は同じ） |
-| false | false | NodeType | 同じノードタイプ |
-| true | true | NodeType | 同じノードタイプ |
-| "Node" | "Node" | Label | 同じラベル |
-| "val" | "val" | Label | 同じラベル |
-| "next" | "next" | Label | 同じラベル |
-| "0" | "3" | Literal | ホールとして扱い（値は異なるが構造的役割は同じ） |
-
-#### マッチング結果: **TRUE**
-
-両グラフは構造的に同型です：
-- 同じ操作パターン（AddNode×2, AddEdge×2）
-- 同じラベル使用（"Node", "val", "next"）
-- 同じノードタイプ構成（literal, object）
-- エッジの方向性が保持されている
-
-具体的な値（ノードID、リテラル値）の差異は**ホール**として抽出され、構造的類似性の判定には影響しません。
-
 
 ### 操作列 (append_ops_permuted)
 
 ```rust
 vec![
-    Op { id: "op_0", kind: AddNode { id: "__temp1", is_literal: true, label: "0" } },
-    Op { id: "op_1", kind: AddNode { id: "__temp2", is_literal: false, label: "Node" } },
-    Op { id: "op_2", kind: AddEdge { from: "main-new1", to: "__temp2", label: "next" } },
-    Op { id: "op_3", kind: AddEdge { from: "__temp2", to: "__temp1", label: "val" } },
+    Op { id: "op_0", kind: AddNode { id: "__temp2", is_literal: true, label: "0" } },
+    Op { id: "op_1", kind: AddNode { id: "__temp1", is_literal: false, label: "Node" } },
+    Op { id: "op_2", kind: AddVariable { to: "__temp1", label: "return" } },
+    Op { id: "op_3", kind: AddEdge { from: "__temp1", to: "__temp2", label: "val" } },
+    Op { id: "op_4", kind: AddEdge { from: "__temp1", to: "main-new1", label: "next" } },
 ]
 ```
 
@@ -790,45 +759,195 @@ vec![
 ```mermaid
 graph TD
     %% Operations
-    Op0P[op_0: AddNode]:::operation
-    Op1P[op_1: AddNode]:::operation
-    Op2P[op_2: AddEdge]:::operation
-    Op3P[op_3: AddEdge]:::operation
+    Op0PreP[op_0: AddNode]:::operation
+    Op1PreP[op_1: AddNode]:::operation
+    Op2PreP[op_2: AddVariable]:::operation
+    Op3PreP[op_3: AddEdge]:::operation
+    Op4PreP[op_4: AddEdge]:::operation
     
     %% Node IDs
-    NodeId1P[__temp1]:::nodeId
-    NodeId2P[__temp2]:::nodeId
-    NodeId3P[main-new1]:::nodeId
+    NodeId1PreP[__temp2]:::nodeId
+    NodeId2PreP[__temp1]:::nodeId
+    NodeId3PreP[main-new1]:::nodeId
     
     %% Node Types
-    Type1P[true]:::nodeType
-    Type2P[false]:::nodeType
+    Type1PreP[true]:::nodeType
+    Type2PreP[false]:::nodeType
     
     %% Labels and Literals
-    Literal1P[0]:::literal
-    Label1P[Node]:::label
-    Label2P[next]:::label
-    Label3P[val]:::label
+    Literal1PreP[0]:::literal
+    Label1PreP[Node]:::label
+    Label2PreP[return]:::label
+    Label3PreP[val]:::label
+    Label4PreP[next]:::label
     
     %% op_0 connections
-    Op0P -->|ReferencesNodeId| NodeId1P
-    Op0P -->|SpecifiesNodeType| Type1P
-    Op0P -->|UsesLiteral| Literal1P
+    Op0PreP -->|ReferencesNodeId| NodeId1PreP
+    Op0PreP -->|SpecifiesNodeType| Type1PreP
+    Op0PreP -->|UsesLiteral| Literal1PreP
     
     %% op_1 connections
-    Op1P -->|ReferencesNodeId| NodeId2P
-    Op1P -->|SpecifiesNodeType| Type2P
-    Op1P -->|UsesLabel| Label1P
+    Op1PreP -->|ReferencesNodeId| NodeId2PreP
+    Op1PreP -->|SpecifiesNodeType| Type2PreP
+    Op1PreP -->|UsesLabel| Label1PreP
     
     %% op_2 connections
-    Op2P -->|EdgeDirection:from| NodeId3P
-    Op2P -->|EdgeDirection:to| NodeId2P
-    Op2P -->|UsesLabel| Label2P
+    Op2PreP -->|ReferencesNodeId| NodeId2PreP
+    Op2PreP -->|UsesLabel| Label2PreP
     
     %% op_3 connections
-    Op3P -->|EdgeDirection:from| NodeId2P
-    Op3P -->|EdgeDirection:to| NodeId1P
-    Op3P -->|UsesLabel| Label3P
+    Op3PreP -->|EdgeDirection:from| NodeId2PreP
+    Op3PreP -->|EdgeDirection:to| NodeId1PreP
+    Op3PreP -->|UsesLabel| Label3PreP
+    
+    %% op_4 connections
+    Op4PreP -->|EdgeDirection:from| NodeId2PreP
+    Op4PreP -->|EdgeDirection:to| NodeId3PreP
+    Op4PreP -->|UsesLabel| Label4PreP
+    
+    %% Styling
+    classDef operation fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef nodeId fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef nodeType fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef label fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef literal fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+```
+
+### 4. Prepend操作
+
+#### 操作列 (prepend_ops_original)
+
+```rust
+vec![
+    Op { id: "op_0", kind: AddNode { id: "__temp1", is_literal: false, label: "Node" } },
+    Op { id: "op_1", kind: AddNode { id: "__temp2", is_literal: true, label: "0" } },
+    Op { id: "op_2", kind: AddEdge { from: "__temp1", to: "__temp2", label: "val" } },
+    Op { id: "op_3", kind: AddEdge { from: "__temp1", to: "main-new1", label: "next" } },
+    Op { id: "op_4", kind: AddVariable { to: "__temp1", label: "return" } },
+]
+```
+
+#### 詳細構造グラフ (prepend_ops_original)
+
+```mermaid
+graph TD
+    %% Operations
+    Op0Pre[op_0: AddNode]:::operation
+    Op1Pre[op_1: AddNode]:::operation
+    Op2Pre[op_2: AddEdge]:::operation
+    Op3Pre[op_3: AddEdge]:::operation
+    Op4Pre[op_4: AddVariable]:::operation
+    
+    %% Node IDs
+    NodeId1Pre[__temp1]:::nodeId
+    NodeId2Pre[__temp2]:::nodeId
+    NodeId3Pre[main-new1]:::nodeId
+    
+    %% Node Types
+    Type1Pre[false]:::nodeType
+    Type2Pre[true]:::nodeType
+    
+    %% Labels and Literals
+    Label1Pre[Node]:::label
+    Literal1Pre[0]:::literal
+    Label2Pre[val]:::label
+    Label3Pre[next]:::label
+    Label4Pre[return]:::label
+    
+    %% op_0 connections
+    Op0Pre -->|ReferencesNodeId| NodeId1Pre
+    Op0Pre -->|SpecifiesNodeType| Type1Pre
+    Op0Pre -->|UsesLabel| Label1Pre
+    
+    %% op_1 connections
+    Op1Pre -->|ReferencesNodeId| NodeId2Pre
+    Op1Pre -->|SpecifiesNodeType| Type2Pre
+    Op1Pre -->|UsesLiteral| Literal1Pre
+    
+    %% op_2 connections
+    Op2Pre -->|EdgeDirection:from| NodeId1Pre
+    Op2Pre -->|EdgeDirection:to| NodeId2Pre
+    Op2Pre -->|UsesLabel| Label2Pre
+    
+    %% op_3 connections
+    Op3Pre -->|EdgeDirection:from| NodeId1Pre
+    Op3Pre -->|EdgeDirection:to| NodeId3Pre
+    Op3Pre -->|UsesLabel| Label3Pre
+    
+    %% op_4 connections
+    Op4Pre -->|ReferencesNodeId| NodeId1Pre
+    Op4Pre -->|UsesLabel| Label4Pre
+    
+    %% Styling
+    classDef operation fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef nodeId fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef nodeType fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef label fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef literal fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+```
+
+#### 操作列 (prepend_ops_permuted)
+
+```rust
+vec![
+    Op { id: "op_0", kind: AddNode { id: "__temp2", is_literal: true, label: "0" } },
+    Op { id: "op_1", kind: AddNode { id: "__temp1", is_literal: false, label: "Node" } },
+    Op { id: "op_2", kind: AddVariable { to: "__temp1", label: "return" } },
+    Op { id: "op_3", kind: AddEdge { from: "__temp1", to: "__temp2", label: "val" } },
+    Op { id: "op_4", kind: AddEdge { from: "__temp1", to: "main-new1", label: "next" } },
+]
+```
+
+#### 詳細構造グラフ (prepend_ops_permuted)
+
+```mermaid
+graph TD
+    %% Operations
+    Op0PreP[op_0: AddNode]:::operation
+    Op1PreP[op_1: AddNode]:::operation
+    Op2PreP[op_2: AddVariable]:::operation
+    Op3PreP[op_3: AddEdge]:::operation
+    Op4PreP[op_4: AddEdge]:::operation
+    
+    %% Node IDs
+    NodeId1PreP[__temp2]:::nodeId
+    NodeId2PreP[__temp1]:::nodeId
+    NodeId3PreP[main-new1]:::nodeId
+    
+    %% Node Types
+    Type1PreP[true]:::nodeType
+    Type2PreP[false]:::nodeType
+    
+    %% Labels and Literals
+    Literal1PreP[0]:::literal
+    Label1PreP[Node]:::label
+    Label2PreP[return]:::label
+    Label3PreP[val]:::label
+    Label4PreP[next]:::label
+    
+    %% op_0 connections
+    Op0PreP -->|ReferencesNodeId| NodeId1PreP
+    Op0PreP -->|SpecifiesNodeType| Type1PreP
+    Op0PreP -->|UsesLiteral| Literal1PreP
+    
+    %% op_1 connections
+    Op1PreP -->|ReferencesNodeId| NodeId2PreP
+    Op1PreP -->|SpecifiesNodeType| Type2PreP
+    Op1PreP -->|UsesLabel| Label1PreP
+    
+    %% op_2 connections
+    Op2PreP -->|ReferencesNodeId| NodeId2PreP
+    Op2PreP -->|UsesLabel| Label2PreP
+    
+    %% op_3 connections
+    Op3PreP -->|EdgeDirection:from| NodeId2PreP
+    Op3PreP -->|EdgeDirection:to| NodeId1PreP
+    Op3PreP -->|UsesLabel| Label3PreP
+    
+    %% op_4 connections
+    Op4PreP -->|EdgeDirection:from| NodeId2PreP
+    Op4PreP -->|EdgeDirection:to| NodeId3PreP
+    Op4PreP -->|UsesLabel| Label4PreP
     
     %% Styling
     classDef operation fill:#e1f5fe,stroke:#01579b,stroke-width:2px
@@ -911,6 +1030,77 @@ graph TD
     classDef literal fill:#fce4ec,stroke:#880e4f,stroke-width:2px
 ```
 
+#### 操作列 (prepend_ops_permuted)
+
+```rust
+vec![
+    Op { id: "op_0", kind: AddNode { id: "__temp2", is_literal: true, label: "0" } },
+    Op { id: "op_1", kind: AddNode { id: "__temp1", is_literal: false, label: "Node" } },
+    Op { id: "op_2", kind: AddVariable { to: "__temp1", label: "return" } },
+    Op { id: "op_3", kind: AddEdge { from: "__temp1", to: "__temp2", label: "val" } },
+    Op { id: "op_4", kind: AddEdge { from: "__temp1", to: "main-new1", label: "next" } },
+]
+```
+
+#### 詳細構造グラフ (prepend_ops_permuted)
+
+```mermaid
+graph TD
+    %% Operations
+    Op0PreP[op_0: AddNode]:::operation
+    Op1PreP[op_1: AddNode]:::operation
+    Op2PreP[op_2: AddVariable]:::operation
+    Op3PreP[op_3: AddEdge]:::operation
+    Op4PreP[op_4: AddEdge]:::operation
+    
+    %% Node IDs
+    NodeId1PreP[__temp2]:::nodeId
+    NodeId2PreP[__temp1]:::nodeId
+    NodeId3PreP[main-new1]:::nodeId
+    
+    %% Node Types
+    Type1PreP[true]:::nodeType
+    Type2PreP[false]:::nodeType
+    
+    %% Labels and Literals
+    Literal1PreP[0]:::literal
+    Label1PreP[Node]:::label
+    Label2PreP[return]:::label
+    Label3PreP[val]:::label
+    Label4PreP[next]:::label
+    
+    %% op_0 connections
+    Op0PreP -->|ReferencesNodeId| NodeId1PreP
+    Op0PreP -->|SpecifiesNodeType| Type1PreP
+    Op0PreP -->|UsesLiteral| Literal1PreP
+    
+    %% op_1 connections
+    Op1PreP -->|ReferencesNodeId| NodeId2PreP
+    Op1PreP -->|SpecifiesNodeType| Type2PreP
+    Op1PreP -->|UsesLabel| Label1PreP
+    
+    %% op_2 connections
+    Op2PreP -->|ReferencesNodeId| NodeId2PreP
+    Op2PreP -->|UsesLabel| Label2PreP
+    
+    %% op_3 connections
+    Op3PreP -->|EdgeDirection:from| NodeId2PreP
+    Op3PreP -->|EdgeDirection:to| NodeId1PreP
+    Op3PreP -->|UsesLabel| Label3PreP
+    
+    %% op_4 connections
+    Op4PreP -->|EdgeDirection:from| NodeId2PreP
+    Op4PreP -->|EdgeDirection:to| NodeId3PreP
+    Op4PreP -->|UsesLabel| Label4PreP
+    
+    %% Styling
+    classDef operation fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef nodeId fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef nodeType fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef label fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef literal fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+```
+
 ### 4. Remove Last操作
 
 #### 操作列 (remove_last_ops_a)
@@ -933,6 +1123,32 @@ graph TD
     
     %% op_0 connections
     Op0Del -->|ReferencesNodeId| NodeId1Del
+    
+    %% Styling
+    classDef operation fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef nodeId fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+```
+
+#### 操作列 (remove_last_ops_b)
+
+```rust
+vec![
+    Op { id: "op_0", kind: DeleteNode { id: "main-new2" } },
+]
+```
+
+#### 詳細構造グラフ (remove_last_ops_b)
+
+```mermaid
+graph TD
+    %% Operations
+    Op0DelB[op_0: DeleteNode]:::operation
+    
+    %% Node IDs
+    NodeId1DelB[main-new2]:::nodeId
+    
+    %% op_0 connections
+    Op0DelB -->|ReferencesNodeId| NodeId1DelB
     
     %% Styling
     classDef operation fill:#e1f5fe,stroke:#01579b,stroke-width:2px
@@ -972,7 +1188,125 @@ graph TD
     classDef label fill:#fff3e0,stroke:#e65100,stroke-width:2px
 ```
 
-### 6. Insert After操作
+#### 操作列 (remove_first_ops_b)
+
+```rust
+vec![
+    Op { id: "op_0", kind: AddVariable { to: "main-new3", label: "return" } }
+]
+```
+
+#### 詳細構造グラフ (remove_first_ops_b)
+
+```mermaid
+graph TD
+    %% Operations
+    Op0VarB[op_0: AddVariable]:::operation
+    
+    %% Node IDs
+    NodeId1VarB[main-new3]:::nodeId
+    
+    %% Labels
+    Label1VarB[return]:::label
+    
+    %% op_0 connections
+    Op0VarB -->|ReferencesNodeId| NodeId1VarB
+    Op0VarB -->|UsesLabel| Label1VarB
+    
+    %% Styling
+    classDef operation fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef nodeId fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef label fill:#fff3e0,stroke:#e65100,stroke-width:2px
+```
+
+### 6. Remove At操作（非同型ペア）
+
+#### 操作列 (remove_at_ops_original)
+
+```rust
+vec![
+    Op { id: "op_0", kind: EditEdgeReference { from: "main-new2", old_to: "main-new3", new_to: "main-new4", label: "next" } },
+    Op { id: "op_1", kind: AddVariable { to: "main-new1", label: "return" } },
+]
+```
+
+#### 詳細構造グラフ (remove_at_ops_original)
+
+```mermaid
+graph TD
+    %% Operations
+    Op0RemAt[op_0: EditEdgeReference]:::operation
+    Op1RemAt[op_1: AddVariable]:::operation
+    
+    %% Node IDs
+    NodeId1RemAt[main-new2]:::nodeId
+    NodeId2RemAt[main-new3]:::nodeId
+    NodeId3RemAt[main-new4]:::nodeId
+    NodeId4RemAt[main-new1]:::nodeId
+    
+    %% Labels
+    Label1RemAt[next]:::label
+    Label2RemAt[return]:::label
+    
+    %% op_0 connections
+    Op0RemAt -->|EdgeDirection:from| NodeId1RemAt
+    Op0RemAt -->|EdgeDirection:old_to| NodeId2RemAt
+    Op0RemAt -->|EdgeDirection:new_to| NodeId3RemAt
+    Op0RemAt -->|UsesLabel| Label1RemAt
+    
+    %% op_1 connections
+    Op1RemAt -->|ReferencesNodeId| NodeId4RemAt
+    Op1RemAt -->|UsesLabel| Label2RemAt
+    
+    %% Styling
+    classDef operation fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef nodeId fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef label fill:#fff3e0,stroke:#e65100,stroke-width:2px
+```
+
+#### 操作列 (remove_at_ops_permuted)
+
+```rust
+vec![
+    Op { id: "op_0", kind: AddVariable { to: "main-new1", label: "return" } },
+    Op { id: "op_1", kind: EditEdgeReference { from: "main-new1", old_to: "main-new2", new_to: "main-new4", label: "next" } },
+]
+```
+
+#### 詳細構造グラフ (remove_at_ops_permuted)
+
+```mermaid
+graph TD
+    %% Operations
+    Op0RemAtP[op_0: AddVariable]:::operation
+    Op1RemAtP[op_1: EditEdgeReference]:::operation
+    
+    %% Node IDs
+    NodeId1RemAtP[main-new1]:::nodeId
+    NodeId2RemAtP[main-new2]:::nodeId
+    NodeId3RemAtP[main-new4]:::nodeId
+    
+    %% Labels
+    Label1RemAtP[return]:::label
+    Label2RemAtP[next]:::label
+    
+    %% op_0 connections
+    Op0RemAtP -->|ReferencesNodeId| NodeId1RemAtP
+    Op0RemAtP -->|UsesLabel| Label1RemAtP
+    
+    %% op_1 connections
+    Op1RemAtP -->|EdgeDirection:from| NodeId1RemAtP
+    Op1RemAtP -->|EdgeDirection:old_to| NodeId2RemAtP
+    Op1RemAtP -->|EdgeDirection:new_to| NodeId3RemAtP
+    Op1RemAtP -->|UsesLabel| Label2RemAtP
+    
+    %% Styling
+    classDef operation fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef nodeId fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef label fill:#fff3e0,stroke:#e65100,stroke-width:2px
+```
+
+### 7. Insert After操作
 
 #### 操作列 (insert_after_ops_original)
 
@@ -1047,7 +1381,80 @@ graph TD
     classDef literal fill:#fce4ec,stroke:#880e4f,stroke-width:2px
 ```
 
-### 7. Concat操作
+#### 操作列 (insert_after_ops_permuted)
+
+```rust
+vec![
+    Op { id: "op_0", kind: AddNode { id: "__temp3", is_literal: false, label: "Node" } },
+    Op { id: "op_1", kind: AddNode { id: "__temp4", is_literal: true, label: "4" } },
+    Op { id: "op_2", kind: AddEdge { from: "__temp3", to: "__temp4", label: "val" } },
+    Op { id: "op_3", kind: AddEdge { from: "__temp3", to: "main-new2", label: "next" } },
+    Op { id: "op_4", kind: EditEdgeReference { from: "main-new1", old_to: "main-new2", new_to: "__temp3", label: "next" } },
+]
+```
+
+#### 詳細構造グラフ (insert_after_ops_permuted)
+
+```mermaid
+graph TD
+    %% Operations
+    Op0InsP[op_0: AddNode]:::operation
+    Op1InsP[op_1: AddNode]:::operation
+    Op2InsP[op_2: AddEdge]:::operation
+    Op3InsP[op_3: AddEdge]:::operation
+    Op4InsP[op_4: EditEdgeReference]:::operation
+    
+    %% Node IDs
+    NodeId1InsP[__temp3]:::nodeId
+    NodeId2InsP[__temp4]:::nodeId
+    NodeId3InsP[main-new2]:::nodeId
+    NodeId4InsP[main-new1]:::nodeId
+    
+    %% Node Types
+    Type1InsP[false]:::nodeType
+    Type2InsP[true]:::nodeType
+    
+    %% Labels and Literals
+    Label1InsP[Node]:::label
+    Literal1InsP[4]:::literal
+    Label2InsP[val]:::label
+    Label3InsP[next]:::label
+    
+    %% op_0 connections
+    Op0InsP -->|ReferencesNodeId| NodeId1InsP
+    Op0InsP -->|SpecifiesNodeType| Type1InsP
+    Op0InsP -->|UsesLabel| Label1InsP
+    
+    %% op_1 connections
+    Op1InsP -->|ReferencesNodeId| NodeId2InsP
+    Op1InsP -->|SpecifiesNodeType| Type2InsP
+    Op1InsP -->|UsesLiteral| Literal1InsP
+    
+    %% op_2 connections
+    Op2InsP -->|EdgeDirection:from| NodeId1InsP
+    Op2InsP -->|EdgeDirection:to| NodeId2InsP
+    Op2InsP -->|UsesLabel| Label2InsP
+    
+    %% op_3 connections
+    Op3InsP -->|EdgeDirection:from| NodeId1InsP
+    Op3InsP -->|EdgeDirection:to| NodeId3InsP
+    Op3InsP -->|UsesLabel| Label3InsP
+    
+    %% op_4 connections
+    Op4InsP -->|EdgeDirection:from| NodeId4InsP
+    Op4InsP -->|EdgeDirection:old_to| NodeId3InsP
+    Op4InsP -->|EdgeDirection:new_to| NodeId1InsP
+    Op4InsP -->|UsesLabel| Label3InsP
+    
+    %% Styling
+    classDef operation fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef nodeId fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef nodeType fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef label fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef literal fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+```
+
+### 8. Concat操作
 
 #### 操作列 (concat_ops_original)
 
@@ -1082,7 +1489,40 @@ graph TD
     classDef label fill:#fff3e0,stroke:#e65100,stroke-width:2px
 ```
 
-### 8. Set操作
+#### 操作列 (concat_ops_permuted)
+
+```rust
+vec![
+    Op { id: "op_0", kind: AddEdge { from: "main-new5", to: "main-new6", label: "next" } }
+]
+```
+
+#### 詳細構造グラフ (concat_ops_permuted)
+
+```mermaid
+graph TD
+    %% Operations
+    Op0ConP[op_0: AddEdge]:::operation
+    
+    %% Node IDs
+    NodeId1ConP[main-new5]:::nodeId
+    NodeId2ConP[main-new6]:::nodeId
+    
+    %% Labels
+    Label1ConP[next]:::label
+    
+    %% op_0 connections
+    Op0ConP -->|EdgeDirection:from| NodeId1ConP
+    Op0ConP -->|EdgeDirection:to| NodeId2ConP
+    Op0ConP -->|UsesLabel| Label1ConP
+    
+    %% Styling
+    classDef operation fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef nodeId fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef label fill:#fff3e0,stroke:#e65100,stroke-width:2px
+```
+
+### 9. Set操作
 
 #### 操作列 (set_ops_original)
 
@@ -1132,7 +1572,55 @@ graph TD
     classDef literal fill:#fce4ec,stroke:#880e4f,stroke-width:2px
 ```
 
-## 詳細構造マッチングの結果
+#### 操作列 (set_ops_permuted)
+
+```rust
+vec![
+    Op { id: "op_0", kind: AddNode { id: "__temp2", is_literal: true, label: "4" } },
+    Op { id: "op_1", kind: EditEdgeReference { from: "main-new2", old_to: "main-new2-val", new_to: "__temp2", label: "val" } },
+]
+```
+
+#### 詳細構造グラフ (set_ops_permuted)
+
+```mermaid
+graph TD
+    %% Operations
+    Op0SetP[op_0: AddNode]:::operation
+    Op1SetP[op_1: EditEdgeReference]:::operation
+    
+    %% Node IDs
+    NodeId1SetP[__temp2]:::nodeId
+    NodeId2SetP[main-new2]:::nodeId
+    NodeId3SetP[main-new2-val]:::nodeId
+    
+    %% Node Types
+    Type1SetP[true]:::nodeType
+    
+    %% Labels and Literals
+    Literal1SetP[4]:::literal
+    Label1SetP[val]:::label
+    
+    %% op_0 connections
+    Op0SetP -->|ReferencesNodeId| NodeId1SetP
+    Op0SetP -->|SpecifiesNodeType| Type1SetP
+    Op0SetP -->|UsesLiteral| Literal1SetP
+    
+    %% op_1 connections
+    Op1SetP -->|EdgeDirection:from| NodeId2SetP
+    Op1SetP -->|EdgeDirection:old_to| NodeId3SetP
+    Op1SetP -->|EdgeDirection:new_to| NodeId1SetP
+    Op1SetP -->|UsesLabel| Label1SetP
+    
+    %% Styling
+    classDef operation fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef nodeId fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef nodeType fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef label fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef literal fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+```
+
+### 詳細構造マッチングの結果
 
 以下は、各操作ペアに対する`match_graphs_with_flexible_structure`の判定結果です：
 
