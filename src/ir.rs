@@ -924,6 +924,204 @@ pub fn match_graphs(a: &[Op], b: &[Op]) -> MatchResult {
     MatchResult { common_ops, holes }
 }
 
+/// 結果として最大共通部分グラフの写像とそれぞれの差分を返す構造体
+#[derive(Debug, Clone)]
+pub struct CommonSubgraphResult {
+    pub mapping: Vec<(OpId, OpId)>,
+    pub diff_a: Vec<OpId>,
+    pub diff_b: Vec<OpId>,
+}
+
+fn same_id_category(a: &str, b: &str) -> bool {
+    if a == b {
+        return true;
+    }
+    let cat = |s: &str| {
+        if s.contains("__temp") {
+            "temp"
+        } else if s.contains("main-new") {
+            "main"
+        } else {
+            "other"
+        }
+    };
+    cat(a) == cat(b)
+}
+
+fn node_ids_match(
+    id_a: &str,
+    id_b: &str,
+    nodes_a: &HashMap<NodeId, (bool, String)>,
+    nodes_b: &HashMap<NodeId, (bool, String)>,
+) -> bool {
+    match (nodes_a.get(id_a), nodes_b.get(id_b)) {
+        (Some((lit_a, lab_a)), Some((lit_b, lab_b))) => {
+            if lit_a != lit_b {
+                false
+            } else if *lit_a {
+                true
+            } else {
+                lab_a == lab_b
+            }
+        }
+        (None, None) => same_id_category(id_a, id_b),
+        _ => false,
+    }
+}
+
+fn ops_compatible(
+    op_a: &Op,
+    op_b: &Op,
+    nodes_a: &HashMap<NodeId, (bool, String)>,
+    nodes_b: &HashMap<NodeId, (bool, String)>,
+) -> bool {
+    match (&op_a.kind, &op_b.kind) {
+        (OpKind::AddNode { is_literal: l1, label: lab1, .. },
+         OpKind::AddNode { is_literal: l2, label: lab2, .. }) => {
+            l1 == l2 && (!l1 || lab1 == lab2)
+        },
+        (OpKind::AddEdge { from: f1, to: t1, label: lab1 },
+         OpKind::AddEdge { from: f2, to: t2, label: lab2 }) => {
+            lab1 == lab2
+                && node_ids_match(f1, f2, nodes_a, nodes_b)
+                && node_ids_match(t1, t2, nodes_a, nodes_b)
+        }
+        (OpKind::EditEdgeReference { label: lab1, .. }, OpKind::EditEdgeReference { label: lab2, .. }) => lab1 == lab2,
+        (OpKind::AddVariable { label: lab1, .. }, OpKind::AddVariable { label: lab2, .. }) => lab1 == lab2,
+        (OpKind::EditVariableReference { label: lab1, .. }, OpKind::EditVariableReference { label: lab2, .. }) => lab1 == lab2,
+        _ => std::mem::discriminant(&op_a.kind) == std::mem::discriminant(&op_b.kind),
+    }
+}
+
+fn build_association_graph<'a>(
+    a: &'a [Op],
+    b: &'a [Op],
+    g_a: &DiGraph<OpId, ()>,
+    g_b: &DiGraph<OpId, ()>,
+    idx_a: &HashMap<OpId, NodeIndex>,
+    idx_b: &HashMap<OpId, NodeIndex>,
+) -> (petgraph::graph::UnGraph<(OpId, OpId), ()>, Vec<(OpId, OpId)>) {
+    use petgraph::graph::UnGraph;
+
+    let mut assoc: UnGraph<(OpId, OpId), ()> = UnGraph::new_undirected();
+    let mut nodes = Vec::new();
+
+    let node_map_a: HashMap<_, _> = a
+        .iter()
+        .filter_map(|op| {
+            if let OpKind::AddNode { id, is_literal, label } = &op.kind {
+                Some((id.clone(), (*is_literal, label.clone())))
+            } else {
+                None
+            }
+        })
+        .collect();
+    let node_map_b: HashMap<_, _> = b
+        .iter()
+        .filter_map(|op| {
+            if let OpKind::AddNode { id, is_literal, label } = &op.kind {
+                Some((id.clone(), (*is_literal, label.clone())))
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    for op_a in a {
+        for op_b in b {
+            if ops_compatible(op_a, op_b, &node_map_a, &node_map_b) {
+                let idx = assoc.add_node((op_a.id.clone(), op_b.id.clone()));
+                nodes.push(((op_a.id.clone(), op_b.id.clone()), idx));
+            }
+        }
+    }
+
+    // For each pair of nodes in association graph, add edge if consistent
+    let node_pairs: Vec<_> = nodes.clone();
+    for ((a1, b1), idx1) in &node_pairs {
+        for ((a2, b2), idx2) in &node_pairs {
+            if a1 == a2 || b1 == b2 {
+                continue;
+            }
+            let a_i = idx_a.get(a1).unwrap();
+            let a_j = idx_a.get(a2).unwrap();
+            let b_i = idx_b.get(b1).unwrap();
+            let b_j = idx_b.get(b2).unwrap();
+
+            let a_has = g_a.find_edge(*a_i, *a_j).is_some();
+            let b_has = g_b.find_edge(*b_i, *b_j).is_some();
+            let a_rev = g_a.find_edge(*a_j, *a_i).is_some();
+            let b_rev = g_b.find_edge(*b_j, *b_i).is_some();
+
+            if a_has == b_has && a_rev == b_rev {
+                assoc.update_edge(*idx1, *idx2, ());
+            }
+        }
+    }
+
+    (assoc, nodes.into_iter().map(|(p, _)| p).collect())
+}
+
+fn maximum_clique(graph: &petgraph::graph::UnGraph<(OpId, OpId), ()>) -> Vec<NodeIndex> {
+    use std::collections::HashSet;
+    fn bronk(
+        g: &petgraph::graph::UnGraph<(OpId, OpId), ()>,
+        r: &mut Vec<NodeIndex>,
+        mut p: HashSet<NodeIndex>,
+        mut x: HashSet<NodeIndex>,
+        best: &mut Vec<NodeIndex>,
+    ) {
+        if p.is_empty() && x.is_empty() {
+            if r.len() > best.len() {
+                *best = r.clone();
+            }
+            return;
+        }
+
+        let mut p_vec: Vec<NodeIndex> = p.iter().cloned().collect();
+        while let Some(v) = p_vec.pop() {
+            r.push(v);
+            let neigh: HashSet<NodeIndex> = g.neighbors(v).collect();
+            let p_next: HashSet<NodeIndex> = p.intersection(&neigh).cloned().collect();
+            let x_next: HashSet<NodeIndex> = x.intersection(&neigh).cloned().collect();
+            bronk(g, r, p_next, x_next, best);
+            r.pop();
+            p.remove(&v);
+            x.insert(v);
+        }
+    }
+
+    let mut r = Vec::new();
+    let p: std::collections::HashSet<_> = graph.node_indices().collect();
+    let x = std::collections::HashSet::new();
+    let mut best = Vec::new();
+    bronk(graph, &mut r, p, x, &mut best);
+    best
+}
+
+/// 最大共通部分グラフを求め、差分も取得する
+pub fn maximum_common_subgraph(a: &[Op], b: &[Op]) -> CommonSubgraphResult {
+    let (g_a, idx_a) = build_graph(a);
+    let (g_b, idx_b) = build_graph(b);
+    let (assoc, _pairs) = build_association_graph(a, b, &g_a, &g_b, &idx_a, &idx_b);
+
+    let clique = maximum_clique(&assoc);
+
+    let mut mapping = Vec::new();
+    for idx in &clique {
+        let (ref a_id, ref b_id) = assoc[*idx];
+        mapping.push((a_id.clone(), b_id.clone()));
+    }
+
+    let a_in: std::collections::HashSet<_> = mapping.iter().map(|(a_id, _)| a_id.clone()).collect();
+    let b_in: std::collections::HashSet<_> = mapping.iter().map(|(_, b_id)| b_id.clone()).collect();
+    let diff_a = a.iter().filter(|op| !a_in.contains(&op.id)).map(|op| op.id.clone()).collect();
+    let diff_b = b.iter().filter(|op| !b_in.contains(&op.id)).map(|op| op.id.clone()).collect();
+
+    CommonSubgraphResult { mapping, diff_a, diff_b }
+}
+
+
 /// 操作列からASTを生成する関数
 pub fn generate_ast_from_sorted_ops(ops: &[Op], env: &MemoEnv) -> ast::Program {
     eprintln!("=== generate_ast_from_sorted_ops called with {} operations ===", ops.len());
