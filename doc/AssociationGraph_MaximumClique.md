@@ -18,6 +18,14 @@ Association Graph の最大クリークは、同時に選択可能な頂点ペ�
 
 得られたクリークに含まれない頂点は、それぞれのグラフに固有の頂点として差分に分類します。
 
+## 詳細構造グラフを用いた拡張
+
+`semantic_common_subgraph` 関数では、各操作列から `build_detailed_structure_graph` を使って
+`DetailedNode` ベースのグラフを構築します。Association Graph もこれらのノードのペアで
+作成されるため、`AddNode` や `AddEdge` が参照する `NodeId` が異なっていても同一操作とみな
+すことができます。最大クリークに含まれた `NodeId` のペアで値が異なるものは
+`Hole::Ref` として結果に保持され、対応する操作写像と共に返されます。
+
 ## テスト手順
 
 tests/max_common_subgraph_tests.rs では次の 2 パターンを確認しています。
