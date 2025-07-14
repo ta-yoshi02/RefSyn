@@ -1,4 +1,4 @@
-use refsyn::ir::{Op, OpKind, maximum_common_subgraph};
+use refsyn::ir::{Op, OpKind, maximum_common_subgraph, semantic_common_subgraph};
 
 fn append_ops_original() -> Vec<Op> {
     /*
@@ -209,4 +209,19 @@ fn test_max_common_subgraph_difference() {
     assert_eq!(mapping, expected_mapping);
     assert_eq!(res.diff_a, vec!["op_1".to_string(), "op_4".to_string()]);
     assert_eq!(res.diff_b, vec!["op_1".to_string(), "op_4".to_string()]);
+}
+
+#[test]
+fn test_semantic_common_subgraph_with_holes() {
+    let ops_a = append_ops_original();
+    let ops_b = append_ops_b();
+    let res = semantic_common_subgraph(&ops_a, &ops_b);
+    let mut mapping = res.mapping.clone();
+    mapping.sort();
+    let mut expected_mapping = vec![("op_0".to_string(), "op_1".to_string()), ("op_2".to_string(), "op_3".to_string())];
+    expected_mapping.sort();
+    assert_eq!(mapping, expected_mapping);
+    assert_eq!(res.diff_a, vec!["op_1".to_string(), "op_3".to_string()]);
+    assert_eq!(res.diff_b, vec!["op_0".to_string(), "op_2".to_string()]);
+    assert_eq!(res.holes.len(), 2);
 }

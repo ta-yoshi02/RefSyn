@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::ast;
 use crate::env::MemoEnv;
 use crate::convert_operations_to_ir;
+use crate::build_graph_detailed::{DetailedNode, build_detailed_structure_graph};
 
 /// 操作ID（各操作を一意に識別）
 pub type OpId = String;
@@ -932,6 +933,15 @@ pub struct CommonSubgraphResult {
     pub diff_b: Vec<OpId>,
 }
 
+/// 結果としてノードIDの差異も返す構造体（semantic_common_subgraph 用）
+#[derive(Debug, Clone)]
+pub struct SemanticSubgraphResult {
+    pub mapping: Vec<(OpId, OpId)>,
+    pub diff_a: Vec<OpId>,
+    pub diff_b: Vec<OpId>,
+    pub holes: Vec<Hole>,
+}
+
 fn same_id_category(a: &str, b: &str) -> bool {
     if a == b {
         return true;
@@ -993,17 +1003,23 @@ fn ops_compatible(
     }
 }
 
-fn build_association_graph<'a>(
+fn build_association_graph<'a, N, E, F>(
     a: &'a [Op],
     b: &'a [Op],
-    g_a: &DiGraph<OpId, ()>,
-    g_b: &DiGraph<OpId, ()>,
-    idx_a: &HashMap<OpId, NodeIndex>,
-    idx_b: &HashMap<OpId, NodeIndex>,
-) -> (petgraph::graph::UnGraph<(OpId, OpId), ()>, Vec<(OpId, OpId)>) {
+    g_a: &DiGraph<N, E>,
+    g_b: &DiGraph<N, E>,
+    idx_a: &HashMap<N, NodeIndex>,
+    idx_b: &HashMap<N, NodeIndex>,
+    mut op_to_node: F,
+) -> (petgraph::graph::UnGraph<(N, N), ()>, Vec<(N, N)>)
+where
+    N: Clone + Eq + std::hash::Hash,
+    E: PartialEq,
+    F: FnMut(&Op) -> N,
+{
     use petgraph::graph::UnGraph;
 
-    let mut assoc: UnGraph<(OpId, OpId), ()> = UnGraph::new_undirected();
+    let mut assoc: UnGraph<(N, N), ()> = UnGraph::new_undirected();
     let mut nodes = Vec::new();
 
     let node_map_a: HashMap<_, _> = a
@@ -1030,8 +1046,10 @@ fn build_association_graph<'a>(
     for op_a in a {
         for op_b in b {
             if ops_compatible(op_a, op_b, &node_map_a, &node_map_b) {
-                let idx = assoc.add_node((op_a.id.clone(), op_b.id.clone()));
-                nodes.push(((op_a.id.clone(), op_b.id.clone()), idx));
+                let na = op_to_node(op_a);
+                let nb = op_to_node(op_b);
+                let idx = assoc.add_node((na.clone(), nb.clone()));
+                nodes.push(((na, nb), idx));
             }
         }
     }
@@ -1062,10 +1080,13 @@ fn build_association_graph<'a>(
     (assoc, nodes.into_iter().map(|(p, _)| p).collect())
 }
 
-fn maximum_clique(graph: &petgraph::graph::UnGraph<(OpId, OpId), ()>) -> Vec<NodeIndex> {
+fn maximum_clique<N>(graph: &petgraph::graph::UnGraph<(N, N), ()>) -> Vec<NodeIndex>
+where
+    N: Clone + Eq + std::hash::Hash,
+{
     use std::collections::HashSet;
-    fn bronk(
-        g: &petgraph::graph::UnGraph<(OpId, OpId), ()>,
+    fn bronk<N>(
+        g: &petgraph::graph::UnGraph<(N, N), ()>,
         r: &mut Vec<NodeIndex>,
         mut p: HashSet<NodeIndex>,
         mut x: HashSet<NodeIndex>,
@@ -1103,7 +1124,7 @@ fn maximum_clique(graph: &petgraph::graph::UnGraph<(OpId, OpId), ()>) -> Vec<Nod
 pub fn maximum_common_subgraph(a: &[Op], b: &[Op]) -> CommonSubgraphResult {
     let (g_a, idx_a) = build_graph(a);
     let (g_b, idx_b) = build_graph(b);
-    let (assoc, _pairs) = build_association_graph(a, b, &g_a, &g_b, &idx_a, &idx_b);
+    let (assoc, _pairs) = build_association_graph(a, b, &g_a, &g_b, &idx_a, &idx_b, |op| op.id.clone());
 
     let clique = maximum_clique(&assoc);
 
@@ -1119,6 +1140,59 @@ pub fn maximum_common_subgraph(a: &[Op], b: &[Op]) -> CommonSubgraphResult {
     let diff_b = b.iter().filter(|op| !b_in.contains(&op.id)).map(|op| op.id.clone()).collect();
 
     CommonSubgraphResult { mapping, diff_a, diff_b }
+}
+
+/// 詳細構造グラフを用いた最大共通部分グラフ（ノード差分付き）
+pub fn semantic_common_subgraph(a: &[Op], b: &[Op]) -> SemanticSubgraphResult {
+
+    let (g_a, idx_a) = build_detailed_structure_graph(a);
+    let (g_b, idx_b) = build_detailed_structure_graph(b);
+
+    let map_node = |op: &Op| DetailedNode::Operation(op.id.clone());
+    let (assoc, _) = build_association_graph(
+        a,
+        b,
+        &g_a,
+        &g_b,
+        &idx_a,
+        &idx_b,
+        map_node,
+    );
+
+    let clique = maximum_clique(&assoc);
+
+    let mut mapping = Vec::new();
+    let mut holes = Vec::new();
+    let mut hole_map: HashMap<(NodeId, NodeId), String> = HashMap::new();
+    let mut next_hole = 1;
+
+    for idx in &clique {
+        let (ref n_a, ref n_b) = assoc[*idx];
+        match (n_a, n_b) {
+            (DetailedNode::Operation(id_a), DetailedNode::Operation(id_b)) => {
+                mapping.push((id_a.clone(), id_b.clone()));
+            }
+            (DetailedNode::NodeId(id_a), DetailedNode::NodeId(id_b)) => {
+                if id_a != id_b {
+                    let key = (id_a.clone(), id_b.clone());
+                    let placeholder = hole_map.entry(key.clone()).or_insert_with(|| {
+                        let name = format!("Hole{}", next_hole);
+                        next_hole += 1;
+                        name
+                    });
+                    holes.push(Hole::Ref { placeholder: placeholder.clone(), refs: vec![id_a.clone(), id_b.clone()] });
+                }
+            }
+            _ => {}
+        }
+    }
+
+    let a_in: std::collections::HashSet<_> = mapping.iter().map(|(a_id, _)| a_id.clone()).collect();
+    let b_in: std::collections::HashSet<_> = mapping.iter().map(|(_, b_id)| b_id.clone()).collect();
+    let diff_a = a.iter().filter(|op| !a_in.contains(&op.id)).map(|op| op.id.clone()).collect();
+    let diff_b = b.iter().filter(|op| !b_in.contains(&op.id)).map(|op| op.id.clone()).collect();
+
+    SemanticSubgraphResult { mapping, diff_a, diff_b, holes }
 }
 
 
