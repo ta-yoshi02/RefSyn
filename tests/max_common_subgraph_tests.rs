@@ -1,6 +1,12 @@
 use refsyn::ir::{Op, OpKind, maximum_common_subgraph};
 
 fn append_ops_original() -> Vec<Op> {
+    /*
+    addNode("__temp1", false, "Node"),
+    addNode("__temp2", true, "0"),
+    addEdge("__temp1", "__temp2", "val"),
+    addEdge("main-new1", "__temp1", "next")
+     */
     vec![
         Op { id: "op_0".to_string(), kind: OpKind::AddNode { id: "__temp1".to_string(), is_literal: false, label: "Node".to_string() } },
         Op { id: "op_1".to_string(), kind: OpKind::AddNode { id: "__temp2".to_string(), is_literal: true, label: "0".to_string() } },
@@ -10,6 +16,12 @@ fn append_ops_original() -> Vec<Op> {
 }
 
 fn append_ops_b() -> Vec<Op> {
+    /*
+    addNode("__temp3", true, "3"),
+    addNode("__temp4", false, "Node"),
+    addEdge("__temp1", "__temp4", "next"),
+    addEdge("__temp4", "__temp3", "val")
+    */
     vec![
         Op {id: "op_0".to_string(), kind: OpKind::AddNode { id: "__temp3".to_string(), is_literal: true, label: "3".to_string() } },
         Op { id: "op_1".to_string(), kind: OpKind::AddNode { id: "__temp4".to_string(), is_literal: false, label: "Node".to_string() } },
@@ -20,12 +32,32 @@ fn append_ops_b() -> Vec<Op> {
 
 
 fn append_ops_permuted() -> Vec<Op> {
+    /*
+    addNode("__temp1", true, "0"),
+    addNode("__temp2", false, "Node"),
+    addEdge("main-new1", "__temp2", "next"),
+    addEdge("__temp2", "__temp1", "val")
+    */
     vec![
         Op { id: "op_0".to_string(), kind: OpKind::AddNode { id: "__temp1".to_string(), is_literal: true, label: "0".to_string() } },
         Op { id: "op_1".to_string(), kind: OpKind::AddNode { id: "__temp2".to_string(), is_literal: false, label: "Node".to_string() } },
         Op { id: "op_2".to_string(), kind: OpKind::AddEdge { from: "main-new1".to_string(), to: "__temp2".to_string(), label: "next".to_string() } },
         Op { id: "op_3".to_string(), kind: OpKind::AddEdge { from: "__temp2".to_string(), to: "__temp1".to_string(), label: "val".to_string() } },
     ]
+}
+
+#[test]
+fn test_max_common_subgraph_mapping_and_diff() {
+    let ops_a = append_ops_original();
+    let ops_b = append_ops_b();
+    let res = maximum_common_subgraph(&ops_a, &ops_b);
+    let mut mapping = res.mapping.clone();
+    mapping.sort();
+    let mut expected_mapping = vec![("op_0".to_string(), "op_1".to_string()), ("op_2".to_string(), "op_3".to_string())];
+    expected_mapping.sort();
+    assert_eq!(mapping, expected_mapping);
+    assert_eq!(res.diff_a, vec!["op_1".to_string(), "op_3".to_string()]);
+    assert_eq!(res.diff_b, vec!["op_0".to_string(), "op_2".to_string()]);
 }
 
 
@@ -86,13 +118,6 @@ fn remove_at_ops_permuted() -> Vec<Op> {
     ]
 }
 
-// 注意: これらの操作は構造的には違うパターンだが、操作の依存関係のグラフ構造しか見ていないのでダメ。
-// #[test]
-// fn test_match_graphs_with_isomorphism_remove_at_permuted() {
-//     let ops_a = remove_at_ops_original();
-//     let ops_b = remove_at_ops_permuted();
-//     assert!(match_graphs_with_isomorphism(&ops_a, &ops_b));
-// }
 
 fn insert_after_ops_original() -> Vec<Op> {
     vec![
@@ -166,19 +191,6 @@ fn add2_nodes_ops_b() -> Vec<Op> {
     ]
 }
 
-#[test]
-fn test_max_common_subgraph_mapping_and_diff() {
-    let ops_a = append_ops_original();
-    let ops_b = append_ops_b();
-    let res = maximum_common_subgraph(&ops_a, &ops_b);
-    let mut mapping = res.mapping.clone();
-    mapping.sort();
-    let mut expected_mapping = vec![("op_0".to_string(), "op_1".to_string()), ("op_2".to_string(), "op_3".to_string())];
-    expected_mapping.sort();
-    assert_eq!(mapping, expected_mapping);
-    assert_eq!(res.diff_a, vec!["op_1".to_string(), "op_3".to_string()]);
-    assert_eq!(res.diff_b, vec!["op_0".to_string(), "op_2".to_string()]);
-}
 
 
 #[test]
