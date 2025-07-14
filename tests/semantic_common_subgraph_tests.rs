@@ -110,8 +110,29 @@ fn test_semantic_common_subgraph_concat() {
     assert_eq!(res.mapping, vec![("op_0".to_string(), "op_0".to_string())]);
     assert!(res.diff_a.is_empty());
     assert!(res.diff_b.is_empty());
-    let diff = &res.node_id_diffs[0];
-    assert_eq!(diff.field, "from");
+    let mut diffs = res.node_id_diffs.clone();
+    diffs.sort_by(|a, b| a.field.cmp(&b.field));
+    assert_eq!(diffs.len(), 2);
+    assert_eq!(
+        diffs[0],
+        NodeIdDiff {
+            op_a: "op_0".to_string(),
+            op_b: "op_0".to_string(),
+            field: "from".to_string(),
+            id_a: "main-new3".to_string(),
+            id_b: "main-new5".to_string(),
+        }
+    );
+    assert_eq!(
+        diffs[1],
+        NodeIdDiff {
+            op_a: "op_0".to_string(),
+            op_b: "op_0".to_string(),
+            field: "to".to_string(),
+            id_a: "main-new4".to_string(),
+            id_b: "main-new6".to_string(),
+        }
+    );
 }
 
 #[test]
