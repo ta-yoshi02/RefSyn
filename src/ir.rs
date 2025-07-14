@@ -932,6 +932,25 @@ pub struct CommonSubgraphResult {
     pub diff_b: Vec<OpId>,
 }
 
+/// 差異情報（NodeIdの違いなど）を保持する構造体
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NodeIdDiff {
+    pub op_a: OpId,
+    pub op_b: OpId,
+    pub field: String, // "from" または "to"
+    pub id_a: NodeId,
+    pub id_b: NodeId,
+}
+
+/// semantic_common_subgraph の結果
+#[derive(Debug, Clone)]
+pub struct SemanticCommonSubgraphResult {
+    pub mapping: Vec<(OpId, OpId)>,
+    pub diff_a: Vec<OpId>,
+    pub diff_b: Vec<OpId>,
+    pub node_id_diffs: Vec<NodeIdDiff>,
+}
+
 fn same_id_category(a: &str, b: &str) -> bool {
     if a == b {
         return true;
@@ -990,6 +1009,31 @@ fn ops_compatible(
         (OpKind::AddVariable { label: lab1, .. }, OpKind::AddVariable { label: lab2, .. }) => lab1 == lab2,
         (OpKind::EditVariableReference { label: lab1, .. }, OpKind::EditVariableReference { label: lab2, .. }) => lab1 == lab2,
         _ => std::mem::discriminant(&op_a.kind) == std::mem::discriminant(&op_b.kind),
+    }
+}
+
+fn ops_semantically_equal(op_a: &Op, op_b: &Op) -> bool {
+    match (&op_a.kind, &op_b.kind) {
+        (OpKind::AddNode { is_literal: l1, label: lab1, .. },
+         OpKind::AddNode { is_literal: l2, label: lab2, .. }) => {
+            if l1 != l2 {
+                false
+            } else if *l1 {
+                true
+            } else {
+                lab1 == lab2
+            }
+        },
+        (OpKind::AddEdge { label: lab1, .. },
+         OpKind::AddEdge { label: lab2, .. }) => lab1 == lab2,
+        (OpKind::EditEdgeReference { label: lab1, .. }, OpKind::EditEdgeReference { label: lab2, .. }) => lab1 == lab2,
+        (OpKind::AddVariable { label: lab1, .. }, OpKind::AddVariable { label: lab2, .. }) => lab1 == lab2,
+        (OpKind::EditVariableReference { label: lab1, .. }, OpKind::EditVariableReference { label: lab2, .. }) => lab1 == lab2,
+        (OpKind::DeleteNode { .. }, OpKind::DeleteNode { .. }) => true,
+        (OpKind::DeleteEdge { label: lab1, .. }, OpKind::DeleteEdge { label: lab2, .. }) => lab1 == lab2,
+        (OpKind::EditEdgeLabel { old_label: o1, new_label: n1, .. },
+         OpKind::EditEdgeLabel { old_label: o2, new_label: n2, .. }) => o1 == o2 && n1 == n2,
+        _ => false,
     }
 }
 
@@ -1119,6 +1163,55 @@ pub fn maximum_common_subgraph(a: &[Op], b: &[Op]) -> CommonSubgraphResult {
     let diff_b = b.iter().filter(|op| !b_in.contains(&op.id)).map(|op| op.id.clone()).collect();
 
     CommonSubgraphResult { mapping, diff_a, diff_b }
+}
+
+/// より緩やかな意味レベルのマッチングで共通部分と差分を取得する
+pub fn semantic_common_subgraph(a: &[Op], b: &[Op]) -> SemanticCommonSubgraphResult {
+    use std::collections::HashSet;
+
+    let mut mapping = Vec::new();
+    let mut diff_a = Vec::new();
+    let mut diff_b = Vec::new();
+    let mut node_id_diffs = Vec::new();
+
+    let mut used_b: HashSet<usize> = HashSet::new();
+
+    for op_a in a {
+        let mut found_idx = None;
+        for (j, op_b) in b.iter().enumerate() {
+            if used_b.contains(&j) {
+                continue;
+            }
+            if ops_semantically_equal(op_a, op_b) {
+                found_idx = Some(j);
+                if let OpKind::AddEdge { from: f1, to: t1, .. } = &op_a.kind {
+                    if let OpKind::AddEdge { from: f2, to: t2, .. } = &op_b.kind {
+                        if f1 != f2 {
+                            node_id_diffs.push(NodeIdDiff { op_a: op_a.id.clone(), op_b: op_b.id.clone(), field: "from".to_string(), id_a: f1.clone(), id_b: f2.clone() });
+                        }
+                        if t1 != t2 {
+                            node_id_diffs.push(NodeIdDiff { op_a: op_a.id.clone(), op_b: op_b.id.clone(), field: "to".to_string(), id_a: t1.clone(), id_b: t2.clone() });
+                        }
+                    }
+                }
+                break;
+            }
+        }
+        if let Some(j) = found_idx {
+            used_b.insert(j);
+            mapping.push((op_a.id.clone(), b[j].id.clone()));
+        } else {
+            diff_a.push(op_a.id.clone());
+        }
+    }
+
+    for (j, op_b) in b.iter().enumerate() {
+        if !used_b.contains(&j) {
+            diff_b.push(op_b.id.clone());
+        }
+    }
+
+    SemanticCommonSubgraphResult { mapping, diff_a, diff_b, node_id_diffs }
 }
 
 
