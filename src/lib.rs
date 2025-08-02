@@ -9,6 +9,7 @@ pub mod is_structurally_equivalent_option;
 pub mod program_analyzer;
 pub mod build_graph_detailed;
 pub mod unify_ops;
+pub mod isomorphism;
 
 use serde::{Deserialize, Serialize};
 use serde_json;

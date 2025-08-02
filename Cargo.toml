@@ -23,3 +23,7 @@ path = "tests/integration_tests.rs"
 [[test]]
 name = "method_specific_tests"  
 path = "tests/method_specific_tests.rs"
+
+[[test]]
+name = "isomorphism_tests"
+path = "tests/isomorphism_tests.rs"
