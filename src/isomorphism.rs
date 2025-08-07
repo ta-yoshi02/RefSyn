@@ -2,7 +2,7 @@ use petgraph::graph::{Graph, NodeIndex};
 use petgraph::visit::EdgeRef;
 use std::collections::{HashMap, HashSet};
 
-use crate::unify_ops::{Op, GraphOp, EdgeExpr, UnificationResult, NodeExpr};
+use crate::unify_ops::{Op, GraphOp, EdgeExpr, UnificationResult, NodeExpr, VarOp};
 
 // Operation Graph representation
 struct OpGraph<'a> {
@@ -78,6 +78,31 @@ fn find_mcs<'a>(g1: &OpGraph<'a>, g2: &OpGraph<'a>) -> HashMap<NodeIndex, NodeIn
     best_mapping
 }
 
+fn is_consistent<'a>(
+    g1: &Graph<&'a Op, &'static str>,
+    g2: &Graph<&'a Op, &'static str>,
+    g1_node: NodeIndex,
+    g2_node: NodeIndex,
+    mapping: &HashMap<NodeIndex, NodeIndex>,
+) -> bool {
+    for (&u, &v) in mapping.iter() {
+        // Check edges from u to g1_node in g1 and v to g2_node in g2
+        let g1_edges_out: HashSet<_> = g1.edges_connecting(u, g1_node).map(|e| e.weight()).collect();
+        let g2_edges_out: HashSet<_> = g2.edges_connecting(v, g2_node).map(|e| e.weight()).collect();
+        if g1_edges_out != g2_edges_out {
+            return false;
+        }
+
+        // Check edges from g1_node to u in g1 and g2_node to v in g2
+        let g1_edges_in: HashSet<_> = g1.edges_connecting(g1_node, u).map(|e| e.weight()).collect();
+        let g2_edges_in: HashSet<_> = g2.edges_connecting(g2_node, v).map(|e| e.weight()).collect();
+        if g1_edges_in != g2_edges_in {
+            return false;
+        }
+    }
+    true
+}
+
 fn backtrack_mcs<'a>(
     g1: &Graph<&'a Op, &'static str>,
     g2: &Graph<&'a Op, &'static str>,
@@ -103,11 +128,23 @@ fn backtrack_mcs<'a>(
 
     // Option 1: Try to map g1_node to each compatible, unused node in g2
     for g2_node in g2.node_indices() {
-        if !g2_used_nodes.contains(&g2_node) && node_labels_match(g1[g1_node], g2[g2_node]) {
+        if !g2_used_nodes.contains(&g2_node)
+            && node_labels_match(g1[g1_node], g2[g2_node])
+            && is_consistent(g1, g2, g1_node, g2_node, current_mapping)
+        {
             current_mapping.insert(g1_node, g2_node);
             g2_used_nodes.insert(g2_node);
 
-            backtrack_mcs(g1, g2, g1_nodes, g1_idx + 1, current_mapping, g2_used_nodes, best_score, best_mapping);
+            backtrack_mcs(
+                g1,
+                g2,
+                g1_nodes,
+                g1_idx + 1,
+                current_mapping,
+                g2_used_nodes,
+                best_score,
+                best_mapping,
+            );
 
             current_mapping.remove(&g1_node);
             g2_used_nodes.remove(&g2_node);
@@ -115,7 +152,16 @@ fn backtrack_mcs<'a>(
     }
 
     // Option 2: Don't map g1_node and move to the next one
-    backtrack_mcs(g1, g2, g1_nodes, g1_idx + 1, current_mapping, g2_used_nodes, best_score, best_mapping);
+    backtrack_mcs(
+        g1,
+        g2,
+        g1_nodes,
+        g1_idx + 1,
+        current_mapping,
+        g2_used_nodes,
+        best_score,
+        best_mapping,
+    );
 }
 
 
@@ -123,6 +169,7 @@ fn node_labels_match(op1: &Op, op2: &Op) -> bool {
     match (&op1.kind, &op2.kind) {
         (GraphOp::Node(n1), GraphOp::Node(n2)) => std::mem::discriminant(n1) == std::mem::discriminant(n2),
         (GraphOp::Edge(e1), GraphOp::Edge(e2)) => std::mem::discriminant(e1) == std::mem::discriminant(e2),
+        (GraphOp::Variable(_), GraphOp::Variable(_)) => true,
         _ => false,
     }
 }
@@ -137,7 +184,10 @@ fn attributes_match(op1: &Op, op2: &Op) -> bool {
             }
         },
         (GraphOp::Node(NodeExpr::ExistNode { id: id1, .. }), GraphOp::Node(NodeExpr::ExistNode { id: id2, .. })) => id1 == id2,
+        (GraphOp::Node(NodeExpr::NullNode{..}), GraphOp::Node(NodeExpr::NullNode{..})) => true,
         (GraphOp::Edge(EdgeExpr::AddEdge { label: l1, .. }), GraphOp::Edge(EdgeExpr::AddEdge { label: l2, .. })) => l1 == l2,
+        (GraphOp::Edge(EdgeExpr::EditEdgeReference { label: l1, .. }), GraphOp::Edge(EdgeExpr::EditEdgeReference { label: l2, .. })) => l1 == l2,
+        (GraphOp::Variable(VarOp::AddVariable { label: l1, .. }), GraphOp::Variable(VarOp::AddVariable { label: l2, .. })) => l1 == l2,
         _ => false,
     }
 }
