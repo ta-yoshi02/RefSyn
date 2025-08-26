@@ -792,7 +792,9 @@ name = "refsyn"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bytes",
  "http 0.2.12",
+ "hyper",
  "petgraph",
  "serde",
  "serde_json",

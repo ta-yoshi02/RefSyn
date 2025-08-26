@@ -10,6 +10,7 @@ pub mod program_analyzer;
 pub mod build_graph_detailed;
 pub mod unify_ops;
 pub mod isomorphism;
+pub mod list_env;
 
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -19,6 +20,7 @@ use warp::http::StatusCode;
 use crate::ast::{Placeholder, Program};
 use crate::parser::parse_operations;
 use crate::env::MemoEnv;
+use bytes::Bytes;
 
 #[derive(Deserialize, Debug)]
 pub struct MethodCallOperation {
@@ -33,9 +35,12 @@ pub struct MethodCallOperation {
     pub operations: Vec<serde_json::Value>,
 }
 
+use crate::models::VisGraph;
+
 #[derive(Deserialize, Debug)]
 pub struct SynthesisRequest {
     pub method_calls: Vec<MethodCallOperation>,
+    pub vis_graph: VisGraph,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -44,6 +49,7 @@ pub struct SynthesisResponse {
     pub hole_information: Option<HashMap<String, Vec<String>>>,
     pub code: Vec<String>,
     pub individual_codes: Vec<String>,
+    pub list_environment_info: Option<String>, // ListEnvironmentの情報を追加
 }
 
 fn add_to_hole(
@@ -309,7 +315,33 @@ pub fn convert_operations_to_ir(operations: &[serde_json::Value]) -> anyhow::Res
 
 // Types needed by the server module will be imported from main directly
 
-pub async fn handle_synthesis(req: SynthesisRequest) -> Result<impl warp::Reply, warp::Rejection> {
+pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, warp::Rejection> {
+    // 受け取ったリクエストボディをターミナルに出力
+    if let Ok(body_str) = std::str::from_utf8(&body) {
+        println!("--- RAW REQUEST PAYLOAD ---");
+        println!("{}", body_str);
+        println!("---------------------------");
+    }
+
+    // 手動でデシリアライズ
+    let req: SynthesisRequest = match serde_json::from_slice(&body) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Deserialization error: {}", e);
+            let response = SynthesisResponse {
+                common_pattern: Some(format!("Invalid request body: {}", e)),
+                hole_information: None,
+                code: vec![],
+                individual_codes: vec![],
+                list_environment_info: None,
+            };
+            return Ok(warp::reply::with_status(
+                warp::reply::json(&response),
+                StatusCode::BAD_REQUEST,
+            ));
+        }
+    };
+
     println!("Received synthesis request: {:?}", req);
 
     let mut parsed_programs = Vec::new();
@@ -323,6 +355,7 @@ pub async fn handle_synthesis(req: SynthesisRequest) -> Result<impl warp::Reply,
             hole_information: None,
             code: vec![],
             individual_codes: vec![],
+            list_environment_info: None,
         };
         return Ok(warp::reply::with_status(warp::reply::json(&response), StatusCode::OK));
     }
@@ -380,6 +413,7 @@ pub async fn handle_synthesis(req: SynthesisRequest) -> Result<impl warp::Reply,
                         e
                     )],
                     individual_codes: vec![],
+                    list_environment_info: None,
                 };
                 return Ok(warp::reply::with_status(
                     warp::reply::json(&response),
@@ -396,6 +430,7 @@ pub async fn handle_synthesis(req: SynthesisRequest) -> Result<impl warp::Reply,
             hole_information: None,
             code: vec![],
             individual_codes: vec![],
+            list_environment_info: None,
         };
         return Ok(warp::reply::with_status(warp::reply::json(&response), StatusCode::OK));
     }
@@ -432,11 +467,18 @@ pub async fn handle_synthesis(req: SynthesisRequest) -> Result<impl warp::Reply,
     };
     println!("Formatted Hole Info: {:?}", formatted_hole_info);
 
+    // ListEnvironmentを作成
+    use crate::list_env::ListEnvironment;
+    let list_env = ListEnvironment::from_vis_graph(&req.vis_graph);
+    let list_env_info = format!("List Environment:\n{}", list_env.to_debug_string());
+    println!("List Environment Debug: {}", list_env_info);
+
     let response = SynthesisResponse {
         common_pattern: Some(common_pattern_str),
         hole_information: formatted_hole_info,
         code: individual_codes_str.clone(),
         individual_codes: individual_codes_str,
+        list_environment_info: Some(list_env_info),
     };
     println!("Final Response: {:?}", response);
 
