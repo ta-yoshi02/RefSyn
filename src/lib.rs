@@ -11,6 +11,7 @@ pub mod build_graph_detailed;
 pub mod unify_ops;
 pub mod isomorphism;
 pub mod list_env;
+pub mod operation_analyzer;
 
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -20,9 +21,8 @@ use warp::http::StatusCode;
 use crate::ast::{Placeholder, Program};
 use crate::parser::parse_operations;
 use crate::env::MemoEnv;
-use bytes::Bytes;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct MethodCallOperation {
     #[serde(rename = "callLabel")]
     pub call_label: String,
@@ -37,7 +37,7 @@ pub struct MethodCallOperation {
 
 use crate::models::VisGraph;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct SynthesisRequest {
     pub method_calls: Vec<MethodCallOperation>,
     pub vis_graph: VisGraph,
@@ -50,6 +50,17 @@ pub struct SynthesisResponse {
     pub code: Vec<String>,
     pub individual_codes: Vec<String>,
     pub list_environment_info: Option<String>, // ListEnvironmentの情報を追加
+    // 操作分析結果のフィールド（複数の操作列が提供された場合のみ設定）
+    pub operation_analysis: Option<OperationAnalysisData>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct OperationAnalysisData {
+    pub common_operations_count: usize,
+    pub total_operations_counts: Vec<usize>,
+    pub difference_summary: String,
+    pub differences_found: usize,
+    pub synthesis_matches: Option<usize>, // 合成で見つかった共通パターン数
 }
 
 fn add_to_hole(
@@ -334,6 +345,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
                 code: vec![],
                 individual_codes: vec![],
                 list_environment_info: None,
+                operation_analysis: None,
             };
             return Ok(warp::reply::with_status(
                 warp::reply::json(&response),
@@ -356,6 +368,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
             code: vec![],
             individual_codes: vec![],
             list_environment_info: None,
+            operation_analysis: None,
         };
         return Ok(warp::reply::with_status(warp::reply::json(&response), StatusCode::OK));
     }
@@ -414,6 +427,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
                     )],
                     individual_codes: vec![],
                     list_environment_info: None,
+                    operation_analysis: None,
                 };
                 return Ok(warp::reply::with_status(
                     warp::reply::json(&response),
@@ -431,6 +445,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
             code: vec![],
             individual_codes: vec![],
             list_environment_info: None,
+            operation_analysis: None,
         };
         return Ok(warp::reply::with_status(warp::reply::json(&response), StatusCode::OK));
     }
@@ -467,11 +482,89 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     };
     println!("Formatted Hole Info: {:?}", formatted_hole_info);
 
-    // ListEnvironmentを作成
+    // ListEnvironmentを作成し、より構造化された情報を提供
     use crate::list_env::ListEnvironment;
     let list_env = ListEnvironment::from_vis_graph(&req.vis_graph);
-    let list_env_info = format!("List Environment:\n{}", list_env.to_debug_string());
-    println!("List Environment Debug: {}", list_env_info);
+    
+    // List環境の要約情報を作成
+    let field_count = list_env.field_lists.len();
+    let object_count = list_env.obj_id_to_index.len();
+    let literal_count = list_env.literal_id_to_value.len();
+    
+    let field_names: Vec<String> = list_env.field_lists.keys().cloned().collect();
+    
+    let list_env_info = format!(
+        "List Environment Summary:\n- {} objects tracked\n- {} literals\n- {} field types: {}\n\nCurrent state:\n{}",
+        object_count,
+        literal_count,
+        field_count,
+        field_names.join(", "),
+        list_env.to_debug_string()
+    );
+    
+    println!("List Environment Summary: {}", list_env_info);
+
+    // 複数の操作列がある場合は操作分析も実行
+    let operation_analysis_data = if operations_list.len() > 1 {
+        println!("Starting operation analysis with {} operation sequences", operations_list.len());
+        
+        // unify_isomorphic_graphsを使って同型グラフ統合を試行
+        match analyze_operations_with_unification(&req.vis_graph, &operations_list[0], &operations_list[1]) {
+            Ok(analysis_result) => {
+                println!("Unification-based analysis succeeded!");
+                let difference_summary = if analysis_result.common_operations_count == 0 {
+                    "統合ベース分析: 共通する操作パターンが見つかりませんでした".to_string()
+                } else {
+                    format!(
+                        "統合ベース分析: {}個の共通操作パターンを特定。差異部分では{}個と{}個の異なる操作。",
+                        analysis_result.common_operations_count,
+                        analysis_result.differences_found,
+                        analysis_result.total_operations_counts.get(1).unwrap_or(&0) - analysis_result.common_operations_count
+                    )
+                };
+
+                Some(OperationAnalysisData {
+                    common_operations_count: analysis_result.common_operations_count,
+                    total_operations_counts: analysis_result.total_operations_counts.clone(),
+                    difference_summary,
+                    differences_found: analysis_result.differences_found,
+                    synthesis_matches: Some(analysis_result.common_operations_count),
+                })
+            }
+            Err(e) => {
+                eprintln!("Error during unification-based operation analysis: {}", e);
+                // フォールバックとして従来の操作分析を使用
+                use crate::operation_analyzer::analyze_operations_with_environments;
+                match analyze_operations_with_environments(&req.vis_graph, &operations_list[0], &operations_list[1]) {
+                    Ok(analysis_result) => {
+                        println!("Fallback to position-based analysis succeeded");
+                        let difference_summary = format!(
+                            "位置ベース分析（フォールバック）: {}個の共通操作、{}個の差異点",
+                            analysis_result.common_operations_count,
+                            analysis_result.difference_points.len()
+                        );
+                        
+                        Some(OperationAnalysisData {
+                            common_operations_count: analysis_result.common_operations_count,
+                            total_operations_counts: vec![
+                                analysis_result.total_operations_a,
+                                analysis_result.total_operations_b,
+                            ],
+                            difference_summary,
+                            differences_found: analysis_result.difference_points.len(),
+                            synthesis_matches: None,
+                        })
+                    }
+                    Err(e2) => {
+                        eprintln!("Error during fallback operation analysis: {}", e2);
+                        None
+                    }
+                }
+            }
+        }
+    } else {
+        None
+    };
 
     let response = SynthesisResponse {
         common_pattern: Some(common_pattern_str),
@@ -479,8 +572,224 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         code: individual_codes_str.clone(),
         individual_codes: individual_codes_str,
         list_environment_info: Some(list_env_info),
+        operation_analysis: operation_analysis_data,
     };
-    println!("Final Response: {:?}", response);
+    
+    // 改善されたレスポンス表示
+    println!("=== IMPROVED SYNTHESIS RESPONSE ===");
+    println!("Common Pattern: {}", response.common_pattern.as_ref().unwrap_or(&"None".to_string()));
+    println!("Holes: {}", response.hole_information.as_ref().map(|h| format!("{:?}", h)).unwrap_or("None".to_string()));
+    
+    if let Some(analysis) = &response.operation_analysis {
+        println!("Operation Analysis Summary: {}", analysis.difference_summary);
+        println!("  - Raw operation differences: {}", analysis.differences_found);
+        println!("  - Synthesis common patterns: {}", analysis.synthesis_matches.unwrap_or(0));
+    } else {
+        println!("Operation Analysis: Not performed (single operation sequence)");
+    }
+    
+    println!("List Environment Summary: {}", response.list_environment_info.as_ref().unwrap_or(&"None".to_string()));
+    println!("=====================================");
 
     Ok(warp::reply::with_status(warp::reply::json(&response), StatusCode::OK))
+}
+
+// unify_isomorphic_graphsを使用した統合ベースの操作分析
+pub fn analyze_operations_with_unification(
+    vis_graph: &models::VisGraph,
+    operations_a: &[serde_json::Value],
+    operations_b: &[serde_json::Value],
+) -> anyhow::Result<UnificationAnalysisResult> {
+    use crate::isomorphism::unify_isomorphic_graphs;
+    
+    println!("=== UNIFICATION-BASED OPERATION ANALYSIS ===");
+    
+    // JSON操作をunify_ops::Op形式に変換
+    let ops_a = convert_json_to_unify_ops(operations_a)?;
+    let ops_b = convert_json_to_unify_ops(operations_b)?;
+    
+    println!("Converted {} operations from sequence A", ops_a.len());
+    println!("Converted {} operations from sequence B", ops_b.len());
+    
+    // unify_isomorphic_graphsを呼び出し
+    let unification_result = unify_isomorphic_graphs(&ops_a, &ops_b);
+    
+    // 統合結果を分析
+    let common_count = unification_result.common_a.len();
+    let diff_a_count = unification_result.diff_a.len();
+    let diff_b_count = unification_result.diff_b.len();
+    
+    println!("Unification results:");
+    println!("  - Common operations: {}", common_count);
+    println!("  - Differences in A: {}", diff_a_count);
+    println!("  - Differences in B: {}", diff_b_count);
+    
+    // List環境を共通操作のポイントまで構築
+    if common_count > 0 {
+        let list_env = create_environment_at_unification_boundary(vis_graph, &unification_result.common_a)?;
+        println!("Created List environment at unification boundary with {} common operations", common_count);
+        println!("Environment state: {}", list_env.to_debug_string());
+    }
+    
+    Ok(UnificationAnalysisResult {
+        common_operations_count: common_count,
+        total_operations_counts: vec![ops_a.len(), ops_b.len()],
+        differences_found: std::cmp::max(diff_a_count, diff_b_count),
+        unification_result,
+    })
+}
+
+// JSON操作をunify_ops::Op形式に変換
+fn convert_json_to_unify_ops(operations: &[serde_json::Value]) -> anyhow::Result<Vec<crate::unify_ops::Op>> {
+    use crate::unify_ops::{Op, GraphOp, NodeExpr, EdgeExpr};
+    
+    let mut result = Vec::new();
+    
+    for (i, op_val) in operations.iter().enumerate() {
+        if let Ok(op) = serde_json::from_value::<parser::Operation>(op_val.clone()) {
+            let graph_op = match op.edit_type.as_str() {
+                "addNode" => {
+                    if let (Some(id), Some(is_literal)) = (op.id.clone(), op.is_literal) {
+                        let label = op.label.clone().unwrap_or_default();
+                        GraphOp::Node(NodeExpr::AddNode {
+                            id,
+                            label,
+                            is_literal,
+                        })
+                    } else {
+                        continue; // スキップ
+                    }
+                },
+                "addEdge" => {
+                    if let (Some(from), Some(to), Some(label)) = (op.from.clone(), op.to.clone(), op.label.clone()) {
+                        GraphOp::Edge(EdgeExpr::AddEdge {
+                            from,
+                            to,
+                            label,
+                        })
+                    } else {
+                        continue; // スキップ
+                    }
+                },
+                "deleteNode" => {
+                    if let Some(id) = op.id.clone() {
+                        // DeleteNodeは現在NodeExprに定義されていないため、ExistNodeとして扱う
+                        GraphOp::Node(NodeExpr::ExistNode {
+                            id,
+                            label: op.label.clone().unwrap_or_default(),
+                            is_literal: op.is_literal.unwrap_or(false),
+                        })
+                    } else {
+                        continue; // スキップ
+                    }
+                },
+                "deleteEdge" => {
+                    if let (Some(from), Some(to)) = (op.from.clone(), op.to.clone()) {
+                        let label = op.label.clone().unwrap_or_default();
+                        GraphOp::Edge(EdgeExpr::DeleteEdge {
+                            from,
+                            to,
+                            label,
+                        })
+                    } else {
+                        continue; // スキップ
+                    }
+                },
+                _ => continue, // 他の操作タイプはスキップ
+            };
+            
+            result.push(Op {
+                id: format!("op_{}", i),
+                kind: graph_op,
+            });
+        }
+    }
+    
+    Ok(result)
+}
+
+// 統合境界でのList環境作成
+fn create_environment_at_unification_boundary(
+    vis_graph: &models::VisGraph,
+    common_operations: &[crate::unify_ops::Op],
+) -> anyhow::Result<crate::list_env::ListEnvironment> {
+    use crate::list_env::ListEnvironment;
+    
+    // 初期状態のList環境を作成
+    let mut list_env = ListEnvironment::from_vis_graph(vis_graph);
+    
+    // 共通操作を順次適用してホール境界までの状態を構築
+    for op in common_operations {
+        apply_operation_to_list_env(&mut list_env, op)?;
+    }
+    
+    Ok(list_env)
+}
+
+// List環境に操作を適用
+fn apply_operation_to_list_env(
+    list_env: &mut crate::list_env::ListEnvironment,
+    op: &crate::unify_ops::Op,
+) -> anyhow::Result<()> {
+    use crate::unify_ops::{GraphOp, NodeExpr, EdgeExpr};
+    
+    match &op.kind {
+        GraphOp::Node(NodeExpr::AddNode { id, label, is_literal }) => {
+            // ノード追加をList環境に反映
+            if *is_literal {
+                list_env.literal_id_to_value.insert(id.clone(), serde_json::Value::String(label.clone()));
+            } else {
+                // 新しいオブジェクトインデックスを追加
+                let new_index = list_env.obj_id_to_index.len();
+                list_env.obj_id_to_index.insert(id.clone(), new_index);
+            }
+        },
+        GraphOp::Edge(EdgeExpr::AddEdge { from, to, label }) => {
+            // エッジ追加をList環境に反映
+            if let Some(&from_index) = list_env.obj_id_to_index.get(from) {
+                // フィールドリストの更新
+                let field_list = list_env.field_lists.entry(label.clone()).or_insert_with(Vec::new);
+                
+                // インデックスが範囲外の場合はリストを拡張
+                while field_list.len() <= from_index {
+                    field_list.push(serde_json::Value::Null);
+                }
+                
+                // toが既存オブジェクトか新しいリテラルかを判定
+                if let Some(&to_index) = list_env.obj_id_to_index.get(to) {
+                    field_list[from_index] = serde_json::Value::String(format!("obj_{}", to_index));
+                } else if let Some(literal_value) = list_env.literal_id_to_value.get(to) {
+                    field_list[from_index] = literal_value.clone();
+                } else {
+                    field_list[from_index] = serde_json::Value::String(to.clone());
+                }
+            }
+        },
+        GraphOp::Node(NodeExpr::ExistNode { .. }) => {
+            // 既存ノード参照は環境変更なし
+        },
+        GraphOp::Node(NodeExpr::NullNode) => {
+            // NullNode操作は環境変更なし
+        },
+        GraphOp::Edge(EdgeExpr::DeleteEdge { .. }) => {
+            // エッジ削除は複雑なため、現在は未実装
+        },
+        GraphOp::Edge(EdgeExpr::EditEdgeReference { .. }) => {
+            // エッジ編集は複雑なため、現在は未実装
+        },
+        GraphOp::Variable(_) => {
+            // 変数操作は現在未実装
+        },
+    }
+    
+    Ok(())
+}
+
+// 統合分析結果の構造体
+#[derive(Debug)]
+pub struct UnificationAnalysisResult {
+    pub common_operations_count: usize,
+    pub total_operations_counts: Vec<usize>,
+    pub differences_found: usize,
+    pub unification_result: crate::unify_ops::UnificationResult,
 }
