@@ -43,6 +43,7 @@ impl ListEnvironment {
             .nodes
             .iter()
             .filter(|n| !n.is_literal)
+            .filter(|n| n.id != "__RectForVariable__") // 不要なオブジェクトを除外
             .map(|n| n.id.clone())
             .collect();
 
@@ -73,6 +74,10 @@ impl ListEnvironment {
 
         // エッジからフィールドリストを構築
         for edge in &vis_graph.edges {
+            // __RectForVariable__に関連するエッジは無視
+            if edge.from == "__RectForVariable__" || edge.to == "__RectForVariable__" {
+                continue;
+            }
             if let Some(&from_index) = obj_id_to_index.get(&edge.from) {
                 let field_vec = field_lists
                     .entry(edge.label.clone())
@@ -199,10 +204,50 @@ impl ListEnvironment {
         let mut result = String::new();
         
         for (field_name, values) in &self.field_lists {
-            result.push_str(&format!("List[obj_{}] = {:?}\n", field_name, values));
+            if field_name == "lst" {
+                // lstフィールドは単一の値として出力
+                let lst_value = self.get_lst_reference();
+                result.push_str(&format!("obj_lst = {}\n", lst_value));
+            } else {
+                // 不要なインデックスを除去してフィルタリング
+                let filtered_values = self.filter_relevant_indices(values);
+                result.push_str(&format!("List[obj_{}] = {:?}\n", field_name, filtered_values));
+            }
         }
         
         result
+    }
+
+    /// lstフィールドの参照先インデックスを取得
+    fn get_lst_reference(&self) -> i32 {
+        if let Some(lst_values) = self.field_lists.get("lst") {
+            // __Variable-lstのインデックスを探す
+            if let Some(&var_lst_index) = self.obj_id_to_index.get("__Variable-lst") {
+                if var_lst_index < lst_values.len() {
+                    if let Some(value) = lst_values[var_lst_index].as_i64() {
+                        return value as i32;
+                    }
+                }
+            }
+        }
+        -1 // デフォルト値
+    }
+
+    /// 関連するインデックスのみをフィルタリング
+    fn filter_relevant_indices(&self, values: &[Value]) -> Vec<Value> {
+        let mut filtered = Vec::new();
+        
+        for (index, value) in values.iter().enumerate() {
+            // インデックスに対応するオブジェクトIDを取得
+            if let Some(obj_id) = self.index_to_obj_id.get(&index) {
+                // __RectForVariable__と__Variable-lstを除外
+                if obj_id != "__RectForVariable__" && obj_id != "__Variable-lst" {
+                    filtered.push(value.clone());
+                }
+            }
+        }
+        
+        filtered
     }
 }
 

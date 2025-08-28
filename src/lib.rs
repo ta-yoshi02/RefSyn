@@ -735,6 +735,11 @@ fn apply_operation_to_list_env(
     
     match &op.kind {
         GraphOp::Node(NodeExpr::AddNode { id, label, is_literal }) => {
+            // __RectForVariable__と__Variable-lstは無視
+            if id == "__RectForVariable__" || id == "__Variable-lst" {
+                return Ok(());
+            }
+            
             // ノード追加をList環境に反映
             if *is_literal {
                 list_env.literal_id_to_value.insert(id.clone(), serde_json::Value::String(label.clone()));
@@ -742,9 +747,16 @@ fn apply_operation_to_list_env(
                 // 新しいオブジェクトインデックスを追加
                 let new_index = list_env.obj_id_to_index.len();
                 list_env.obj_id_to_index.insert(id.clone(), new_index);
+                list_env.index_to_obj_id.insert(new_index, id.clone());
             }
         },
         GraphOp::Edge(EdgeExpr::AddEdge { from, to, label }) => {
+            // __RectForVariable__や__Variable-lstに関連するエッジは無視
+            if from == "__RectForVariable__" || from == "__Variable-lst" || 
+               to == "__RectForVariable__" || to == "__Variable-lst" {
+                return Ok(());
+            }
+            
             // エッジ追加をList環境に反映
             if let Some(&from_index) = list_env.obj_id_to_index.get(from) {
                 // フィールドリストの更新
