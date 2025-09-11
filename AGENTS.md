@@ -1,4 +1,4 @@
-# GEMINI.md: Kanon-to-Escher-Scala Interpreter Specification
+# Kanon-to-Escher-Scala Interpreter Specification
 
 ## 1. プロジェクト概要：Kanon-to-Escher-Scala Interpreter
 

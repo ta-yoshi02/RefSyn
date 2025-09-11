@@ -12,6 +12,7 @@ pub mod unify_ops;
 pub mod isomorphism;
 pub mod list_env;
 pub mod operation_analyzer;
+pub mod escher_bridge;
 
 use serde::{Deserialize, Serialize};
 use serde_json;
