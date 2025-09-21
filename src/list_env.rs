@@ -3,7 +3,7 @@
 //! このモジュールはKanonのグラフ操作によって変化する環境を
 //! List[field_name] = [values...] の形式で表現するためのものです。
 
-use crate::models::{VisGraph, Node, Edge};
+use crate::models::VisGraph;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -147,7 +147,12 @@ impl ListEnvironment {
         let from = operation.from.as_ref().ok_or("addEdge requires from")?;
         let to = operation.to.as_ref().ok_or("addEdge requires to")?;
         let binding = json!("");
-        let label = operation.label.as_ref().unwrap_or(&binding).as_str().unwrap_or("");
+        let label = operation
+            .label
+            .as_ref()
+            .unwrap_or(&binding)
+            .as_str()
+            .unwrap_or("");
 
         // fromがオブジェクトでなければ無視
         let from_index = match self.obj_id_to_index.get(from) {
@@ -167,7 +172,8 @@ impl ListEnvironment {
         };
 
         // フィールドリストを更新
-        let field_vec = self.field_lists
+        let field_vec = self
+            .field_lists
             .entry(label.to_string())
             .or_insert_with(|| vec![json!(-1); self.next_index]);
 
@@ -241,7 +247,10 @@ impl ListEnvironment {
                 }
             }
 
-            result.push_str(&format!("List[obj_{}] = {:?}\n", field_name, display_values));
+            result.push_str(&format!(
+                "List[obj_{}] = {:?}\n",
+                field_name, display_values
+            ));
         }
 
         result
@@ -265,7 +274,7 @@ impl ListEnvironment {
     /// 関連するインデックスのみをフィルタリング
     fn filter_relevant_indices(&self, values: &[Value]) -> Vec<Value> {
         let mut filtered = Vec::new();
-        
+
         for (index, value) in values.iter().enumerate() {
             // インデックスに対応するオブジェクトIDを取得
             if let Some(obj_id) = self.index_to_obj_id.get(&index) {
@@ -275,7 +284,7 @@ impl ListEnvironment {
                 }
             }
         }
-        
+
         filtered
     }
 }
@@ -283,27 +292,88 @@ impl ListEnvironment {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::{Edge, Node};
 
     fn create_test_graph() -> VisGraph {
         VisGraph {
             nodes: vec![
-                Node { id: "obj1".to_string(), is_literal: false, label: json!("Node") },
-                Node { id: "obj2".to_string(), is_literal: false, label: json!("Node") },
-                Node { id: "obj3".to_string(), is_literal: false, label: json!("Node") },
-                Node { id: "obj4".to_string(), is_literal: false, label: json!("Node") },
-                Node { id: "val1".to_string(), is_literal: true, label: json!(2) },
-                Node { id: "val2".to_string(), is_literal: true, label: json!(0) },
-                Node { id: "val3".to_string(), is_literal: true, label: json!(9) },
-                Node { id: "val4".to_string(), is_literal: true, label: json!(5) },
+                Node {
+                    id: "obj1".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                Node {
+                    id: "obj2".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                Node {
+                    id: "obj3".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                Node {
+                    id: "obj4".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                Node {
+                    id: "val1".to_string(),
+                    is_literal: true,
+                    label: json!(2),
+                },
+                Node {
+                    id: "val2".to_string(),
+                    is_literal: true,
+                    label: json!(0),
+                },
+                Node {
+                    id: "val3".to_string(),
+                    is_literal: true,
+                    label: json!(9),
+                },
+                Node {
+                    id: "val4".to_string(),
+                    is_literal: true,
+                    label: json!(5),
+                },
             ],
             edges: vec![
-                Edge { from: "obj1".to_string(), to: "obj2".to_string(), label: "next".to_string() },
-                Edge { from: "obj2".to_string(), to: "obj3".to_string(), label: "next".to_string() },
-                Edge { from: "obj3".to_string(), to: "obj4".to_string(), label: "next".to_string() },
-                Edge { from: "obj1".to_string(), to: "val1".to_string(), label: "value".to_string() },
-                Edge { from: "obj2".to_string(), to: "val2".to_string(), label: "value".to_string() },
-                Edge { from: "obj3".to_string(), to: "val3".to_string(), label: "value".to_string() },
-                Edge { from: "obj4".to_string(), to: "val4".to_string(), label: "value".to_string() },
+                Edge {
+                    from: "obj1".to_string(),
+                    to: "obj2".to_string(),
+                    label: "next".to_string(),
+                },
+                Edge {
+                    from: "obj2".to_string(),
+                    to: "obj3".to_string(),
+                    label: "next".to_string(),
+                },
+                Edge {
+                    from: "obj3".to_string(),
+                    to: "obj4".to_string(),
+                    label: "next".to_string(),
+                },
+                Edge {
+                    from: "obj1".to_string(),
+                    to: "val1".to_string(),
+                    label: "value".to_string(),
+                },
+                Edge {
+                    from: "obj2".to_string(),
+                    to: "val2".to_string(),
+                    label: "value".to_string(),
+                },
+                Edge {
+                    from: "obj3".to_string(),
+                    to: "val3".to_string(),
+                    label: "value".to_string(),
+                },
+                Edge {
+                    from: "obj4".to_string(),
+                    to: "val4".to_string(),
+                    label: "value".to_string(),
+                },
             ],
         }
     }
@@ -318,7 +388,7 @@ mod tests {
         // next フィールドをチェック
         let next_list = env.field_lists.get("next").unwrap();
         assert_eq!(next_list[0], json!(1)); // obj1 -> obj2
-        assert_eq!(next_list[1], json!(2)); // obj2 -> obj3  
+        assert_eq!(next_list[1], json!(2)); // obj2 -> obj3
         assert_eq!(next_list[2], json!(3)); // obj3 -> obj4
         assert_eq!(next_list[3], json!(-1)); // obj4 -> null
 
@@ -353,7 +423,7 @@ mod tests {
 
         // オブジェクトが追加されたことを確認
         assert_eq!(env.obj_id_to_index.get("obj5"), Some(&4));
-        
+
         // 全てのフィールドリストが拡張されたことを確認
         let next_list = env.field_lists.get("next").unwrap();
         assert_eq!(next_list.len(), 5);

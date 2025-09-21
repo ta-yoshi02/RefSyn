@@ -35,7 +35,8 @@
 この例は内部で以下を実行します：
 - `analyze_operations_with_unification` により共通部分を抽出
 - 共通操作を初期 `VisGraph` に順に適用し、差分直前の `ListEnvironment` を構築
-- `build_escher_spec` で `input`/`inputTypes`/`examples` を組み立て、`tests.json` へ書き込み
+- `build_escher_spec` で `input`/`inputTypes`/`examples` を組み立て
+- `specs_to_json` で複数仕様を配列化し、`tests.json` へ書き込み
 
 ## Escher-Scala の実行（手動）
 - Java 8 の環境変数（macOS 例）
@@ -52,7 +53,8 @@ Escher-Scala は `src/main/resources/escher/tests.json` を読み込みます。
   - `vis_graph`: Kanon の環境（ノード/エッジ）
   - `ops_a`, `ops_b`: 比較する 2 本の操作列（JSON オブジェクト配列）
   - `arguments`/`output`: 各ケースの引数・期待出力
-  - `build_escher_spec("<関数名>", "<戻り値型>", &cases)` の設定
+- `build_escher_spec("<関数名>", "<戻り値型>", &cases)` で `EscherSpec` を生成
+- 複数仕様は `Vec<EscherSpec>` にまとめて `specs_to_json` → `write_spec_to_file`
 - 再生成
   - `cargo run --example generate_escher_json`
 
@@ -65,4 +67,3 @@ Escher-Scala は `src/main/resources/escher/tests.json` を読み込みます。
 ## 参考ドキュメント
 - `docs/REFSYN_TO_ESCHER.md`: 仕様詳細とコード断片
 - `architecture.md`: フローの背景と全体像
-

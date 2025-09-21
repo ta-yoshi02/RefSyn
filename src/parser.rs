@@ -24,7 +24,7 @@ pub struct Operation {
     pub old_to: Option<String>, // Added for editEdgeReference
     #[serde(rename = "newTo")]
     pub new_to: Option<String>, // Added
-    pub value: Option<Value>,   // Added for addNode literal, addVariable value
+    pub value: Option<Value>, // Added for addNode literal, addVariable value
     pub is_literal: Option<bool>, // 既存だが、addNodeでのリテラル判定に引き続き使用
 }
 
@@ -37,8 +37,9 @@ fn get_operation(val: &Value) -> Option<Operation> {
 pub fn parse_operations(
     ops: &[Value],
     current_receiver_id_as_this: Option<&String>, // 引数名を変更
-    memo_env: &mut MemoEnv, // MemoEnv を可変参照で受け取る
-) -> anyhow::Result<Program> { // 戻り値を Program のみに変更
+    memo_env: &mut MemoEnv,                       // MemoEnv を可変参照で受け取る
+) -> anyhow::Result<Program> {
+    // 戻り値を Program のみに変更
     let mut stmts = Vec::<Stmt>::new();
     let mut literal_nodes: HashMap<String, Expr> = HashMap::new(); // 値をExprとして保持
 
@@ -58,7 +59,10 @@ pub fn parse_operations(
 
         match op.edit_type.as_str() {
             "addNode" => {
-                let id = op.id.as_ref().ok_or_else(|| anyhow::anyhow!("addNode operation missing id"))?;
+                let id = op
+                    .id
+                    .as_ref()
+                    .ok_or_else(|| anyhow::anyhow!("addNode operation missing id"))?;
                 let label = op.label.as_deref().unwrap_or_default();
 
                 if Some(id.as_str()) == current_receiver_id_as_this.map(|s| s.as_str()) {
@@ -81,42 +85,71 @@ pub fn parse_operations(
                 }
             }
             "addEdge" => {
-                let from_id = op.from.as_ref().ok_or_else(|| anyhow::anyhow!("addEdge operation missing from"))?;
-                let to_id = op.to.as_ref().ok_or_else(|| anyhow::anyhow!("addEdge operation missing to"))?;
+                let from_id = op
+                    .from
+                    .as_ref()
+                    .ok_or_else(|| anyhow::anyhow!("addEdge operation missing from"))?;
+                let to_id = op
+                    .to
+                    .as_ref()
+                    .ok_or_else(|| anyhow::anyhow!("addEdge operation missing to"))?;
                 let edge_label = op.label.as_deref().unwrap_or_default();
 
                 let is_receiver_from = current_receiver_id_as_this
                     .map(|s| s == from_id)
                     .unwrap_or(false);
-                let owner_name = memo_env.resolve_or_create_var_name_for_id(from_id, is_receiver_from);
+                let owner_name =
+                    memo_env.resolve_or_create_var_name_for_id(from_id, is_receiver_from);
 
-                let lhs_base = if owner_name == "this" { Lhs::This } else { Lhs::Var(owner_name.clone()) };
+                let lhs_base = if owner_name == "this" {
+                    Lhs::This
+                } else {
+                    Lhs::Var(owner_name.clone())
+                };
                 let lhs = Lhs::ObjAccess(Box::new(lhs_base), edge_label.to_string());
 
-                let expr = resolve_id_to_expr(to_id, memo_env, &literal_nodes, current_receiver_id_as_this)?;
+                let expr = resolve_id_to_expr(
+                    to_id,
+                    memo_env,
+                    &literal_nodes,
+                    current_receiver_id_as_this,
+                )?;
                 stmts.push(Stmt::Assign { lhs, expr });
 
                 if !literal_nodes.contains_key(to_id) {
-                    memo_env.register_property_assignment(from_id.clone(), edge_label.to_string(), to_id.clone());
-                    
+                    memo_env.register_property_assignment(
+                        from_id.clone(),
+                        edge_label.to_string(),
+                        to_id.clone(),
+                    );
+
                     // Check for external reference registration
                     if let Some(owner_access_path) = memo_env.get_access_path(from_id) {
                         if owner_access_path == "this" || owner_access_path.starts_with("this.") {
-                            let external_path_for_value = format!("{}.{}", owner_access_path, edge_label);
+                            let external_path_for_value =
+                                format!("{}.{}", owner_access_path, edge_label);
                             memo_env.register_external_reference(to_id, &external_path_for_value);
                         }
                     }
                 }
             }
-            "editEdge" => { // Refer (プロパティ参照の変更)
-                let from_id = op.from.as_ref().ok_or_else(|| anyhow::anyhow!("editEdge operation missing from"))?;
-                let new_to_id = op.new_to.as_ref().ok_or_else(|| anyhow::anyhow!("editEdge operation missing newTo"))?;
+            "editEdge" => {
+                // Refer (プロパティ参照の変更)
+                let from_id = op
+                    .from
+                    .as_ref()
+                    .ok_or_else(|| anyhow::anyhow!("editEdge operation missing from"))?;
+                let new_to_id = op
+                    .new_to
+                    .as_ref()
+                    .ok_or_else(|| anyhow::anyhow!("editEdge operation missing newTo"))?;
                 let edge_label = op.label.as_deref().unwrap_or_default(); // プロパティ名
 
                 let is_receiver_from = current_receiver_id_as_this
                     .map(|s| s == from_id)
                     .unwrap_or(false);
-                let owner_name_for_lhs = memo_env.resolve_or_create_var_name_for_id(from_id, is_receiver_from);
+                let owner_name_for_lhs =
+                    memo_env.resolve_or_create_var_name_for_id(from_id, is_receiver_from);
                 let lhs_base_obj_expr = if owner_name_for_lhs == "this" {
                     Expr::Var("this".to_string())
                 } else {
@@ -126,25 +159,42 @@ pub fn parse_operations(
                 let lhs_base = expr_to_lhs(lhs_base_obj_expr);
                 let lhs = Lhs::ObjAccess(Box::new(lhs_base), edge_label.to_string());
 
-                let expr = resolve_id_to_expr(new_to_id, memo_env, &literal_nodes, current_receiver_id_as_this)?;
+                let expr = resolve_id_to_expr(
+                    new_to_id,
+                    memo_env,
+                    &literal_nodes,
+                    current_receiver_id_as_this,
+                )?;
                 stmts.push(Stmt::Assign { lhs, expr });
 
                 // プロパティ割り当てを登録
                 if !literal_nodes.contains_key(new_to_id) {
-                    memo_env.register_property_assignment(from_id.clone(), edge_label.to_string(), new_to_id.clone());
+                    memo_env.register_property_assignment(
+                        from_id.clone(),
+                        edge_label.to_string(),
+                        new_to_id.clone(),
+                    );
 
                     // Check for external reference registration
                     if let Some(owner_access_path) = memo_env.get_access_path(from_id) {
                         if owner_access_path == "this" || owner_access_path.starts_with("this.") {
-                            let external_path_for_value = format!("{}.{}", owner_access_path, edge_label);
-                            memo_env.register_external_reference(new_to_id, &external_path_for_value);
+                            let external_path_for_value =
+                                format!("{}.{}", owner_access_path, edge_label);
+                            memo_env
+                                .register_external_reference(new_to_id, &external_path_for_value);
                         }
                     }
                 }
             }
-            "editVariable" => { // Refer (変数の参照先の変更)
-                let var_id = op.id.as_ref().ok_or_else(|| anyhow::anyhow!("editVariable operation missing id (variable id)"))?;
-                let new_to_id = op.new_to.as_ref().ok_or_else(|| anyhow::anyhow!("editVariable operation missing newTo"))?;
+            "editVariable" => {
+                // Refer (変数の参照先の変更)
+                let var_id = op.id.as_ref().ok_or_else(|| {
+                    anyhow::anyhow!("editVariable operation missing id (variable id)")
+                })?;
+                let new_to_id = op
+                    .new_to
+                    .as_ref()
+                    .ok_or_else(|| anyhow::anyhow!("editVariable operation missing newTo"))?;
 
                 let lhs_expr = resolve_id_to_expr(
                     var_id,
@@ -162,13 +212,20 @@ pub fn parse_operations(
                     continue;
                 }
 
-                let expr = resolve_id_to_expr(new_to_id, memo_env, &literal_nodes, current_receiver_id_as_this)?;
+                let expr = resolve_id_to_expr(
+                    new_to_id,
+                    memo_env,
+                    &literal_nodes,
+                    current_receiver_id_as_this,
+                )?;
                 stmts.push(Stmt::Assign { lhs, expr });
             }
             "addVariable" => {
                 // toフィールドを優先し、なければidフィールドを使用
-                let var_id = op.to.as_ref().or_else(|| op.id.as_ref())
-                    .ok_or_else(|| anyhow::anyhow!("addVariable operation missing id/to field"))?;
+                let var_id =
+                    op.to.as_ref().or_else(|| op.id.as_ref()).ok_or_else(|| {
+                        anyhow::anyhow!("addVariable operation missing id/to field")
+                    })?;
                 let var_name_hint = op.label.as_deref();
 
                 // For addVariable, is_receiver should be false.
@@ -176,18 +233,22 @@ pub fn parse_operations(
                 // should pick it up from special_mappings or main-new* heuristic.
                 let var_name = memo_env.resolve_or_create_var_name_for_id(var_id, false);
 
-                if var_name == "this" && Some(var_id.as_str()) != current_receiver_id_as_this.map(|s| s.as_str()) {
-                     // Avoid declaring 'let this = ...' unless var_id is the actual receiver.
-                     // This case should be rare if current_receiver_id_as_this is correctly set.
-                     eprintln!("Warning: addVariable for id {} resolved to 'this' but is not the designated receiver. Hint: {:?}", var_id, var_name_hint);
-                     // Potentially generate a different name or handle as an error.
-                     // For now, proceed but this might lead to incorrect code.
+                if var_name == "this"
+                    && Some(var_id.as_str()) != current_receiver_id_as_this.map(|s| s.as_str())
+                {
+                    // Avoid declaring 'let this = ...' unless var_id is the actual receiver.
+                    // This case should be rare if current_receiver_id_as_this is correctly set.
+                    eprintln!("Warning: addVariable for id {} resolved to 'this' but is not the designated receiver. Hint: {:?}", var_id, var_name_hint);
+                    // Potentially generate a different name or handle as an error.
+                    // For now, proceed but this might lead to incorrect code.
                 }
-
 
                 if let Some(val_json) = &op.value {
                     let expr = parse_json_value_to_expr(val_json)?;
-                    stmts.push(Stmt::VarDecl { name: var_name, expr });
+                    stmts.push(Stmt::VarDecl {
+                        name: var_name,
+                        expr,
+                    });
                 } else {
                     stmts.push(Stmt::VarDecl {
                         name: var_name,
@@ -201,7 +262,10 @@ pub fn parse_operations(
                 // main.rs で処理
             }
             "editNode" => {
-                let id = op.id.as_ref().ok_or_else(|| anyhow::anyhow!("editNode operation missing id"))?;
+                let id = op
+                    .id
+                    .as_ref()
+                    .ok_or_else(|| anyhow::anyhow!("editNode operation missing id"))?;
                 let new_label = op.label.as_deref().unwrap_or_default();
 
                 if Some(id.as_str()) == current_receiver_id_as_this.map(|s| s.as_str()) {
@@ -245,9 +309,7 @@ fn parse_literal(literal_str: &str) -> Expr {
 }
 
 // JSON Value を AST Expr に変換するヘルパー関数
-fn parse_json_value_to_expr(
-    val: &Value,
-) -> anyhow::Result<Expr> {
+fn parse_json_value_to_expr(val: &Value) -> anyhow::Result<Expr> {
     match val {
         Value::Null => Ok(Expr::Literal("null".to_string())),
         Value::Bool(b) => Ok(Expr::Literal(b.to_string())),
@@ -266,7 +328,9 @@ fn parse_json_value_to_expr(
             Ok(Expr::Str(val.to_string()))
         }
         Value::Object(_map) => {
-            eprintln!("Warning: Object literal in JSON value is not fully supported, stringifying.");
+            eprintln!(
+                "Warning: Object literal in JSON value is not fully supported, stringifying."
+            );
             Ok(Expr::Str(val.to_string()))
         }
     }
@@ -293,18 +357,18 @@ fn resolve_id_to_expr(
         if access_path == "this" {
             return Ok(Expr::This);
         }
-        
+
         if access_path.starts_with("this.") {
             let parts: Vec<&str> = access_path.split('.').collect();
             let mut lhs = Lhs::This;
-            
+
             for prop in parts.into_iter().skip(1) {
                 lhs = Lhs::ObjAccess(Box::new(lhs), prop.to_string());
             }
-            
+
             return Ok(Expr::Lhs(Box::new(lhs)));
         }
-        
+
         // その他のアクセスパス（obj_0など）
         return Ok(Expr::Var(access_path));
     }
@@ -312,7 +376,12 @@ fn resolve_id_to_expr(
     let property_access_info = memo_env.get_property_access_for_id(id).cloned();
 
     if let Some((owner_id, prop_name)) = property_access_info {
-        let owner_expr = resolve_id_to_expr(&owner_id, memo_env, literal_nodes, current_receiver_id_as_this)?;
+        let owner_expr = resolve_id_to_expr(
+            &owner_id,
+            memo_env,
+            literal_nodes,
+            current_receiver_id_as_this,
+        )?;
         let lhs_base = match owner_expr {
             Expr::Var(name) => Lhs::Var(name),
             Expr::This => Lhs::This,
@@ -329,7 +398,10 @@ fn resolve_id_to_expr(
                 }
             }
         };
-        return Ok(Expr::Lhs(Box::new(Lhs::ObjAccess(Box::new(lhs_base), prop_name))));
+        return Ok(Expr::Lhs(Box::new(Lhs::ObjAccess(
+            Box::new(lhs_base),
+            prop_name,
+        ))));
     }
 
     if let Some(expr) = literal_nodes.get(id) {

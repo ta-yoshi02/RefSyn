@@ -1,5 +1,5 @@
-use warp::Filter;
 use crate::handle_synthesis;
+use warp::Filter;
 
 pub async fn run_server() {
     let hello = warp::path("hello").map(|| "Hello from RefSyn!");
@@ -15,9 +15,7 @@ pub async fn run_server() {
         .and(warp::body::bytes())
         .and_then(handle_synthesis);
 
-    let routes = hello
-        .or(synthesize_route)
-        .with(cors); // CORSフィルターを適用
+    let routes = hello.or(synthesize_route).with(cors); // CORSフィルターを適用
 
     println!("Server running on http://127.0.0.1:3030");
     println!("Available endpoints:");

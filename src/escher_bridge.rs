@@ -8,7 +8,7 @@
 //! - Deterministic ordering of inputs (args, then value lists, then pointer lists)
 
 use crate::list_env::ListEnvironment;
-use crate::models::{Edge, Node, VisGraph};
+use crate::models::VisGraph;
 use anyhow::{anyhow, Result};
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -23,24 +23,30 @@ pub struct EscherCase {
     pub output: Value,
 }
 
-#[derive(Serialize)]
-struct ExampleJson {
+#[derive(Serialize, Debug, Clone)]
+pub struct ExampleJson {
     input: Vec<Value>,
     output: Value,
 }
 
-#[derive(Serialize)]
-struct FunctionTestJson {
-    name: String,
-    inputTypes: Vec<String>,
-    returnType: String,
-    examples: Vec<ExampleJson>,
+#[derive(Serialize, Debug, Clone)]
+pub struct EscherSpec {
+    pub name: String,
+    #[serde(rename = "inputTypes")]
+    pub input_types: Vec<String>,
+    #[serde(rename = "returnType")]
+    pub return_type: String,
+    pub examples: Vec<ExampleJson>,
 }
 
 /// Build Escher-Scala tests.json content from cases.
 /// - `name`: synthesized function name
 /// - `return_type`: Escher type string (e.g., "Int", "List[Int]")
-pub fn build_escher_spec(name: &str, return_type: &str, cases: &[EscherCase]) -> Result<String> {
+pub fn build_escher_spec(
+    name: &str,
+    return_type: &str,
+    cases: &[EscherCase],
+) -> Result<EscherSpec> {
     if cases.is_empty() {
         return Err(anyhow!("no cases provided"));
     }
@@ -72,10 +78,15 @@ pub fn build_escher_spec(name: &str, return_type: &str, cases: &[EscherCase]) ->
         let (value_fields_c, pointer_fields_c) = analyze_fields(&case.vis_graph)?;
 
         // Enforce compatibility with first case
-        if set_of(&value_fields_c) != set_of(&value_fields) || set_of(&pointer_fields_c) != set_of(&pointer_fields) {
+        if set_of(&value_fields_c) != set_of(&value_fields)
+            || set_of(&pointer_fields_c) != set_of(&pointer_fields)
+        {
             return Err(anyhow!(
                 "field sets differ across cases: values={:?}/{:?}, pointers={:?}/{:?}",
-                value_fields_c, value_fields, pointer_fields_c, pointer_fields
+                value_fields_c,
+                value_fields,
+                pointer_fields_c,
+                pointer_fields
             ));
         }
 
@@ -103,15 +114,12 @@ pub fn build_escher_spec(name: &str, return_type: &str, cases: &[EscherCase]) ->
         });
     }
 
-    let spec = FunctionTestJson {
+    Ok(EscherSpec {
         name: name.to_string(),
-        inputTypes: input_types,
-        returnType: return_type.to_string(),
+        input_types,
+        return_type: return_type.to_string(),
         examples,
-    };
-
-    let arr = json!([spec]);
-    Ok(serde_json::to_string_pretty(&arr)?)
+    })
 }
 
 // ---------- internals ----------
@@ -161,7 +169,10 @@ fn analyze_fields(vis_graph: &VisGraph) -> Result<(Vec<String>, Vec<String>)> {
         }
     }
 
-    Ok((value_fields.into_iter().collect(), pointer_fields.into_iter().collect()))
+    Ok((
+        value_fields.into_iter().collect(),
+        pointer_fields.into_iter().collect(),
+    ))
 }
 
 #[derive(Debug, Clone)]
@@ -173,7 +184,11 @@ struct BfsOrder {
 }
 
 /// Build BFS order from the detected root variable across pointer fields only.
-fn build_bfs_order(env: &ListEnvironment, vis_graph: &VisGraph, pointer_fields: &[String]) -> Result<BfsOrder> {
+fn build_bfs_order(
+    env: &ListEnvironment,
+    vis_graph: &VisGraph,
+    pointer_fields: &[String],
+) -> Result<BfsOrder> {
     // 1) detect root from variable nodes
     let (root_env_idx, _) = detect_root(env, vis_graph)?;
 
@@ -199,7 +214,9 @@ fn build_bfs_order(env: &ListEnvironment, vis_graph: &VisGraph, pointer_fields: 
     let mut order: Vec<usize> = Vec::new();
     q.push_back(root_env_idx);
     while let Some(u) = q.pop_front() {
-        if !visited.insert(u) { continue; }
+        if !visited.insert(u) {
+            continue;
+        }
         order.push(u);
         if let Some(neis) = adj.get(&u) {
             for &v in neis {
@@ -215,7 +232,10 @@ fn build_bfs_order(env: &ListEnvironment, vis_graph: &VisGraph, pointer_fields: 
     for (bi, &orig) in order.iter().enumerate() {
         idx_to_bfs.insert(orig, bi);
     }
-    Ok(BfsOrder { order_indices: order, idx_to_bfs })
+    Ok(BfsOrder {
+        order_indices: order,
+        idx_to_bfs,
+    })
 }
 
 /// Detect root object index from variable bindings in env/graph.
@@ -291,14 +311,23 @@ fn build_pointer_index_list(env: &ListEnvironment, bfs: &BfsOrder, field: &str) 
             result.push(-1);
         } else {
             let to_orig = target_orig as usize;
-            let mapped = bfs.idx_to_bfs.get(&to_orig).copied().map(|i| i as i32).unwrap_or(-1);
+            let mapped = bfs
+                .idx_to_bfs
+                .get(&to_orig)
+                .copied()
+                .map(|i| i as i32)
+                .unwrap_or(-1);
             result.push(mapped);
         }
     }
     result
 }
 
-/// Convenience: write the produced spec JSON to a file path (e.g.,
+pub fn specs_to_json(specs: &[EscherSpec]) -> Result<String> {
+    Ok(serde_json::to_string_pretty(specs)?)
+}
+
+/// Convenience: write the produced spec JSON string to a file path (e.g.,
 /// `Escher-Scala/src/main/resources/escher/tests.json`).
 pub fn write_spec_to_file(path: &str, content: &str) -> Result<()> {
     std::fs::write(path, content)?;
@@ -308,27 +337,80 @@ pub fn write_spec_to_file(path: &str, content: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::{Edge, Node};
     use serde_json::json;
 
     fn graph_for_linear_list() -> (VisGraph, ListEnvironment) {
         // Objects: n1 -> n2 -> n3, values 10, 20, 30, and variable lst bound to n1
         let vis_graph = VisGraph {
             nodes: vec![
-                Node { id: "n1".to_string(), is_literal: false, label: json!("Node") },
-                Node { id: "n2".to_string(), is_literal: false, label: json!("Node") },
-                Node { id: "n3".to_string(), is_literal: false, label: json!("Node") },
-                Node { id: "__Variable-lst".to_string(), is_literal: false, label: json!("Var") },
-                Node { id: "v10".to_string(), is_literal: true, label: json!(10) },
-                Node { id: "v20".to_string(), is_literal: true, label: json!(20) },
-                Node { id: "v30".to_string(), is_literal: true, label: json!(30) },
+                Node {
+                    id: "n1".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                Node {
+                    id: "n2".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                Node {
+                    id: "n3".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                Node {
+                    id: "__Variable-lst".to_string(),
+                    is_literal: false,
+                    label: json!("Var"),
+                },
+                Node {
+                    id: "v10".to_string(),
+                    is_literal: true,
+                    label: json!(10),
+                },
+                Node {
+                    id: "v20".to_string(),
+                    is_literal: true,
+                    label: json!(20),
+                },
+                Node {
+                    id: "v30".to_string(),
+                    is_literal: true,
+                    label: json!(30),
+                },
             ],
             edges: vec![
-                Edge { from: "n1".to_string(), to: "n2".to_string(), label: "next".to_string() },
-                Edge { from: "n2".to_string(), to: "n3".to_string(), label: "next".to_string() },
-                Edge { from: "n1".to_string(), to: "v10".to_string(), label: "val".to_string() },
-                Edge { from: "n2".to_string(), to: "v20".to_string(), label: "val".to_string() },
-                Edge { from: "n3".to_string(), to: "v30".to_string(), label: "val".to_string() },
-                Edge { from: "__Variable-lst".to_string(), to: "n1".to_string(), label: "lst".to_string() },
+                Edge {
+                    from: "n1".to_string(),
+                    to: "n2".to_string(),
+                    label: "next".to_string(),
+                },
+                Edge {
+                    from: "n2".to_string(),
+                    to: "n3".to_string(),
+                    label: "next".to_string(),
+                },
+                Edge {
+                    from: "n1".to_string(),
+                    to: "v10".to_string(),
+                    label: "val".to_string(),
+                },
+                Edge {
+                    from: "n2".to_string(),
+                    to: "v20".to_string(),
+                    label: "val".to_string(),
+                },
+                Edge {
+                    from: "n3".to_string(),
+                    to: "v30".to_string(),
+                    label: "val".to_string(),
+                },
+                Edge {
+                    from: "__Variable-lst".to_string(),
+                    to: "n1".to_string(),
+                    label: "lst".to_string(),
+                },
             ],
         };
         let env = ListEnvironment::from_vis_graph(&vis_graph);
@@ -344,10 +426,17 @@ mod tests {
             arguments: vec![json!(99)],
             output: json!(2), // e.g., last node index in BFS order
         };
-        let json_text = build_escher_spec("append-g", "Int", &[case]).expect("spec");
-        // The JSON contains our name and types and one example
-        assert!(json_text.contains("append-g"));
-        assert!(json_text.contains("\"inputTypes\""));
-        assert!(json_text.contains("\"examples\""));
+        let spec = build_escher_spec("append-g", "Int", &[case]).expect("spec");
+        assert_eq!(spec.name, "append-g");
+        assert_eq!(
+            spec.input_types,
+            vec![
+                "Int".to_string(),
+                "List[Int]".to_string(),
+                "List[Int]".to_string()
+            ]
+        );
+        assert_eq!(spec.return_type, "Int".to_string());
+        assert_eq!(spec.examples.len(), 1);
     }
 }

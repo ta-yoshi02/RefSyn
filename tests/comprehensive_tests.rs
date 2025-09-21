@@ -1,34 +1,34 @@
-use refsyn::ir::*;
 use refsyn::ast;
-use refsyn::env::MemoEnv;
 use refsyn::convert_operations_to_ir;
+use refsyn::env::MemoEnv;
+use refsyn::ir::*;
 use refsyn::program_analyzer::ProgramAnalysis;
 use serde_json;
 
 /// tex解析記録に基づく実際のテストケース作成
-/// 
+///
 /// これらのテストは`records/analysys.tex`に記録された手動解析結果を基に、
 /// 各メソッドが正しく合成されることを検証します。
 
 /// テスト用ユーティリティ関数 - 動的なthis決定版
 fn create_env_for_method_call(js_program: &str, call_index: usize) -> MemoEnv {
-    let analysis = ProgramAnalysis::analyze_program(js_program)
-        .expect("Failed to analyze JavaScript program");
-    
+    let analysis =
+        ProgramAnalysis::analyze_program(js_program).expect("Failed to analyze JavaScript program");
+
     let mut env = MemoEnv::new();
-    
+
     // 指定されたメソッド呼び出しのレシーバーをthisにマッピング
     if let Some(receiver_id) = analysis.get_receiver_id_for_call(call_index) {
         env.add_name_id_mapping(receiver_id.to_string(), "this".to_string());
     }
-    
+
     // その他のオブジェクトIDも適切にマッピング
     for (var_name, object_id) in &analysis.object_declarations {
         if !env.get_name_by_id(object_id).is_some() {
             env.add_name_id_mapping(object_id.clone(), var_name.clone());
         }
     }
-    
+
     env
 }
 
@@ -105,57 +105,84 @@ fn test_append_comprehensive() {
     ];
 
     let operations_list = vec![append_0_ops, append_3_ops];
-    
+
     // 動的な環境構築を使用
     let js_program = r#"
         var lst = new Node();   // main-new1
         lst.append(0);          // call1: receiver = main-new1
         lst.append(3);          // call2: receiver = main-new1（同じオブジェクト）
     "#;
-    
+
     let memo_envs = vec![
-        create_env_for_method_call(js_program, 0),  // call1
-        create_env_for_method_call(js_program, 1),  // call2
+        create_env_for_method_call(js_program, 0), // call1
+        create_env_for_method_call(js_program, 1), // call2
     ];
 
     let (program_opt, holes) = find_common_pattern_from_operations(&operations_list, &memo_envs);
 
-    assert!(program_opt.is_some(), "append pattern synthesis should succeed");
+    assert!(
+        program_opt.is_some(),
+        "append pattern synthesis should succeed"
+    );
     let program = program_opt.unwrap();
 
     println!("=== Append Method Test Results ===");
     println!("Generated {} statements", program.stmts.len());
     println!("Found {} holes", holes.len());
-    
+
     for (i, stmt) in program.stmts.iter().enumerate() {
         println!("Statement {}: {:?}", i, stmt);
     }
-    
+
     // 期待される構造の詳細な検証
     // 1. Nodeの作成
-    let new_node_count = program.stmts.iter().filter(|stmt| {
-        matches!(stmt, ast::Stmt::VarDecl { expr: ast::Expr::New(_), .. })
-    }).count();
-    assert!(new_node_count > 0, "append should create at least one new Node");
+    let new_node_count = program
+        .stmts
+        .iter()
+        .filter(|stmt| {
+            matches!(
+                stmt,
+                ast::Stmt::VarDecl {
+                    expr: ast::Expr::New(_),
+                    ..
+                }
+            )
+        })
+        .count();
+    assert!(
+        new_node_count > 0,
+        "append should create at least one new Node"
+    );
 
     // 2. val プロパティの設定
-    let val_assignments = program.stmts.iter().filter(|stmt| {
-        matches!(stmt, ast::Stmt::Assign { 
+    let val_assignments = program
+        .stmts
+        .iter()
+        .filter(|stmt| {
+            matches!(stmt, ast::Stmt::Assign { 
             lhs: ast::Lhs::ObjAccess(_, prop), .. 
         } if prop == "val")
-    }).count();
+        })
+        .count();
     assert!(val_assignments > 0, "append should set val properties");
 
     // 3. next プロパティの設定
-    let next_assignments = program.stmts.iter().filter(|stmt| {
-        matches!(stmt, ast::Stmt::Assign { 
+    let next_assignments = program
+        .stmts
+        .iter()
+        .filter(|stmt| {
+            matches!(stmt, ast::Stmt::Assign { 
             lhs: ast::Lhs::ObjAccess(_, prop), .. 
         } if prop == "next")
-    }).count();
+        })
+        .count();
     assert!(next_assignments > 0, "append should set next properties");
 
     // 4. ホールの存在確認（値の差異を表現）
-    assert!(!holes.is_empty(), "append should have holes for different values");
+    assert!(
+        !holes.is_empty(),
+        "append should have holes for different values"
+    );
 }
 
 /// tex解析: prependメソッドの詳細テスト
@@ -205,14 +232,20 @@ fn test_prepend_comprehensive() {
         println!("=== Prepend Method Test Results ===");
         println!("Generated {} statements", program.stmts.len());
         println!("Found {} holes", holes.len());
-        
+
         for (i, stmt) in program.stmts.iter().enumerate() {
             println!("Statement {}: {:?}", i, stmt);
         }
 
         // prependの特徴: 新しいノードの作成と、thisへの参照設定
         let has_new_node = program.stmts.iter().any(|stmt| {
-            matches!(stmt, ast::Stmt::VarDecl { expr: ast::Expr::New(_), .. })
+            matches!(
+                stmt,
+                ast::Stmt::VarDecl {
+                    expr: ast::Expr::New(_),
+                    ..
+                }
+            )
         });
         assert!(has_new_node, "prepend should create new Node");
 
@@ -223,7 +256,7 @@ fn test_prepend_comprehensive() {
                 expr: ast::Expr::This
             } if prop == "next")
         });
-        
+
         println!("Has next to this assignment: {}", has_next_to_this);
     } else {
         println!("Prepend pattern synthesis returned None");
@@ -278,24 +311,36 @@ fn test_insert_after_comprehensive() {
     if let Some(program) = program_opt {
         println!("=== InsertAfter Method Test Results ===");
         println!("Generated {} statements", program.stmts.len());
-        
+
         for (i, stmt) in program.stmts.iter().enumerate() {
             println!("Statement {}: {:?}", i, stmt);
         }
 
         // insertAfterの特徴: 新しいノード作成 + 参照の再配線
         let has_new_node = program.stmts.iter().any(|stmt| {
-            matches!(stmt, ast::Stmt::VarDecl { expr: ast::Expr::New(_), .. })
+            matches!(
+                stmt,
+                ast::Stmt::VarDecl {
+                    expr: ast::Expr::New(_),
+                    ..
+                }
+            )
         });
         assert!(has_new_node, "insertAfter should create new Node");
 
-        let next_modifications = program.stmts.iter().filter(|stmt| {
-            matches!(stmt, ast::Stmt::Assign { 
+        let next_modifications = program
+            .stmts
+            .iter()
+            .filter(|stmt| {
+                matches!(stmt, ast::Stmt::Assign { 
                 lhs: ast::Lhs::ObjAccess(_, prop), .. 
             } if prop == "next")
-        }).count();
-        assert!(next_modifications >= 1, "insertAfter should modify next references");
-
+            })
+            .count();
+        assert!(
+            next_modifications >= 1,
+            "insertAfter should modify next references"
+        );
     } else {
         println!("InsertAfter pattern synthesis returned None");
     }
@@ -331,40 +376,50 @@ fn test_ir_conversion_comprehensive() {
     ];
 
     let ir_result = convert_operations_to_ir(&test_operations);
-    
+
     match ir_result {
         Ok(ir_ops) => {
             println!("=== IR Conversion Test Results ===");
             println!("Converted {} operations to IR", ir_ops.len());
-            
+
             assert_eq!(ir_ops.len(), 4, "Should convert all operations");
-            
+
             // 各操作タイプの確認
-            let add_node_count = ir_ops.iter().filter(|op| {
-                matches!(op.kind, OpKind::AddNode { .. })
-            }).count();
+            let add_node_count = ir_ops
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::AddNode { .. }))
+                .count();
             assert_eq!(add_node_count, 1, "Should have one AddNode operation");
 
-            let add_edge_count = ir_ops.iter().filter(|op| {
-                matches!(op.kind, OpKind::AddEdge { .. })
-            }).count();
+            let add_edge_count = ir_ops
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::AddEdge { .. }))
+                .count();
             assert_eq!(add_edge_count, 1, "Should have one AddEdge operation");
 
-            let edit_edge_count = ir_ops.iter().filter(|op| {
-                matches!(op.kind, OpKind::EditEdgeReference { .. })
-            }).count();
-            assert_eq!(edit_edge_count, 1, "Should have one EditEdgeReference operation");
+            let edit_edge_count = ir_ops
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::EditEdgeReference { .. }))
+                .count();
+            assert_eq!(
+                edit_edge_count, 1,
+                "Should have one EditEdgeReference operation"
+            );
 
-            let delete_node_count = ir_ops.iter().filter(|op| {
-                matches!(op.kind, OpKind::DeleteNode { .. })
-            }).count();
+            let delete_node_count = ir_ops
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::DeleteNode { .. }))
+                .count();
             assert_eq!(delete_node_count, 1, "Should have one DeleteNode operation");
 
             // 正規順序の確認
             let canonical_ids = canonical_order(&ir_ops);
-            assert_eq!(canonical_ids.len(), ir_ops.len(), "Canonical order should preserve all operations");
-
-        },
+            assert_eq!(
+                canonical_ids.len(),
+                ir_ops.len(),
+                "Canonical order should preserve all operations"
+            );
+        }
         Err(e) => {
             panic!("IR conversion failed: {}", e);
         }
@@ -406,7 +461,10 @@ fn test_pattern_matching_detailed() {
     ];
 
     let operations_list = vec![ops_a, ops_b];
-    let memo_envs = vec![create_comprehensive_memo_env(), create_comprehensive_memo_env()];
+    let memo_envs = vec![
+        create_comprehensive_memo_env(),
+        create_comprehensive_memo_env(),
+    ];
 
     let (program_opt, holes) = find_common_pattern_from_operations(&operations_list, &memo_envs);
 
@@ -414,15 +472,14 @@ fn test_pattern_matching_detailed() {
         println!("=== Pattern Matching Test Results ===");
         println!("Generated {} statements", program.stmts.len());
         println!("Found {} holes", holes.len());
-        
+
         // 共通パターンが抽出されることを確認
         assert!(!program.stmts.is_empty(), "Should extract common pattern");
-        
+
         // ホールが適切に作成されることを確認（異なるIDに対して）
         if !holes.is_empty() {
             println!("Holes found: {:?}", holes);
         }
-
     } else {
         println!("Pattern matching returned None - this might be expected for simple cases");
     }
@@ -433,38 +490,40 @@ fn test_pattern_matching_detailed() {
 fn test_edge_cases() {
     // 空の操作リスト
     let empty_ops: Vec<serde_json::Value> = vec![];
-    let empty_result = find_common_pattern_from_operations(&[empty_ops], &[create_comprehensive_memo_env()]);
+    let empty_result =
+        find_common_pattern_from_operations(&[empty_ops], &[create_comprehensive_memo_env()]);
     match empty_result {
         (Some(_), _) => println!("Empty operations handled gracefully"),
         (None, _) => println!("Empty operations returned None as expected"),
     }
 
     // 不正なJSON構造
-    let malformed_ops = vec![
-        serde_json::json!({
-            "invalidField": "invalid"
-        }),
-    ];
-    let malformed_result = find_common_pattern_from_operations(&[malformed_ops], &[create_comprehensive_memo_env()]);
+    let malformed_ops = vec![serde_json::json!({
+        "invalidField": "invalid"
+    })];
+    let malformed_result =
+        find_common_pattern_from_operations(&[malformed_ops], &[create_comprehensive_memo_env()]);
     match malformed_result {
         (Some(_), _) => println!("Malformed operations handled gracefully"),
         (None, _) => println!("Malformed operations returned None as expected"),
     }
 
     // 1つだけの操作リスト（パターンマッチング不可）
-    let single_op = vec![
-        serde_json::json!({
-            "editType": "addNode",
-            "id": "single",
-            "isLiteral": false,
-            "label": "Node"
-        }),
-    ];
-    let single_result = find_common_pattern_from_operations(&[single_op], &[create_comprehensive_memo_env()]);
+    let single_op = vec![serde_json::json!({
+        "editType": "addNode",
+        "id": "single",
+        "isLiteral": false,
+        "label": "Node"
+    })];
+    let single_result =
+        find_common_pattern_from_operations(&[single_op], &[create_comprehensive_memo_env()]);
     match single_result {
         (Some(program), _) => {
-            println!("Single operation converted successfully: {} statements", program.stmts.len());
-        },
+            println!(
+                "Single operation converted successfully: {} statements",
+                program.stmts.len()
+            );
+        }
         (None, _) => println!("Single operation returned None"),
     }
 }
@@ -473,7 +532,7 @@ fn test_edge_cases() {
 #[test]
 fn test_synthesis_statistics() {
     println!("=== RefSyn Test Suite Statistics ===");
-    
+
     // 各メソッドタイプのテスト実行統計
     let test_methods = vec![
         ("append", "Node insertion at end"),

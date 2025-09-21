@@ -1,84 +1,86 @@
-# Kanon → Escher-Scala JSON Bridge (Unification → Diff → List/Int JSON)
+# Kanon → Escher-Scala JSON ブリッジ（Unification → Diff → List/Int JSON）
 
-This document explains how to go from two Kanon operation traces to Escher-Scala `tests.json`:
+このドキュメントは、Kanon の操作トレース（オペレーション列）から Escher-Scala の `tests.json` を生成する手順を説明します。
 
-1) run unification to find common/diff parts
-2) build a local List/Int environment snapshot at the boundary
-3) emit Escher-compatible JSON examples
+1) 同型統合（unification）で共通部分と差分を特定
+2) 差分境界でのローカル List/Int 環境スナップショットを構築
+3) Escher 互換の JSON 例（examples）を出力
 
-You will then point Escher-Scala to the generated file and run it manually.
+最後に、生成したファイルを Escher-Scala に読み込ませて実行します。
 
-## What’s Implemented
+## 実装済みの機能
 
-- Module: `src/escher_bridge.rs`
-  - `EscherCase`: holds a `ListEnvironment` + arguments + output
-  - `build_escher_spec(name, return_type, cases) -> String`:
-    - dynamically detects fields (value vs pointer)
-    - BFS local indexing from detected root variable
-    - sentinel `-1` for null/undefined/end
-    - builds a single Escher spec with many `examples`
-  - `write_spec_to_file(path, content)`
+- モジュール: `src/escher_bridge.rs`
+  - `EscherCase`: `ListEnvironment` と関数引数、期待出力をまとめたケース
+  - `build_escher_spec(name, return_type, cases) -> EscherSpec`:
+    - フィールド（値フィールド/ポインタフィールド）を動的に検出
+    - 変数ノードから BFS によるローカルインデックス化
+    - `null/undefined/終端` をセンチネル `-1` で表現
+    - 複数の `examples` を持つ単一の Escher 仕様を生成
+  - `specs_to_json(&[EscherSpec]) -> String` で配列 JSON を生成
+  - `write_spec_to_file(path, content)` でファイル出力
 
-- Environment builder: `src/list_env.rs`
-  - `ListEnvironment::from_vis_graph(&VisGraph)` builds initial lists
-  - `ListEnvironment::apply_operation(&GraphOperation)` applies a Kanon edit
-  - Stores pointer fields as indices and values as integers (numeric strings also supported by the bridge)
+- 環境ビルダー: `src/list_env.rs`
+  - `ListEnvironment::from_vis_graph(&VisGraph)` で初期リストを構築
+  - `ListEnvironment::apply_operation(&GraphOperation)` で Kanon の編集操作を適用
+  - ポインタはインデックス、値は整数として保持（数値文字列はブリッジ側で数値化をサポート）
 
-- Unification utilities: `src/lib.rs`
+- 統合ユーティリティ: `src/lib.rs`
   - `pub fn analyze_operations_with_unification(vis_graph, operations_a, operations_b)`
-    - returns `UnificationAnalysisResult` containing `unification_result` with `common_a`, `diff_a`, etc.
-  - Note: You’ll map `common_a` back to the original JSON operations by the index in the op id (e.g. `op_3` → index 3)
+    - `unification_result`（`common_a`, `diff_a` 等）を含む `UnificationAnalysisResult` を返却
+  - 備考: `common_a` の各操作は ID（例: `op_3` → 3番目）から元の JSON 操作列へ対応付け可能
 
-## End-to-End Flow
+## エンドツーエンドの流れ
 
-Inputs per test case:
-- `VisGraph` (Kanon environment: nodes/edges)
-- Two operation sequences (JSON array of operations) to compare: A and B
-- Function arguments (scalars, e.g., `Int`)
-- Expected output (e.g., `Int`)
+各テストケースの入力:
+- `VisGraph`（Kanon の環境: ノード/エッジ）
+- 比較する操作列 2 本（A と B、JSON 配列）
+- 関数引数（スカラー、例: `Int`）
+- 期待される出力（例: `Int`）
 
-Steps:
+手順:
 
-1. Unify operations to find common/diff
-   - Convert A and B to unify ops and compute unification.
-   - Use: `refsyn::analyze_operations_with_unification(&vis_graph, &ops_a, &ops_b)`
+1. 操作列の統合で共通/差分を特定
+   - A と B を統合用の表現に変換し、統合を計算
+   - 使用関数: `refsyn::analyze_operations_with_unification(&vis_graph, &ops_a, &ops_b)`
 
-2. Build environment at the boundary
-   - Start from `ListEnvironment::from_vis_graph(&vis_graph)`.
-   - Extract indices from `analysis.unification_result.common_a` (ids like `op_0`, `op_1`, …), sort ascending.
-   - For each index i:
-     - Parse the original JSON A[i] into `list_env::GraphOperation` (serde)
-     - Apply via `env.apply_operation(&graph_op)`
-   - The resulting `env` is the snapshot just before first difference.
+2. 差分境界での環境を構築
+   - `ListEnvironment::from_vis_graph(&vis_graph)` から開始
+   - `analysis.unification_result.common_a` から ID（`op_0`, `op_1`, …）の末尾番号を抽出し昇順にソート
+   - 各番号 i について:
+     - 元の JSON A[i] を `list_env::GraphOperation` にデコード（serde）
+     - `env.apply_operation(&graph_op)` で適用
+   - 得られた `env` が「最初の差分直前」のスナップショット
 
-3. Create Escher case(s)
-   - Wrap `env`, `vis_graph`, `arguments`, `output` into `EscherCase`.
-   - You can create multiple cases (one per Kanon test) and pass all to `build_escher_spec`.
+3. Escher ケースを作成
+   - `env`, `vis_graph`, `arguments`, `output` を `EscherCase` に包む
+   - Kanon 側の複数テストを複数ケースとして作り、`build_escher_spec` にまとめて渡せる
 
-4. Emit tests.json
-   - Call `build_escher_spec("<func-name>", "<return-type>", &cases)` → `String`
-   - Write to a path you choose (e.g., `Escher-Scala/src/main/resources/escher/tests.json`):
-     - `write_spec_to_file(path, &spec)`
-   - You will then adjust Escher-Scala’s loader and run it.
+4. `tests.json` を出力
+- `build_escher_spec("<func-name>", "<return-type>", &cases)` → `EscherSpec`
+- 必要な仕様を `Vec<EscherSpec>` にまとめ、`specs_to_json(&specs)` で文字列化
+- 任意のパスへ保存（例: `Escher-Scala/src/main/resources/escher/tests.json`）:
+  - `write_spec_to_file(path, &json_text)`
+   - その後、Escher-Scala 側でロードして実行
 
-## Example Code (Rust)
+## サンプルコード（Rust）
 
-Assume you already have for each test:
+前提（各テストごとに準備済み）:
 - `vis_graph: refsyn::models::VisGraph`
 - `ops_a: Vec<serde_json::Value>`
 - `ops_b: Vec<serde_json::Value>`
-- `arguments: Vec<serde_json::Value>` (e.g., `[json!(0)]`)
-- `expected_output: serde_json::Value` (e.g., `json!(2)`) 
+- `arguments: Vec<serde_json::Value>`（例: `[json!(0)]`）
+- `expected_output: serde_json::Value`（例: `json!(2)`）
 
 ```rust
-use refsyn::escher_bridge::{EscherCase, build_escher_spec, write_spec_to_file};
+use refsyn::escher_bridge::{EscherCase, build_escher_spec, specs_to_json, write_spec_to_file};
 use refsyn::list_env::{ListEnvironment, GraphOperation};
 use serde_json::json;
 
-// 1) Unification
+// 1) 統合（unification）
 let analysis = refsyn::analyze_operations_with_unification(&vis_graph, &ops_a, &ops_b)?;
 
-// 2) Build env at the common boundary (apply common A-ops in original order)
+// 2) 共通部分の境界で環境を構築（A 側の共通操作を元の順序で適用）
 let mut env = ListEnvironment::from_vis_graph(&vis_graph);
 let mut common_indices: Vec<usize> = analysis
     .unification_result
@@ -94,57 +96,58 @@ for idx in common_indices {
     env.apply_operation(&graph_op)?;
 }
 
-// 3) Wrap into an Escher case
+// 3) Escher ケースに包む
 let case = EscherCase {
     env,
     vis_graph: vis_graph.clone(),
-    arguments: vec![json!(0)],          // your scalar args
-    output: json!(2),                   // your expected output
+    arguments: vec![json!(0)],          // スカラー引数
+    output: json!(2),                   // 期待出力
 };
 
-// You can repeat the above to build multiple cases.
+// 複数ケースを作成してまとめて渡すことも可能
 let spec = build_escher_spec("append-g", "Int", &[case])?;
+let specs = vec![spec];
+let json_text = specs_to_json(&specs)?;
 
-// 4) Write to a file Escher will load
-write_spec_to_file("Escher-Scala/src/main/resources/escher/tests.json", &spec)?;
+// 4) Escher 側が読むファイルとして書き出す
+write_spec_to_file("Escher-Scala/src/main/resources/escher/tests.json", &json_text)?;
 ```
 
-## Field Detection and Indexing Details
+## フィールド検出とインデックス化の詳細
 
-- Dynamic fields:
-  - Value fields: any edge label with at least one edge to a literal node
-  - Pointer fields: any edge label with at least one edge to a non-literal object node
-  - Special nodes (`__RectForVariable__`, `__Variable-*`) are ignored for classification
+- 動的フィールド検出:
+  - 値フィールド: リテラルノードへ向かうエッジが1つ以上あるラベル
+  - ポインタフィールド: 非リテラルオブジェクトへ向かうエッジが1つ以上あるラベル
+  - 特殊ノード（`__RectForVariable__`, `__Variable-*`）は分類から除外
 
-- Root detection for BFS:
-  - Bridge searches variable nodes with id `__Variable-<name>`
-  - If field `<name>` at that variable’s index points to an object, that object becomes the BFS root
-  - BFS follows only pointer fields; this yields the local index order
+- BFS のルート検出:
+  - ID が `__Variable-<name>` の変数ノードを探索
+  - その変数インデックスの `<name>` フィールドがオブジェクトを指すなら、そのオブジェクトを BFS ルートに採用
+  - BFS はポインタフィールドのみを辿り、ローカルインデックス順を決める
 
-- Normalization:
-  - Scalar values: parsed as `Int` (numeric JSON or numeric string)
-  - Missing/undefined/null: `-1`
-  - Pointers: original indices remapped into BFS-local indices, terminals become `-1`
+- 正規化:
+  - スカラー値: `Int` として格納（数値 JSON または数値文字列）
+  - 欠損/未定義/null: `-1`
+  - ポインタ: 元のインデックスを BFS ローカルインデックスへ再マップ、終端は `-1`
 
-## Multiple Test Cases
+## 複数のテストケース
 
-Pass several `EscherCase`s to `build_escher_spec`. The bridge:
-- derives `inputTypes` from the first case
-- checks that detected field sets are consistent across all cases
-- emits one function spec containing all cases under `examples`
+複数の `EscherCase` を `build_escher_spec` に渡すと、ブリッジは次を行います:
+- 最初のケースから `inputTypes` を導出
+- 検出したフィールド集合が全ケースで一致するか検査
+- `examples` に全ケースを含めた単一の関数仕様を生成
 
-## Tips and Caveats
+## Tips / 注意点
 
-- If your Kanon literals are strings like `"2"`, the bridge will parse them as numbers for value lists.
-- Ensure the root variable node (e.g., `__Variable-lst` → label `lst`) exists; otherwise root detection fails.
-- If you prefer a position-based fallback without unification, you can use:
-  - `operation_analyzer::analyze_operations_with_environments`, which returns snapshots (`environment_before`) at each difference. You can convert those directly into `EscherCase`s.
-- The internal helper in `lib.rs` used for printing env during unification uses a string form for some edges; prefer the `ListEnvironment` API shown above for the bridge.
+- Kanon のリテラルが文字列（例: `"2"`）でも、ブリッジは値リストとして数値へパースします。
+- ルートの変数ノード（例: `__Variable-lst` → ラベル `lst`）が存在することを確認してください。ない場合はルート検出に失敗します。
+- Unification を使わず位置ベースのフォールバックが必要な場合は、
+  - `operation_analyzer::analyze_operations_with_environments` を利用できます。差分ごとに `environment_before` を返すので、そのまま `EscherCase` に変換可能です。
+- `lib.rs` 内部の一部ヘルパは出力整形上、エッジ表現が文字列になる箇所があります。ブリッジ用途では、本ドキュメントの `ListEnvironment` API を推奨します。
 
-## Where Things Live
+## 配置場所（ソース案内）
 
-- `src/escher_bridge.rs`: bridge implementation (build spec JSON)
-- `src/list_env.rs`: list-based environment representation + operations
-- `src/lib.rs`: public unify entry (`analyze_operations_with_unification`)
-- `Escher-Scala/src/main/scala/escher/Test.scala`: Escher runner (loads `/escher/tests.json`)
-
+- `src/escher_bridge.rs`: ブリッジ実装（spec JSON 生成）
+- `src/list_env.rs`: リストベース環境表現と操作適用
+- `src/lib.rs`: 公開 API（`analyze_operations_with_unification`）
+- `Escher-Scala/src/main/scala/escher/Test.scala`: Escher ランナー（`/escher/tests.json` をロード）

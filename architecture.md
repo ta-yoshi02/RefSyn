@@ -56,12 +56,14 @@ flowchart TB
 
 ### 使用例（概要）
 ```
-use refsyn::escher_bridge::{EscherCase, build_escher_spec, write_spec_to_file};
+use refsyn::escher_bridge::{EscherCase, build_escher_spec, specs_to_json, write_spec_to_file};
 
 let spec = build_escher_spec(
     "append-g",
     "Int",
     &[EscherCase { env, vis_graph, arguments: vec![json!(0)], output: json!(2) }]
 )?;
-write_spec_to_file("Escher-Scala/src/main/resources/escher/tests.json", &spec)?;
+let specs = vec![spec];
+let json_text = specs_to_json(&specs)?;
+write_spec_to_file("Escher-Scala/src/main/resources/escher/tests.json", &json_text)?;
 ```

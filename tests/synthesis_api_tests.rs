@@ -1,9 +1,9 @@
+use refsyn::list_env::{GraphOperation, ListEnvironment};
+use refsyn::models::{Edge, Node, VisGraph};
 use refsyn::{handle_synthesis, SynthesisResponse};
-use refsyn::list_env::{ListEnvironment, GraphOperation};
-use refsyn::models::{VisGraph, Node, Edge};
+use serde_json::json;
 use warp::http::StatusCode;
 use warp::Reply;
-use serde_json::json;
 
 #[tokio::test]
 async fn test_synthesis_from_kanon_payload() {
@@ -20,36 +20,46 @@ async fn test_synthesis_from_kanon_payload() {
 
     let bytes = bytes::Bytes::from(json_payload);
     let result = handle_synthesis(bytes).await;
-    
+
     match result {
         Ok(reply) => {
             let response = reply.into_response();
             assert_eq!(response.status(), StatusCode::OK);
             let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
             let synthesis_response: SynthesisResponse = serde_json::from_slice(&body).unwrap();
-            
+
             // 期待される個別コード数
             assert_eq!(synthesis_response.individual_codes.len(), 2);
-            
+
             // 期待される個別コード内容（実際の出力に合わせて修正）
-            assert_eq!(synthesis_response.individual_codes[0], "var obj_0 = new Node();\nobj_0.val = 0;\nthis.next = obj_0;\n");
-            assert_eq!(synthesis_response.individual_codes[1], "var obj_0 = new Node();\nthis.next.next = obj_0;\nobj_0.val = 3;\n");
-            
+            assert_eq!(
+                synthesis_response.individual_codes[0],
+                "var obj_0 = new Node();\nobj_0.val = 0;\nthis.next = obj_0;\n"
+            );
+            assert_eq!(
+                synthesis_response.individual_codes[1],
+                "var obj_0 = new Node();\nthis.next.next = obj_0;\nobj_0.val = 3;\n"
+            );
+
             // 期待される共通パターン（実際の出力では空文字列）
             assert_eq!(synthesis_response.common_pattern.as_deref(), Some(""));
-            
+
             // 期待されるホール情報（実際の出力ではNone）
             assert_eq!(synthesis_response.hole_information, None);
-            
+
             // 期待されるListEnvironment情報（実際のKanonデータから）
             let list_env_info = synthesis_response.list_environment_info.as_ref().unwrap();
-            
+
             // 順序に依存しないテスト - 各リストの内容を個別に確認
             assert!(list_env_info.contains("List Environment:"));
             assert!(list_env_info.contains("List[obj_val] = [Number(-1), Number(-1), String(\"0\"), String(\"3\"), String(\"2\")]"));
-            assert!(list_env_info.contains("List[obj_next] = [Number(-1), Number(-1), Number(3), Number(-1), Number(2)]"));
-            assert!(list_env_info.contains("List[obj_lst] = [Number(-1), Number(4), Number(-1), Number(-1), Number(-1)]"));
-            
+            assert!(list_env_info.contains(
+                "List[obj_next] = [Number(-1), Number(-1), Number(3), Number(-1), Number(2)]"
+            ));
+            assert!(list_env_info.contains(
+                "List[obj_lst] = [Number(-1), Number(4), Number(-1), Number(-1), Number(-1)]"
+            ));
+
             println!("✅ All assertions passed!");
         }
         Err(_) => {
@@ -63,69 +73,69 @@ fn test_list_environment_from_kanon_data() {
     // KanonのAPIテストデータから実際のグラフ構造を抽出
     let vis_graph = VisGraph {
         nodes: vec![
-            Node { 
-                id: "main-new1".to_string(), 
-                is_literal: false, 
-                label: json!("Node") 
+            Node {
+                id: "main-new1".to_string(),
+                is_literal: false,
+                label: json!("Node"),
             },
-            Node { 
-                id: "main-new1-val".to_string(), 
-                is_literal: true, 
-                label: json!("2") 
+            Node {
+                id: "main-new1-val".to_string(),
+                is_literal: true,
+                label: json!("2"),
             },
-            Node { 
-                id: "__temp1".to_string(), 
-                is_literal: false, 
-                label: json!("Node") 
+            Node {
+                id: "__temp1".to_string(),
+                is_literal: false,
+                label: json!("Node"),
             },
-            Node { 
-                id: "__temp1-val".to_string(), 
-                is_literal: true, 
-                label: json!("0") 
+            Node {
+                id: "__temp1-val".to_string(),
+                is_literal: true,
+                label: json!("0"),
             },
-            Node { 
-                id: "__temp3".to_string(), 
-                is_literal: true, 
-                label: json!("3") 
+            Node {
+                id: "__temp3".to_string(),
+                is_literal: true,
+                label: json!("3"),
             },
-            Node { 
-                id: "__temp4".to_string(), 
-                is_literal: false, 
-                label: json!("Node") 
+            Node {
+                id: "__temp4".to_string(),
+                is_literal: false,
+                label: json!("Node"),
             },
         ],
         edges: vec![
-            Edge { 
-                from: "main-new1".to_string(), 
-                to: "main-new1-val".to_string(), 
-                label: "val".to_string() 
+            Edge {
+                from: "main-new1".to_string(),
+                to: "main-new1-val".to_string(),
+                label: "val".to_string(),
             },
-            Edge { 
-                from: "__temp1".to_string(), 
-                to: "__temp1-val".to_string(), 
-                label: "val".to_string() 
+            Edge {
+                from: "__temp1".to_string(),
+                to: "__temp1-val".to_string(),
+                label: "val".to_string(),
             },
-            Edge { 
-                from: "main-new1".to_string(), 
-                to: "__temp1".to_string(), 
-                label: "next".to_string() 
+            Edge {
+                from: "main-new1".to_string(),
+                to: "__temp1".to_string(),
+                label: "next".to_string(),
             },
-            Edge { 
-                from: "__temp1".to_string(), 
-                to: "__temp4".to_string(), 
-                label: "next".to_string() 
+            Edge {
+                from: "__temp1".to_string(),
+                to: "__temp4".to_string(),
+                label: "next".to_string(),
             },
-            Edge { 
-                from: "__temp4".to_string(), 
-                to: "__temp3".to_string(), 
-                label: "val".to_string() 
+            Edge {
+                from: "__temp4".to_string(),
+                to: "__temp3".to_string(),
+                label: "val".to_string(),
             },
         ],
     };
 
     // 初期状態のListEnvironmentを作成
     let env = ListEnvironment::from_vis_graph(&vis_graph);
-    
+
     println!("Initial environment from Kanon data:");
     println!("{}", env.to_debug_string());
 
@@ -141,7 +151,7 @@ fn test_list_environment_from_kanon_data() {
     assert_eq!(next_list[1], json!(-1)); // __temp4 -> null
     assert_eq!(next_list[2], json!(0)); // main-new1 -> __temp1 (index 0)
 
-    // val フィールドをチェック  
+    // val フィールドをチェック
     let val_list = env.field_lists.get("val").unwrap();
     assert_eq!(val_list[0], json!("0")); // __temp1.val = "0"
     assert_eq!(val_list[1], json!("3")); // __temp4.val = "3"
@@ -153,28 +163,26 @@ fn test_kanon_operations_applied() {
     // 初期状態のグラフ（操作前）
     let initial_graph = VisGraph {
         nodes: vec![
-            Node { 
-                id: "main-new1".to_string(), 
-                is_literal: false, 
-                label: json!("Node") 
+            Node {
+                id: "main-new1".to_string(),
+                is_literal: false,
+                label: json!("Node"),
             },
-            Node { 
-                id: "main-new1-val".to_string(), 
-                is_literal: true, 
-                label: json!("2") 
-            },
-        ],
-        edges: vec![
-            Edge { 
-                from: "main-new1".to_string(), 
-                to: "main-new1-val".to_string(), 
-                label: "val".to_string() 
+            Node {
+                id: "main-new1-val".to_string(),
+                is_literal: true,
+                label: json!("2"),
             },
         ],
+        edges: vec![Edge {
+            from: "main-new1".to_string(),
+            to: "main-new1-val".to_string(),
+            label: "val".to_string(),
+        }],
     };
 
     let mut env = ListEnvironment::from_vis_graph(&initial_graph);
-    
+
     println!("Initial state:");
     println!("{}", env.to_debug_string());
 
@@ -219,7 +227,7 @@ fn test_kanon_operations_applied() {
     ];
 
     env.apply_operations(&call1_operations).unwrap();
-    
+
     println!("After call1 operations:");
     println!("{}", env.to_debug_string());
 
@@ -277,7 +285,7 @@ fn test_kanon_operations_applied() {
     ];
 
     env.apply_operations(&call2_operations).unwrap();
-    
+
     println!("After call2 operations:");
     println!("{}", env.to_debug_string());
 

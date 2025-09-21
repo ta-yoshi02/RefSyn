@@ -1,7 +1,7 @@
 //! AST 定義 + Display 実装
 
-use std::fmt::{self, Display};
 use std::collections::HashMap;
+use std::fmt::{self, Display};
 
 /// プレースホルダー ID （`PH0`, `PH1`, ...）
 pub type Placeholder = String;
@@ -12,11 +12,11 @@ pub enum Expr {
     Num(i64),
     Str(String),
     Var(String),
-    New(String),   // new <Class>()
+    New(String), // new <Class>()
     This,
     Lhs(Box<Lhs>),
-    Hole(Placeholder), // ホール表現
-    Literal(String), // 新しいバリアント
+    Hole(Placeholder),                       // ホール表現
+    Literal(String),                         // 新しいバリアント
     MethodCall(Box<Lhs>, String, Vec<Expr>), // obj.method(args)
 }
 
@@ -25,16 +25,16 @@ pub enum Expr {
 pub enum Lhs {
     Var(String),
     ObjAccess(Box<Lhs>, String), // obj.prop ...
-    Hole(Placeholder), // ホール表現
-    This, // New variant for 'this' keyword
+    Hole(Placeholder),           // ホール表現
+    This,                        // New variant for 'this' keyword
 }
 
 /* ---------- Statements ---------- */
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     VarDecl { name: String, expr: Expr },
-    Assign  { lhs: Lhs,     expr: Expr },
-    Expr(Expr), 
+    Assign { lhs: Lhs, expr: Expr },
+    Expr(Expr),
     Hole(Placeholder), // Added
 }
 
@@ -49,18 +49,22 @@ impl Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use Expr::*;
         match self {
-            Num(n)        => write!(f, "{n}"),
-            Str(s)        => write!(f, "{s:?}"), // Strings are quoted
-            Var(v)        => write!(f, "{v}"),
-            New(cls)      => write!(f, "new {cls}()"),
-            This          => write!(f, "this"),
-            Lhs(lhs)      => write!(f, "{lhs}"),
-            Hole(ph)      => write!(f, "{ph}"),
-            Literal(lit)  => write!(f, "{lit}"), // Literals (e.g. from JSON) might not need quotes here if they are already strings
+            Num(n) => write!(f, "{n}"),
+            Str(s) => write!(f, "{s:?}"), // Strings are quoted
+            Var(v) => write!(f, "{v}"),
+            New(cls) => write!(f, "new {cls}()"),
+            This => write!(f, "this"),
+            Lhs(lhs) => write!(f, "{lhs}"),
+            Hole(ph) => write!(f, "{ph}"),
+            Literal(lit) => write!(f, "{lit}"), // Literals (e.g. from JSON) might not need quotes here if they are already strings
             MethodCall(obj, method, args) => {
-                let args_str = args.iter().map(|a| format!("{}", a)).collect::<Vec<String>>().join(", ");
+                let args_str = args
+                    .iter()
+                    .map(|a| format!("{}", a))
+                    .collect::<Vec<String>>()
+                    .join(", ");
                 write!(f, "{}.{}({})", obj, method, args_str)
-            },
+            }
         }
     }
 }
@@ -69,10 +73,10 @@ impl Display for Lhs {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use Lhs::*;
         match self {
-            Var(v)             => write!(f, "{v}"),
-            ObjAccess(obj, p)  => write!(f, "{obj}.{p}"),
-            Hole(ph)           => write!(f, "{ph}"),
-            This               => write!(f, "this"),
+            Var(v) => write!(f, "{v}"),
+            ObjAccess(obj, p) => write!(f, "{obj}.{p}"),
+            Hole(ph) => write!(f, "{ph}"),
+            This => write!(f, "this"),
         }
     }
 }
@@ -82,9 +86,9 @@ impl Display for Stmt {
         use Stmt::*;
         match self {
             VarDecl { name, expr } => write!(f, "var {} = {};", name, expr),
-            Assign { lhs, expr }   => write!(f, "{} = {};", lhs, expr),
-            Expr(expr)             => write!(f, "{};", expr), // Assuming expressions as statements end with a semicolon
-            Hole(ph)               => write!(f, "{};", ph), // Placeholder statement
+            Assign { lhs, expr } => write!(f, "{} = {};", lhs, expr),
+            Expr(expr) => write!(f, "{};", expr), // Assuming expressions as statements end with a semicolon
+            Hole(ph) => write!(f, "{};", ph),     // Placeholder statement
         }
     }
 }
@@ -105,29 +109,65 @@ pub fn synchronize_and_hole_stmt(
     hole_map: &mut HashMap<String, Vec<String>>,
 ) {
     use crate::{add_to_hole, update_hole_value};
-    
+
     match (template_stmt.clone(), target_stmt) {
         (
-            Stmt::VarDecl { name: name1, expr: mut expr1 },
-            Stmt::VarDecl { name: name2, expr: expr2 },
+            Stmt::VarDecl {
+                name: name1,
+                expr: mut expr1,
+            },
+            Stmt::VarDecl {
+                name: name2,
+                expr: expr2,
+            },
         ) => {
             if name1 != *name2 {
-                let stmt1_str = format!("{}", Stmt::VarDecl { name: name1.clone(), expr: expr1.clone() });
-                let stmt2_str = format!("{}", Stmt::VarDecl { name: name2.clone(), expr: expr2.clone() });
-                let ph_name = add_to_hole(hole_map, next_hole_id, "var_decl_stmt", stmt1_str, stmt2_str);
+                let stmt1_str = format!(
+                    "{}",
+                    Stmt::VarDecl {
+                        name: name1.clone(),
+                        expr: expr1.clone()
+                    }
+                );
+                let stmt2_str = format!(
+                    "{}",
+                    Stmt::VarDecl {
+                        name: name2.clone(),
+                        expr: expr2.clone()
+                    }
+                );
+                let ph_name = add_to_hole(
+                    hole_map,
+                    next_hole_id,
+                    "var_decl_stmt",
+                    stmt1_str,
+                    stmt2_str,
+                );
                 *template_stmt = Stmt::Hole(ph_name);
                 return;
             }
             synchronize_and_hole_expr(&mut expr1, expr2, next_hole_id, hole_map);
-            *template_stmt = Stmt::VarDecl { name: name1, expr: expr1 };
+            *template_stmt = Stmt::VarDecl {
+                name: name1,
+                expr: expr1,
+            };
         }
         (
-            Stmt::Assign { lhs: mut lhs1, expr: mut expr1 },
-            Stmt::Assign { lhs: lhs2, expr: expr2 },
+            Stmt::Assign {
+                lhs: mut lhs1,
+                expr: mut expr1,
+            },
+            Stmt::Assign {
+                lhs: lhs2,
+                expr: expr2,
+            },
         ) => {
             synchronize_and_hole_lhs(&mut lhs1, lhs2, next_hole_id, hole_map);
             synchronize_and_hole_expr(&mut expr1, expr2, next_hole_id, hole_map);
-            *template_stmt = Stmt::Assign { lhs: lhs1, expr: expr1 };
+            *template_stmt = Stmt::Assign {
+                lhs: lhs1,
+                expr: expr1,
+            };
         }
         (Stmt::Expr(mut e1), Stmt::Expr(e2)) => {
             synchronize_and_hole_expr(&mut e1, e2, next_hole_id, hole_map);
@@ -147,7 +187,8 @@ pub fn synchronize_and_hole_stmt(
                 } else {
                     let s1_str = format!("{}", s1);
                     let s2_str = format!("{}", s2);
-                    let new_ph_name = add_to_hole(hole_map, next_hole_id, "stmt_mismatch", s1_str, s2_str);
+                    let new_ph_name =
+                        add_to_hole(hole_map, next_hole_id, "stmt_mismatch", s1_str, s2_str);
                     *template_stmt = Stmt::Hole(new_ph_name);
                 }
             } else if s1.to_string() != s2.to_string() {
@@ -167,29 +208,38 @@ pub fn synchronize_and_hole_expr(
     hole_map: &mut HashMap<String, Vec<String>>,
 ) {
     use crate::{add_to_hole, update_hole_value};
-    
+
     match (template_expr.clone(), target_expr) {
         (Expr::Num(n1), Expr::Num(n2)) => {
             if n1 != *n2 {
-                let ph_name = add_to_hole(hole_map, next_hole_id, "num_value", n1.to_string(), n2.to_string());
+                let ph_name = add_to_hole(
+                    hole_map,
+                    next_hole_id,
+                    "num_value",
+                    n1.to_string(),
+                    n2.to_string(),
+                );
                 *template_expr = Expr::Hole(ph_name);
             }
         }
         (Expr::Str(s1), Expr::Str(s2)) => {
             if s1 != *s2 {
-                let ph_name = add_to_hole(hole_map, next_hole_id, "str_value", s1.clone(), s2.clone());
+                let ph_name =
+                    add_to_hole(hole_map, next_hole_id, "str_value", s1.clone(), s2.clone());
                 *template_expr = Expr::Hole(ph_name);
             }
         }
         (Expr::Var(v1), Expr::Var(v2)) => {
             if v1 != *v2 {
-                let ph_name = add_to_hole(hole_map, next_hole_id, "var_name", v1.clone(), v2.clone());
+                let ph_name =
+                    add_to_hole(hole_map, next_hole_id, "var_name", v1.clone(), v2.clone());
                 *template_expr = Expr::Hole(ph_name);
             }
         }
         (Expr::New(c1), Expr::New(c2)) => {
             if c1 != *c2 {
-                let ph_name = add_to_hole(hole_map, next_hole_id, "class_name", c1.clone(), c2.clone());
+                let ph_name =
+                    add_to_hole(hole_map, next_hole_id, "class_name", c1.clone(), c2.clone());
                 *template_expr = Expr::Hole(ph_name);
             }
         }
@@ -203,16 +253,40 @@ pub fn synchronize_and_hole_expr(
             let new_obj1 = mut_obj1;
 
             if method1 != *method2 {
-                let expr1_str = format!("{}", Expr::MethodCall(obj1.clone(), method1.clone(), args1.clone()));
-                let expr2_str = format!("{}", Expr::MethodCall(obj2.clone(), method2.clone(), args2.clone()));
-                let ph_name_call = add_to_hole(hole_map, next_hole_id, "method_call_expr", expr1_str, expr2_str);
+                let expr1_str = format!(
+                    "{}",
+                    Expr::MethodCall(obj1.clone(), method1.clone(), args1.clone())
+                );
+                let expr2_str = format!(
+                    "{}",
+                    Expr::MethodCall(obj2.clone(), method2.clone(), args2.clone())
+                );
+                let ph_name_call = add_to_hole(
+                    hole_map,
+                    next_hole_id,
+                    "method_call_expr",
+                    expr1_str,
+                    expr2_str,
+                );
                 *template_expr = Expr::Hole(ph_name_call);
                 return;
             }
             if args1.len() != args2.len() {
-                let expr1_str = format!("{}", Expr::MethodCall(obj1.clone(), method1.clone(), args1.clone()));
-                let expr2_str = format!("{}", Expr::MethodCall(obj2.clone(), method2.clone(), args2.clone()));
-                let ph_name_call = add_to_hole(hole_map, next_hole_id, "method_call_expr_args_len_diff", expr1_str, expr2_str);
+                let expr1_str = format!(
+                    "{}",
+                    Expr::MethodCall(obj1.clone(), method1.clone(), args1.clone())
+                );
+                let expr2_str = format!(
+                    "{}",
+                    Expr::MethodCall(obj2.clone(), method2.clone(), args2.clone())
+                );
+                let ph_name_call = add_to_hole(
+                    hole_map,
+                    next_hole_id,
+                    "method_call_expr_args_len_diff",
+                    expr1_str,
+                    expr2_str,
+                );
                 *template_expr = Expr::Hole(ph_name_call);
                 return;
             }
@@ -239,7 +313,8 @@ pub fn synchronize_and_hole_expr(
                 } else {
                     let e1_str = format!("{}", e1);
                     let e2_str = format!("{}", e2);
-                    let new_ph_name = add_to_hole(hole_map, next_hole_id, "expr_mismatch", e1_str, e2_str);
+                    let new_ph_name =
+                        add_to_hole(hole_map, next_hole_id, "expr_mismatch", e1_str, e2_str);
                     *template_expr = Expr::Hole(new_ph_name);
                 }
             } else if e1.to_string() != e2.to_string() {
@@ -259,7 +334,7 @@ pub fn synchronize_and_hole_lhs(
     hole_map: &mut HashMap<String, Vec<String>>,
 ) {
     use crate::{add_to_hole, update_hole_value};
-    
+
     match (template_lhs.clone(), target_lhs) {
         (Lhs::Var(v1), Lhs::Var(v2)) => {
             if v1 != *v2 {
@@ -275,7 +350,13 @@ pub fn synchronize_and_hole_lhs(
             if prop1 != *prop2 {
                 let lhs1_str = format!("{}", Lhs::ObjAccess(obj1.clone(), prop1.clone()));
                 let lhs2_str = format!("{}", Lhs::ObjAccess(obj2.clone(), prop2.clone()));
-                let ph_name = add_to_hole(hole_map, next_hole_id, "lhs_obj_access_prop_diff", lhs1_str, lhs2_str);
+                let ph_name = add_to_hole(
+                    hole_map,
+                    next_hole_id,
+                    "lhs_obj_access_prop_diff",
+                    lhs1_str,
+                    lhs2_str,
+                );
                 *template_lhs = Lhs::Hole(ph_name);
             } else {
                 *template_lhs = Lhs::ObjAccess(new_obj1, prop1.clone());
@@ -296,7 +377,8 @@ pub fn synchronize_and_hole_lhs(
                 } else {
                     let l1_str = format!("{}", l1);
                     let l2_str = format!("{}", l2);
-                    let new_ph_name = add_to_hole(hole_map, next_hole_id, "lhs_mismatch", l1_str, l2_str);
+                    let new_ph_name =
+                        add_to_hole(hole_map, next_hole_id, "lhs_mismatch", l1_str, l2_str);
                     *template_lhs = Lhs::Hole(new_ph_name);
                 }
             } else if l1.to_string() != l2.to_string() {

@@ -1,6 +1,6 @@
-use refsyn::ir::*;
 use refsyn::ast;
 use refsyn::env::MemoEnv;
+use refsyn::ir::*;
 use serde_json;
 
 /// テスト用のMemoEnvを作成
@@ -24,7 +24,7 @@ fn test_append_method_synthesis() {
             "label": "Node"
         }),
         serde_json::json!({
-            "editType": "addNode", 
+            "editType": "addNode",
             "id": "__temp2",
             "isLiteral": true,
             "label": "0",
@@ -54,7 +54,7 @@ fn test_append_method_synthesis() {
         }),
         serde_json::json!({
             "editType": "addNode",
-            "id": "__temp4", 
+            "id": "__temp4",
             "isLiteral": true,
             "label": "3",
             "type": "string"
@@ -82,11 +82,20 @@ fn test_append_method_synthesis() {
     let program = program_opt.unwrap();
 
     // 期待される構造の検証
-    assert!(!program.stmts.is_empty(), "Generated program should have statements");
-    
+    assert!(
+        !program.stmts.is_empty(),
+        "Generated program should have statements"
+    );
+
     // 新しいNodeの作成があることを確認
     let has_new_node = program.stmts.iter().any(|stmt| {
-        matches!(stmt, ast::Stmt::VarDecl { expr: ast::Expr::New(_), .. })
+        matches!(
+            stmt,
+            ast::Stmt::VarDecl {
+                expr: ast::Expr::New(_),
+                ..
+            }
+        )
     });
     assert!(has_new_node, "append should create new Node");
 
@@ -107,7 +116,10 @@ fn test_append_method_synthesis() {
     assert!(has_next_assignment, "append should set next property");
 
     // ホールが適切に抽出されていることを確認
-    assert!(!holes.is_empty(), "append should have holes for variable values");
+    assert!(
+        !holes.is_empty(),
+        "append should have holes for variable values"
+    );
 
     println!("Append method synthesis test passed");
     println!("Generated {} statements", program.stmts.len());
@@ -194,11 +206,20 @@ fn test_prepend_method_synthesis() {
     let program = program_opt.unwrap();
 
     // 期待される構造の検証
-    assert!(!program.stmts.is_empty(), "Generated program should have statements");
+    assert!(
+        !program.stmts.is_empty(),
+        "Generated program should have statements"
+    );
 
     // 新しいNodeの作成があることを確認
     let has_new_node = program.stmts.iter().any(|stmt| {
-        matches!(stmt, ast::Stmt::VarDecl { expr: ast::Expr::New(_), .. })
+        matches!(
+            stmt,
+            ast::Stmt::VarDecl {
+                expr: ast::Expr::New(_),
+                ..
+            }
+        )
     });
     assert!(has_new_node, "prepend should create new Node");
 
@@ -214,27 +235,26 @@ fn test_prepend_method_synthesis() {
 #[test]
 fn test_remove_last_method_synthesis() {
     // tex解析からの操作データ（最初のremoveLast()の場合）
-    let remove_last_1_operations = vec![
-        serde_json::json!({
-            "editType": "deleteNode",
-            "id": "main-new3"
-        }),
-    ];
+    let remove_last_1_operations = vec![serde_json::json!({
+        "editType": "deleteNode",
+        "id": "main-new3"
+    })];
 
     // 2回目のremoveLast()の場合
-    let remove_last_2_operations = vec![
-        serde_json::json!({
-            "editType": "deleteNode", 
-            "id": "main-new2"
-        }),
-    ];
+    let remove_last_2_operations = vec![serde_json::json!({
+        "editType": "deleteNode",
+        "id": "main-new2"
+    })];
 
     let operations_list = vec![remove_last_1_operations, remove_last_2_operations];
     let memo_envs = vec![create_test_memo_env(), create_test_memo_env()];
 
     let (program_opt, _holes) = find_common_pattern_from_operations(&operations_list, &memo_envs);
 
-    assert!(program_opt.is_some(), "Failed to synthesize removeLast method");
+    assert!(
+        program_opt.is_some(),
+        "Failed to synthesize removeLast method"
+    );
     let program = program_opt.unwrap();
 
     // removeLastは参照の削除なので、deleteNode操作が含まれることを期待
@@ -245,19 +265,17 @@ fn test_remove_last_method_synthesis() {
 }
 
 /// removeFirstメソッドの統合テスト
-#[test] 
+#[test]
 fn test_remove_first_method_synthesis() {
     // 手動解析の記録を参考に、removeFirstの操作を定義
     // tex に記載されている操作ログを参考に構築
-    
-    let remove_first_operations = vec![
-        serde_json::json!({
-            "editType": "editVariableReference",
-            "oldTo": "main-new1",
-            "newTo": "main-new2", 
-            "label": "lst"
-        }),
-    ];
+
+    let remove_first_operations = vec![serde_json::json!({
+        "editType": "editVariableReference",
+        "oldTo": "main-new1",
+        "newTo": "main-new2",
+        "label": "lst"
+    })];
 
     let operations_list = vec![remove_first_operations];
     let memo_envs = vec![create_test_memo_env()];
@@ -269,7 +287,9 @@ fn test_remove_first_method_synthesis() {
         println!("RemoveFirst method synthesis test passed");
         println!("Generated {} statements", program.stmts.len());
     } else {
-        println!("RemoveFirst method synthesis returned None (expected for reference-only operations)");
+        println!(
+            "RemoveFirst method synthesis returned None (expected for reference-only operations)"
+        );
     }
 }
 
@@ -317,12 +337,21 @@ fn test_insert_after_method_synthesis() {
 
     let (program_opt, _holes) = find_common_pattern_from_operations(&operations_list, &memo_envs);
 
-    assert!(program_opt.is_some(), "Failed to synthesize insertAfter method");
+    assert!(
+        program_opt.is_some(),
+        "Failed to synthesize insertAfter method"
+    );
     let program = program_opt.unwrap();
 
     // 新しいNodeの作成があることを確認
     let has_new_node = program.stmts.iter().any(|stmt| {
-        matches!(stmt, ast::Stmt::VarDecl { expr: ast::Expr::New(_), .. })
+        matches!(
+            stmt,
+            ast::Stmt::VarDecl {
+                expr: ast::Expr::New(_),
+                ..
+            }
+        )
     });
     assert!(has_new_node, "insertAfter should create new Node");
 
@@ -332,7 +361,10 @@ fn test_insert_after_method_synthesis() {
             lhs: ast::Lhs::ObjAccess(_, prop), .. 
         } if prop == "next")
     });
-    assert!(has_reference_change, "insertAfter should modify next references");
+    assert!(
+        has_reference_change,
+        "insertAfter should modify next references"
+    );
 
     println!("InsertAfter method synthesis test passed");
     println!("Generated {} statements", program.stmts.len());
@@ -343,29 +375,30 @@ fn test_insert_after_method_synthesis() {
 fn test_with_actual_json_files() {
     // ワークスペースにあるtests/data/operations.jsonを使用
     let test_file_content = std::fs::read_to_string("tests/data/operations.json");
-    
+
     if let Ok(content) = test_file_content {
         let json_data: serde_json::Value = serde_json::from_str(&content).unwrap();
-        
+
         if let Some(method_calls) = json_data.get("methodCalls").and_then(|v| v.as_array()) {
             // 各メソッド呼び出しの操作を抽出
             let mut operations_list = Vec::new();
-            
+
             for method_call in method_calls {
                 if let Some(operations) = method_call.get("operations").and_then(|v| v.as_array()) {
                     operations_list.push(operations.clone());
                 }
             }
-            
+
             if operations_list.len() >= 2 {
                 let memo_envs = vec![create_test_memo_env(); operations_list.len()];
-                let (program_opt, holes) = find_common_pattern_from_operations(&operations_list, &memo_envs);
-                
+                let (program_opt, holes) =
+                    find_common_pattern_from_operations(&operations_list, &memo_envs);
+
                 if let Some(program) = program_opt {
                     println!("Successfully synthesized pattern from actual JSON file");
                     println!("Generated {} statements", program.stmts.len());
                     println!("Found {} holes", holes.len());
-                    
+
                     // 異なる種類の操作が混在している場合、共通パターンが見つからないのは正常
                     // ここでは、プログラムが生成されたこと自体を成功として扱う
                     // 空のプログラムも有効な結果として認める
@@ -389,7 +422,7 @@ fn test_multiple_method_differences() {
     let append_ops = vec![
         serde_json::json!({
             "editType": "addNode",
-            "id": "__temp1", 
+            "id": "__temp1",
             "isLiteral": false,
             "label": "Node"
         }),
@@ -405,7 +438,7 @@ fn test_multiple_method_differences() {
         serde_json::json!({
             "editType": "addNode",
             "id": "__temp1",
-            "isLiteral": false, 
+            "isLiteral": false,
             "label": "Node"
         }),
         serde_json::json!({
@@ -419,9 +452,10 @@ fn test_multiple_method_differences() {
     let memo_env = create_test_memo_env();
 
     // append処理
-    let (append_program, _) = find_common_pattern_from_operations(&[append_ops], &[memo_env.clone()]);
-    
-    // prepend処理  
+    let (append_program, _) =
+        find_common_pattern_from_operations(&[append_ops], &[memo_env.clone()]);
+
+    // prepend処理
     let (prepend_program, _) = find_common_pattern_from_operations(&[prepend_ops], &[memo_env]);
 
     // 両方とも合成できることを確認

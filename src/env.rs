@@ -22,9 +22,9 @@ pub struct MemoEnv {
     property_of: HashMap<String, (String, String)>, // obj_id -> (owner_id, property_name)
     current_method_call: Option<String>,            // 現在処理中のメソッド呼び出しID
     method_call_vars: HashMap<String, Vec<String>>, // メソッド呼び出しIDごとの変数ID一覧
-    external_refs: HashMap<String, String>,         // 変数IDの外部参照パス (例: obj_0 -> "this.next")
-    method_receivers: HashMap<String, String>,      // メソッド呼び出しID -> レシーバーオブジェクトID
-    current_receiver: Option<String>,               // 現在のメソッド呼び出しのレシーバーID
+    external_refs: HashMap<String, String>, // 変数IDの外部参照パス (例: obj_0 -> "this.next")
+    method_receivers: HashMap<String, String>, // メソッド呼び出しID -> レシーバーオブジェクトID
+    current_receiver: Option<String>,       // 現在のメソッド呼び出しのレシーバーID
 }
 
 impl MemoEnv {
@@ -112,7 +112,7 @@ impl MemoEnv {
         if self.is_current_receiver(id) {
             return Some("this".to_string());
         }
-        
+
         if let Some(name) = self.id_to_name.get(id) {
             if name == "this" {
                 return Some("this".to_string());
@@ -127,13 +127,13 @@ impl MemoEnv {
         while visited_ids_for_prop_chain.insert(current_id_for_prop_chain.clone()) {
             if let Some((owner_id, prop_name)) = self.property_of.get(&current_id_for_prop_chain) {
                 path_components.push(prop_name.clone());
-                
+
                 // 所有者が現在のレシーバーまたは "this" ならパスを構築して返す
                 if self.is_current_receiver(owner_id) {
                     path_components.reverse();
                     return Some(format!("this.{}", path_components.join(".")));
                 }
-                
+
                 if let Some(owner_name) = self.id_to_name.get(owner_id) {
                     if owner_name == "this" {
                         path_components.reverse();
@@ -145,7 +145,7 @@ impl MemoEnv {
                 break; // これ以上プロパティチェーンを辿れない
             }
         }
-        
+
         // 4. ローカル変数名を返す（thisでない場合）
         if let Some(name) = self.id_to_name.get(id) {
             if name != "this" {
@@ -161,13 +161,18 @@ impl MemoEnv {
     /// これによりメソッド呼び出し内の変数を追跡できるようになります。
     pub fn start_method_call_scope(&mut self, method_call_id: &str) {
         self.current_method_call = Some(method_call_id.to_string());
-        self.method_call_vars.insert(method_call_id.to_string(), Vec::new());
+        self.method_call_vars
+            .insert(method_call_id.to_string(), Vec::new());
         // 新しいメソッド呼び出しスコープで変数カウンターをリセット
         self.next_var_id = 0;
     }
 
     /// メソッド呼び出しのスコープを開始し、レシーバーを設定します。
-    pub fn start_method_call_scope_with_receiver(&mut self, method_call_id: &str, receiver_id: &str) {
+    pub fn start_method_call_scope_with_receiver(
+        &mut self,
+        method_call_id: &str,
+        receiver_id: &str,
+    ) {
         self.start_method_call_scope(method_call_id);
         self.set_current_receiver(receiver_id);
     }
@@ -192,7 +197,8 @@ impl MemoEnv {
     /// 変数の外部参照パスを取得または設定します。
     /// 例：obj_0 -> "this.next" のようにメソッド呼び出し後に変数がどのように参照されるかを記録します。
     pub fn register_external_reference(&mut self, var_id: &str, ref_path: &str) {
-        self.external_refs.insert(var_id.to_string(), ref_path.to_string());
+        self.external_refs
+            .insert(var_id.to_string(), ref_path.to_string());
     }
 
     /// 変数の外部参照パスを取得します。
@@ -201,18 +207,18 @@ impl MemoEnv {
         if let Some(path) = self.external_refs.get(var_id) {
             return Some(path.clone());
         }
-        
+
         // プロパティチェーンから外部参照パスを構築
         // 例：obj_0が"this.next"のプロパティとして登録されている場合など
         if let Some((owner_id, prop_name)) = self.property_of.get(var_id) {
             if let Some(owner_name) = self.get_name_by_id(owner_id) {
                 if owner_name == "this" {
                     // 外部参照パスを返す
-                    return Some(format!("this.{}" , prop_name));
+                    return Some(format!("this.{}", prop_name));
                 }
             }
         }
-        
+
         None
     }
 
@@ -221,14 +227,15 @@ impl MemoEnv {
     pub fn merge_from(&mut self, other: &MemoEnv) {
         // プロパティ割り当てを統合
         for (var_id, (owner_id, prop_name)) in &other.property_of {
-            self.property_of.insert(var_id.clone(), (owner_id.clone(), prop_name.clone()));
+            self.property_of
+                .insert(var_id.clone(), (owner_id.clone(), prop_name.clone()));
         }
-        
+
         // 外部参照を統合
         for (var_id, ref_path) in &other.external_refs {
             self.external_refs.insert(var_id.clone(), ref_path.clone());
         }
-        
+
         // ID-名前マッピングを統合（重複がある場合は既存を保持）
         for (id, name) in &other.id_to_name {
             if !self.id_to_name.contains_key(id) {
@@ -237,7 +244,7 @@ impl MemoEnv {
             }
         }
     }
-    
+
     /// グローバルな外部参照を設定します。
     /// 前のメソッド呼び出しの結果を次のメソッド呼び出しで参照するために使用されます。
     pub fn setup_cross_scope_references(&mut self, global_env: &MemoEnv) {
@@ -245,10 +252,12 @@ impl MemoEnv {
         for (var_id, (owner_id, prop_name)) in &global_env.property_of {
             if let Some(owner_name) = global_env.get_name_by_id(owner_id) {
                 if owner_name == "this" {
-                    let ref_path = format!("this.{}" , prop_name);
+                    let ref_path = format!("this.{}", prop_name);
                     self.register_external_reference(var_id, &ref_path);
-                } else if let Some(owner_ref_path) = global_env.get_external_reference_path(owner_id) {
-                    let ref_path = format!("{}.{}" , owner_ref_path, prop_name);
+                } else if let Some(owner_ref_path) =
+                    global_env.get_external_reference_path(owner_id)
+                {
+                    let ref_path = format!("{}.{}", owner_ref_path, prop_name);
                     self.register_external_reference(var_id, &ref_path);
                 }
             }
@@ -260,7 +269,8 @@ impl MemoEnv {
     pub fn register_method_receiver(&mut self, receiver_id: &str) {
         self.current_receiver = Some(receiver_id.to_string());
         if let Some(method_call_id) = &self.current_method_call {
-            self.method_receivers.insert(method_call_id.clone(), receiver_id.to_string());
+            self.method_receivers
+                .insert(method_call_id.clone(), receiver_id.to_string());
         }
         // レシーバーを "this" として登録
         self.add_special_mapping(receiver_id.to_string(), "this".to_string());
@@ -275,7 +285,9 @@ impl MemoEnv {
 
     /// 指定されたIDが現在のレシーバーかどうかを判定します。
     pub fn is_current_receiver(&self, id: &str) -> bool {
-        self.current_receiver.as_ref().map_or(false, |receiver| receiver == id)
+        self.current_receiver
+            .as_ref()
+            .map_or(false, |receiver| receiver == id)
     }
 
     /// 指定されたメソッド呼び出しのレシーバーIDを取得します。

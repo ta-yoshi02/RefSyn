@@ -1,22 +1,42 @@
 //! Generate Escher-Scala tests.json from a minimal demo
 //! Usage: cargo run --example generate_escher_json
 
-use refsyn::escher_bridge::{EscherCase, build_escher_spec, write_spec_to_file};
-use refsyn::list_env::{ListEnvironment, GraphOperation};
-use refsyn::models::{VisGraph, Node, Edge};
+use refsyn::escher_bridge::{build_escher_spec, specs_to_json, write_spec_to_file, EscherCase};
+use refsyn::list_env::{GraphOperation, ListEnvironment};
+use refsyn::models::{Edge, Node, VisGraph};
 use serde_json::json;
 
 fn main() -> anyhow::Result<()> {
     // 1) Minimal VisGraph with a variable root: __Variable-lst -> main-new1
     let vis_graph = VisGraph {
         nodes: vec![
-            Node { id: "main-new1".to_string(), is_literal: false, label: json!("Node") },
-            Node { id: "main-new1-val".to_string(), is_literal: true, label: json!("2") },
-            Node { id: "__Variable-lst".to_string(), is_literal: false, label: json!("lst") },
+            Node {
+                id: "main-new1".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "main-new1-val".to_string(),
+                is_literal: true,
+                label: json!("2"),
+            },
+            Node {
+                id: "__Variable-lst".to_string(),
+                is_literal: false,
+                label: json!("lst"),
+            },
         ],
         edges: vec![
-            Edge { from: "main-new1".to_string(), to: "main-new1-val".to_string(), label: "val".to_string() },
-            Edge { from: "__Variable-lst".to_string(), to: "main-new1".to_string(), label: "lst".to_string() },
+            Edge {
+                from: "main-new1".to_string(),
+                to: "main-new1-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "__Variable-lst".to_string(),
+                to: "main-new1".to_string(),
+                label: "lst".to_string(),
+            },
         ],
     };
 
@@ -50,7 +70,9 @@ fn main() -> anyhow::Result<()> {
     for idx in common_indices {
         let op_json = ops_a[idx].clone();
         let graph_op: GraphOperation = serde_json::from_value(op_json)?;
-        env.apply_operation(&graph_op)?;
+        // Map String error from ListEnvironment into anyhow::Error
+        env.apply_operation(&graph_op)
+            .map_err(|e| anyhow::anyhow!(e))?;
     }
 
     // 5) Build one Escher example (args and expected output are placeholders)
@@ -63,10 +85,11 @@ fn main() -> anyhow::Result<()> {
 
     // 6) Emit JSON and write to Escher-Scala resource path
     let spec = build_escher_spec("append-g", "Int", &[case])?;
+    let spec_bundle = vec![spec];
+    let json_text = specs_to_json(&spec_bundle)?;
     let out_path = "Escher-Scala/src/main/resources/escher/tests.json";
-    write_spec_to_file(out_path, &spec)?;
-    println!("Wrote {} bytes to {}", spec.len(), out_path);
+    write_spec_to_file(out_path, &json_text)?;
+    println!("Wrote {} bytes to {}", json_text.len(), out_path);
 
     Ok(())
 }
-

@@ -1,6 +1,6 @@
-use refsyn::ir::*;
 use refsyn::ast;
 use refsyn::env::MemoEnv;
+use refsyn::ir::*;
 use serde_json;
 
 /// テスト用のユーティリティ関数
@@ -40,7 +40,7 @@ fn test_remove_val_method_synthesis() {
     let remove_val_0_operations = vec![
         serde_json::json!({
             "editType": "editEdgeReference",
-            "from": "main-new1", 
+            "from": "main-new1",
             "oldTo": "main-new2",
             "newTo": "main-new3",
             "label": "next"
@@ -54,7 +54,7 @@ fn test_remove_val_method_synthesis() {
     // removeVal(3)の操作: main-new3を削除
     let remove_val_3_operations = vec![
         serde_json::json!({
-            "editType": "editEdgeReference", 
+            "editType": "editEdgeReference",
             "from": "main-new2",
             "oldTo": "main-new3",
             "newTo": "undefined", // またはnull
@@ -74,7 +74,7 @@ fn test_remove_val_method_synthesis() {
     if let Some(program) = program_opt {
         println!("RemoveVal method synthesis test passed");
         println!("Generated {} statements", program.stmts.len());
-        
+
         // 実際の動作に基づいた検証：生成された文が意味をなすかチェック
         if program.stmts.len() > 0 {
             // 参照の変更があることを確認
@@ -107,7 +107,7 @@ fn test_remove_at_method_synthesis() {
         serde_json::json!({
             "editType": "editEdgeReference",
             "from": "main-new1",
-            "oldTo": "main-new2", 
+            "oldTo": "main-new2",
             "newTo": "main-new3",
             "label": "next"
         }),
@@ -136,17 +136,15 @@ fn test_remove_at_method_synthesis() {
 
 /// concat(lst)メソッドのテスト
 /// tex解析: 現在のリストに別のリストを結合
-#[test]  
+#[test]
 fn test_concat_method_synthesis() {
     // concat操作: 末尾ノードからargリストの先頭へのエッジを追加
-    let concat_operations = vec![
-        serde_json::json!({
-            "editType": "addEdge",
-            "from": "main-new3", // 現在のリストの末尾
-            "to": "arg-new1",    // 引数リストの先頭
-            "label": "next"
-        }),
-    ];
+    let concat_operations = vec![serde_json::json!({
+        "editType": "addEdge",
+        "from": "main-new3", // 現在のリストの末尾
+        "to": "arg-new1",    // 引数リストの先頭
+        "label": "next"
+    })];
 
     let operations_list = vec![concat_operations];
     let memo_envs = vec![create_basic_memo_env()];
@@ -194,7 +192,7 @@ fn test_set_method_synthesis() {
         println!("Set method synthesis test passed");
         println!("Generated {} statements", program.stmts.len());
 
-        // val参照の変更があることを確認  
+        // val参照の変更があることを確認
         let has_val_assignment = program.stmts.iter().any(|stmt| {
             matches!(stmt, ast::Stmt::Assign { 
                 lhs: ast::Lhs::ObjAccess(_, prop), .. 
@@ -220,7 +218,7 @@ fn test_swap_method_synthesis() {
             "label": "val"
         }),
         serde_json::json!({
-            "editType": "editEdgeReference", 
+            "editType": "editEdgeReference",
             "from": "main-new3",
             "oldTo": "3", // 元の値
             "newTo": "2", // 交換後の値
@@ -238,13 +236,20 @@ fn test_swap_method_synthesis() {
         println!("Generated {} statements", program.stmts.len());
 
         // 複数のval参照の変更があることを確認
-        let val_assignment_count = program.stmts.iter().filter(|stmt| {
-            matches!(stmt, ast::Stmt::Assign { 
+        let val_assignment_count = program
+            .stmts
+            .iter()
+            .filter(|stmt| {
+                matches!(stmt, ast::Stmt::Assign { 
                 lhs: ast::Lhs::ObjAccess(_, prop), .. 
             } if prop == "val")
-        }).count();
-        
-        assert!(val_assignment_count >= 2, "swap should modify at least 2 val properties");
+            })
+            .count();
+
+        assert!(
+            val_assignment_count >= 2,
+            "swap should modify at least 2 val properties"
+        );
     } else {
         println!("Swap synthesis returned None");
     }
@@ -268,7 +273,7 @@ fn test_clear_method_synthesis() {
             "id": "main-new2"
         }),
         serde_json::json!({
-            "editType": "deleteNode", 
+            "editType": "deleteNode",
             "id": "main-new3"
         }),
     ];
@@ -285,14 +290,14 @@ fn test_clear_method_synthesis() {
         // next参照をundefined/nullに設定することを確認
         let _has_clear_operation = program.stmts.iter().any(|stmt| {
             match stmt {
-                ast::Stmt::Assign { 
-                    lhs: ast::Lhs::ObjAccess(_, prop), 
-                    expr 
+                ast::Stmt::Assign {
+                    lhs: ast::Lhs::ObjAccess(_, prop),
+                    expr,
                 } if prop == "next" => {
                     // undefinedやnullの代入をチェック
                     matches!(expr, ast::Expr::Var(name) if name == "undefined" || name == "null")
-                },
-                _ => false
+                }
+                _ => false,
             }
         });
         // clear操作は複雑なので、基本的な構造があることだけ確認
@@ -316,7 +321,7 @@ fn test_reverse_method_synthesis() {
         }),
         serde_json::json!({
             "editType": "editEdgeReference",
-            "from": "main-new3", 
+            "from": "main-new3",
             "oldTo": "undefined",
             "newTo": "main-new2",
             "label": "next"
@@ -324,7 +329,7 @@ fn test_reverse_method_synthesis() {
         serde_json::json!({
             "editType": "editEdgeReference",
             "from": "main-new1",
-            "oldTo": "main-new2", 
+            "oldTo": "main-new2",
             "newTo": "undefined",
             "label": "next"
         }),
@@ -340,13 +345,20 @@ fn test_reverse_method_synthesis() {
         println!("Generated {} statements", program.stmts.len());
 
         // 複数のnext参照の変更があることを確認
-        let next_assignment_count = program.stmts.iter().filter(|stmt| {
-            matches!(stmt, ast::Stmt::Assign { 
+        let next_assignment_count = program
+            .stmts
+            .iter()
+            .filter(|stmt| {
+                matches!(stmt, ast::Stmt::Assign { 
                 lhs: ast::Lhs::ObjAccess(_, prop), .. 
             } if prop == "next")
-        }).count();
-        
-        assert!(next_assignment_count >= 2, "reverse should modify multiple next references");
+            })
+            .count();
+
+        assert!(
+            next_assignment_count >= 2,
+            "reverse should modify multiple next references"
+        );
     } else {
         println!("Reverse synthesis returned None (complex operation)");
     }
@@ -356,12 +368,10 @@ fn test_reverse_method_synthesis() {
 #[test]
 fn test_invalid_operations_handling() {
     // 不正な操作データ
-    let invalid_operations = vec![
-        serde_json::json!({
-            "editType": "invalidOperation",
-            "id": "test"
-        }),
-    ];
+    let invalid_operations = vec![serde_json::json!({
+        "editType": "invalidOperation",
+        "id": "test"
+    })];
 
     let operations_list = vec![invalid_operations];
     let memo_envs = vec![create_basic_memo_env()];
@@ -380,19 +390,19 @@ fn test_invalid_operations_handling() {
 fn test_large_operation_set() {
     // 大量の操作を生成（100個のノード追加）
     let mut large_operations = Vec::new();
-    
+
     for i in 0..100 {
         large_operations.push(create_node_operation(
             &format!("__temp{}", i),
             &format!("value{}", i),
-            true
+            true,
         ));
-        
+
         if i > 0 {
             large_operations.push(create_edge_operation(
-                &format!("__temp{}", i-1),
+                &format!("__temp{}", i - 1),
                 &format!("__temp{}", i),
-                "next"
+                "next",
             ));
         }
     }
@@ -408,9 +418,12 @@ fn test_large_operation_set() {
         println!("Large operation set test completed in {:?}", duration);
         println!("Generated {} statements", program.stmts.len());
         println!("Found {} holes", holes.len());
-        
+
         // パフォーマンスが合理的であることを確認（10秒以内）
-        assert!(duration.as_secs() < 10, "Processing should complete within 10 seconds");
+        assert!(
+            duration.as_secs() < 10,
+            "Processing should complete within 10 seconds"
+        );
     } else {
         println!("Large operation set returned None");
     }

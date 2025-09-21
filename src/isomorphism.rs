@@ -2,7 +2,7 @@ use petgraph::graph::{Graph, NodeIndex};
 use petgraph::visit::EdgeRef;
 use std::collections::{HashMap, HashSet};
 
-use crate::unify_ops::{Op, GraphOp, EdgeExpr, UnificationResult, NodeExpr, VarOp};
+use crate::unify_ops::{EdgeExpr, GraphOp, NodeExpr, Op, UnificationResult, VarOp};
 
 // Operation Graph representation
 struct OpGraph<'a> {
@@ -23,7 +23,11 @@ fn build_op_graph<'a>(ops: &'a [Op]) -> OpGraph<'a> {
     for op in ops {
         if let GraphOp::Edge(edge_expr) = &op.kind {
             if let EdgeExpr::AddEdge { from, to, .. } = edge_expr {
-                if let (Some(&from_node), Some(&to_node), Some(&op_node)) = (op_map.get(from.as_str()), op_map.get(to.as_str()), op_map.get(op.id.as_str())) {
+                if let (Some(&from_node), Some(&to_node), Some(&op_node)) = (
+                    op_map.get(from.as_str()),
+                    op_map.get(to.as_str()),
+                    op_map.get(op.id.as_str()),
+                ) {
                     graph.add_edge(op_node, from_node, "from");
                     graph.add_edge(op_node, to_node, "to");
                 }
@@ -44,7 +48,8 @@ fn count_preserved_edges<'a>(
         if let (Some(&mapped_source), Some(&mapped_target)) =
             (mapping.get(&edge.source()), mapping.get(&edge.target()))
         {
-            if g2.edges_connecting(mapped_source, mapped_target)
+            if g2
+                .edges_connecting(mapped_source, mapped_target)
                 .any(|e| e.weight() == edge.weight())
             {
                 preserved_edges += 1;
@@ -53,7 +58,6 @@ fn count_preserved_edges<'a>(
     }
     preserved_edges
 }
-
 
 // Find the maximum common subgraph isomorphism
 fn find_mcs<'a>(g1: &OpGraph<'a>, g2: &OpGraph<'a>) -> HashMap<NodeIndex, NodeIndex> {
@@ -87,15 +91,27 @@ fn is_consistent<'a>(
 ) -> bool {
     for (&u, &v) in mapping.iter() {
         // Check edges from u to g1_node in g1 and v to g2_node in g2
-        let g1_edges_out: HashSet<_> = g1.edges_connecting(u, g1_node).map(|e| e.weight()).collect();
-        let g2_edges_out: HashSet<_> = g2.edges_connecting(v, g2_node).map(|e| e.weight()).collect();
+        let g1_edges_out: HashSet<_> = g1
+            .edges_connecting(u, g1_node)
+            .map(|e| e.weight())
+            .collect();
+        let g2_edges_out: HashSet<_> = g2
+            .edges_connecting(v, g2_node)
+            .map(|e| e.weight())
+            .collect();
         if g1_edges_out != g2_edges_out {
             return false;
         }
 
         // Check edges from g1_node to u in g1 and g2_node to v in g2
-        let g1_edges_in: HashSet<_> = g1.edges_connecting(g1_node, u).map(|e| e.weight()).collect();
-        let g2_edges_in: HashSet<_> = g2.edges_connecting(g2_node, v).map(|e| e.weight()).collect();
+        let g1_edges_in: HashSet<_> = g1
+            .edges_connecting(g1_node, u)
+            .map(|e| e.weight())
+            .collect();
+        let g2_edges_in: HashSet<_> = g2
+            .edges_connecting(g2_node, v)
+            .map(|e| e.weight())
+            .collect();
         if g1_edges_in != g2_edges_in {
             return false;
         }
@@ -164,11 +180,14 @@ fn backtrack_mcs<'a>(
     );
 }
 
-
 fn node_labels_match(op1: &Op, op2: &Op) -> bool {
     match (&op1.kind, &op2.kind) {
-        (GraphOp::Node(n1), GraphOp::Node(n2)) => std::mem::discriminant(n1) == std::mem::discriminant(n2),
-        (GraphOp::Edge(e1), GraphOp::Edge(e2)) => std::mem::discriminant(e1) == std::mem::discriminant(e2),
+        (GraphOp::Node(n1), GraphOp::Node(n2)) => {
+            std::mem::discriminant(n1) == std::mem::discriminant(n2)
+        }
+        (GraphOp::Edge(e1), GraphOp::Edge(e2)) => {
+            std::mem::discriminant(e1) == std::mem::discriminant(e2)
+        }
         (GraphOp::Variable(_), GraphOp::Variable(_)) => true,
         _ => false,
     }
@@ -176,18 +195,43 @@ fn node_labels_match(op1: &Op, op2: &Op) -> bool {
 
 fn attributes_match(op1: &Op, op2: &Op) -> bool {
     match (&op1.kind, &op2.kind) {
-        (GraphOp::Node(NodeExpr::AddNode { is_literal: l1, label: lab1, .. }), GraphOp::Node(NodeExpr::AddNode { is_literal: l2, label: lab2, .. })) => {
+        (
+            GraphOp::Node(NodeExpr::AddNode {
+                is_literal: l1,
+                label: lab1,
+                ..
+            }),
+            GraphOp::Node(NodeExpr::AddNode {
+                is_literal: l2,
+                label: lab2,
+                ..
+            }),
+        ) => {
             if !l1 && !l2 {
                 true
             } else {
                 lab1 == lab2
             }
-        },
-        (GraphOp::Node(NodeExpr::ExistNode { id: id1, .. }), GraphOp::Node(NodeExpr::ExistNode { id: id2, .. })) => id1 == id2,
-        (GraphOp::Node(NodeExpr::NullNode{..}), GraphOp::Node(NodeExpr::NullNode{..})) => true,
-        (GraphOp::Edge(EdgeExpr::AddEdge { label: l1, .. }), GraphOp::Edge(EdgeExpr::AddEdge { label: l2, .. })) => l1 == l2,
-        (GraphOp::Edge(EdgeExpr::EditEdgeReference { label: l1, .. }), GraphOp::Edge(EdgeExpr::EditEdgeReference { label: l2, .. })) => l1 == l2,
-        (GraphOp::Variable(VarOp::AddVariable { label: l1, .. }), GraphOp::Variable(VarOp::AddVariable { label: l2, .. })) => l1 == l2,
+        }
+        (
+            GraphOp::Node(NodeExpr::ExistNode { id: id1, .. }),
+            GraphOp::Node(NodeExpr::ExistNode { id: id2, .. }),
+        ) => id1 == id2,
+        (GraphOp::Node(NodeExpr::NullNode { .. }), GraphOp::Node(NodeExpr::NullNode { .. })) => {
+            true
+        }
+        (
+            GraphOp::Edge(EdgeExpr::AddEdge { label: l1, .. }),
+            GraphOp::Edge(EdgeExpr::AddEdge { label: l2, .. }),
+        ) => l1 == l2,
+        (
+            GraphOp::Edge(EdgeExpr::EditEdgeReference { label: l1, .. }),
+            GraphOp::Edge(EdgeExpr::EditEdgeReference { label: l2, .. }),
+        ) => l1 == l2,
+        (
+            GraphOp::Variable(VarOp::AddVariable { label: l1, .. }),
+            GraphOp::Variable(VarOp::AddVariable { label: l2, .. }),
+        ) => l1 == l2,
         _ => false,
     }
 }
@@ -223,7 +267,7 @@ pub fn unify_isomorphic_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
             diff_b.push(op_b.clone());
         }
     }
-    
+
     common_a.sort_by_key(|k| format!("{:?}", k));
     common_b.sort_by_key(|k| format!("{:?}", k));
     diff_a.sort_by_key(|k| format!("{:?}", k));

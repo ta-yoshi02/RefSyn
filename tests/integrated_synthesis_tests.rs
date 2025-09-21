@@ -1,5 +1,5 @@
+use refsyn::models::{Edge, Node, VisGraph};
 use refsyn::{handle_synthesis, MethodCallOperation, SynthesisRequest};
-use refsyn::models::{VisGraph, Node, Edge};
 use serde_json;
 
 /// 統合されたsynthesizeエンドポイントのテスト - 単一の操作列
@@ -8,12 +8,22 @@ async fn test_integrated_synthesis_single_operation_list() {
     // 基本的なVisGraphを作成
     let vis_graph = VisGraph {
         nodes: vec![
-            Node { id: "n1".to_string(), is_literal: false, label: serde_json::json!("node1") },
-            Node { id: "n2".to_string(), is_literal: false, label: serde_json::json!("node2") },
+            Node {
+                id: "n1".to_string(),
+                is_literal: false,
+                label: serde_json::json!("node1"),
+            },
+            Node {
+                id: "n2".to_string(),
+                is_literal: false,
+                label: serde_json::json!("node2"),
+            },
         ],
-        edges: vec![
-            Edge { from: "n1".to_string(), to: "n2".to_string(), label: "edge1".to_string() },
-        ],
+        edges: vec![Edge {
+            from: "n1".to_string(),
+            to: "n2".to_string(),
+            label: "edge1".to_string(),
+        }],
     };
 
     // 単一の操作列を作成
@@ -28,7 +38,7 @@ async fn test_integrated_synthesis_single_operation_list() {
             "from": "n1",
             "to": "n3",
             "edge_data": {"type": "Edge"}
-        })
+        }),
     ];
 
     let method_call = MethodCallOperation {
@@ -49,7 +59,7 @@ async fn test_integrated_synthesis_single_operation_list() {
 
     let response = handle_synthesis(body_bytes).await;
     assert!(response.is_ok(), "Handle synthesis should succeed");
-    
+
     // レスポンスのステータスコードが成功であることを確認
     println!("Single operation list test completed successfully");
 }
@@ -60,12 +70,22 @@ async fn test_integrated_synthesis_multiple_operation_lists() {
     // 基本的なVisGraphを作成
     let vis_graph = VisGraph {
         nodes: vec![
-            Node { id: "n1".to_string(), is_literal: false, label: serde_json::json!("node1") },
-            Node { id: "n2".to_string(), is_literal: false, label: serde_json::json!("node2") },
+            Node {
+                id: "n1".to_string(),
+                is_literal: false,
+                label: serde_json::json!("node1"),
+            },
+            Node {
+                id: "n2".to_string(),
+                is_literal: false,
+                label: serde_json::json!("node2"),
+            },
         ],
-        edges: vec![
-            Edge { from: "n1".to_string(), to: "n2".to_string(), label: "edge1".to_string() },
-        ],
+        edges: vec![Edge {
+            from: "n1".to_string(),
+            to: "n2".to_string(),
+            label: "edge1".to_string(),
+        }],
     };
 
     // 最初の操作列
@@ -76,11 +96,11 @@ async fn test_integrated_synthesis_multiple_operation_lists() {
             "node_data": {"type": "Node"}
         }),
         serde_json::json!({
-            "edit_type": "addEdge", 
+            "edit_type": "addEdge",
             "from": "n1",
             "to": "n3",
             "edge_data": {"type": "Edge"}
-        })
+        }),
     ];
 
     // 二番目の操作列（異なる）
@@ -95,7 +115,7 @@ async fn test_integrated_synthesis_multiple_operation_lists() {
             "from": "n2", // 異なる
             "to": "n3",
             "edge_data": {"type": "Edge"}
-        })
+        }),
     ];
 
     let method_call_a = MethodCallOperation {
@@ -123,8 +143,11 @@ async fn test_integrated_synthesis_multiple_operation_lists() {
     let body_bytes = bytes::Bytes::from(request_body);
 
     let response = handle_synthesis(body_bytes).await;
-    assert!(response.is_ok(), "Handle synthesis with multiple operation lists should succeed");
-    
+    assert!(
+        response.is_ok(),
+        "Handle synthesis with multiple operation lists should succeed"
+    );
+
     println!("Multiple operation lists test completed successfully");
 }
 
@@ -145,7 +168,10 @@ async fn test_integrated_synthesis_empty_method_calls() {
     let body_bytes = bytes::Bytes::from(request_body);
 
     let response = handle_synthesis(body_bytes).await;
-    assert!(response.is_ok(), "Handle synthesis with empty method calls should succeed");
-    
+    assert!(
+        response.is_ok(),
+        "Handle synthesis with empty method calls should succeed"
+    );
+
     println!("Empty method calls test completed successfully");
 }

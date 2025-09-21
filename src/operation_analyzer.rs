@@ -3,9 +3,9 @@
 //! 複数の操作列を受け取り、同型解析で共通部分と差異部分を特定し、
 //! 各差異部分の直前でのList環境を計算する。
 
-use crate::models::VisGraph;
-use crate::list_env::{ListEnvironment, GraphOperation};
 use crate::ir::{Op, OpKind};
+use crate::list_env::{GraphOperation, ListEnvironment};
+use crate::models::VisGraph;
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -36,7 +36,7 @@ pub fn analyze_operations_with_environments(
         .iter()
         .map(|op| serde_json::from_value(op.clone()))
         .collect();
-    
+
     let graph_ops_b: Result<Vec<GraphOperation>, _> = operations_b
         .iter()
         .map(|op| serde_json::from_value(op.clone()))
@@ -76,8 +76,9 @@ pub fn analyze_operations_with_environments(
         if let (Some(a), Some(b)) = (op_a, op_b) {
             if operations_equivalent(a, b) {
                 // 共通操作として適用（どちらでも同じなのでAを使用）
-                current_env.apply_operation(a)
-                    .map_err(|e| format!("Failed to apply operation at position {}: {}", position, e))?;
+                current_env.apply_operation(a).map_err(|e| {
+                    format!("Failed to apply operation at position {}: {}", position, e)
+                })?;
             }
         }
 
@@ -94,34 +95,34 @@ pub fn analyze_operations_with_environments(
 
 /// 2つの操作が等価かどうかを判定
 fn operations_equivalent(op_a: &GraphOperation, op_b: &GraphOperation) -> bool {
-    op_a.edit_type == op_b.edit_type &&
-        op_a.id == op_b.id &&
-        op_a.label == op_b.label &&
-        op_a.is_literal == op_b.is_literal &&
-        op_a.from == op_b.from &&
-        op_a.to == op_b.to
+    op_a.edit_type == op_b.edit_type
+        && op_a.id == op_b.id
+        && op_a.label == op_b.label
+        && op_a.is_literal == op_b.is_literal
+        && op_a.from == op_b.from
+        && op_a.to == op_b.to
 }
 
 /// 操作の詳細情報をフォーマットする
 pub fn format_operation_details(op: &GraphOperation) -> String {
     let mut details = Vec::new();
-    
+
     if let Some(id) = &op.id {
         details.push(format!("id: {}", id));
     }
-    
+
     if let Some(label) = &op.label {
         details.push(format!("label: {}", label));
     }
-    
+
     if let Some(from) = &op.from {
         details.push(format!("from: {}", from));
     }
-    
+
     if let Some(to) = &op.to {
         details.push(format!("to: {}", to));
     }
-    
+
     if details.is_empty() {
         "詳細なし".to_string()
     } else {
@@ -144,23 +145,43 @@ pub fn display_analysis_result(result: &OperationAnalysisResult) {
     }
 
     for (index, diff_point) in result.difference_points.iter().enumerate() {
-        println!("--- 差異点 {} (位置: {}) ---", index + 1, diff_point.position);
-        
+        println!(
+            "--- 差異点 {} (位置: {}) ---",
+            index + 1,
+            diff_point.position
+        );
+
         // 操作の差異を表示
         match (&diff_point.operation_a, &diff_point.operation_b) {
             (Some(op_a), Some(op_b)) => {
                 println!("🔄 操作の違い:");
-                println!("  操作A: {} ({})", op_a.edit_type, format_operation_details(op_a));
-                println!("  操作B: {} ({})", op_b.edit_type, format_operation_details(op_b));
-            },
+                println!(
+                    "  操作A: {} ({})",
+                    op_a.edit_type,
+                    format_operation_details(op_a)
+                );
+                println!(
+                    "  操作B: {} ({})",
+                    op_b.edit_type,
+                    format_operation_details(op_b)
+                );
+            }
             (Some(op_a), None) => {
-                println!("➕ 操作A のみ: {} ({})", op_a.edit_type, format_operation_details(op_a));
+                println!(
+                    "➕ 操作A のみ: {} ({})",
+                    op_a.edit_type,
+                    format_operation_details(op_a)
+                );
                 println!("  操作B: なし");
-            },
+            }
             (None, Some(op_b)) => {
                 println!("  操作A: なし");
-                println!("➕ 操作B のみ: {} ({})", op_b.edit_type, format_operation_details(op_b));
-            },
+                println!(
+                    "➕ 操作B のみ: {} ({})",
+                    op_b.edit_type,
+                    format_operation_details(op_b)
+                );
+            }
             (None, None) => {
                 println!("⚠️  両方とも操作なし（予期しない状態）");
             }
@@ -178,30 +199,28 @@ pub fn display_analysis_result(result: &OperationAnalysisResult) {
 
 /// 簡単なテスト用ヘルパー関数
 pub fn test_operation_analysis() -> Result<(), String> {
-    use crate::models::{Node, Edge};
+    use crate::models::{Edge, Node};
     use serde_json::json;
 
     // テスト用のグラフ
     let vis_graph = VisGraph {
         nodes: vec![
-            Node { 
-                id: "main-new1".to_string(), 
-                is_literal: false, 
-                label: json!("Node") 
+            Node {
+                id: "main-new1".to_string(),
+                is_literal: false,
+                label: json!("Node"),
             },
-            Node { 
-                id: "main-new1-val".to_string(), 
-                is_literal: true, 
-                label: json!("2") 
-            },
-        ],
-        edges: vec![
-            Edge { 
-                from: "main-new1".to_string(), 
-                to: "main-new1-val".to_string(), 
-                label: "val".to_string() 
+            Node {
+                id: "main-new1-val".to_string(),
+                is_literal: true,
+                label: json!("2"),
             },
         ],
+        edges: vec![Edge {
+            from: "main-new1".to_string(),
+            to: "main-new1-val".to_string(),
+            label: "val".to_string(),
+        }],
     };
 
     // テスト用の操作列
@@ -221,6 +240,6 @@ pub fn test_operation_analysis() -> Result<(), String> {
 
     let result = analyze_operations_with_environments(&vis_graph, &operations_a, &operations_b)?;
     display_analysis_result(&result);
-    
+
     Ok(())
 }

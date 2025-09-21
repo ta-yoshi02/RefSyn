@@ -1,5 +1,5 @@
-use std::collections::{HashMap, BTreeSet};
 use serde::{Deserialize, Serialize};
+use std::collections::{BTreeSet, HashMap};
 
 /// 操作ID（各操作を一意に識別）
 pub type OpNum = String;
@@ -9,23 +9,53 @@ pub type NodeId = String;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub enum NodeExpr {
-    AddNode {is_literal: bool, label: String, id: NodeId},
-    ExistNode {is_literal: bool, label: String, id: NodeId},
-    NullNode
+    AddNode {
+        is_literal: bool,
+        label: String,
+        id: NodeId,
+    },
+    ExistNode {
+        is_literal: bool,
+        label: String,
+        id: NodeId,
+    },
+    NullNode,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub enum EdgeExpr {
-    AddEdge { from: OpNum, to: OpNum, label: String },
-    EditEdgeReference { from: OpNum, new_to: OpNum, label: String },
-    DeleteEdge { from: OpNum, to: OpNum, label: String },
+    AddEdge {
+        from: OpNum,
+        to: OpNum,
+        label: String,
+    },
+    EditEdgeReference {
+        from: OpNum,
+        new_to: OpNum,
+        label: String,
+    },
+    DeleteEdge {
+        from: OpNum,
+        to: OpNum,
+        label: String,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub enum VarOp {
-    AddVariable { to: OpNum, label: String },
-    EditVariableReference { old_to: OpNum, new_to: OpNum, label: String },
-    DeleteVariable { to: OpNum, label: String },
+    AddVariable {
+        to: OpNum,
+        label: String,
+    },
+    EditVariableReference {
+        old_to: OpNum,
+        new_to: OpNum,
+        label: String,
+    },
+    DeleteVariable {
+        to: OpNum,
+        label: String,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
@@ -42,7 +72,7 @@ pub struct Op {
     pub kind: GraphOp,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct UnificationResult {
     pub common_a: Vec<Op>,
     pub common_b: Vec<Op>,
@@ -60,19 +90,29 @@ pub fn unify_operation_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
     for op in b {
         match &op.kind {
             GraphOp::Node(NodeExpr::AddNode { is_literal, .. }) => {
-                nodes_b_groups.entry((true, *is_literal, false)).or_default().push(op.id.clone());
+                nodes_b_groups
+                    .entry((true, *is_literal, false))
+                    .or_default()
+                    .push(op.id.clone());
             }
             GraphOp::Node(NodeExpr::ExistNode { is_literal, .. }) => {
-                nodes_b_groups.entry((false, *is_literal, false)).or_default().push(op.id.clone());
+                nodes_b_groups
+                    .entry((false, *is_literal, false))
+                    .or_default()
+                    .push(op.id.clone());
             }
             GraphOp::Node(NodeExpr::NullNode) => {
-                nodes_b_groups.entry((false, false, true)).or_default().push(op.id.clone());
+                nodes_b_groups
+                    .entry((false, false, true))
+                    .or_default()
+                    .push(op.id.clone());
             }
             _ => {}
         }
     }
 
-    let nodes_a: Vec<OpNum> = a.iter()
+    let nodes_a: Vec<OpNum> = a
+        .iter()
         .filter(|op| matches!(&op.kind, GraphOp::Node(_)))
         .map(|op| op.id.clone())
         .collect();
@@ -96,16 +136,26 @@ pub fn unify_operation_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
     let mut diff_b_ids = BTreeSet::new();
 
     // Initially, all ops are considered diffs.
-    for op in a { diff_a_ids.insert(op.id.clone()); }
-    for op in b { diff_b_ids.insert(op.id.clone()); }
+    for op in a {
+        diff_a_ids.insert(op.id.clone());
+    }
+    for op in b {
+        diff_b_ids.insert(op.id.clone());
+    }
 
     // Re-classify mapped nodes based on attribute equality.
     for (id_a, id_b) in final_mapping.iter() {
         let op_a = &ops_a_map[id_a];
         let op_b = &ops_b_map[id_b];
         let are_attrs_equal = match (&op_a.kind, &op_b.kind) {
-            (GraphOp::Node(NodeExpr::AddNode { label: label_a, .. }), GraphOp::Node(NodeExpr::AddNode { label: label_b, .. })) => label_a == label_b,
-            (GraphOp::Node(NodeExpr::ExistNode { id: id_a_node, .. }), GraphOp::Node(NodeExpr::ExistNode { id: id_b_node, .. })) => id_a_node == id_b_node,
+            (
+                GraphOp::Node(NodeExpr::AddNode { label: label_a, .. }),
+                GraphOp::Node(NodeExpr::AddNode { label: label_b, .. }),
+            ) => label_a == label_b,
+            (
+                GraphOp::Node(NodeExpr::ExistNode { id: id_a_node, .. }),
+                GraphOp::Node(NodeExpr::ExistNode { id: id_b_node, .. }),
+            ) => id_a_node == id_b_node,
             (GraphOp::Node(NodeExpr::NullNode), GraphOp::Node(NodeExpr::NullNode)) => true,
             _ => false,
         };
@@ -122,42 +172,74 @@ pub fn unify_operation_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
     for edge_a in a.iter().filter(|op| matches!(&op.kind, GraphOp::Edge(_))) {
         if let GraphOp::Edge(edge_expr_a) = &edge_a.kind {
             let b_edge_id = match edge_expr_a {
-                EdgeExpr::AddEdge { from: from_a, to: to_a, label: label_a } => {
-                    if let (Some(from_b), Some(to_b)) = (final_mapping.get(from_a), final_mapping.get(to_a)) {
+                EdgeExpr::AddEdge {
+                    from: from_a,
+                    to: to_a,
+                    label: label_a,
+                } => {
+                    if let (Some(from_b), Some(to_b)) =
+                        (final_mapping.get(from_a), final_mapping.get(to_a))
+                    {
                         b.iter().find_map(|op_b| {
-                            if let GraphOp::Edge(EdgeExpr::AddEdge { from, to, label }) = &op_b.kind {
+                            if let GraphOp::Edge(EdgeExpr::AddEdge { from, to, label }) = &op_b.kind
+                            {
                                 if label == label_a && from == from_b && to == to_b {
                                     return Some(op_b.id.clone());
                                 }
                             }
                             None
                         })
-                    } else { None }
-                },
-                EdgeExpr::EditEdgeReference { from: from_a, new_to: new_to_a, label: label_a } => {
-                    if let (Some(from_b), Some(new_to_b)) = (final_mapping.get(from_a), final_mapping.get(new_to_a)) {
+                    } else {
+                        None
+                    }
+                }
+                EdgeExpr::EditEdgeReference {
+                    from: from_a,
+                    new_to: new_to_a,
+                    label: label_a,
+                } => {
+                    if let (Some(from_b), Some(new_to_b)) =
+                        (final_mapping.get(from_a), final_mapping.get(new_to_a))
+                    {
                         b.iter().find_map(|op_b| {
-                            if let GraphOp::Edge(EdgeExpr::EditEdgeReference { from, new_to, label }) = &op_b.kind {
+                            if let GraphOp::Edge(EdgeExpr::EditEdgeReference {
+                                from,
+                                new_to,
+                                label,
+                            }) = &op_b.kind
+                            {
                                 if label == label_a && from == from_b && new_to == new_to_b {
                                     return Some(op_b.id.clone());
                                 }
                             }
                             None
                         })
-                    } else { None }
-                },
-                EdgeExpr::DeleteEdge { from: from_a, to: to_a, label: label_a } => {
-                    if let (Some(from_b), Some(to_b)) = (final_mapping.get(from_a), final_mapping.get(to_a)) {
+                    } else {
+                        None
+                    }
+                }
+                EdgeExpr::DeleteEdge {
+                    from: from_a,
+                    to: to_a,
+                    label: label_a,
+                } => {
+                    if let (Some(from_b), Some(to_b)) =
+                        (final_mapping.get(from_a), final_mapping.get(to_a))
+                    {
                         b.iter().find_map(|op_b| {
-                            if let GraphOp::Edge(EdgeExpr::DeleteEdge { from, to, label }) = &op_b.kind {
+                            if let GraphOp::Edge(EdgeExpr::DeleteEdge { from, to, label }) =
+                                &op_b.kind
+                            {
                                 if label == label_a && from == from_b && to == to_b {
                                     return Some(op_b.id.clone());
                                 }
                             }
                             None
                         })
-                    } else { None }
-                },
+                    } else {
+                        None
+                    }
+                }
             };
 
             if let Some(id_b) = b_edge_id {
@@ -170,45 +252,74 @@ pub fn unify_operation_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
     }
 
     // Classify variables based on structural mapping.
-    for var_a in a.iter().filter(|op| matches!(&op.kind, GraphOp::Variable(_))) {
+    for var_a in a
+        .iter()
+        .filter(|op| matches!(&op.kind, GraphOp::Variable(_)))
+    {
         if let GraphOp::Variable(var_expr_a) = &var_a.kind {
             let b_var_id = match var_expr_a {
-                VarOp::AddVariable { to: to_a, label: label_a } => {
+                VarOp::AddVariable {
+                    to: to_a,
+                    label: label_a,
+                } => {
                     if let Some(to_b) = final_mapping.get(to_a) {
                         b.iter().find_map(|op_b| {
-                            if let GraphOp::Variable(VarOp::AddVariable { to, label }) = &op_b.kind {
+                            if let GraphOp::Variable(VarOp::AddVariable { to, label }) = &op_b.kind
+                            {
                                 if label == label_a && to == to_b {
                                     return Some(op_b.id.clone());
                                 }
                             }
                             None
                         })
-                    } else { None }
-                },
-                VarOp::EditVariableReference { old_to: old_to_a, new_to: new_to_a, label: label_a } => {
-                    if let (Some(old_to_b), Some(new_to_b)) = (final_mapping.get(old_to_a), final_mapping.get(new_to_a)) {
+                    } else {
+                        None
+                    }
+                }
+                VarOp::EditVariableReference {
+                    old_to: old_to_a,
+                    new_to: new_to_a,
+                    label: label_a,
+                } => {
+                    if let (Some(old_to_b), Some(new_to_b)) =
+                        (final_mapping.get(old_to_a), final_mapping.get(new_to_a))
+                    {
                         b.iter().find_map(|op_b| {
-                            if let GraphOp::Variable(VarOp::EditVariableReference { old_to, new_to, label }) = &op_b.kind {
+                            if let GraphOp::Variable(VarOp::EditVariableReference {
+                                old_to,
+                                new_to,
+                                label,
+                            }) = &op_b.kind
+                            {
                                 if label == label_a && old_to == old_to_b && new_to == new_to_b {
                                     return Some(op_b.id.clone());
                                 }
                             }
                             None
                         })
-                    } else { None }
-                },
-                VarOp::DeleteVariable { to: to_a, label: label_a } => {
+                    } else {
+                        None
+                    }
+                }
+                VarOp::DeleteVariable {
+                    to: to_a,
+                    label: label_a,
+                } => {
                     if let Some(to_b) = final_mapping.get(to_a) {
                         b.iter().find_map(|op_b| {
-                            if let GraphOp::Variable(VarOp::DeleteVariable { to, label }) = &op_b.kind {
+                            if let GraphOp::Variable(VarOp::DeleteVariable { to, label }) =
+                                &op_b.kind
+                            {
                                 if label == label_a && to == to_b {
                                     return Some(op_b.id.clone());
                                 }
                             }
                             None
                         })
-                    } else { None }
-                },
+                    } else {
+                        None
+                    }
+                }
             };
 
             if let Some(id_b) = b_var_id {
@@ -221,10 +332,26 @@ pub fn unify_operation_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
     }
 
     let mut result = UnificationResult {
-        common_a: a.iter().filter(|op| common_a_ids.contains(&op.id)).cloned().collect(),
-        common_b: b.iter().filter(|op| common_b_ids.contains(&op.id)).cloned().collect(),
-        diff_a: a.iter().filter(|op| diff_a_ids.contains(&op.id)).cloned().collect(),
-        diff_b: b.iter().filter(|op| diff_b_ids.contains(&op.id)).cloned().collect(),
+        common_a: a
+            .iter()
+            .filter(|op| common_a_ids.contains(&op.id))
+            .cloned()
+            .collect(),
+        common_b: b
+            .iter()
+            .filter(|op| common_b_ids.contains(&op.id))
+            .cloned()
+            .collect(),
+        diff_a: a
+            .iter()
+            .filter(|op| diff_a_ids.contains(&op.id))
+            .cloned()
+            .collect(),
+        diff_b: b
+            .iter()
+            .filter(|op| diff_b_ids.contains(&op.id))
+            .cloned()
+            .collect(),
     };
 
     result.common_a.sort_by_key(|k| format!("{:?}", k));
@@ -243,30 +370,53 @@ fn calculate_structural_score(
     let mut score = 0;
 
     // Score for edges
-    for edge_a in ops_a_map.values().filter(|op| matches!(&op.kind, GraphOp::Edge(_))) {
+    for edge_a in ops_a_map
+        .values()
+        .filter(|op| matches!(&op.kind, GraphOp::Edge(_)))
+    {
         if let GraphOp::Edge(edge_expr_a) = &edge_a.kind {
             let found_matching_edge = match edge_expr_a {
-                EdgeExpr::AddEdge { from: from_a, to: to_a, label: label_a } => {
+                EdgeExpr::AddEdge {
+                    from: from_a,
+                    to: to_a,
+                    label: label_a,
+                } => {
                     if let (Some(from_b), Some(to_b)) = (mapping.get(from_a), mapping.get(to_a)) {
                         ops_b_map.values().any(|edge_b| {
                             matches!(&edge_b.kind, GraphOp::Edge(EdgeExpr::AddEdge { from, to, label }) if label == label_a && from == from_b && to == to_b)
                         })
-                    } else { false }
-                },
-                EdgeExpr::EditEdgeReference { from: from_a, new_to: new_to_a, label: label_a } => {
-                    if let (Some(from_b), Some(new_to_b)) = (mapping.get(from_a), mapping.get(new_to_a)) {
+                    } else {
+                        false
+                    }
+                }
+                EdgeExpr::EditEdgeReference {
+                    from: from_a,
+                    new_to: new_to_a,
+                    label: label_a,
+                } => {
+                    if let (Some(from_b), Some(new_to_b)) =
+                        (mapping.get(from_a), mapping.get(new_to_a))
+                    {
                         ops_b_map.values().any(|edge_b| {
                             matches!(&edge_b.kind, GraphOp::Edge(EdgeExpr::EditEdgeReference { from, new_to, label }) if label == label_a && from == from_b && new_to == new_to_b)
                         })
-                    } else { false }
-                },
-                EdgeExpr::DeleteEdge { from: from_a, to: to_a, label: label_a } => {
+                    } else {
+                        false
+                    }
+                }
+                EdgeExpr::DeleteEdge {
+                    from: from_a,
+                    to: to_a,
+                    label: label_a,
+                } => {
                     if let (Some(from_b), Some(to_b)) = (mapping.get(from_a), mapping.get(to_a)) {
                         ops_b_map.values().any(|edge_b| {
                             matches!(&edge_b.kind, GraphOp::Edge(EdgeExpr::DeleteEdge { from, to, label }) if label == label_a && from == from_b && to == to_b)
                         })
-                    } else { false }
-                },
+                    } else {
+                        false
+                    }
+                }
             };
             if found_matching_edge {
                 score += 1;
@@ -275,30 +425,51 @@ fn calculate_structural_score(
     }
 
     // Score for variables
-    for var_a in ops_a_map.values().filter(|op| matches!(&op.kind, GraphOp::Variable(_))) {
+    for var_a in ops_a_map
+        .values()
+        .filter(|op| matches!(&op.kind, GraphOp::Variable(_)))
+    {
         if let GraphOp::Variable(var_expr_a) = &var_a.kind {
             let found_matching_var = match var_expr_a {
-                VarOp::AddVariable { to: to_a, label: label_a } => {
+                VarOp::AddVariable {
+                    to: to_a,
+                    label: label_a,
+                } => {
                     if let Some(to_b) = mapping.get(to_a) {
                         ops_b_map.values().any(|var_b| {
                             matches!(&var_b.kind, GraphOp::Variable(VarOp::AddVariable { to, label }) if label == label_a && to == to_b)
                         })
-                    } else { false }
-                },
-                VarOp::EditVariableReference { old_to: old_to_a, new_to: new_to_a, label: label_a } => {
-                    if let (Some(old_to_b), Some(new_to_b)) = (mapping.get(old_to_a), mapping.get(new_to_a)) {
+                    } else {
+                        false
+                    }
+                }
+                VarOp::EditVariableReference {
+                    old_to: old_to_a,
+                    new_to: new_to_a,
+                    label: label_a,
+                } => {
+                    if let (Some(old_to_b), Some(new_to_b)) =
+                        (mapping.get(old_to_a), mapping.get(new_to_a))
+                    {
                         ops_b_map.values().any(|var_b| {
                             matches!(&var_b.kind, GraphOp::Variable(VarOp::EditVariableReference { old_to, new_to, label }) if label == label_a && old_to == old_to_b && new_to == new_to_b)
                         })
-                    } else { false }
-                },
-                VarOp::DeleteVariable { to: to_a, label: label_a } => {
+                    } else {
+                        false
+                    }
+                }
+                VarOp::DeleteVariable {
+                    to: to_a,
+                    label: label_a,
+                } => {
                     if let Some(to_b) = mapping.get(to_a) {
                         ops_b_map.values().any(|var_b| {
                             matches!(&var_b.kind, GraphOp::Variable(VarOp::DeleteVariable { to, label }) if label == label_a && to == to_b)
                         })
-                    } else { false }
-                },
+                    } else {
+                        false
+                    }
+                }
             };
             if found_matching_var {
                 score += 1;
@@ -344,12 +515,26 @@ fn find_best_mapping_recursive<'a>(
                     continue; // Already mapped
                 }
                 current_mapping.insert(op_a_id.clone(), op_b_id.clone());
-                find_best_mapping_recursive(remaining_nodes_a, mappable_nodes_b, current_mapping, best_mapping, ops_a_map, ops_b_map);
+                find_best_mapping_recursive(
+                    remaining_nodes_a,
+                    mappable_nodes_b,
+                    current_mapping,
+                    best_mapping,
+                    ops_a_map,
+                    ops_b_map,
+                );
                 current_mapping.remove(op_a_id);
             }
         }
     }
 
     // Path 2: Explore NOT mapping the current node
-    find_best_mapping_recursive(remaining_nodes_a, mappable_nodes_b, current_mapping, best_mapping, ops_a_map, ops_b_map);
+    find_best_mapping_recursive(
+        remaining_nodes_a,
+        mappable_nodes_b,
+        current_mapping,
+        best_mapping,
+        ops_a_map,
+        ops_b_map,
+    );
 }
