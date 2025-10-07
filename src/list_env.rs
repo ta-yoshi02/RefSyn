@@ -39,16 +39,13 @@ pub struct GraphOperation {
 impl ListEnvironment {
     /// 初期のVisGraphからListEnvironmentを作成
     pub fn from_vis_graph(vis_graph: &VisGraph) -> Self {
-        let mut object_ids: Vec<String> = vis_graph
+        let object_ids: Vec<String> = vis_graph
             .nodes
             .iter()
             .filter(|n| !n.is_literal)
             .filter(|n| n.id != "__RectForVariable__") // 不要なオブジェクトを除外
             .map(|n| n.id.clone())
             .collect();
-
-        // IDの辞書順でソートして一貫したインデックスを保証
-        object_ids.sort();
 
         let obj_id_to_index: HashMap<String, usize> = object_ids
             .iter()

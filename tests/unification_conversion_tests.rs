@@ -1,5 +1,5 @@
 use refsyn::analyze_operations_with_unification;
-use refsyn::models::{Edge, Node, VisGraph};
+use refsyn::models::VisGraph;
 use serde_json::json;
 
 fn make_min_vis_graph() -> VisGraph {

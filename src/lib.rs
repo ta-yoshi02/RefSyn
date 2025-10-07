@@ -23,7 +23,8 @@ use crate::parser::parse_operations;
 use anyhow;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::convert::TryFrom;
 use warp::http::StatusCode;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -37,6 +38,8 @@ pub struct MethodCallOperation {
     #[serde(rename = "methodName")]
     pub method_name: String,
     pub operations: Vec<serde_json::Value>,
+    #[serde(rename = "actualGraph")]
+    pub actual_graph: Option<VisGraph>,
 }
 
 use crate::models::VisGraph;
@@ -596,9 +599,25 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     let mut aggregated_specs: Vec<EscherSpec> = Vec::new();
 
     if operations_list.len() >= 2 {
+        let vis_graph_a = req
+            .method_calls
+            .get(0)
+            .and_then(|m| m.actual_graph.as_ref())
+            .unwrap_or(&req.vis_graph);
+        let vis_graph_b = req
+            .method_calls
+            .get(1)
+            .and_then(|m| m.actual_graph.as_ref())
+            .unwrap_or(&req.vis_graph);
+        let base_env_a = crate::list_env::ListEnvironment::from_vis_graph(vis_graph_a);
+        let base_env_b = crate::list_env::ListEnvironment::from_vis_graph(vis_graph_b);
+
         if let Some(uni) = &unification_analysis {
             match generate_specs_from_unification(
-                &req.vis_graph,
+                vis_graph_a,
+                vis_graph_b,
+                &base_env_a,
+                &base_env_b,
                 &operations_list[0],
                 &operations_list[1],
                 uni,
@@ -1133,26 +1152,19 @@ fn bfs_local_index_for_object(
     }
 }
 
-fn target_object_id_from_op(op: &crate::list_env::GraphOperation) -> Option<&str> {
-    let et = op.edit_type.as_str();
-    match et {
-        // エッジの差分ではフィールド所有者（from）を対象オブジェクトとみなす
-        "addEdge" | "removeEdge" => op.from.as_deref(),
-        // ノード追加/削除の差分ではそのノード自体
-        "addNode" | "removeNode" => op.id.as_deref(),
-        _ => None,
-    }
-}
-
 fn build_environment_prefix(
-    vis_graph: &models::VisGraph,
+    base_env: &crate::list_env::ListEnvironment,
     operations: &[serde_json::Value],
     position: usize,
+    inclusive: bool,
 ) -> anyhow::Result<crate::list_env::ListEnvironment> {
-    use crate::list_env::{GraphOperation, ListEnvironment};
+    use crate::list_env::GraphOperation;
 
-    let mut env = ListEnvironment::from_vis_graph(vis_graph);
-    let limit = position.min(operations.len());
+    let mut env = base_env.clone();
+    let mut limit = position.min(operations.len());
+    if inclusive {
+        limit = limit.saturating_add(1).min(operations.len());
+    }
     for op_json in operations.iter().take(limit) {
         let graph_op: GraphOperation = serde_json::from_value(op_json.clone())?;
         env.apply_operation(&graph_op)
@@ -1162,77 +1174,76 @@ fn build_environment_prefix(
 }
 
 #[derive(Clone)]
-struct DiffEntry {
+struct DiffPair {
+    op_a: crate::list_env::GraphOperation,
+    index_a: usize,
+    op_b: crate::list_env::GraphOperation,
+    index_b: usize,
+}
+
+#[derive(Debug, Hash, Eq, PartialEq, Clone, Ord, PartialOrd)]
+struct DiffKey {
+    parent_id: String,
+    label: Option<String>,
+    edit_type: String,
+}
+
+#[derive(Clone)]
+struct DiffCandidate {
+    graph_op: crate::list_env::GraphOperation,
     index: usize,
-    operation: crate::list_env::GraphOperation,
+}
+
+fn operations_equivalent_graph(
+    op_a: &crate::list_env::GraphOperation,
+    op_b: &crate::list_env::GraphOperation,
+) -> bool {
+    op_a.edit_type == op_b.edit_type
+        && op_a.id == op_b.id
+        && op_a.label == op_b.label
+        && op_a.is_literal == op_b.is_literal
+        && op_a.from == op_b.from
+        && op_a.to == op_b.to
 }
 
 fn parse_op_index(op_id: &str) -> Option<usize> {
-    op_id.strip_prefix("op_")?.parse().ok()
+    op_id
+        .strip_prefix("op_")
+        .and_then(|rest| rest.parse::<usize>().ok())
 }
 
-fn diff_group_key(op: &crate::list_env::GraphOperation) -> String {
+fn extract_node_object_id(op: &crate::unify_ops::Op) -> Option<String> {
+    use crate::unify_ops::{GraphOp, NodeExpr};
+
+    match &op.kind {
+        GraphOp::Node(NodeExpr::AddNode { id, .. }) => Some(id.clone()),
+        GraphOp::Node(NodeExpr::ExistNode { id, .. }) => Some(id.clone()),
+        _ => None,
+    }
+}
+
+fn graph_op_parent_id(op: &crate::list_env::GraphOperation) -> Option<String> {
     match op.edit_type.as_str() {
-        "addNode" => {
-            if op.is_literal.unwrap_or(false) {
-                "addNode_literal".to_string()
-            } else {
-                "addNode_object".to_string()
-            }
-        }
-        "addEdge" => {
-            let label = op
-                .label
-                .as_ref()
-                .map(|v| value_to_key_fragment(v))
-                .unwrap_or_else(|| "".to_string());
-            format!("addEdge:{}", label)
-        }
-        other => {
-            let label = op
-                .label
-                .as_ref()
-                .map(|v| value_to_key_fragment(v))
-                .unwrap_or_else(|| "".to_string());
-            format!("{}:{}", other, label)
-        }
+        "addEdge" | "removeEdge" => op.from.clone(),
+        "addNode" | "removeNode" => op.id.clone(),
+        _ => None,
     }
 }
 
-fn value_to_key_fragment(val: &serde_json::Value) -> String {
-    match val {
-        serde_json::Value::String(s) => s.clone(),
-        serde_json::Value::Number(n) => n.to_string(),
-        serde_json::Value::Bool(b) => b.to_string(),
-        serde_json::Value::Null => "null".to_string(),
-        _ => "value".to_string(),
-    }
-}
-
-fn collect_diff_map(
-    diff_ops: &[crate::unify_ops::Op],
-    graph_ops: &[crate::list_env::GraphOperation],
-) -> std::collections::BTreeMap<String, std::collections::VecDeque<DiffEntry>> {
-    use std::collections::{BTreeMap, VecDeque};
-    let mut map: BTreeMap<String, VecDeque<DiffEntry>> = BTreeMap::new();
-
-    for op in diff_ops {
-        if let Some(idx) = parse_op_index(&op.id) {
-            if let Some(graph_op) = graph_ops.get(idx) {
-                let key = diff_group_key(graph_op);
-                map.entry(key).or_default().push_back(DiffEntry {
-                    index: idx,
-                    operation: graph_op.clone(),
-                });
-            }
-        }
-    }
-
-    map
+fn graph_op_label_string(op: &crate::list_env::GraphOperation) -> Option<String> {
+    op.label.as_ref().and_then(|value| match value {
+        serde_json::Value::String(s) => Some(s.clone()),
+        serde_json::Value::Number(num) => Some(num.to_string()),
+        serde_json::Value::Bool(b) => Some(b.to_string()),
+        _ => None,
+    })
 }
 
 fn generate_specs_from_unification(
-    vis_graph: &models::VisGraph,
+    vis_graph_a: &models::VisGraph,
+    vis_graph_b: &models::VisGraph,
+    base_env_a: &crate::list_env::ListEnvironment,
+    base_env_b: &crate::list_env::ListEnvironment,
     operations_a: &[serde_json::Value],
     operations_b: &[serde_json::Value],
     analysis: &UnificationAnalysisResult,
@@ -1247,59 +1258,307 @@ fn generate_specs_from_unification(
         .map(|op| serde_json::from_value(op.clone()))
         .collect::<Result<_, _>>()?;
 
-    let map_a = collect_diff_map(&analysis.unification_result.diff_a, &graph_ops_a);
-    let map_b = collect_diff_map(&analysis.unification_result.diff_b, &graph_ops_b);
+    let mut diff_pairs = Vec::new();
+    let mut used_indices_a: HashSet<usize> = HashSet::new();
+    let mut used_indices_b: HashSet<usize> = HashSet::new();
 
-    let mut keys: Vec<String> = map_a.keys().chain(map_b.keys()).cloned().collect();
-    keys.sort();
-    keys.dedup();
+    // Build op-id -> object-id lookup for nodes in both sequences
+    let mut op_id_to_obj_a: HashMap<String, String> = HashMap::new();
+    for op in analysis
+        .unification_result
+        .common_a
+        .iter()
+        .chain(analysis.unification_result.diff_a.iter())
+    {
+        if let Some(node_id) = extract_node_object_id(op) {
+            op_id_to_obj_a.insert(op.id.clone(), node_id);
+        }
+    }
+    let mut op_id_to_obj_b: HashMap<String, String> = HashMap::new();
+    for op in analysis
+        .unification_result
+        .common_b
+        .iter()
+        .chain(analysis.unification_result.diff_b.iter())
+    {
+        if let Some(node_id) = extract_node_object_id(op) {
+            op_id_to_obj_b.insert(op.id.clone(), node_id);
+        }
+    }
 
-    let mut specs = Vec::new();
-    let mut suffix_index = 0usize;
+    // Convert final mapping to object-id mapping for parent tracking
+    let mut object_id_mapping: HashMap<String, String> = HashMap::new();
+    for (op_a_id, op_b_id) in &analysis.unification_result.final_mapping {
+        if let (Some(obj_a), Some(obj_b)) =
+            (op_id_to_obj_a.get(op_a_id), op_id_to_obj_b.get(op_b_id))
+        {
+            object_id_mapping.insert(obj_a.clone(), obj_b.clone());
+        }
+    }
+    let mut object_id_mapping_inv: HashMap<String, String> = HashMap::new();
+    for (a, b) in &object_id_mapping {
+        object_id_mapping_inv.insert(b.clone(), a.clone());
+    }
 
-    for key in keys {
-        let mut queue_a = map_a.get(&key).cloned().unwrap_or_default();
-        let mut queue_b = map_b.get(&key).cloned().unwrap_or_default();
-        let pair_count = queue_a.len().min(queue_b.len());
-
-        for _ in 0..pair_count {
-            if let (Some(entry_a), Some(entry_b)) = (queue_a.pop_front(), queue_b.pop_front()) {
-                let env_a = build_environment_prefix(vis_graph, operations_a, entry_a.index)?;
-                let env_b = build_environment_prefix(vis_graph, operations_b, entry_b.index)?;
-
-                let out_idx_a = target_object_id_from_op(&entry_a.operation)
-                    .and_then(|obj_id| bfs_local_index_for_object(&env_a, vis_graph, obj_id).ok())
-                    .unwrap_or(-1);
-
-                let out_idx_b = target_object_id_from_op(&entry_b.operation)
-                    .and_then(|obj_id| bfs_local_index_for_object(&env_b, vis_graph, obj_id).ok())
-                    .unwrap_or(-1);
-
-                let cases = vec![
-                    EscherCase {
-                        env: env_a,
-                        vis_graph: vis_graph.clone(),
-                        arguments: vec![],
-                        output: serde_json::json!(out_idx_a),
-                    },
-                    EscherCase {
-                        env: env_b,
-                        vis_graph: vis_graph.clone(),
-                        arguments: vec![],
-                        output: serde_json::json!(out_idx_b),
-                    },
-                ];
-
-                let spec_name = build_spec_name(base_name, suffix_index);
-                suffix_index += 1;
-
-                let spec = build_escher_spec(&spec_name, "Int", &cases)?;
-                specs.push(spec);
+    let mut diff_map_a: HashMap<DiffKey, Vec<DiffCandidate>> = HashMap::new();
+    for op in &analysis.unification_result.diff_a {
+        if let Some(idx) = parse_op_index(&op.id) {
+            if let Some(graph_op) = graph_ops_a.get(idx) {
+                if let Some(parent_id) = graph_op_parent_id(graph_op) {
+                    let key = DiffKey {
+                        parent_id,
+                        label: graph_op_label_string(graph_op),
+                        edit_type: graph_op.edit_type.clone(),
+                    };
+                    diff_map_a.entry(key).or_default().push(DiffCandidate {
+                        graph_op: graph_op.clone(),
+                        index: idx,
+                    });
+                }
             }
         }
     }
 
+    let mut diff_map_b: HashMap<DiffKey, Vec<DiffCandidate>> = HashMap::new();
+    for op in &analysis.unification_result.diff_b {
+        if let Some(idx) = parse_op_index(&op.id) {
+            if let Some(graph_op) = graph_ops_b.get(idx) {
+                if let Some(parent_id_b) = graph_op_parent_id(graph_op) {
+                    let canonical_parent = object_id_mapping_inv
+                        .get(&parent_id_b)
+                        .cloned()
+                        .unwrap_or(parent_id_b.clone());
+                    let key = DiffKey {
+                        parent_id: canonical_parent,
+                        label: graph_op_label_string(graph_op),
+                        edit_type: graph_op.edit_type.clone(),
+                    };
+                    diff_map_b.entry(key).or_default().push(DiffCandidate {
+                        graph_op: graph_op.clone(),
+                        index: idx,
+                    });
+                }
+            }
+        }
+    }
+
+    for candidates in diff_map_a.values_mut() {
+        candidates.sort_by_key(|c| c.index);
+    }
+    for candidates in diff_map_b.values_mut() {
+        candidates.sort_by_key(|c| c.index);
+    }
+
+    let mut sorted_keys: Vec<DiffKey> = diff_map_a.keys().cloned().collect();
+    sorted_keys.sort();
+
+    for key in sorted_keys {
+        if let (Some(candidates_a), Some(candidates_b)) =
+            (diff_map_a.get(&key), diff_map_b.get(&key))
+        {
+            let count = candidates_a.len().min(candidates_b.len());
+            for i in 0..count {
+                let cand_a = &candidates_a[i];
+                let cand_b = &candidates_b[i];
+                diff_pairs.push(DiffPair {
+                    op_a: cand_a.graph_op.clone(),
+                    index_a: cand_a.index,
+                    op_b: cand_b.graph_op.clone(),
+                    index_b: cand_b.index,
+                });
+                used_indices_a.insert(cand_a.index);
+                used_indices_b.insert(cand_b.index);
+            }
+        }
+    }
+
+    let target_pairs = std::cmp::min(
+        analysis.unification_result.diff_a.len(),
+        analysis.unification_result.diff_b.len(),
+    );
+
+    if target_pairs > diff_pairs.len() {
+        let mut diff_candidates_a: Vec<(usize, crate::list_env::GraphOperation)> = Vec::new();
+        for op in &analysis.unification_result.diff_a {
+            if let Some(idx) = parse_op_index(&op.id) {
+                if used_indices_a.contains(&idx) {
+                    continue;
+                }
+                if let Some(graph_op) = graph_ops_a.get(idx) {
+                    diff_candidates_a.push((idx, graph_op.clone()));
+                }
+            }
+        }
+        diff_candidates_a.sort_by_key(|(idx, _)| *idx);
+
+        let mut diff_candidates_b: Vec<(usize, crate::list_env::GraphOperation)> = Vec::new();
+        for op in &analysis.unification_result.diff_b {
+            if let Some(idx) = parse_op_index(&op.id) {
+                if used_indices_b.contains(&idx) {
+                    continue;
+                }
+                if let Some(graph_op) = graph_ops_b.get(idx) {
+                    diff_candidates_b.push((idx, graph_op.clone()));
+                }
+            }
+        }
+        diff_candidates_b.sort_by_key(|(idx, _)| *idx);
+
+        let pair_count = diff_candidates_a
+            .len()
+            .min(diff_candidates_b.len())
+            .min(target_pairs.saturating_sub(diff_pairs.len()));
+        for i in 0..pair_count {
+            let (idx_a, op_a) = &diff_candidates_a[i];
+            let (idx_b, op_b) = &diff_candidates_b[i];
+            diff_pairs.push(DiffPair {
+                op_a: op_a.clone(),
+                index_a: *idx_a,
+                op_b: op_b.clone(),
+                index_b: *idx_b,
+            });
+            used_indices_a.insert(*idx_a);
+            used_indices_b.insert(*idx_b);
+        }
+    }
+
+    if target_pairs > diff_pairs.len() {
+        let max_len = graph_ops_a.len().max(graph_ops_b.len());
+        for idx in 0..max_len {
+            if diff_pairs.len() >= target_pairs {
+                break;
+            }
+            if used_indices_a.contains(&idx) || used_indices_b.contains(&idx) {
+                continue;
+            }
+
+            let op_a = graph_ops_a.get(idx);
+            let op_b = graph_ops_b.get(idx);
+
+            match (op_a, op_b) {
+                (Some(a), Some(b)) if operations_equivalent_graph(a, b) => continue,
+                (Some(a), Some(b)) => {
+                    diff_pairs.push(DiffPair {
+                        op_a: a.clone(),
+                        index_a: idx,
+                        op_b: b.clone(),
+                        index_b: idx,
+                    });
+                    used_indices_a.insert(idx);
+                    used_indices_b.insert(idx);
+                }
+                _ => {}
+            }
+        }
+    }
+
+    let mut specs = Vec::new();
+    let mut suffix_index = 0usize;
+
+    for pair in diff_pairs {
+        let env_a = build_environment_prefix(base_env_a, operations_a, pair.index_a, true)?;
+        let env_b = build_environment_prefix(base_env_b, operations_b, pair.index_b, true)?;
+
+        let out_a = determine_output_value(&pair.op_a, &env_a, vis_graph_a);
+        let out_b = determine_output_value(&pair.op_b, &env_b, vis_graph_b);
+
+        let root_idx_a = if let Some(idx) = detect_root_index(&env_a, vis_graph_a) {
+            if let Some(obj_id) = env_a.index_to_obj_id.get(&idx) {
+                bfs_local_index_for_object(&env_a, vis_graph_a, obj_id).unwrap_or(-1)
+            } else {
+                -1
+            }
+        } else {
+            -1
+        };
+        let root_idx_b = if let Some(idx) = detect_root_index(&env_b, vis_graph_b) {
+            if let Some(obj_id) = env_b.index_to_obj_id.get(&idx) {
+                bfs_local_index_for_object(&env_b, vis_graph_b, obj_id).unwrap_or(-1)
+            } else {
+                -1
+            }
+        } else {
+            -1
+        };
+
+        let cases = vec![
+            EscherCase {
+                env: env_a,
+                vis_graph: vis_graph_a.clone(),
+                arguments: vec![serde_json::json!(root_idx_a)],
+                output: out_a,
+            },
+            EscherCase {
+                env: env_b,
+                vis_graph: vis_graph_b.clone(),
+                arguments: vec![serde_json::json!(root_idx_b)],
+                output: out_b,
+            },
+        ];
+
+        let spec_name = build_spec_name(base_name, suffix_index);
+        suffix_index += 1;
+
+        let spec = build_escher_spec(&spec_name, "Int", &cases)?;
+        specs.push(spec);
+    }
+
     Ok(specs)
+}
+
+fn determine_output_value(
+    operation: &crate::list_env::GraphOperation,
+    env: &crate::list_env::ListEnvironment,
+    vis_graph: &models::VisGraph,
+) -> serde_json::Value {
+    match operation.edit_type.as_str() {
+        "addEdge" | "removeEdge" => {
+            if let Some(to_id) = operation.to.as_deref() {
+                if env.obj_id_to_index.contains_key(to_id) {
+                    match bfs_local_index_for_object(env, vis_graph, to_id) {
+                        Ok(idx) => serde_json::json!(idx),
+                        Err(_) => serde_json::json!(-1),
+                    }
+                } else if let Some(val) = env.literal_id_to_value.get(to_id) {
+                    value_to_i32(val)
+                        .map(|v| serde_json::json!(v))
+                        .unwrap_or_else(|| serde_json::json!(-1))
+                } else {
+                    serde_json::json!(-1)
+                }
+            } else {
+                serde_json::json!(-1)
+            }
+        }
+        "addNode" | "removeNode" => {
+            if operation.is_literal.unwrap_or(false) {
+                if let Some(label) = operation.label.as_ref() {
+                    value_to_i32(label)
+                        .map(|v| serde_json::json!(v))
+                        .unwrap_or_else(|| serde_json::json!(-1))
+                } else {
+                    serde_json::json!(-1)
+                }
+            } else if let Some(id) = operation.id.as_deref() {
+                match bfs_local_index_for_object(env, vis_graph, id) {
+                    Ok(idx) => serde_json::json!(idx),
+                    Err(_) => serde_json::json!(-1),
+                }
+            } else {
+                serde_json::json!(-1)
+            }
+        }
+        _ => serde_json::json!(-1),
+    }
+}
+
+fn value_to_i32(val: &serde_json::Value) -> Option<i32> {
+    match val {
+        serde_json::Value::Number(num) => num.as_i64().and_then(|v| i32::try_from(v).ok()),
+        serde_json::Value::String(s) => s.parse::<i64>().ok().and_then(|v| i32::try_from(v).ok()),
+        serde_json::Value::Bool(b) => Some(if *b { 1 } else { 0 }),
+        _ => None,
+    }
 }
 
 fn build_spec_name(base: &str, idx: usize) -> String {

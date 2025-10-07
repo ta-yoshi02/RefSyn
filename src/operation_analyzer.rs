@@ -3,11 +3,9 @@
 //! 複数の操作列を受け取り、同型解析で共通部分と差異部分を特定し、
 //! 各差異部分の直前でのList環境を計算する。
 
-use crate::ir::{Op, OpKind};
 use crate::list_env::{GraphOperation, ListEnvironment};
 use crate::models::VisGraph;
 use serde_json::Value;
-use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct DifferencePoint {

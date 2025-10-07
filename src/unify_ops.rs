@@ -78,6 +78,8 @@ pub struct UnificationResult {
     pub common_b: Vec<Op>,
     pub diff_a: Vec<Op>,
     pub diff_b: Vec<Op>,
+    /// Mapping from operation IDs in sequence A to their counterparts in sequence B
+    pub final_mapping: HashMap<OpNum, OpNum>,
 }
 
 pub fn unify_operation_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
@@ -127,7 +129,7 @@ pub fn unify_operation_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
         &ops_a_map,
         &ops_b_map,
     );
-    let final_mapping = &best_mapping.0;
+    let final_mapping = best_mapping.0.clone();
 
     // 3. Classify operations based on the best structural mapping.
     let mut common_a_ids = BTreeSet::new();
@@ -352,6 +354,7 @@ pub fn unify_operation_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
             .filter(|op| diff_b_ids.contains(&op.id))
             .cloned()
             .collect(),
+        final_mapping,
     };
 
     result.common_a.sort_by_key(|k| format!("{:?}", k));

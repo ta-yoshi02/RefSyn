@@ -1,4 +1,4 @@
-use refsyn::ir::{maximum_common_subgraph, semantic_common_subgraph, Op, OpKind};
+use refsyn::ir::{maximum_common_subgraph, Op, OpKind};
 
 fn append_ops_original() -> Vec<Op> {
     /*

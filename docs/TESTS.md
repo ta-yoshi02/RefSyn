@@ -108,30 +108,16 @@
     - `test_edge_cases`: 空/不正/単一操作ケースの堅牢性
     - `test_synthesis_statistics`: 実行ヘルプの出力（統計表示）
 
-- `tests/canonical_order_tests.rs:7`
-  - 対象: `canonical_order` + パターン抽出
-  - 目的: 操作の依存性に基づく正規順序の妥当性、`ProgramAnalysis` を用いた適切な `this` 文脈での合成
-  - 主なテスト:
-    - `test_canonical_order_with_user_example`: 並び替え後の長さと依存順序の成立
-    - `test_pattern_matching_with_proper_context`: 解析→合成→`this`/ホール検証
-    - `test_complex_dependency_ordering`: 同構造・異 ID のケースで 3 文にまとまること
-
 - `tests/method_specific_tests.rs:37`
   - 対象: メソッド別（removeVal/removeAt/concat/set/swap/clear/reverse 等）合成
   - 目的: 各操作の本質的な構造（`next`/`val` の代入、参照編集、性能など）に着目
   - 主なテスト: 参照再配線の有無、期待件数（例: swap で 2 回以上の `val` 変更）、大規模操作（100件）を 10 秒以内で処理
 
 - `tests/improved_example_tests.rs:9`
-  - 対象: append の厳密検証 + 実行検証
-  - 目的: `analysys.tex` の期待構造（Node 作成 → `val` 設定 → `next` 接続、ホール化）と、抽出パターンの整合性
+  - 対象: append の厳密検証
+  - 目的: `analysys.tex` の期待構造（Node 作成 → `val` 設定 → `next` 接続、ホール化）と抽出パターンの整合性
   - 主なテスト:
     - `test_append_method_correctness`: 0/3 の値差異がホール化されること
-    - `test_program_execution_simulation`: 複数呼び出しからの抽出結果を簡易実行して妥当性検証
-
-- `tests/dynamic_environment_tests.rs:34`
-  - 対象: 動的環境構築（`ProgramAnalysis` → `MemoEnv`）
-  - 目的: 実プログラム解析に基づくレシーバ解決とメソッド別の合成
-  - 主なテスト: append 実運用相当/レシーバ差異/環境マッピングの正確性
 
 - `tests/synthesis_api_tests.rs:61`（非同期テストを含む）
   - 対象: HTTP ハンドラ `handle_synthesis`、および Kanon 由来データの適用
@@ -183,4 +169,3 @@
   - `src/env.rs`
 
 以上。詳細が必要なテストや、追加の観点（カバレッジ/実行時間/失敗時の典型ログなど）があればお知らせください。必要に応じて追補します。
-

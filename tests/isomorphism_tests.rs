@@ -1,5 +1,5 @@
 use refsyn::isomorphism::unify_isomorphic_graphs;
-use refsyn::unify_ops::{EdgeExpr, GraphOp, NodeExpr, Op, UnificationResult, VarOp};
+use refsyn::unify_ops::{EdgeExpr, GraphOp, NodeExpr, Op, VarOp};
 
 fn append_ops_a() -> Vec<Op> {
     vec![

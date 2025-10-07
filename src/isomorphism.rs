@@ -255,9 +255,13 @@ pub fn unify_isomorphic_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
     let mut diff_a = Vec::new();
     let mut diff_b = Vec::new();
 
+    let mut final_mapping = HashMap::new();
+
     for (node_a_idx, node_b_idx) in &mcs_mapping {
         let op_a = op_graph_a.graph[*node_a_idx];
         let op_b = op_graph_b.graph[*node_b_idx];
+
+        final_mapping.insert(op_a.id.clone(), op_b.id.clone());
 
         if attributes_match(op_a, op_b) {
             common_a.push(op_a.clone());
@@ -278,5 +282,6 @@ pub fn unify_isomorphic_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
         common_b,
         diff_a,
         diff_b,
+        final_mapping,
     }
 }

@@ -51,11 +51,46 @@ pub fn build_escher_spec(
         return Err(anyhow!("no cases provided"));
     }
 
-    // Analyze fields from first case's graph to determine input arity/types
-    let (value_fields, pointer_fields) = analyze_fields(&cases[0].vis_graph)?;
-    let mut sorted_value_fields = value_fields.clone();
+    // Analyze fields across all cases based on ListEnvironment contents
+    let mut value_field_set: HashSet<String> = HashSet::new();
+    let mut pointer_field_set: HashSet<String> = HashSet::new();
+
+    for case in cases {
+        for (field, values) in &case.env.field_lists {
+            let mut has_pointer = false;
+            let mut has_value = false;
+            for v in values {
+                if let Some(num) = v.as_i64() {
+                    if num >= 0 {
+                        if case.env.index_to_obj_id.contains_key(&(num as usize)) {
+                            has_pointer = true;
+                        } else {
+                            has_value = true;
+                        }
+                    } else if num != -1 {
+                        has_value = true;
+                    }
+                } else if !v.is_null() {
+                    has_value = true;
+                }
+            }
+            if has_pointer {
+                pointer_field_set.insert(field.clone());
+            }
+            if has_value
+                || (!has_pointer
+                    && values
+                        .iter()
+                        .all(|v| v.is_null() || (v.as_i64() == Some(-1))))
+            {
+                value_field_set.insert(field.clone());
+            }
+        }
+    }
+
+    let mut sorted_value_fields: Vec<String> = value_field_set.into_iter().collect();
     sorted_value_fields.sort();
-    let mut sorted_pointer_fields = pointer_fields.clone();
+    let mut sorted_pointer_fields: Vec<String> = pointer_field_set.into_iter().collect();
     sorted_pointer_fields.sort();
 
     // inputTypes: args first (Int per arg), then one List[Int] per value field, then per pointer field
@@ -74,24 +109,8 @@ pub fn build_escher_spec(
     // Examples
     let mut examples: Vec<ExampleJson> = Vec::new();
     for case in cases {
-        // Field classification for this case (in case labels differ, but we keep names consistent)
-        let (value_fields_c, pointer_fields_c) = analyze_fields(&case.vis_graph)?;
-
-        // Enforce compatibility with first case
-        if set_of(&value_fields_c) != set_of(&value_fields)
-            || set_of(&pointer_fields_c) != set_of(&pointer_fields)
-        {
-            return Err(anyhow!(
-                "field sets differ across cases: values={:?}/{:?}, pointers={:?}/{:?}",
-                value_fields_c,
-                value_fields,
-                pointer_fields_c,
-                pointer_fields
-            ));
-        }
-
-        // Build BFS-local index mapping
-        let bfs = build_bfs_order(&case.env, &case.vis_graph, &pointer_fields_c)?;
+        // Build BFS-local index mapping using the union of pointer fields
+        let bfs = build_bfs_order(&case.env, &case.vis_graph, &sorted_pointer_fields)?;
 
         // Compose input: args + value lists + pointer index lists
         let mut input: Vec<Value> = case.arguments.clone();
@@ -123,57 +142,6 @@ pub fn build_escher_spec(
 }
 
 // ---------- internals ----------
-
-fn set_of(v: &[String]) -> HashSet<String> {
-    v.iter().cloned().collect()
-}
-
-/// Analyze field labels dynamically:
-/// - value fields: have at least one edge to a literal node
-/// - pointer fields: have at least one edge to a non-literal object node
-/// Ignores edges whose `from` is a special variable node (id starts with "__Variable-") or
-/// special rect ("__RectForVariable__").
-fn analyze_fields(vis_graph: &VisGraph) -> Result<(Vec<String>, Vec<String>)> {
-    let var_prefix = "__Variable-";
-    let mut object_ids: HashSet<&str> = HashSet::new();
-    let mut literal_ids: HashSet<&str> = HashSet::new();
-    let mut variable_ids: HashSet<&str> = HashSet::new();
-
-    for n in &vis_graph.nodes {
-        if n.id == "__RectForVariable__" {
-            continue;
-        }
-        if n.is_literal {
-            literal_ids.insert(n.id.as_str());
-        } else if n.id.starts_with(var_prefix) {
-            variable_ids.insert(n.id.as_str());
-        } else {
-            object_ids.insert(n.id.as_str());
-        }
-    }
-
-    let mut value_fields: HashSet<String> = HashSet::new();
-    let mut pointer_fields: HashSet<String> = HashSet::new();
-    for e in &vis_graph.edges {
-        if e.from == "__RectForVariable__" || e.to == "__RectForVariable__" {
-            continue;
-        }
-        if variable_ids.contains(e.from.as_str()) {
-            // variable binding edge; ignore for field classification
-            continue;
-        }
-        if literal_ids.contains(e.to.as_str()) {
-            value_fields.insert(e.label.clone());
-        } else if object_ids.contains(e.to.as_str()) {
-            pointer_fields.insert(e.label.clone());
-        }
-    }
-
-    Ok((
-        value_fields.into_iter().collect(),
-        pointer_fields.into_iter().collect(),
-    ))
-}
 
 #[derive(Debug, Clone)]
 struct BfsOrder {
@@ -226,8 +194,7 @@ fn build_bfs_order(
             }
         }
     }
-
-    // map indices
+    // map indices for visited nodes only
     let mut idx_to_bfs = HashMap::new();
     for (bi, &orig) in order.iter().enumerate() {
         idx_to_bfs.insert(orig, bi);
@@ -432,6 +399,7 @@ mod tests {
             spec.input_types,
             vec![
                 "Int".to_string(),
+                "List[Int]".to_string(),
                 "List[Int]".to_string(),
                 "List[Int]".to_string()
             ]

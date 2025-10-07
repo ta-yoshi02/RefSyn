@@ -1,6 +1,4 @@
-use refsyn::unify_ops::{
-    unify_operation_graphs, EdgeExpr, GraphOp, NodeExpr, Op, UnificationResult, VarOp,
-};
+use refsyn::unify_ops::{unify_operation_graphs, EdgeExpr, GraphOp, NodeExpr, Op, VarOp};
 
 fn append_ops_a() -> Vec<Op> {
     vec![
