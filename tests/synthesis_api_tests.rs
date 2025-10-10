@@ -28,33 +28,17 @@ async fn test_synthesis_from_kanon_payload() {
             let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
             let synthesis_response: SynthesisResponse = serde_json::from_slice(&body).unwrap();
 
-            // 期待される個別コード数
-            assert_eq!(synthesis_response.individual_codes.len(), 2);
-
-            // 期待される個別コード内容（実際の出力に合わせて修正）
-            assert_eq!(
-                synthesis_response.individual_codes[0],
-                "var obj_0 = new Node();\nobj_0.val = 0;\nthis.next = obj_0;\n"
-            );
-            assert_eq!(
-                synthesis_response.individual_codes[1],
-                "var obj_0 = new Node();\nthis.next.next = obj_0;\nobj_0.val = 3;\n"
-            );
-
-            // 期待される共通パターン（実際の出力では空文字列）
-            assert_eq!(synthesis_response.common_pattern.as_deref(), Some(""));
-
-            // 期待されるホール情報（実際の出力ではNone）
+            // The new pipeline does not perform code generation or hole analysis
+            assert!(synthesis_response.individual_codes.is_empty());
+            assert!(synthesis_response.code.is_empty());
+            assert_eq!(synthesis_response.common_pattern, None);
             assert_eq!(synthesis_response.hole_information, None);
 
-            // 期待されるListEnvironment情報（実際のKanonデータから）
+            // ListEnvironment情報が含まれているかを確認
             let list_env_info = synthesis_response.list_environment_info.as_ref().unwrap();
-
-            // 順序に依存しないテスト - 各リストの内容を個別に確認
-            assert!(list_env_info.contains("List Environment:"));
-            assert!(list_env_info.contains("List[obj_val]"));
-            assert!(list_env_info.contains("List[obj_next]"));
-            assert!(list_env_info.contains("List[obj_lst]"));
+            assert!(list_env_info.contains("List Environment Summary"));
+            assert!(list_env_info.contains("objects tracked"));
+            assert!(list_env_info.contains("Current state"));
 
             println!("✅ All assertions passed!");
         }

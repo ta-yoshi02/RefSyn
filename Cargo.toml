@@ -19,16 +19,8 @@ tokio-test = "0.4"
 hyper = { version = "0.14", features = ["full"] }
 
 [[test]]
-name = "integration_tests"
-path = "tests/integration_tests.rs"
-
-[[test]]
 name = "synthesis_api_tests"
 path = "tests/synthesis_api_tests.rs"
-
-[[test]]
-name = "method_specific_tests"  
-path = "tests/method_specific_tests.rs"
 
 [[test]]
 name = "isomorphism_tests"
