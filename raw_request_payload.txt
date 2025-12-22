@@ -1,0 +1,51 @@
+--- RAW REQUEST PAYLOAD ---
+{"method_calls":[{"callLabel":"call1","contextSensitiveID":"main","receiverObject":"main-new1","methodName":"call1","operations":[{"editType":"addNode","id":"__temp1","label":"Node","isLiteral":false},{"editType":"addNode","id":"__temp2","label":"0","isLiteral":true,"type":"string"},{"editType":"addEdge","from":"__temp1","to":"__temp2","label":"val"},{"editType":"addEdge","from":"main-new1","to":"__temp1","label":"next"}],"actualGraph":{"nodes":[{"color":"skyblue","id":"main-new1","label":"Node","shape":"ellipse","fixed":true,"value":15,"scaling":{"label":{"enable":true,"min":15,"max":15}}},{"color":{"border":"white","background":"white","highlight":{"border":"white","background":"white"},"hover":{"border":"white","background":"white"}},"id":"main-new1-val","label":"2","type":"number","isLiteral":true,"scaling":{"label":{"enable":true,"min":10,"max":10}},"fixed":true,"value":10},{"hidden":true,"id":"__Variable-lst","label":"lst"}],"edges":[{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"main-new1","to":"main-new1-val","label":"val","width":3,"font":{"size":14},"smooth":{"enabled":true}},{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"__Variable-lst","to":"main-new1","label":"lst","width":3,"font":{"size":14},"smooth":{"enabled":true},"color":"seagreen"}]}},{"callLabel":"call2","contextSensitiveID":"main","receiverObject":"main-new1","methodName":"call2","operations":[{"editType":"addNode","id":"__temp3","label":"3","isLiteral":true,"type":"string"},{"editType":"addNode","id":"__temp4","label":"Node","isLiteral":false},{"editType":"addEdge","from":"__temp1","to":"__temp4","label":"next"},{"editType":"addEdge","from":"__temp4","to":"__temp3","label":"val"}],"actualGraph":{"nodes":[{"color":"skyblue","id":"main-new1","label":"Node","shape":"ellipse","fixed":true,"value":15,"scaling":{"label":{"enable":true,"min":15,"max":15}}},{"color":{"border":"white","background":"white","highlight":{"border":"white","background":"white"},"hover":{"border":"white","background":"white"}},"id":"main-new1-val","label":"2","type":"number","isLiteral":true,"scaling":{"label":{"enable":true,"min":10,"max":10}},"fixed":true,"value":10},{"color":"skyblue","id":"__temp1","label":"Node","shape":"ellipse","fixed":true,"value":15,"scaling":{"label":{"enable":true,"min":15,"max":15}}},{"color":{"border":"white","background":"white","highlight":{"border":"white","background":"white"},"hover":{"border":"white","background":"white"}},"id":"__temp1-val","label":"0","type":"string","isLiteral":true,"scaling":{"label":{"enable":true,"min":10,"max":10}},"fixed":true,"value":10},{"hidden":true,"id":"__Variable-lst","label":"lst"}],"edges":[{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"main-new1","to":"main-new1-val","label":"val","width":3,"font":{"size":14},"smooth":{"enabled":true}},{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"__temp1","to":"__temp1-val","label":"val","width":3,"font":{"size":14},"smooth":{"enabled":true}},{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"main-new1","to":"__temp1","label":"next","width":3,"font":{"size":14},"smooth":{"enabled":true}},{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"__Variable-lst","to":"main-new1","label":"lst","width":3,"font":{"size":14},"smooth":{"enabled":true},"color":"seagreen"}]}}],"vis_graph":{"nodes":[{"color":"skyblue","id":"main-new1","label":"Node","shape":"ellipse","fixed":true,"value":15,"scaling":{"label":{"enable":true,"min":15,"max":15}},"x":-72,"y":5},{"color":{"border":"white","background":"white","highlight":{"border":"white","background":"white"},"hover":{"border":"white","background":"white"}},"id":"main-new1-val","label":"2","type":"number","isLiteral":true,"scaling":{"label":{"enable":true,"min":10,"max":10}},"fixed":true,"value":10,"x":-103,"y":95},{"color":"skyblue","id":"__temp1","label":"Node","shape":"ellipse","fixed":true,"value":15,"scaling":{"label":{"enable":true,"min":15,"max":15}},"x":72,"y":5},{"color":{"border":"white","background":"white","highlight":{"border":"white","background":"white"},"hover":{"border":"white","background":"white"}},"id":"__temp1-val","label":"0","type":"string","isLiteral":true,"scaling":{"label":{"enable":true,"min":10,"max":10}},"fixed":true,"value":10,"x":102,"y":95},{"hidden":true,"id":"__Variable-lst","label":"lst"},{"id":"__RectForVariable__","label":"def var","color":{"border":"lightsalmon","background":"lightsalmon","highlight":{"border":"lightsalmon","background":"lightsalmon"},"hover":{"border":"lightsalmon","background":"lightsalmon"}},"shape":"box","physics":false},{"id":"__temp3","x":248.50283813476562,"y":-11.440769550403957,"label":"3","isLiteral":true,"fixed":true,"color":{"border":"white","background":"white","highlight":{"border":"white","background":"white"},"hover":{"border":"white","background":"white"}},"type":"string"},{"id":"__temp4","x":249.50283813476562,"y":84.55923044959604,"label":"Node","isLiteral":false,"fixed":true}],"edges":[{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"main-new1","to":"main-new1-val","label":"val","width":3,"font":{"size":14},"smooth":{"enabled":true},"id":"18a3d4fc-f6e1-4447-b460-80b553eb6f47"},{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"__temp1","to":"__temp1-val","label":"val","width":3,"font":{"size":14},"smooth":{"enabled":true},"id":"bc51511e-70a7-43e4-87db-44fa8cca15ec"},{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"main-new1","to":"__temp1","label":"next","width":3,"font":{"size":14},"smooth":{"enabled":true},"id":"dde04cc9-d69c-4c35-a5b9-b64d7708a08f"},{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"__Variable-lst","to":"main-new1","label":"lst","width":3,"font":{"size":14},"smooth":{"enabled":true},"color":"seagreen","id":"33521ff9-4429-4f2c-b7ba-ec2d0feb85d1"},{"from":"__temp1","to":"__temp4","label":"next","id":"0e9056d4-851d-4216-a748-8dbc2ecd01c8"},{"from":"__temp4","to":"__temp3","label":"val","id":"1260e73f-d9c3-4b89-9224-e055f87df1a5"}]}}
+---------------------------
+List Environment Summary: List Environment Summary:
+- 4 objects tracked
+- 3 literals
+- 3 field types: lst, val, next
+
+Current state:
+List Environment:
+obj_lst = 0
+List[obj_lst] = [Number(-1), Number(-1), Number(-1), Number(1), Number(-1)]
+List[obj_val] = [Number(-1), String("2"), String("0"), Number(-1), String("3")]
+List[obj_next] = [Number(-1), Number(2), Number(4), Number(-1), Number(-1)]
+
+Starting operation analysis with 2 operation sequences
+=== UNIFICATION-BASED OPERATION ANALYSIS ===
+Converted 5 operations from sequence A
+Converted 5 operations from sequence B
+Unification results:
+  - Common operations: 3
+  - Differences in A: 2
+  - Differences in B: 2
+Created List environment at unification boundary with 3 common operations
+Environment state: List Environment:
+List[obj_val] = [Number(-1), String("2"), String("0"), Number(-1), String("3")]
+List[obj_next] = [Number(-1), Number(2), Number(4), Number(-1), Number(-1)]
+obj_lst = 0
+List[obj_lst] = [Number(-1), Number(-1), Number(-1), Number(1), Number(-1)]
+
+Wrote aggregated Escher spec to Escher-Scala/src/main/resources/escher/aux_1760092158.json (2 functions)
+=== IMPROVED SYNTHESIS RESPONSE ===
+Common Pattern: None
+Holes: None
+Operation Analysis Summary: 統合ベース分析: 3個の共通操作パターンを特定。差異部分では2個と2個の異なる操作。
+  - Raw operation differences: 2
+  - Synthesis common patterns: 3
+List Environment Summary: List Environment Summary:
+- 4 objects tracked
+- 3 literals
+- 3 field types: lst, val, next
+
+Current state:
+List Environment:
+obj_lst = 0
+List[obj_lst] = [Number(-1), Number(-1), Number(-1), Number(1), Number(-1)]
+List[obj_val] = [Number(-1), String("2"), String("0"), Number(-1), String("3")]
+List[obj_next] = [Number(-1), Number(2), Number(4), Number(-1), Number(-1)]
+
+Escher JSON saved: Escher-Scala/src/main/resources/escher/aux_1760092158.json
+=====================================

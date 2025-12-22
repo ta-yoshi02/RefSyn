@@ -1,0 +1,68 @@
+{
+  "method_calls": [
+    {
+      "callLabel": "call1",
+      "contextSensitiveID": "main",
+      "receiverObject": "main-new1",
+      "methodName": "call1",
+      "actual_graph": {
+        "nodes": [
+          {"id": "main-new1", "is_literal": false, "label": "Node"},
+          {"id": "main-new1-val", "is_literal": true, "label": "2"},
+          {"id": "__Variable-lst", "is_literal": false, "label": "lst"},
+          {"id": "__RectForVariable__", "is_literal": false, "label": "def var"}
+        ],
+        "edges": [
+          {"from": "main-new1", "to": "main-new1-val", "label": "val"},
+          {"from": "__Variable-lst", "to": "main-new1", "label": "lst"}
+        ]
+      },
+      "operations": [
+        {"editType": "addNode", "id": "__temp1", "isLiteral": false, "label": "Node"},
+        {"editType": "addNode", "id": "__temp2", "isLiteral": true, "label": "0", "type": "string"},
+        {"editType": "addEdge", "from": "__temp1", "label": "val", "to": "__temp2"},
+        {"editType": "addEdge", "from": "main-new1", "label": "next", "to": "__temp1"}
+      ]
+    },
+    {
+      "callLabel": "call2",
+      "contextSensitiveID": "main",
+      "receiverObject": "main-new1",
+      "methodName": "call2",
+      "actual_graph": {
+        "nodes": [
+          {"id": "main-new1", "is_literal": false, "label": "Node"},
+          {"id": "main-new1-val", "is_literal": true, "label": "2"},
+          {"id": "__temp1", "is_literal": false, "label": "Node"},
+          {"id": "__temp1-val", "is_literal": true, "label": "0"},
+          {"id": "__Variable-lst", "is_literal": false, "label": "lst"},
+          {"id": "__RectForVariable__", "is_literal": false, "label": "def var"}
+        ],
+        "edges": [
+          {"from": "main-new1", "to": "main-new1-val", "label": "val"},
+          {"from": "main-new1", "to": "__temp1", "label": "next"},
+          {"from": "__temp1", "to": "__temp1-val", "label": "val"},
+          {"from": "__Variable-lst", "to": "main-new1", "label": "lst"}
+        ]
+      },
+      "operations": [
+        {"editType": "addNode", "id": "__temp3", "isLiteral": true, "label": "3", "type": "string"},
+        {"editType": "addNode", "id": "__temp4", "isLiteral": false, "label": "Node"},
+        {"editType": "addEdge", "from": "__temp1", "label": "next", "to": "__temp4"},
+        {"editType": "addEdge", "from": "__temp4", "label": "val", "to": "__temp3"}
+      ]
+    }
+  ],
+  "vis_graph": {
+    "nodes": [
+      {"id": "main-new1", "is_literal": false, "label": "Node"},
+      {"id": "main-new1-val", "is_literal": true, "label": "2"},
+      {"id": "__Variable-lst", "is_literal": false, "label": "lst"},
+      {"id": "__RectForVariable__", "is_literal": false, "label": "def var"}
+    ],
+    "edges": [
+      {"from": "main-new1", "to": "main-new1-val", "label": "val"},
+      {"from": "__Variable-lst", "to": "main-new1", "label": "lst"}
+    ]
+  }
+}

@@ -9,12 +9,13 @@ pub mod server;
 pub mod unify_ops;
 
 use crate::escher_bridge::{
-    build_escher_spec, specs_to_json, write_spec_to_file, EscherCase, EscherSpec,
+    build_escher_spec, run_escher_js, specs_to_json, write_spec_to_file, EscherCase,
+    EscherJsOutcome, EscherSpec,
 };
 use anyhow;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use warp::http::StatusCode;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -49,6 +50,8 @@ pub struct SynthesisResponse {
     pub list_environment_info: Option<String>, // ListEnvironmentの情報を追加
     // 操作分析結果のフィールド（複数の操作列が提供された場合のみ設定）
     pub operation_analysis: Option<OperationAnalysisData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub escher_results: Option<Vec<EscherJsOutcome>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -58,6 +61,23 @@ pub struct OperationAnalysisData {
     pub difference_summary: String,
     pub differences_found: usize,
     pub synthesis_matches: Option<usize>, // 合成で見つかった共通パターン数
+}
+
+fn trace_enabled() -> bool {
+    match std::env::var("REFSYN_TRACE") {
+        Ok(v) => matches!(v.as_str(), "1" | "true" | "yes" | "on"),
+        Err(_) => false,
+    }
+}
+
+fn trace_json<T: serde::Serialize>(label: &str, value: &T) {
+    if !trace_enabled() {
+        return;
+    }
+    match serde_json::to_string_pretty(value) {
+        Ok(json) => println!("TRACE: {}:\n{}", label, json),
+        Err(err) => println!("TRACE: {}: <failed to serialize: {}>", label, err),
+    }
 }
 
 // Types needed by the server module will be imported from main directly
@@ -80,6 +100,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
                 individual_codes: vec![],
                 list_environment_info: None,
                 operation_analysis: None,
+                escher_results: None,
             };
             return Ok(warp::reply::with_status(
                 warp::reply::json(&response),
@@ -97,6 +118,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
             individual_codes: vec![],
             list_environment_info: None,
             operation_analysis: None,
+            escher_results: None,
         };
         return Ok(warp::reply::with_status(
             warp::reply::json(&response),
@@ -205,6 +227,10 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     let mut escher_written_paths: Vec<String> = Vec::new();
     let spec_base_name = derive_spec_base_name(&req.method_calls);
     let mut aggregated_specs: Vec<EscherSpec> = Vec::new();
+    let mut escher_json: Option<String> = None;
+    let mut escher_outcomes: Option<Vec<EscherJsOutcome>> = None;
+    let mut synthesized_codes: Vec<String> = Vec::new();
+    let mut individual_codes: Vec<String> = Vec::new();
 
     if operations_list.len() >= 2 {
         let vis_graph_a = req
@@ -253,6 +279,10 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     if !aggregated_specs.is_empty() {
         match specs_to_json(&aggregated_specs) {
             Ok(json_text) => {
+                escher_json = Some(json_text.clone());
+                if trace_enabled() {
+                    println!("TRACE: Escher JSON:\n{}", json_text);
+                }
                 let ts = std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .map(|d| d.as_secs())
@@ -276,6 +306,33 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         }
     }
 
+    if let Some(json_text) = escher_json.as_ref() {
+        match run_escher_js(json_text) {
+            Ok(results) => {
+                let success_count = results.iter().filter(|r| r.success).count();
+                let failure_count = results.len().saturating_sub(success_count);
+                println!(
+                    "Escher JS synthesis completed ({} success / {} failure)",
+                    success_count, failure_count
+                );
+
+                for out in &results {
+                    if let Some(rendered) = &out.rendered {
+                        synthesized_codes.push(rendered.clone());
+                        individual_codes.push(format!("{}: {}", out.name, rendered));
+                    } else if let Some(err) = &out.error {
+                        individual_codes.push(format!("{}: ERROR {}", out.name, err));
+                    } else {
+                        individual_codes.push(format!("{}: no output", out.name));
+                    }
+                }
+
+                escher_outcomes = Some(results);
+            }
+            Err(e) => eprintln!("Escher JS synthesis failed: {}", e),
+        }
+    }
+
     if !escher_written_paths.is_empty() {
         list_env_info = format!(
             "{}\nEscher JSON saved: {}",
@@ -287,10 +344,11 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     let response = SynthesisResponse {
         common_pattern: None,
         hole_information: None,
-        code: vec![],
-        individual_codes: vec![],
+        code: synthesized_codes,
+        individual_codes,
         list_environment_info: Some(list_env_info),
         operation_analysis: operation_analysis_data,
+        escher_results: escher_outcomes,
     };
 
     // 改善されたレスポンス表示
@@ -335,6 +393,32 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
             .as_ref()
             .unwrap_or(&"None".to_string())
     );
+
+    if response.code.is_empty() {
+        println!("Synthesized code: none");
+    } else {
+        println!("Synthesized code:");
+        for (i, c) in response.code.iter().enumerate() {
+            println!("  [{}] {}", i, c);
+        }
+    }
+
+    if let Some(results) = &response.escher_results {
+        println!("Escher results:");
+        for r in results {
+            let status = if r.success { "OK" } else { "FAIL" };
+            let rendered = r.rendered.as_deref().unwrap_or("<none>");
+            let err = r.error.as_deref().unwrap_or("<no error>");
+            if r.success {
+                println!("  [{}] {} -> {}", status, r.name, rendered);
+            } else {
+                println!("  [{}] {} -> {}", status, r.name, err);
+            }
+        }
+    } else {
+        println!("Escher results: none");
+    }
+
     println!("=====================================");
 
     Ok(warp::reply::with_status(
@@ -359,6 +443,8 @@ pub fn analyze_operations_with_unification(
 
     println!("Converted {} operations from sequence A", ops_a.len());
     println!("Converted {} operations from sequence B", ops_b.len());
+    trace_json("Unify ops A", &ops_a);
+    trace_json("Unify ops B", &ops_b);
 
     // unify_isomorphic_graphsを呼び出し
     let unification_result = unify_operation_graphs(&ops_a, &ops_b);
@@ -372,6 +458,19 @@ pub fn analyze_operations_with_unification(
     println!("  - Common operations: {}", common_count);
     println!("  - Differences in A: {}", diff_a_count);
     println!("  - Differences in B: {}", diff_b_count);
+    if trace_enabled() {
+        let mut mapping_pairs: Vec<(String, String)> = unification_result
+            .final_mapping
+            .iter()
+            .map(|(a, b)| (a.clone(), b.clone()))
+            .collect();
+        mapping_pairs.sort();
+        trace_json("Unification final_mapping", &mapping_pairs);
+        trace_json("Unification common_a", &unification_result.common_a);
+        trace_json("Unification common_b", &unification_result.common_b);
+        trace_json("Unification diff_a", &unification_result.diff_a);
+        trace_json("Unification diff_b", &unification_result.diff_b);
+    }
 
     // List環境を共通操作のポイントまで構築
     if common_count > 0 {
@@ -791,12 +890,80 @@ fn build_environment_prefix(
     Ok(env)
 }
 
+fn build_env_from_common_ops(
+    base_env: &crate::list_env::ListEnvironment,
+    graph_ops: &[crate::list_env::GraphOperation],
+    common_ops: &[crate::unify_ops::Op],
+) -> anyhow::Result<crate::list_env::ListEnvironment> {
+    let mut env = base_env.clone();
+    let mut indices: Vec<usize> = common_ops
+        .iter()
+        .filter_map(|op| parse_op_index(&op.id))
+        .collect();
+    indices.sort_unstable();
+    indices.dedup();
+    for idx in indices {
+        if let Some(graph_op) = graph_ops.get(idx) {
+            env.apply_operation(graph_op)
+                .map_err(|e| anyhow::anyhow!(e))?;
+        }
+    }
+    Ok(env)
+}
+
+#[derive(Clone)]
+enum DiffOp {
+    Json {
+        graph_op: crate::list_env::GraphOperation,
+        index: usize,
+    },
+    ExistNode {
+        id: String,
+        is_literal: bool,
+        label: Option<String>,
+    },
+}
+
 #[derive(Clone)]
 struct DiffPair {
-    op_a: crate::list_env::GraphOperation,
-    index_a: usize,
-    op_b: crate::list_env::GraphOperation,
-    index_b: usize,
+    op_a: Option<DiffOp>,
+    op_b: Option<DiffOp>,
+}
+
+#[derive(Clone)]
+struct ExistCandidate {
+    id: String,
+    is_literal: bool,
+    label: Option<String>,
+}
+
+fn format_graph_op(graph_op: &crate::list_env::GraphOperation) -> String {
+    let label = graph_op_label_string(graph_op).unwrap_or_else(|| "<none>".to_string());
+    let id = graph_op.id.as_deref().unwrap_or("-");
+    let from = graph_op.from.as_deref().unwrap_or("-");
+    let to = graph_op.to.as_deref().unwrap_or("-");
+    let is_literal = graph_op.is_literal.unwrap_or(false);
+    format!(
+        "{} id={} from={} to={} label={} is_literal={}",
+        graph_op.edit_type, id, from, to, label, is_literal
+    )
+}
+
+fn format_diff_op(op: &DiffOp) -> String {
+    match op {
+        DiffOp::Json { graph_op, .. } => format_graph_op(graph_op),
+        DiffOp::ExistNode {
+            id,
+            is_literal,
+            label,
+        } => {
+            let label_str = label.as_deref().unwrap_or("<none>");
+            format!(
+                "ExistNode id={} label={} is_literal={}",
+                id, label_str, is_literal
+            )
+        }
+    }
 }
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone, Ord, PartialOrd)]
@@ -812,16 +979,46 @@ struct DiffCandidate {
     index: usize,
 }
 
-fn operations_equivalent_graph(
-    op_a: &crate::list_env::GraphOperation,
-    op_b: &crate::list_env::GraphOperation,
-) -> bool {
-    op_a.edit_type == op_b.edit_type
-        && op_a.id == op_b.id
-        && op_a.label == op_b.label
-        && op_a.is_literal == op_b.is_literal
-        && op_a.from == op_b.from
-        && op_a.to == op_b.to
+fn diff_op_index(op: &DiffOp) -> Option<usize> {
+    match op {
+        DiffOp::Json { index, .. } => Some(*index),
+        DiffOp::ExistNode { .. } => None,
+    }
+}
+
+fn diff_op_from_unify_node(
+    op: &crate::unify_ops::Op,
+    graph_ops: &[crate::list_env::GraphOperation],
+) -> Option<DiffOp> {
+    use crate::unify_ops::{GraphOp, NodeExpr};
+
+    match &op.kind {
+        GraphOp::Node(NodeExpr::AddNode { .. }) => {
+            let idx = parse_op_index(&op.id)?;
+            let graph_op = graph_ops.get(idx)?;
+            Some(DiffOp::Json {
+                graph_op: graph_op.clone(),
+                index: idx,
+            })
+        }
+        GraphOp::Node(NodeExpr::ExistNode {
+            id,
+            is_literal,
+            label,
+        }) => {
+            let label = if label.is_empty() {
+                None
+            } else {
+                Some(label.clone())
+            };
+            Some(DiffOp::ExistNode {
+                id: id.clone(),
+                is_literal: *is_literal,
+                label,
+            })
+        }
+        _ => None,
+    }
 }
 
 fn parse_op_index(op_id: &str) -> Option<usize> {
@@ -857,6 +1054,10 @@ fn graph_op_label_string(op: &crate::list_env::GraphOperation) -> Option<String>
     })
 }
 
+fn canonicalize_object_id(id: &str, mapping: &HashMap<String, String>) -> String {
+    mapping.get(id).cloned().unwrap_or_else(|| id.to_string())
+}
+
 fn generate_specs_from_unification(
     vis_graph_a: &models::VisGraph,
     vis_graph_b: &models::VisGraph,
@@ -875,10 +1076,35 @@ fn generate_specs_from_unification(
         .iter()
         .map(|op| serde_json::from_value(op.clone()))
         .collect::<Result<_, _>>()?;
+    trace_json("GraphOperation A", &graph_ops_a);
+    trace_json("GraphOperation B", &graph_ops_b);
+
+    let env_boundary_a = build_env_from_common_ops(
+        base_env_a,
+        &graph_ops_a,
+        &analysis.unification_result.common_a,
+    )?;
+    let env_boundary_b = build_env_from_common_ops(
+        base_env_b,
+        &graph_ops_b,
+        &analysis.unification_result.common_b,
+    )?;
+    if trace_enabled() {
+        println!(
+            "TRACE: env_boundary_a:\n{}",
+            env_boundary_a.to_debug_string()
+        );
+        println!(
+            "TRACE: env_boundary_b:\n{}",
+            env_boundary_b.to_debug_string()
+        );
+    }
 
     let mut diff_pairs = Vec::new();
     let mut used_indices_a: HashSet<usize> = HashSet::new();
     let mut used_indices_b: HashSet<usize> = HashSet::new();
+    let mut used_diff_ids_a: HashSet<String> = HashSet::new();
+    let mut used_diff_ids_b: HashSet<String> = HashSet::new();
 
     // Build op-id -> object-id lookup for nodes in both sequences
     let mut op_id_to_obj_a: HashMap<String, String> = HashMap::new();
@@ -918,8 +1144,85 @@ fn generate_specs_from_unification(
         object_id_mapping_inv.insert(b.clone(), a.clone());
     }
 
+    let mut op_a_by_id: HashMap<String, &crate::unify_ops::Op> = HashMap::new();
+    for op in analysis
+        .unification_result
+        .common_a
+        .iter()
+        .chain(analysis.unification_result.diff_a.iter())
+    {
+        op_a_by_id.insert(op.id.clone(), op);
+    }
+    let mut op_b_by_id: HashMap<String, &crate::unify_ops::Op> = HashMap::new();
+    for op in analysis
+        .unification_result
+        .common_b
+        .iter()
+        .chain(analysis.unification_result.diff_b.iter())
+    {
+        op_b_by_id.insert(op.id.clone(), op);
+    }
+    let diff_a_ids: HashSet<String> = analysis
+        .unification_result
+        .diff_a
+        .iter()
+        .map(|op| op.id.clone())
+        .collect();
+    let diff_b_ids: HashSet<String> = analysis
+        .unification_result
+        .diff_b
+        .iter()
+        .map(|op| op.id.clone())
+        .collect();
+
+    // Pair diff nodes using structural mapping so connected diffs stay aligned.
+    for (op_a_id, op_b_id) in &analysis.unification_result.final_mapping {
+        if used_diff_ids_a.contains(op_a_id) || used_diff_ids_b.contains(op_b_id) {
+            continue;
+        }
+        if !diff_a_ids.contains(op_a_id) || !diff_b_ids.contains(op_b_id) {
+            continue;
+        }
+        let op_a = match op_a_by_id.get(op_a_id) {
+            Some(op) => *op,
+            None => continue,
+        };
+        let op_b = match op_b_by_id.get(op_b_id) {
+            Some(op) => *op,
+            None => continue,
+        };
+        if !matches!(&op_a.kind, crate::unify_ops::GraphOp::Node(_))
+            || !matches!(&op_b.kind, crate::unify_ops::GraphOp::Node(_))
+        {
+            continue;
+        }
+        let diff_a = match diff_op_from_unify_node(op_a, &graph_ops_a) {
+            Some(op) => op,
+            None => continue,
+        };
+        let diff_b = match diff_op_from_unify_node(op_b, &graph_ops_b) {
+            Some(op) => op,
+            None => continue,
+        };
+        if let Some(idx) = diff_op_index(&diff_a) {
+            used_indices_a.insert(idx);
+        }
+        if let Some(idx) = diff_op_index(&diff_b) {
+            used_indices_b.insert(idx);
+        }
+        used_diff_ids_a.insert(op_a_id.clone());
+        used_diff_ids_b.insert(op_b_id.clone());
+        diff_pairs.push(DiffPair {
+            op_a: Some(diff_a),
+            op_b: Some(diff_b),
+        });
+    }
+
     let mut diff_map_a: HashMap<DiffKey, Vec<DiffCandidate>> = HashMap::new();
     for op in &analysis.unification_result.diff_a {
+        if used_diff_ids_a.contains(&op.id) {
+            continue;
+        }
         if let Some(idx) = parse_op_index(&op.id) {
             if let Some(graph_op) = graph_ops_a.get(idx) {
                 if let Some(parent_id) = graph_op_parent_id(graph_op) {
@@ -939,6 +1242,9 @@ fn generate_specs_from_unification(
 
     let mut diff_map_b: HashMap<DiffKey, Vec<DiffCandidate>> = HashMap::new();
     for op in &analysis.unification_result.diff_b {
+        if used_diff_ids_b.contains(&op.id) {
+            continue;
+        }
         if let Some(idx) = parse_op_index(&op.id) {
             if let Some(graph_op) = graph_ops_b.get(idx) {
                 if let Some(parent_id_b) = graph_op_parent_id(graph_op) {
@@ -979,10 +1285,14 @@ fn generate_specs_from_unification(
                 let cand_a = &candidates_a[i];
                 let cand_b = &candidates_b[i];
                 diff_pairs.push(DiffPair {
-                    op_a: cand_a.graph_op.clone(),
-                    index_a: cand_a.index,
-                    op_b: cand_b.graph_op.clone(),
-                    index_b: cand_b.index,
+                    op_a: Some(DiffOp::Json {
+                        graph_op: cand_a.graph_op.clone(),
+                        index: cand_a.index,
+                    }),
+                    op_b: Some(DiffOp::Json {
+                        graph_op: cand_b.graph_op.clone(),
+                        index: cand_b.index,
+                    }),
                 });
                 used_indices_a.insert(cand_a.index);
                 used_indices_b.insert(cand_b.index);
@@ -990,95 +1300,419 @@ fn generate_specs_from_unification(
         }
     }
 
-    let target_pairs = std::cmp::min(
-        analysis.unification_result.diff_a.len(),
-        analysis.unification_result.diff_b.len(),
-    );
+    let mut addnode_a_by_id: BTreeMap<String, Vec<DiffOp>> = BTreeMap::new();
+    let mut addnode_b_by_id: BTreeMap<String, Vec<DiffOp>> = BTreeMap::new();
+    let mut exist_a_by_id: BTreeMap<String, Vec<ExistCandidate>> = BTreeMap::new();
+    let mut exist_b_by_id: BTreeMap<String, Vec<ExistCandidate>> = BTreeMap::new();
 
-    if target_pairs > diff_pairs.len() {
-        let mut diff_candidates_a: Vec<(usize, crate::list_env::GraphOperation)> = Vec::new();
+    {
+        use crate::unify_ops::{GraphOp, NodeExpr};
+
         for op in &analysis.unification_result.diff_a {
+            if used_diff_ids_a.contains(&op.id) {
+                continue;
+            }
             if let Some(idx) = parse_op_index(&op.id) {
                 if used_indices_a.contains(&idx) {
                     continue;
                 }
                 if let Some(graph_op) = graph_ops_a.get(idx) {
-                    diff_candidates_a.push((idx, graph_op.clone()));
+                    if graph_op.edit_type == "addNode" {
+                        if let Some(id) = graph_op.id.as_deref() {
+                            addnode_a_by_id
+                                .entry(id.to_string())
+                                .or_default()
+                                .push(DiffOp::Json {
+                                    graph_op: graph_op.clone(),
+                                    index: idx,
+                                });
+                        }
+                    }
                 }
+                continue;
+            }
+
+            if let GraphOp::Node(NodeExpr::ExistNode {
+                id,
+                is_literal,
+                label,
+            }) = &op.kind
+            {
+                let label = if label.is_empty() {
+                    None
+                } else {
+                    Some(label.clone())
+                };
+                exist_a_by_id
+                    .entry(id.clone())
+                    .or_default()
+                    .push(ExistCandidate {
+                        id: id.clone(),
+                        is_literal: *is_literal,
+                        label,
+                    });
             }
         }
-        diff_candidates_a.sort_by_key(|(idx, _)| *idx);
 
-        let mut diff_candidates_b: Vec<(usize, crate::list_env::GraphOperation)> = Vec::new();
         for op in &analysis.unification_result.diff_b {
+            if used_diff_ids_b.contains(&op.id) {
+                continue;
+            }
             if let Some(idx) = parse_op_index(&op.id) {
                 if used_indices_b.contains(&idx) {
                     continue;
                 }
                 if let Some(graph_op) = graph_ops_b.get(idx) {
-                    diff_candidates_b.push((idx, graph_op.clone()));
+                    if graph_op.edit_type == "addNode" {
+                        if let Some(id) = graph_op.id.as_deref() {
+                            let key = canonicalize_object_id(id, &object_id_mapping_inv);
+                            addnode_b_by_id.entry(key).or_default().push(DiffOp::Json {
+                                graph_op: graph_op.clone(),
+                                index: idx,
+                            });
+                        }
+                    }
                 }
-            }
-        }
-        diff_candidates_b.sort_by_key(|(idx, _)| *idx);
-
-        let pair_count = diff_candidates_a
-            .len()
-            .min(diff_candidates_b.len())
-            .min(target_pairs.saturating_sub(diff_pairs.len()));
-        for i in 0..pair_count {
-            let (idx_a, op_a) = &diff_candidates_a[i];
-            let (idx_b, op_b) = &diff_candidates_b[i];
-            diff_pairs.push(DiffPair {
-                op_a: op_a.clone(),
-                index_a: *idx_a,
-                op_b: op_b.clone(),
-                index_b: *idx_b,
-            });
-            used_indices_a.insert(*idx_a);
-            used_indices_b.insert(*idx_b);
-        }
-    }
-
-    if target_pairs > diff_pairs.len() {
-        let max_len = graph_ops_a.len().max(graph_ops_b.len());
-        for idx in 0..max_len {
-            if diff_pairs.len() >= target_pairs {
-                break;
-            }
-            if used_indices_a.contains(&idx) || used_indices_b.contains(&idx) {
                 continue;
             }
 
-            let op_a = graph_ops_a.get(idx);
-            let op_b = graph_ops_b.get(idx);
-
-            match (op_a, op_b) {
-                (Some(a), Some(b)) if operations_equivalent_graph(a, b) => continue,
-                (Some(a), Some(b)) => {
-                    diff_pairs.push(DiffPair {
-                        op_a: a.clone(),
-                        index_a: idx,
-                        op_b: b.clone(),
-                        index_b: idx,
-                    });
-                    used_indices_a.insert(idx);
-                    used_indices_b.insert(idx);
-                }
-                _ => {}
+            if let GraphOp::Node(NodeExpr::ExistNode {
+                id,
+                is_literal,
+                label,
+            }) = &op.kind
+            {
+                let key = canonicalize_object_id(id, &object_id_mapping_inv);
+                let label = if label.is_empty() {
+                    None
+                } else {
+                    Some(label.clone())
+                };
+                exist_b_by_id.entry(key).or_default().push(ExistCandidate {
+                    id: id.clone(),
+                    is_literal: *is_literal,
+                    label,
+                });
             }
+        }
+    }
+
+    for candidates in addnode_a_by_id.values_mut() {
+        candidates.sort_by_key(|op| diff_op_index(op).unwrap_or(usize::MAX));
+    }
+    for candidates in addnode_b_by_id.values_mut() {
+        candidates.sort_by_key(|op| diff_op_index(op).unwrap_or(usize::MAX));
+    }
+
+    let addnode_keys_a: Vec<String> = addnode_a_by_id.keys().cloned().collect();
+    for key in addnode_keys_a {
+        let mut remove_add = false;
+        let mut remove_exist = false;
+        {
+            if let (Some(adds), Some(exists)) =
+                (addnode_a_by_id.get_mut(&key), exist_b_by_id.get_mut(&key))
+            {
+                while !adds.is_empty() && !exists.is_empty() {
+                    let add_op = adds.remove(0);
+                    let exist = exists.remove(0);
+                    if let Some(idx) = diff_op_index(&add_op) {
+                        used_indices_a.insert(idx);
+                    }
+                    diff_pairs.push(DiffPair {
+                        op_a: Some(add_op),
+                        op_b: Some(DiffOp::ExistNode {
+                            id: exist.id,
+                            is_literal: exist.is_literal,
+                            label: exist.label,
+                        }),
+                    });
+                }
+                if adds.is_empty() {
+                    remove_add = true;
+                }
+                if exists.is_empty() {
+                    remove_exist = true;
+                }
+            }
+        }
+        if remove_add {
+            addnode_a_by_id.remove(&key);
+        }
+        if remove_exist {
+            exist_b_by_id.remove(&key);
+        }
+    }
+
+    let addnode_keys_b: Vec<String> = addnode_b_by_id.keys().cloned().collect();
+    for key in addnode_keys_b {
+        let mut remove_add = false;
+        let mut remove_exist = false;
+        {
+            if let (Some(adds), Some(exists)) =
+                (addnode_b_by_id.get_mut(&key), exist_a_by_id.get_mut(&key))
+            {
+                while !adds.is_empty() && !exists.is_empty() {
+                    let add_op = adds.remove(0);
+                    let exist = exists.remove(0);
+                    if let Some(idx) = diff_op_index(&add_op) {
+                        used_indices_b.insert(idx);
+                    }
+                    diff_pairs.push(DiffPair {
+                        op_a: Some(DiffOp::ExistNode {
+                            id: exist.id,
+                            is_literal: exist.is_literal,
+                            label: exist.label,
+                        }),
+                        op_b: Some(add_op),
+                    });
+                }
+                if adds.is_empty() {
+                    remove_add = true;
+                }
+                if exists.is_empty() {
+                    remove_exist = true;
+                }
+            }
+        }
+        if remove_add {
+            addnode_b_by_id.remove(&key);
+        }
+        if remove_exist {
+            exist_a_by_id.remove(&key);
+        }
+    }
+
+    let exist_keys: Vec<String> = exist_a_by_id
+        .keys()
+        .filter(|key| exist_b_by_id.contains_key(*key))
+        .cloned()
+        .collect();
+    for key in exist_keys {
+        let mut remove_a = false;
+        let mut remove_b = false;
+        {
+            if let (Some(exists_a), Some(exists_b)) =
+                (exist_a_by_id.get_mut(&key), exist_b_by_id.get_mut(&key))
+            {
+                while !exists_a.is_empty() && !exists_b.is_empty() {
+                    let exist_a = exists_a.remove(0);
+                    let exist_b = exists_b.remove(0);
+                    diff_pairs.push(DiffPair {
+                        op_a: Some(DiffOp::ExistNode {
+                            id: exist_a.id,
+                            is_literal: exist_a.is_literal,
+                            label: exist_a.label,
+                        }),
+                        op_b: Some(DiffOp::ExistNode {
+                            id: exist_b.id,
+                            is_literal: exist_b.is_literal,
+                            label: exist_b.label,
+                        }),
+                    });
+                }
+                if exists_a.is_empty() {
+                    remove_a = true;
+                }
+                if exists_b.is_empty() {
+                    remove_b = true;
+                }
+            }
+        }
+        if remove_a {
+            exist_a_by_id.remove(&key);
+        }
+        if remove_b {
+            exist_b_by_id.remove(&key);
+        }
+    }
+
+    let mut remaining_a: Vec<DiffOp> = Vec::new();
+    for op in &analysis.unification_result.diff_a {
+        if used_diff_ids_a.contains(&op.id) {
+            continue;
+        }
+        if let Some(idx) = parse_op_index(&op.id) {
+            if used_indices_a.contains(&idx) {
+                continue;
+            }
+            if let Some(graph_op) = graph_ops_a.get(idx) {
+                if graph_op.edit_type == "addNode" {
+                    continue;
+                }
+                remaining_a.push(DiffOp::Json {
+                    graph_op: graph_op.clone(),
+                    index: idx,
+                });
+                used_indices_a.insert(idx);
+            }
+        }
+    }
+    remaining_a.sort_by_key(|op| diff_op_index(op).unwrap_or(usize::MAX));
+    for op in remaining_a {
+        diff_pairs.push(DiffPair {
+            op_a: Some(op),
+            op_b: None,
+        });
+    }
+
+    let mut remaining_b: Vec<DiffOp> = Vec::new();
+    for op in &analysis.unification_result.diff_b {
+        if used_diff_ids_b.contains(&op.id) {
+            continue;
+        }
+        if let Some(idx) = parse_op_index(&op.id) {
+            if used_indices_b.contains(&idx) {
+                continue;
+            }
+            if let Some(graph_op) = graph_ops_b.get(idx) {
+                if graph_op.edit_type == "addNode" {
+                    continue;
+                }
+                remaining_b.push(DiffOp::Json {
+                    graph_op: graph_op.clone(),
+                    index: idx,
+                });
+                used_indices_b.insert(idx);
+            }
+        }
+    }
+    remaining_b.sort_by_key(|op| diff_op_index(op).unwrap_or(usize::MAX));
+    for op in remaining_b {
+        diff_pairs.push(DiffPair {
+            op_a: None,
+            op_b: Some(op),
+        });
+    }
+
+    for (_key, mut ops) in addnode_a_by_id {
+        ops.sort_by_key(|op| diff_op_index(op).unwrap_or(usize::MAX));
+        for op in ops {
+            diff_pairs.push(DiffPair {
+                op_a: Some(op),
+                op_b: None,
+            });
+        }
+    }
+    for (_key, mut ops) in addnode_b_by_id {
+        ops.sort_by_key(|op| diff_op_index(op).unwrap_or(usize::MAX));
+        for op in ops {
+            diff_pairs.push(DiffPair {
+                op_a: None,
+                op_b: Some(op),
+            });
+        }
+    }
+    for (_key, exists) in exist_a_by_id {
+        for exist in exists {
+            diff_pairs.push(DiffPair {
+                op_a: Some(DiffOp::ExistNode {
+                    id: exist.id,
+                    is_literal: exist.is_literal,
+                    label: exist.label,
+                }),
+                op_b: None,
+            });
+        }
+    }
+    for (_key, exists) in exist_b_by_id {
+        for exist in exists {
+            diff_pairs.push(DiffPair {
+                op_a: None,
+                op_b: Some(DiffOp::ExistNode {
+                    id: exist.id,
+                    is_literal: exist.is_literal,
+                    label: exist.label,
+                }),
+            });
+        }
+    }
+
+    if trace_enabled() {
+        println!("TRACE: diff_pairs ({}):", diff_pairs.len());
+        for (i, pair) in diff_pairs.iter().enumerate() {
+            let a_desc = pair
+                .op_a
+                .as_ref()
+                .map(format_diff_op)
+                .unwrap_or_else(|| "<none>".to_string());
+            let b_desc = pair
+                .op_b
+                .as_ref()
+                .map(format_diff_op)
+                .unwrap_or_else(|| "<none>".to_string());
+            println!("  [{}] A: {} | B: {}", i, a_desc, b_desc);
         }
     }
 
     let mut specs = Vec::new();
     let mut suffix_index = 0usize;
 
-    for pair in diff_pairs {
-        let env_a = build_environment_prefix(base_env_a, operations_a, pair.index_a, true)?;
-        let env_b = build_environment_prefix(base_env_b, operations_b, pair.index_b, true)?;
+    for (pair_index, pair) in diff_pairs.into_iter().enumerate() {
+        let env_a = match &pair.op_a {
+            Some(DiffOp::Json { index, .. }) => {
+                build_environment_prefix(base_env_a, operations_a, *index, true)?
+            }
+            _ => env_boundary_a.clone(),
+        };
+        let env_b = match &pair.op_b {
+            Some(DiffOp::Json { index, .. }) => {
+                build_environment_prefix(base_env_b, operations_b, *index, true)?
+            }
+            _ => env_boundary_b.clone(),
+        };
+        if trace_enabled() {
+            println!(
+                "TRACE: diff_pair[{}] env_a:\n{}",
+                pair_index,
+                env_a.to_debug_string()
+            );
+            println!(
+                "TRACE: diff_pair[{}] env_b:\n{}",
+                pair_index,
+                env_b.to_debug_string()
+            );
+        }
 
-        let out_a = determine_output_value(&pair.op_a, &env_a, vis_graph_a);
-        let out_b = determine_output_value(&pair.op_b, &env_b, vis_graph_b);
+        let (mut out_a, out_ty_a) = match &pair.op_a {
+            Some(op) => {
+                let (out, ty) = output_for_diff_op(op, &env_a, vis_graph_a);
+                (out, Some(ty))
+            }
+            None => (serde_json::json!(-1), None),
+        };
+        let (mut out_b, out_ty_b) = match &pair.op_b {
+            Some(op) => {
+                let (out, ty) = output_for_diff_op(op, &env_b, vis_graph_b);
+                (out, Some(ty))
+            }
+            None => (serde_json::json!(-1), None),
+        };
+
+        let return_type = match (out_ty_a, out_ty_b) {
+            (Some(OutputType::Ptr), Some(OutputType::Ptr)) => OutputType::Ptr,
+            (Some(OutputType::Int), Some(OutputType::Int)) => OutputType::Int,
+            (Some(OutputType::Ptr), Some(OutputType::Int))
+            | (Some(OutputType::Int), Some(OutputType::Ptr)) => OutputType::Int,
+            (Some(ty), None) | (None, Some(ty)) => ty,
+            (None, None) => OutputType::Int,
+        };
+
+        if pair.op_a.is_none() {
+            out_a = missing_output_for_type(return_type);
+        }
+        if pair.op_b.is_none() {
+            out_b = missing_output_for_type(return_type);
+        }
+        if trace_enabled() {
+            let out_a_str =
+                serde_json::to_string(&out_a).unwrap_or_else(|_| format!("{:?}", out_a));
+            let out_b_str =
+                serde_json::to_string(&out_b).unwrap_or_else(|_| format!("{:?}", out_b));
+            println!(
+                "TRACE: diff_pair[{}] outputs A={} ({:?}) B={} ({:?}) return={:?}",
+                pair_index, out_a_str, out_ty_a, out_b_str, out_ty_b, return_type
+            );
+        }
 
         let root_idx_a = if let Some(idx) = detect_root_index(&env_a, vis_graph_a) {
             if let Some(obj_id) = env_a.index_to_obj_id.get(&idx) {
@@ -1117,56 +1751,123 @@ fn generate_specs_from_unification(
         let spec_name = build_spec_name(base_name, suffix_index);
         suffix_index += 1;
 
-        let spec = build_escher_spec(&spec_name, "Int", &cases)?;
+        let spec = build_escher_spec(&spec_name, return_type.as_escher_type(), &cases)?;
+        trace_json(&format!("EscherSpec {}", spec.name), &spec);
         specs.push(spec);
     }
 
     Ok(specs)
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum OutputType {
+    Int,
+    Ptr,
+}
+
+impl OutputType {
+    fn as_escher_type(self) -> &'static str {
+        match self {
+            OutputType::Int => "Int",
+            OutputType::Ptr => "Ptr",
+        }
+    }
+}
+
 fn determine_output_value(
     operation: &crate::list_env::GraphOperation,
     env: &crate::list_env::ListEnvironment,
     vis_graph: &models::VisGraph,
-) -> serde_json::Value {
+) -> (serde_json::Value, OutputType) {
     match operation.edit_type.as_str() {
         "addEdge" | "removeEdge" => {
             if let Some(to_id) = operation.to.as_deref() {
                 if env.obj_id_to_index.contains_key(to_id) {
-                    match bfs_local_index_for_object(env, vis_graph, to_id) {
+                    let value = match bfs_local_index_for_object(env, vis_graph, to_id) {
                         Ok(idx) => serde_json::json!(idx),
                         Err(_) => serde_json::json!(-1),
-                    }
+                    };
+                    (value, OutputType::Ptr)
                 } else if let Some(val) = env.literal_id_to_value.get(to_id) {
-                    value_to_i32(val)
+                    let value = value_to_i32(val)
                         .map(|v| serde_json::json!(v))
-                        .unwrap_or_else(|| serde_json::json!(-1))
+                        .unwrap_or_else(|| serde_json::json!(-1));
+                    (value, OutputType::Int)
                 } else {
-                    serde_json::json!(-1)
+                    (serde_json::json!(-1), OutputType::Int)
                 }
             } else {
-                serde_json::json!(-1)
+                (serde_json::json!(-1), OutputType::Int)
             }
         }
         "addNode" | "removeNode" => {
             if operation.is_literal.unwrap_or(false) {
                 if let Some(label) = operation.label.as_ref() {
-                    value_to_i32(label)
+                    let value = value_to_i32(label)
                         .map(|v| serde_json::json!(v))
-                        .unwrap_or_else(|| serde_json::json!(-1))
+                        .unwrap_or_else(|| serde_json::json!(-1));
+                    (value, OutputType::Int)
                 } else {
-                    serde_json::json!(-1)
+                    (serde_json::json!(-1), OutputType::Int)
                 }
             } else if let Some(id) = operation.id.as_deref() {
-                match bfs_local_index_for_object(env, vis_graph, id) {
+                let value = match bfs_local_index_for_object(env, vis_graph, id) {
                     Ok(idx) => serde_json::json!(idx),
                     Err(_) => serde_json::json!(-1),
-                }
+                };
+                (value, OutputType::Ptr)
             } else {
-                serde_json::json!(-1)
+                (serde_json::json!(-1), OutputType::Int)
             }
         }
-        _ => serde_json::json!(-1),
+        _ => (serde_json::json!(-1), OutputType::Int),
+    }
+}
+
+fn output_for_diff_op(
+    op: &DiffOp,
+    env: &crate::list_env::ListEnvironment,
+    vis_graph: &models::VisGraph,
+) -> (serde_json::Value, OutputType) {
+    match op {
+        DiffOp::Json { graph_op, .. } => determine_output_value(graph_op, env, vis_graph),
+        DiffOp::ExistNode {
+            id,
+            is_literal,
+            label,
+        } => {
+            determine_output_value_for_exist_node(id, *is_literal, label.as_deref(), env, vis_graph)
+        }
+    }
+}
+
+fn determine_output_value_for_exist_node(
+    id: &str,
+    is_literal: bool,
+    label: Option<&str>,
+    env: &crate::list_env::ListEnvironment,
+    vis_graph: &models::VisGraph,
+) -> (serde_json::Value, OutputType) {
+    if is_literal {
+        let value = label
+            .map(|s| serde_json::Value::String(s.to_string()))
+            .and_then(|v| value_to_i32(&v))
+            .map(|v| serde_json::json!(v))
+            .unwrap_or_else(|| serde_json::json!(-1));
+        (value, OutputType::Int)
+    } else {
+        let value = match bfs_local_index_for_object(env, vis_graph, id) {
+            Ok(idx) => serde_json::json!(idx),
+            Err(_) => serde_json::json!(-1),
+        };
+        (value, OutputType::Ptr)
+    }
+}
+
+fn missing_output_for_type(output_type: OutputType) -> serde_json::Value {
+    match output_type {
+        OutputType::Ptr => serde_json::Value::Null,
+        OutputType::Int => serde_json::json!(-1),
     }
 }
 
@@ -1207,5 +1908,62 @@ fn sanitize_base_name(name: &str) -> String {
         "aux".to_string()
     } else {
         name.to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn simple_vis_graph_with_root() -> VisGraph {
+        VisGraph {
+            nodes: vec![
+                crate::models::Node {
+                    id: "__Variable-lst".to_string(),
+                    is_literal: false,
+                    label: json!("lst"),
+                },
+                crate::models::Node {
+                    id: "obj1".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+            ],
+            edges: vec![crate::models::Edge {
+                from: "__Variable-lst".to_string(),
+                to: "obj1".to_string(),
+                label: "lst".to_string(),
+            }],
+        }
+    }
+
+    #[test]
+    fn exist_node_ptr_output_uses_bfs_index() {
+        let vis_graph = simple_vis_graph_with_root();
+        let env = list_env::ListEnvironment::from_vis_graph(&vis_graph);
+        let (value, ty) =
+            determine_output_value_for_exist_node("obj1", false, None, &env, &vis_graph);
+        assert_eq!(ty, OutputType::Ptr);
+        assert_eq!(value, json!(0));
+    }
+
+    #[test]
+    fn exist_node_literal_output_is_int() {
+        let vis_graph = simple_vis_graph_with_root();
+        let env = list_env::ListEnvironment::from_vis_graph(&vis_graph);
+        let (value, ty) =
+            determine_output_value_for_exist_node("lit1", true, Some("3"), &env, &vis_graph);
+        assert_eq!(ty, OutputType::Int);
+        assert_eq!(value, json!(3));
+    }
+
+    #[test]
+    fn missing_output_sentinels() {
+        assert_eq!(
+            missing_output_for_type(OutputType::Ptr),
+            serde_json::Value::Null
+        );
+        assert_eq!(missing_output_for_type(OutputType::Int), json!(-1));
     }
 }

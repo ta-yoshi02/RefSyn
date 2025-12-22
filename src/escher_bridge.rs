@@ -10,9 +10,12 @@
 use crate::list_env::ListEnvironment;
 use crate::models::VisGraph;
 use anyhow::{anyhow, Result};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::io::Write;
+use std::path::PathBuf;
+use std::process::{Command, Stdio};
 
 /// One test case: environment + args + expected output
 #[derive(Debug, Clone)]
@@ -103,7 +106,8 @@ pub fn build_escher_spec(
         input_types.push("List[Int]".to_string());
     }
     for _ in &sorted_pointer_fields {
-        input_types.push("List[Int]".to_string());
+        // Pointer fields are typed as List[Ptr] on Escher-Scala side
+        input_types.push("List[Ptr]".to_string());
     }
 
     // Examples
@@ -301,6 +305,70 @@ pub fn write_spec_to_file(path: &str, content: &str) -> Result<()> {
     Ok(())
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EscherJsOutcome {
+    pub name: String,
+    pub success: bool,
+    pub rendered: Option<String>,
+    pub error: Option<String>,
+}
+
+/// Invoke Scala.js build via Node and parse normalized results.
+pub fn run_escher_js(spec_json: &str) -> Result<Vec<EscherJsOutcome>> {
+    let default_runner = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("scripts")
+        .join("run_escher.js");
+    let runner = std::env::var("ESCHER_JS_RUNNER")
+        .map(PathBuf::from)
+        .unwrap_or(default_runner);
+
+    if !runner.exists() {
+        return Err(anyhow!(
+            "Escher JS runner not found at {}",
+            runner.display()
+        ));
+    }
+
+    let mut child = Command::new("node")
+        .arg(&runner)
+        .arg("--quiet")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .map_err(|e| anyhow!("Failed to spawn Node runner: {}", e))?;
+
+    {
+        let stdin = child
+            .stdin
+            .as_mut()
+            .ok_or_else(|| anyhow!("Failed to open stdin for Node runner"))?;
+        stdin.write_all(spec_json.as_bytes())?;
+    }
+
+    let output = child.wait_with_output()?;
+    if !output.status.success() {
+        return Err(anyhow!(
+            "Escher JS runner exited with status {}",
+            output.status
+        ));
+    }
+
+    let stdout = String::from_utf8(output.stdout)?;
+    let trimmed = stdout.trim();
+    if trimmed.is_empty() {
+        return Err(anyhow!("Escher JS runner returned empty output"));
+    }
+
+    let outcomes: Vec<EscherJsOutcome> = serde_json::from_str(trimmed)?;
+    Ok(outcomes)
+}
+
+pub fn run_escher_js_from_specs(specs: &[EscherSpec]) -> Result<Vec<EscherJsOutcome>> {
+    let json_text = specs_to_json(specs)?;
+    run_escher_js(&json_text)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -400,8 +468,8 @@ mod tests {
             vec![
                 "Int".to_string(),
                 "List[Int]".to_string(),
-                "List[Int]".to_string(),
-                "List[Int]".to_string()
+                "List[Ptr]".to_string(),
+                "List[Ptr]".to_string()
             ]
         );
         assert_eq!(spec.return_type, "Int".to_string());
