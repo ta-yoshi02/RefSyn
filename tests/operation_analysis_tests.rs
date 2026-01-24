@@ -75,7 +75,7 @@ fn test_operation_analysis_detailed() {
 
 #[test]
 fn test_operation_analysis_identical() {
-    use refsyn::models::{Edge, Node, VisGraph};
+    use refsyn::models::{Node, VisGraph};
     use serde_json::json;
 
     // 同一の操作列のテスト

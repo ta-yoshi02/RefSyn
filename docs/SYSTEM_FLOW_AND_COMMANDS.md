@@ -4,14 +4,15 @@
 
 ## システムの流れ（概要）
 - 共通/差分抽出: 2 本の操作列（Kanon の操作ログ）を unification し、共通部分と差分部分を抽出
-- 環境構築: 共通部分までの操作を初期グラフに適用し、差分直前の List 環境（`List[Int]`/`Int` セット）を構築
+- 環境構築: 共通部分までの操作を初期グラフに適用し、差分直前の List 環境（`List[Int]`/`List[Ptr]`/`Int`/`Ptr` セット）を構築
 - JSON 整形: 動的に検出したフィールドで BFS ローカルインデクシングを行い、`tests.json`（Escher 仕様）を生成
 - 合成実行: Escher-Scala が `tests.json` を読み込み、合成を実行
 
 実装の要点:
 - 動的フィールド検出（値/ポインタ）: 特定のフィールド名をハードコーディングしない
-- ルート検出: 変数ノード `__Variable-<name>` → `<name>` エッジをルートとみなし、ポインタフィールドのみで BFS
-- センチネル: `null`/未接続/終端は `-1` に正規化
+- ルート検出: `__Variable-this` を優先し、なければ `__Variable-<name>` → `<name>` エッジをルートとみなし、ポインタフィールドのみで BFS
+- 引数生成: `__Variable-<name>` の参照先を引数化し、`this` を先頭に並べる
+- nullPtr は JSON `null`、`Int` の欠損は `-1`
 
 関連ファイル:
 - `src/escher_bridge.rs`（Escher 用 JSON 生成）
@@ -52,17 +53,18 @@ Escher-Scala は `src/main/resources/escher/tests.json` を読み込みます。
 - 編集ファイル: `examples/generate_escher_json.rs`
   - `vis_graph`: Kanon の環境（ノード/エッジ）
   - `ops_a`, `ops_b`: 比較する 2 本の操作列（JSON オブジェクト配列）
-  - `arguments`/`output`: 各ケースの引数・期待出力
-- `build_escher_spec("<関数名>", "<戻り値型>", &cases)` で `EscherSpec` を生成
+  - `arguments`/`arg_types`/`receiver_arg_index`/`output`: 各ケースの引数・型・受け取り位置・期待出力
+- `build_escher_spec("<関数名>", "<戻り値型>", &cases, None)` で `EscherSpec` を生成
 - 複数仕様は `Vec<EscherSpec>` にまとめて `specs_to_json` → `write_spec_to_file`
 - 再生成
   - `cargo run --example generate_escher_json`
 
 ## よくある注意点
-- ルート検出には `__Variable-<name>` → `<name>` エッジが必要（例: `__Variable-lst` → `lst`）
+- ルート検出には `__Variable-<name>` → `<name>` エッジが必要（`__Variable-this` があれば優先）
+- 引数順は `this` を先頭にし、残りは変数名の昇順
 - ケース間で検出されたフィールド集合が一致している必要あり（ラベル揺れに注意）
 - 値ノードが文字列数値（例: `"2"`）でも `Int` として解釈される
-- ポインタ終端/未接続は `-1`（`List[Int]` に合わせたセンチネル）
+- ポインタ終端/未接続は `null`（nullPtr）
 
 ## 参考ドキュメント
 - `docs/REFSYN_TO_ESCHER.md`: 仕様詳細とコード断片

@@ -7,7 +7,6 @@ use crate::unify_ops::{EdgeExpr, GraphOp, NodeExpr, Op, UnificationResult, VarOp
 // Operation Graph representation
 struct OpGraph<'a> {
     graph: Graph<&'a Op, &'static str>,
-    op_map: HashMap<&'a str, NodeIndex>,
 }
 
 // Build the operation graph from a sequence of operations
@@ -35,7 +34,7 @@ fn build_op_graph<'a>(ops: &'a [Op]) -> OpGraph<'a> {
         }
     }
 
-    OpGraph { graph, op_map }
+    OpGraph { graph }
 }
 
 fn count_preserved_edges<'a>(

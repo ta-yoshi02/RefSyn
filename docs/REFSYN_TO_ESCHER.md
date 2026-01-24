@@ -11,11 +11,11 @@
 ## 実装済みの機能
 
 - モジュール: `src/escher_bridge.rs`
-  - `EscherCase`: `ListEnvironment` と関数引数、期待出力をまとめたケース
-  - `build_escher_spec(name, return_type, cases) -> EscherSpec`:
+- `EscherCase`: `ListEnvironment` と関数引数（`arg_names` を含む）、期待出力をまとめたケース（`receiver_arg_index` で `this` の位置を指定）
+  - `build_escher_spec(name, return_type, cases, field_tables) -> EscherSpec`:
     - フィールド（値フィールド/ポインタフィールド）を動的に検出
     - 変数ノードから BFS によるローカルインデックス化
-    - `null/undefined/終端` をセンチネル `-1` で表現
+    - nullPtr は JSON `null`、`Int` の欠損はセンチネル `-1`
     - 複数の `examples` を持つ単一の Escher 仕様を生成
   - `specs_to_json(&[EscherSpec]) -> String` で配列 JSON を生成
   - `write_spec_to_file(path, content)` でファイル出力
@@ -35,7 +35,7 @@
 各テストケースの入力:
 - `VisGraph`（Kanon の環境: ノード/エッジ）
 - 比較する操作列 2 本（A と B、JSON 配列）
-- 関数引数（スカラー、例: `Int`）
+- 関数引数（`__Variable-<name>` を引数とみなし、参照先がオブジェクトなら `Ptr`、リテラルなら `Int`）
 - 期待される出力（例: `Int`）
 
 手順:
@@ -53,11 +53,11 @@
    - 得られた `env` が「最初の差分直前」のスナップショット
 
 3. Escher ケースを作成
-   - `env`, `vis_graph`, `arguments`, `output` を `EscherCase` に包む
+   - `env`, `vis_graph`, `arguments`, `arg_names`, `arg_types`, `receiver_arg_index`, `output` を `EscherCase` に包む
    - Kanon 側の複数テストを複数ケースとして作り、`build_escher_spec` にまとめて渡せる
 
 4. `tests.json` を出力
-- `build_escher_spec("<func-name>", "<return-type>", &cases)` → `EscherSpec`
+- `build_escher_spec("<func-name>", "<return-type>", &cases, None)` → `EscherSpec`
 - 必要な仕様を `Vec<EscherSpec>` にまとめ、`specs_to_json(&specs)` で文字列化
 - 任意のパスへ保存（例: `Escher-Scala/src/main/resources/escher/tests.json`）:
   - `write_spec_to_file(path, &json_text)`
@@ -70,6 +70,8 @@
 - `ops_a: Vec<serde_json::Value>`
 - `ops_b: Vec<serde_json::Value>`
 - `arguments: Vec<serde_json::Value>`（例: `[json!(0)]`）
+- `arg_types: Option<Vec<String>>`（例: `Some(vec!["Ptr".to_string()])`。省略時は `Int` 扱い）
+- `receiver_arg_index: Option<usize>`（例: `Some(0)`）
 - `expected_output: serde_json::Value`（例: `json!(2)`）
 
 ```rust
@@ -100,12 +102,15 @@ for idx in common_indices {
 let case = EscherCase {
     env,
     vis_graph: vis_graph.clone(),
-    arguments: vec![json!(0)],          // スカラー引数
+    arguments: vec![json!(0)],          // 受け取り側のポインタ
+    arg_names: vec!["this".to_string()],
+    arg_types: Some(vec!["Ptr".to_string()]),
+    receiver_arg_index: Some(0),
     output: json!(2),                   // 期待出力
 };
 
 // 複数ケースを作成してまとめて渡すことも可能
-let spec = build_escher_spec("append-g", "Int", &[case])?;
+let spec = build_escher_spec("append-g", "Int", &[case], None)?;
 let specs = vec![spec];
 let json_text = specs_to_json(&specs)?;
 
@@ -121,19 +126,24 @@ write_spec_to_file("Escher-Scala/src/main/resources/escher/tests.json", &json_te
   - 特殊ノード（`__RectForVariable__`, `__Variable-*`）は分類から除外
 
 - BFS のルート検出:
-  - ID が `__Variable-<name>` の変数ノードを探索
+  - ID が `__Variable-this` の変数ノードがあれば優先
+  - それ以外は `__Variable-<name>` の変数ノードを探索
   - その変数インデックスの `<name>` フィールドがオブジェクトを指すなら、そのオブジェクトを BFS ルートに採用
   - BFS はポインタフィールドのみを辿り、ローカルインデックス順を決める
 
 - 正規化:
   - スカラー値: `Int` として格納（数値 JSON または数値文字列）
-  - 欠損/未定義/null: `-1`
-  - ポインタ: 元のインデックスを BFS ローカルインデックスへ再マップ、終端は `-1`
+  - `Int` の欠損/未定義: `-1`
+  - ポインタ: 元のインデックスを BFS ローカルインデックスへ再マップ、終端は `null`
+
+- 引数順序:
+  - `this` を先頭にし、残りは変数名の昇順（`__Variable-<name>` の `<name>`）
+  - 参照先がオブジェクトなら `Ptr`、リテラルなら `Int`
 
 ## 複数のテストケース
 
 複数の `EscherCase` を `build_escher_spec` に渡すと、ブリッジは次を行います:
-- 最初のケースから `inputTypes` を導出
+- 最初のケースから `inputTypes` を導出（引数型は `arg_types` を優先、未指定なら `Int`）
 - 検出したフィールド集合が全ケースで一致するか検査
 - `examples` に全ケースを含めた単一の関数仕様を生成
 
@@ -141,6 +151,7 @@ write_spec_to_file("Escher-Scala/src/main/resources/escher/tests.json", &json_te
 
 - Kanon のリテラルが文字列（例: `"2"`）でも、ブリッジは値リストとして数値へパースします。
 - ルートの変数ノード（例: `__Variable-lst` → ラベル `lst`）が存在することを確認してください。ない場合はルート検出に失敗します。
+- `Ptr` 引数が複数ある場合は `receiver_arg_index` を指定して受け取り位置を明示してください。
 - Unification を使わず位置ベースのフォールバックが必要な場合は、
   - `operation_analyzer::analyze_operations_with_environments` を利用できます。差分ごとに `environment_before` を返すので、そのまま `EscherCase` に変換可能です。
 - `lib.rs` 内部の一部ヘルパは出力整形上、エッジ表現が文字列になる箇所があります。ブリッジ用途では、本ドキュメントの `ListEnvironment` API を推奨します。

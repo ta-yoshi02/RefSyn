@@ -48,6 +48,7 @@ async fn test_integrated_synthesis_single_operation_list() {
         method_name: "test".to_string(),
         operations: operations,
         actual_graph: Some(vis_graph.clone()),
+        field_tables: None,
     };
 
     let request = SynthesisRequest {
@@ -126,6 +127,7 @@ async fn test_integrated_synthesis_multiple_operation_lists() {
         method_name: "test".to_string(),
         operations: operations_a,
         actual_graph: Some(vis_graph.clone()),
+        field_tables: None,
     };
 
     let method_call_b = MethodCallOperation {
@@ -135,6 +137,7 @@ async fn test_integrated_synthesis_multiple_operation_lists() {
         method_name: "test".to_string(),
         operations: operations_b,
         actual_graph: Some(vis_graph.clone()),
+        field_tables: None,
     };
 
     let request = SynthesisRequest {

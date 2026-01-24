@@ -1,6 +1,7 @@
 pub mod env;
 pub mod error;
 pub mod escher_bridge;
+pub mod escher_js;
 pub mod isomorphism;
 pub mod list_env;
 pub mod models;
@@ -9,9 +10,11 @@ pub mod server;
 pub mod unify_ops;
 
 use crate::escher_bridge::{
-    build_escher_spec, run_escher_js, specs_to_json, write_spec_to_file, EscherCase,
-    EscherJsOutcome, EscherSpec,
+    build_escher_spec, derive_spec_meta_with_fields, run_escher_js, specs_to_json,
+    resolve_field_order, write_spec_to_file, EscherCase, EscherJsOutcome, EscherSpec,
+    EscherSpecMeta,
 };
+use crate::escher_js::{build_context_from_spec, translate_rendered_method};
 use anyhow;
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -31,6 +34,8 @@ pub struct MethodCallOperation {
     pub operations: Vec<serde_json::Value>,
     #[serde(rename = "actualGraph")]
     pub actual_graph: Option<VisGraph>,
+    #[serde(rename = "fieldTables")]
+    pub field_tables: Option<FieldTables>,
 }
 
 use crate::models::VisGraph;
@@ -39,6 +44,12 @@ use crate::models::VisGraph;
 pub struct SynthesisRequest {
     pub method_calls: Vec<MethodCallOperation>,
     pub vis_graph: VisGraph,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FieldTables {
+    pub value: Vec<String>,
+    pub pointer: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -227,6 +238,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     let mut escher_written_paths: Vec<String> = Vec::new();
     let spec_base_name = derive_spec_base_name(&req.method_calls);
     let mut aggregated_specs: Vec<EscherSpec> = Vec::new();
+    let mut spec_meta_by_name: HashMap<String, EscherSpecMeta> = HashMap::new();
     let mut escher_json: Option<String> = None;
     let mut escher_outcomes: Option<Vec<EscherJsOutcome>> = None;
     let mut synthesized_codes: Vec<String> = Vec::new();
@@ -245,17 +257,31 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
             .unwrap_or(&req.vis_graph);
         let base_env_a = ListEnvironment::from_vis_graph(vis_graph_a);
         let base_env_b = ListEnvironment::from_vis_graph(vis_graph_b);
+        let receiver_object_a = req.method_calls.get(0).map(|m| m.receiver_object.as_str());
+        let receiver_object_b = req.method_calls.get(1).map(|m| m.receiver_object.as_str());
 
         if let Some(uni) = &unification_analysis {
+            let merged_field_tables = merge_field_tables(
+                req.method_calls
+                    .get(0)
+                    .and_then(|m| m.field_tables.as_ref()),
+                req.method_calls
+                    .get(1)
+                    .and_then(|m| m.field_tables.as_ref()),
+            );
             match generate_specs_from_unification(
                 vis_graph_a,
                 vis_graph_b,
                 &base_env_a,
                 &base_env_b,
+                receiver_object_a,
+                receiver_object_b,
                 &operations_list[0],
                 &operations_list[1],
                 uni,
                 &spec_base_name,
+                merged_field_tables.as_ref(),
+                &mut spec_meta_by_name,
             ) {
                 Ok(specs) => {
                     if specs.is_empty() {
@@ -316,10 +342,43 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
                     success_count, failure_count
                 );
 
+                let spec_by_name: HashMap<String, EscherSpec> = aggregated_specs
+                    .iter()
+                    .map(|spec| (spec.name.clone(), spec.clone()))
+                    .collect();
+
                 for out in &results {
                     if let Some(rendered) = &out.rendered {
-                        synthesized_codes.push(rendered.clone());
-                        individual_codes.push(format!("{}: {}", out.name, rendered));
+                        match (spec_by_name.get(&out.name), spec_meta_by_name.get(&out.name)) {
+                            (Some(spec), Some(meta)) => {
+                                match build_context_from_spec(&out.name, spec, meta) {
+                                    Ok((ctx, params_js)) => {
+                                        match translate_rendered_method(rendered, &params_js, &ctx)
+                                        {
+                                            Ok(js) => {
+                                                synthesized_codes.push(js.clone());
+                                                individual_codes
+                                                    .push(format!("{}: {}", out.name, js));
+                                            }
+                                            Err(e) => {
+                                                individual_codes
+                                                    .push(format!("{}: ERROR {}", out.name, e));
+                                            }
+                                        }
+                                    }
+                                    Err(e) => {
+                                        individual_codes
+                                            .push(format!("{}: ERROR {}", out.name, e));
+                                    }
+                                }
+                            }
+                            _ => {
+                                individual_codes.push(format!(
+                                    "{}: ERROR missing spec metadata",
+                                    out.name
+                                ));
+                            }
+                        }
                     } else if let Some(err) = &out.error {
                         individual_codes.push(format!("{}: ERROR {}", out.name, err));
                     } else {
@@ -652,6 +711,7 @@ fn apply_operation_to_list_env(
     list_env: &mut crate::list_env::ListEnvironment,
     op: &crate::unify_ops::Op,
 ) -> anyhow::Result<()> {
+    use crate::list_env::FieldKind;
     use crate::unify_ops::{EdgeExpr, GraphOp, NodeExpr};
 
     match &op.kind {
@@ -689,25 +749,56 @@ fn apply_operation_to_list_env(
 
             // エッジ追加をList環境に反映
             if let Some(&from_index) = list_env.obj_id_to_index.get(from) {
-                // フィールドリストの更新
+                let inferred_kind = if list_env.obj_id_to_index.contains_key(to) {
+                    FieldKind::Pointer
+                } else if list_env.literal_id_to_value.contains_key(to) {
+                    FieldKind::Value
+                } else if to == "null" {
+                    FieldKind::Pointer
+                } else {
+                    FieldKind::Pointer
+                };
+                let field_kind = {
+                    let entry = list_env
+                        .field_kinds
+                        .entry(label.clone())
+                        .or_insert(inferred_kind);
+                    if inferred_kind == FieldKind::Pointer {
+                        *entry = FieldKind::Pointer;
+                    }
+                    *entry
+                };
+                let default_value = field_kind.default_value();
                 let field_list = list_env
                     .field_lists
                     .entry(label.clone())
-                    .or_insert_with(Vec::new);
+                    .or_insert_with(|| vec![default_value.clone(); list_env.obj_id_to_index.len()]);
+
+                if field_kind == FieldKind::Pointer {
+                    for v in field_list.iter_mut() {
+                        if v.as_i64() == Some(-1) {
+                            *v = serde_json::Value::Null;
+                        }
+                    }
+                }
 
                 // インデックスが範囲外の場合はリストを拡張
                 while field_list.len() <= from_index {
-                    field_list.push(serde_json::Value::Null);
+                    field_list.push(default_value.clone());
                 }
 
                 // toが既存オブジェクトか新しいリテラルかを判定
-                if let Some(&to_index) = list_env.obj_id_to_index.get(to) {
-                    field_list[from_index] = serde_json::Value::String(format!("obj_{}", to_index));
+                let mut to_value = if let Some(&to_index) = list_env.obj_id_to_index.get(to) {
+                    serde_json::json!(to_index as i32)
                 } else if let Some(literal_value) = list_env.literal_id_to_value.get(to) {
-                    field_list[from_index] = literal_value.clone();
+                    literal_value.clone()
                 } else {
-                    field_list[from_index] = serde_json::Value::String(to.clone());
+                    serde_json::Value::Null
+                };
+                if field_kind == FieldKind::Value && to_value.is_null() {
+                    to_value = serde_json::json!(-1);
                 }
+                field_list[from_index] = to_value;
             }
         }
         GraphOp::Node(NodeExpr::ExistNode { .. }) => {
@@ -786,6 +877,7 @@ fn detect_root_index(
     env: &crate::list_env::ListEnvironment,
     vis_graph: &models::VisGraph,
 ) -> Option<usize> {
+    use crate::list_env::PtrValue;
     let var_prefix = "__Variable-";
     let mut var_ids: Vec<&str> = vis_graph
         .nodes
@@ -795,15 +887,22 @@ fn detect_root_index(
         .filter(|id| id.starts_with(var_prefix))
         .collect();
     var_ids.sort();
+    let mut ordered_var_ids: Vec<&str> = Vec::new();
+    if var_ids.iter().any(|id| *id == "__Variable-this") {
+        ordered_var_ids.push("__Variable-this");
+    }
     for var_id in var_ids {
+        if var_id != "__Variable-this" {
+            ordered_var_ids.push(var_id);
+        }
+    }
+    for var_id in ordered_var_ids {
         if let Some(&var_idx) = env.obj_id_to_index.get(var_id) {
             let var_name = var_id.trim_start_matches(var_prefix).to_string();
             if let Some(vec) = env.field_lists.get(&var_name) {
                 if var_idx < vec.len() {
-                    if let Some(root_i64) = vec[var_idx].as_i64() {
-                        if root_i64 >= 0 {
-                            return Some(root_i64 as usize);
-                        }
+                    if let Some(PtrValue::Index(root_idx)) = PtrValue::from_value(&vec[var_idx]) {
+                        return Some(root_idx);
                     }
                 }
             }
@@ -812,12 +911,253 @@ fn detect_root_index(
     None
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ArgKind {
+    Ptr,
+    Int,
+}
+
+struct ArgBundle {
+    names: Vec<String>,
+    values: Vec<serde_json::Value>,
+    types: Vec<String>,
+    receiver_arg_index: Option<usize>,
+}
+
+fn build_case_arguments_from_variables(
+    env: &crate::list_env::ListEnvironment,
+    vis_graph: &models::VisGraph,
+    pointer_fields: &[String],
+    receiver_object: Option<&str>,
+) -> anyhow::Result<ArgBundle> {
+    use crate::list_env::{FieldKind, PtrValue};
+    use serde_json::Value;
+    use std::collections::{HashMap, HashSet};
+
+    let var_prefix = "__Variable-";
+    let mut var_names: Vec<String> = Vec::new();
+    let mut var_id_by_name: HashMap<String, String> = HashMap::new();
+    for node in &vis_graph.nodes {
+        if node.is_literal {
+            continue;
+        }
+        if node.id.starts_with(var_prefix) {
+            let name = node.id.trim_start_matches(var_prefix).to_string();
+            var_id_by_name.insert(name.clone(), node.id.clone());
+            var_names.push(name);
+        }
+    }
+    var_names.sort();
+    var_names.dedup();
+    if let Some(pos) = var_names.iter().position(|n| n == "this") {
+        let this_name = var_names.remove(pos);
+        var_names.insert(0, this_name);
+    }
+
+    if var_names.is_empty() {
+        return Ok(ArgBundle {
+            names: Vec::new(),
+            values: Vec::new(),
+            types: Vec::new(),
+            receiver_arg_index: None,
+        });
+    }
+
+    let mut literal_ids: HashSet<&str> = HashSet::new();
+    let mut object_ids: HashSet<&str> = HashSet::new();
+    for node in &vis_graph.nodes {
+        if node.id == "__RectForVariable__" {
+            continue;
+        }
+        if node.is_literal {
+            literal_ids.insert(node.id.as_str());
+        } else if !node.id.starts_with(var_prefix) {
+            object_ids.insert(node.id.as_str());
+        }
+    }
+
+    let mut kind_by_name: HashMap<String, ArgKind> = HashMap::new();
+    for edge in &vis_graph.edges {
+        if edge.from == "__RectForVariable__" || edge.to == "__RectForVariable__" {
+            continue;
+        }
+        if let Some(var_name) = edge.from.strip_prefix(var_prefix) {
+            if edge.label != var_name {
+                continue;
+            }
+            if literal_ids.contains(edge.to.as_str()) {
+                kind_by_name.entry(var_name.to_string()).or_insert(ArgKind::Int);
+            } else if object_ids.contains(edge.to.as_str()) {
+                kind_by_name.insert(var_name.to_string(), ArgKind::Ptr);
+            }
+        }
+    }
+
+    for name in &var_names {
+        if !kind_by_name.contains_key(name) {
+            if let Some(kind) = env.field_kinds.get(name) {
+                let arg_kind = match kind {
+                    FieldKind::Pointer => ArgKind::Ptr,
+                    FieldKind::Value => ArgKind::Int,
+                };
+                kind_by_name.insert(name.clone(), arg_kind);
+            }
+        }
+    }
+    for name in &var_names {
+        kind_by_name.entry(name.clone()).or_insert(ArgKind::Ptr);
+    }
+
+    let needs_bfs = !pointer_fields.is_empty()
+        || var_names
+            .iter()
+            .any(|name| kind_by_name.get(name) == Some(&ArgKind::Ptr));
+    let idx_to_bfs = if needs_bfs {
+        build_bfs_index_map(env, vis_graph, pointer_fields)?
+    } else {
+        HashMap::new()
+    };
+
+    let mut values: Vec<Value> = Vec::with_capacity(var_names.len());
+    let mut types: Vec<String> = Vec::with_capacity(var_names.len());
+    let mut receiver_matches: Vec<usize> = Vec::new();
+
+    for (idx, name) in var_names.iter().enumerate() {
+        let var_id = var_id_by_name.get(name);
+        let var_idx = var_id.and_then(|id| env.obj_id_to_index.get(id)).copied();
+        let arg_kind = kind_by_name.get(name).copied().unwrap_or(ArgKind::Ptr);
+        match arg_kind {
+            ArgKind::Ptr => {
+                types.push("Ptr".to_string());
+                let mut value = Value::Null;
+                if let Some(var_idx) = var_idx {
+                    if let Some(list) = env.field_lists.get(name) {
+                        if var_idx < list.len() {
+                            if let Some(PtrValue::Index(to_idx)) =
+                                PtrValue::from_value(&list[var_idx])
+                            {
+                                if let Some(mapped) = idx_to_bfs.get(&to_idx) {
+                                    value = serde_json::json!(*mapped as i32);
+                                }
+                                if let Some(receiver_object) = receiver_object {
+                                    if let Some(obj_id) = env.index_to_obj_id.get(&to_idx) {
+                                        if obj_id == receiver_object {
+                                            receiver_matches.push(idx);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                values.push(value);
+            }
+            ArgKind::Int => {
+                types.push("Int".to_string());
+                let mut value = serde_json::json!(-1);
+                if let Some(var_idx) = var_idx {
+                    if let Some(list) = env.field_lists.get(name) {
+                        if var_idx < list.len() {
+                            value = value_to_i32(&list[var_idx])
+                                .map(|v| serde_json::json!(v))
+                                .unwrap_or_else(|| serde_json::json!(-1));
+                        }
+                    }
+                }
+                values.push(value);
+            }
+        }
+    }
+
+    let mut receiver_arg_index = None;
+    if let Some(pos) = var_names.iter().position(|n| n == "this") {
+        if types.get(pos).map(|t| t.as_str()) != Some("Ptr") {
+            return Err(anyhow::anyhow!(
+                "variable 'this' must be Ptr to serve as receiver"
+            ));
+        }
+        receiver_arg_index = Some(pos);
+    } else if receiver_object.is_some() {
+        if receiver_matches.len() > 1 {
+            return Err(anyhow::anyhow!(
+                "receiver object is referenced by multiple variables: {:?}",
+                receiver_matches
+            ));
+        }
+        if receiver_matches.len() == 1 {
+            receiver_arg_index = Some(receiver_matches[0]);
+        }
+    }
+
+    if receiver_arg_index.is_none() {
+        let ptr_indices: Vec<usize> = types
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, ty)| if ty == "Ptr" { Some(idx) } else { None })
+            .collect();
+        if ptr_indices.len() == 1 {
+            receiver_arg_index = Some(ptr_indices[0]);
+        }
+    }
+
+    Ok(ArgBundle {
+        names: var_names,
+        values,
+        types,
+        receiver_arg_index,
+    })
+}
+
+fn build_bfs_index_map(
+    env: &crate::list_env::ListEnvironment,
+    vis_graph: &models::VisGraph,
+    pointer_fields: &[String],
+) -> anyhow::Result<HashMap<usize, usize>> {
+    use crate::list_env::PtrValue;
+    use std::collections::{HashMap, HashSet, VecDeque};
+
+    let root = detect_root_index(env, vis_graph).ok_or_else(|| anyhow::anyhow!("root not found"))?;
+    let mut adj: HashMap<usize, Vec<usize>> = HashMap::new();
+    for pf in pointer_fields {
+        if let Some(vec) = env.field_lists.get(pf) {
+            for (from_idx, v) in vec.iter().enumerate() {
+                if let Some(PtrValue::Index(to)) = PtrValue::from_value(v) {
+                    adj.entry(from_idx).or_default().push(to);
+                }
+            }
+        }
+    }
+    let mut visited: HashSet<usize> = HashSet::new();
+    let mut q: VecDeque<usize> = VecDeque::new();
+    let mut order: Vec<usize> = Vec::new();
+    q.push_back(root);
+    while let Some(u) = q.pop_front() {
+        if !visited.insert(u) {
+            continue;
+        }
+        order.push(u);
+        if let Some(ns) = adj.get(&u) {
+            for &v in ns {
+                if !visited.contains(&v) {
+                    q.push_back(v);
+                }
+            }
+        }
+    }
+    let mut idx_to_bfs: HashMap<usize, usize> = HashMap::new();
+    for (bi, &orig) in order.iter().enumerate() {
+        idx_to_bfs.insert(orig, bi);
+    }
+    Ok(idx_to_bfs)
+}
+
 fn bfs_local_index_for_object(
     env: &crate::list_env::ListEnvironment,
     vis_graph: &models::VisGraph,
     object_id: &str,
-) -> anyhow::Result<i32> {
+) -> anyhow::Result<Option<i32>> {
     use std::collections::{HashMap, HashSet, VecDeque};
+    use crate::list_env::PtrValue;
     let (_value_fields, mut pointer_fields) = analyze_fields_for_graph(vis_graph);
     pointer_fields.sort();
     let root =
@@ -827,10 +1167,8 @@ fn bfs_local_index_for_object(
     for pf in &pointer_fields {
         if let Some(vec) = env.field_lists.get(pf) {
             for (from_idx, v) in vec.iter().enumerate() {
-                if let Some(to) = v.as_i64() {
-                    if to >= 0 {
-                        adj.entry(from_idx).or_default().push(to as usize);
-                    }
+                if let Some(PtrValue::Index(to)) = PtrValue::from_value(v) {
+                    adj.entry(from_idx).or_default().push(to);
                 }
             }
         }
@@ -862,10 +1200,9 @@ fn bfs_local_index_for_object(
         Ok(idx_to_bfs
             .get(&orig_idx)
             .copied()
-            .map(|x| x as i32)
-            .unwrap_or(-1))
+            .map(|x| x as i32))
     } else {
-        Ok(-1)
+        Ok(None)
     }
 }
 
@@ -1063,10 +1400,14 @@ fn generate_specs_from_unification(
     vis_graph_b: &models::VisGraph,
     base_env_a: &crate::list_env::ListEnvironment,
     base_env_b: &crate::list_env::ListEnvironment,
+    receiver_object_a: Option<&str>,
+    receiver_object_b: Option<&str>,
     operations_a: &[serde_json::Value],
     operations_b: &[serde_json::Value],
     analysis: &UnificationAnalysisResult,
     base_name: &str,
+    field_tables: Option<&FieldTables>,
+    spec_meta_by_name: &mut HashMap<String, EscherSpecMeta>,
 ) -> anyhow::Result<Vec<EscherSpec>> {
     let graph_ops_a: Vec<crate::list_env::GraphOperation> = operations_a
         .iter()
@@ -1714,36 +2055,94 @@ fn generate_specs_from_unification(
             );
         }
 
-        let root_idx_a = if let Some(idx) = detect_root_index(&env_a, vis_graph_a) {
-            if let Some(obj_id) = env_a.index_to_obj_id.get(&idx) {
-                bfs_local_index_for_object(&env_a, vis_graph_a, obj_id).unwrap_or(-1)
-            } else {
-                -1
-            }
-        } else {
-            -1
-        };
-        let root_idx_b = if let Some(idx) = detect_root_index(&env_b, vis_graph_b) {
-            if let Some(obj_id) = env_b.index_to_obj_id.get(&idx) {
-                bfs_local_index_for_object(&env_b, vis_graph_b, obj_id).unwrap_or(-1)
-            } else {
-                -1
-            }
-        } else {
-            -1
-        };
+        let field_stub_cases = vec![
+            EscherCase {
+                env: env_a.clone(),
+                vis_graph: vis_graph_a.clone(),
+                arguments: Vec::new(),
+                arg_names: Vec::new(),
+                arg_types: None,
+                receiver_arg_index: None,
+                output: serde_json::Value::Null,
+            },
+            EscherCase {
+                env: env_b.clone(),
+                vis_graph: vis_graph_b.clone(),
+                arguments: Vec::new(),
+                arg_names: Vec::new(),
+                arg_types: None,
+                receiver_arg_index: None,
+                output: serde_json::Value::Null,
+            },
+        ];
+        let (_value_fields, pointer_fields) =
+            resolve_field_order(&field_stub_cases, field_tables)?;
 
+        let arg_bundle_a = build_case_arguments_from_variables(
+            &env_a,
+            vis_graph_a,
+            &pointer_fields,
+            receiver_object_a,
+        )?;
+        let arg_bundle_b = build_case_arguments_from_variables(
+            &env_b,
+            vis_graph_b,
+            &pointer_fields,
+            receiver_object_b,
+        )?;
+        if arg_bundle_a.names != arg_bundle_b.names {
+            return Err(anyhow::anyhow!(
+                "argument variable names differ across cases: {:?} vs {:?}",
+                arg_bundle_a.names,
+                arg_bundle_b.names
+            ));
+        }
+        if arg_bundle_a.types != arg_bundle_b.types {
+            return Err(anyhow::anyhow!(
+                "argument types differ across cases: {:?} vs {:?}",
+                arg_bundle_a.types,
+                arg_bundle_b.types
+            ));
+        }
+        if arg_bundle_a.receiver_arg_index != arg_bundle_b.receiver_arg_index {
+            return Err(anyhow::anyhow!(
+                "receiver arg differs across cases: {:?} vs {:?}",
+                arg_bundle_a.receiver_arg_index,
+                arg_bundle_b.receiver_arg_index
+            ));
+        }
+        if arg_bundle_a.receiver_arg_index.is_none() {
+            let ptr_count = arg_bundle_a
+                .types
+                .iter()
+                .filter(|t| t.as_str() == "Ptr")
+                .count();
+            if ptr_count > 1 {
+                return Err(anyhow::anyhow!(
+                    "receiver arg unresolved with multiple Ptr inputs"
+                ));
+            }
+        }
+
+        let arg_names_a = arg_bundle_a.names.clone();
+        let arg_names_b = arg_bundle_b.names.clone();
         let cases = vec![
             EscherCase {
                 env: env_a,
                 vis_graph: vis_graph_a.clone(),
-                arguments: vec![serde_json::json!(root_idx_a)],
+                arguments: arg_bundle_a.values,
+                arg_names: arg_names_a,
+                arg_types: Some(arg_bundle_a.types.clone()),
+                receiver_arg_index: arg_bundle_a.receiver_arg_index,
                 output: out_a,
             },
             EscherCase {
                 env: env_b,
                 vis_graph: vis_graph_b.clone(),
-                arguments: vec![serde_json::json!(root_idx_b)],
+                arguments: arg_bundle_b.values,
+                arg_names: arg_names_b,
+                arg_types: Some(arg_bundle_b.types),
+                receiver_arg_index: arg_bundle_b.receiver_arg_index,
                 output: out_b,
             },
         ];
@@ -1751,7 +2150,11 @@ fn generate_specs_from_unification(
         let spec_name = build_spec_name(base_name, suffix_index);
         suffix_index += 1;
 
-        let spec = build_escher_spec(&spec_name, return_type.as_escher_type(), &cases)?;
+        let meta = derive_spec_meta_with_fields(&cases, field_tables)?;
+        spec_meta_by_name.insert(spec_name.clone(), meta);
+
+        let spec =
+            build_escher_spec(&spec_name, return_type.as_escher_type(), &cases, field_tables)?;
         trace_json(&format!("EscherSpec {}", spec.name), &spec);
         specs.push(spec);
     }
@@ -1784,8 +2187,8 @@ fn determine_output_value(
             if let Some(to_id) = operation.to.as_deref() {
                 if env.obj_id_to_index.contains_key(to_id) {
                     let value = match bfs_local_index_for_object(env, vis_graph, to_id) {
-                        Ok(idx) => serde_json::json!(idx),
-                        Err(_) => serde_json::json!(-1),
+                        Ok(Some(idx)) => serde_json::json!(idx),
+                        Ok(None) | Err(_) => serde_json::Value::Null,
                     };
                     (value, OutputType::Ptr)
                 } else if let Some(val) = env.literal_id_to_value.get(to_id) {
@@ -1812,8 +2215,8 @@ fn determine_output_value(
                 }
             } else if let Some(id) = operation.id.as_deref() {
                 let value = match bfs_local_index_for_object(env, vis_graph, id) {
-                    Ok(idx) => serde_json::json!(idx),
-                    Err(_) => serde_json::json!(-1),
+                    Ok(Some(idx)) => serde_json::json!(idx),
+                    Ok(None) | Err(_) => serde_json::Value::Null,
                 };
                 (value, OutputType::Ptr)
             } else {
@@ -1857,8 +2260,8 @@ fn determine_output_value_for_exist_node(
         (value, OutputType::Int)
     } else {
         let value = match bfs_local_index_for_object(env, vis_graph, id) {
-            Ok(idx) => serde_json::json!(idx),
-            Err(_) => serde_json::json!(-1),
+            Ok(Some(idx)) => serde_json::json!(idx),
+            Ok(None) | Err(_) => serde_json::Value::Null,
         };
         (value, OutputType::Ptr)
     }
@@ -1909,6 +2312,55 @@ fn sanitize_base_name(name: &str) -> String {
     } else {
         name.to_string()
     }
+}
+
+fn merge_field_tables(a: Option<&FieldTables>, b: Option<&FieldTables>) -> Option<FieldTables> {
+    match (a, b) {
+        (None, None) => None,
+        (Some(one), None) | (None, Some(one)) => Some(FieldTables {
+            value: dedupe_preserve_order(&one.value),
+            pointer: dedupe_preserve_order(&one.pointer),
+        }),
+        (Some(left), Some(right)) => {
+            if field_table_conflict(left, right) {
+                return None;
+            }
+            Some(FieldTables {
+                value: merge_field_list(&left.value, &right.value),
+                pointer: merge_field_list(&left.pointer, &right.pointer),
+            })
+        }
+    }
+}
+
+fn field_table_conflict(a: &FieldTables, b: &FieldTables) -> bool {
+    let a_value: HashSet<&str> = a.value.iter().map(|s| s.as_str()).collect();
+    let a_pointer: HashSet<&str> = a.pointer.iter().map(|s| s.as_str()).collect();
+    let b_value: HashSet<&str> = b.value.iter().map(|s| s.as_str()).collect();
+    let b_pointer: HashSet<&str> = b.pointer.iter().map(|s| s.as_str()).collect();
+    a_value.iter().any(|f| b_pointer.contains(*f)) || a_pointer.iter().any(|f| b_value.contains(*f))
+}
+
+fn merge_field_list(base: &[String], extra: &[String]) -> Vec<String> {
+    let mut out = dedupe_preserve_order(base);
+    let mut seen: HashSet<String> = out.iter().cloned().collect();
+    for item in extra {
+        if seen.insert(item.clone()) {
+            out.push(item.clone());
+        }
+    }
+    out
+}
+
+fn dedupe_preserve_order(values: &[String]) -> Vec<String> {
+    let mut seen: HashSet<String> = HashSet::new();
+    let mut out = Vec::new();
+    for v in values {
+        if seen.insert(v.clone()) {
+            out.push(v.clone());
+        }
+    }
+    out
 }
 
 #[cfg(test)]

@@ -20,6 +20,10 @@ POST http://127.0.0.1:3030/synthesize
       "contextSensitiveID": "ctx1",
       "receiverObject": "obj1",
       "methodName": "test",
+      "fieldTables": {
+        "value": ["val"],
+        "pointer": ["next"]
+      },
       "operations": [
         {
           "edit_type": "addNode",
@@ -39,6 +43,10 @@ POST http://127.0.0.1:3030/synthesize
       "contextSensitiveID": "ctx2", 
       "receiverObject": "obj2",
       "methodName": "test",
+      "fieldTables": {
+        "value": ["val"],
+        "pointer": ["next"]
+      },
       "operations": [
         {
           "edit_type": "addNode",
@@ -76,7 +84,15 @@ POST http://127.0.0.1:3030/synthesize
   "code": [...],
   "individual_codes": [...],
   "list_environment_info": "...",
-  "operation_analysis": null
+  "operation_analysis": null,
+  "escher_results": [
+    {
+      "name": "idInt",
+      "success": true,
+      "rendered": "idInt(@x0: Int): Int =\n  @x0",
+      "error": null
+    }
+  ]
 }
 ```
 
@@ -97,7 +113,15 @@ POST http://127.0.0.1:3030/synthesize
     "list_environments_at_differences": [
       "Environment at position 1:\nNodes: {\"n1\": 0, \"n2\": 1, \"n3\": 2}\n..."
     ]
-  }
+  },
+  "escher_results": [
+    {
+      "name": "append",
+      "success": true,
+      "rendered": "append(@x0: List[Int], @x1: List[Int]): List[Int] = ...",
+      "error": null
+    }
+  ]
 }
 ```
 
@@ -110,6 +134,12 @@ POST http://127.0.0.1:3030/synthesize
    - 各操作列の操作数
    - 差異点の詳細
    - 各差異点でのList環境
+
+## Escher Scala.js 連携
+
+- `Escher-Scala/target/scala-2.12/escher-scala-opt.js` を Node 経由で実行し、生成した Escher JSON（差分から作った例）をその場で合成する。
+- ラッパー `scripts/run_escher.js` が JSON を stdin/`--file` から受け取り、`escher_results` として `name/success/rendered/error` を返す。ログは stderr に逃がし、stdout は純粋な JSON のみ。
+- デフォルトのパスはリポジトリ内の `scripts/run_escher.js` と Scala.js ビルド成果物を指す。独自のパスを使う場合は環境変数 `ESCHER_JS_RUNNER` でラッパーの場所を上書きする。
 
 ## 使用例
 

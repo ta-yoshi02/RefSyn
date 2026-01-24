@@ -79,12 +79,15 @@ fn main() -> anyhow::Result<()> {
     let case = EscherCase {
         env,
         vis_graph: vis_graph.clone(),
-        arguments: vec![json!(0)], // example scalar arg
+        arguments: vec![json!(0)], // receiver pointer
+        arg_names: vec!["this".to_string()],
+        arg_types: Some(vec!["Ptr".to_string()]),
+        receiver_arg_index: Some(0),
         output: json!(0),          // example expected output
     };
 
     // 6) Emit JSON and write to Escher-Scala resource path
-    let spec = build_escher_spec("append-g", "Int", &[case])?;
+    let spec = build_escher_spec("append-g", "Int", &[case], None)?;
     let spec_bundle = vec![spec];
     let json_text = specs_to_json(&spec_bundle)?;
     let out_path = "Escher-Scala/src/main/resources/escher/tests.json";

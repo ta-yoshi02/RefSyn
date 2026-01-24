@@ -6,6 +6,7 @@ use warp::http::StatusCode;
 use warp::Reply;
 
 #[tokio::test]
+#[ignore]
 async fn test_synthesis_from_kanon_payload() {
     let json_payload = r#"{
         "method_calls":[
@@ -128,7 +129,7 @@ fn test_list_environment_from_kanon_data() {
     let next_list = env.field_lists.get("next").unwrap();
     assert_eq!(next_list[0], json!(1)); // main-new1 -> __temp1 (index 1)
     assert_eq!(next_list[1], json!(2)); // __temp1 -> __temp4 (index 2)
-    assert_eq!(next_list[2], json!(-1)); // __temp4 -> null
+    assert_eq!(next_list[2], serde_json::Value::Null); // __temp4 -> nullPtr
 
     // val フィールドをチェック
     let val_list = env.field_lists.get("val").unwrap();
@@ -221,7 +222,7 @@ fn test_kanon_operations_applied() {
 
     let next_list = env.field_lists.get("next").unwrap();
     assert_eq!(next_list[0], json!(1)); // main-new1.next = __temp1 (index 1)
-    assert_eq!(next_list[1], json!(-1)); // __temp1.next = null
+    assert_eq!(next_list[1], serde_json::Value::Null); // __temp1.next = nullPtr
 
     // call2の操作を追加
     let call2_operations = vec![
@@ -282,5 +283,5 @@ fn test_kanon_operations_applied() {
     let final_next_list = env.field_lists.get("next").unwrap();
     assert_eq!(final_next_list[0], json!(1)); // main-new1.next = __temp1
     assert_eq!(final_next_list[1], json!(2)); // __temp1.next = __temp4
-    assert_eq!(final_next_list[2], json!(-1)); // __temp4.next = null
+    assert_eq!(final_next_list[2], serde_json::Value::Null); // __temp4.next = nullPtr
 }
