@@ -1,4 +1,5 @@
-use refsyn::unify_ops::{unify_operation_graphs, EdgeExpr, GraphOp, NodeExpr, Op, VarOp};
+use refsyn::isomorphism::unify_isomorphic_graphs;
+use refsyn::unify_ops::{EdgeExpr, GraphOp, NodeExpr, Op, VarOp};
 
 fn append_ops_a() -> Vec<Op> {
     vec![
@@ -94,7 +95,7 @@ fn append_ops_b() -> Vec<Op> {
 fn test_unify_append() {
     let a = append_ops_a();
     let b = append_ops_b();
-    let result = unify_operation_graphs(&a, &b);
+    let result = unify_isomorphic_graphs(&a, &b);
 
     let mut expected_common_a = vec![
         Op {
@@ -353,7 +354,7 @@ fn add2_ops_b() -> Vec<Op> {
 fn test_unify_add2() {
     let a = add2_ops_a();
     let b = add2_ops_b();
-    let result = unify_operation_graphs(&a, &b);
+    let result = unify_isomorphic_graphs(&a, &b);
 
     let mut expected_common_a = vec![
         Op {
@@ -627,7 +628,7 @@ fn prepend_ops_b() -> Vec<Op> {
 fn test_unify_prepend() {
     let a = prepend_ops_a();
     let b = prepend_ops_b();
-    let result = unify_operation_graphs(&a, &b);
+    let result = unify_isomorphic_graphs(&a, &b);
     let mut expected_common_a = vec![
         Op {
             id: "a0".to_string(),
@@ -794,7 +795,7 @@ fn remove_last_ops_b() -> Vec<Op> {
 fn test_unify_remove_last() {
     let a = remove_last_ops_a();
     let b = remove_last_ops_b();
-    let result = unify_operation_graphs(&a, &b);
+    let result = unify_isomorphic_graphs(&a, &b);
     let mut expected_common_a = vec![
         Op {
             id: "a_1".to_string(),
@@ -893,7 +894,7 @@ fn remove_first_ops_b() -> Vec<Op> {
 fn test_unify_remove_first() {
     let a = remove_first_ops_a();
     let b = remove_first_ops_b();
-    let result = unify_operation_graphs(&a, &b);
+    let result = unify_isomorphic_graphs(&a, &b);
     let mut expected_common_a = vec![Op {
         id: "a_1".to_string(),
         kind: GraphOp::Variable(VarOp::AddVariable {
@@ -1060,7 +1061,7 @@ fn insert_after_ops_b() -> Vec<Op> {
 fn test_unify_insert_after() {
     let a = insert_after_ops_a();
     let b = insert_after_ops_b();
-    let result = unify_operation_graphs(&a, &b);
+    let result = unify_isomorphic_graphs(&a, &b);
     let mut expected_common_a = vec![
         Op {
             id: "a_0".to_string(),
@@ -1253,7 +1254,7 @@ fn concat_ops_b() -> Vec<Op> {
 fn test_unify_concat() {
     let a = concat_ops_a();
     let b = concat_ops_b();
-    let result = unify_operation_graphs(&a, &b);
+    let result = unify_isomorphic_graphs(&a, &b);
     let mut expected_common_a = vec![Op {
         id: "a_2".to_string(),
         kind: GraphOp::Edge(EdgeExpr::AddEdge {
@@ -1378,7 +1379,7 @@ fn set_ops_b() -> Vec<Op> {
 fn test_unify_set() {
     let a = set_ops_a();
     let b = set_ops_b();
-    let result = unify_operation_graphs(&a, &b);
+    let result = unify_isomorphic_graphs(&a, &b);
     let mut expected_common_a = vec![Op {
         id: "a_2".to_string(),
         kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {

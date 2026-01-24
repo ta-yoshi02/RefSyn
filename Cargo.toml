@@ -12,14 +12,16 @@ tokio = { version = "1.0", features = ["full"] }
 http = "0.2"
 uuid = { version = "1.8.0", features = ["v4", "macro-diagnostics"] }
 petgraph = "0.6"
+bytes = "1"
 
 [dev-dependencies]
 tokio-test = "0.4"
+hyper = { version = "0.14", features = ["full"] }
 
 [[test]]
-name = "integration_tests"
-path = "tests/integration_tests.rs"
+name = "synthesis_api_tests"
+path = "tests/synthesis_api_tests.rs"
 
 [[test]]
-name = "method_specific_tests"  
-path = "tests/method_specific_tests.rs"
+name = "isomorphism_tests"
+path = "tests/isomorphism_tests.rs"
