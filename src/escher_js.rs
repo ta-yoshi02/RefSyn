@@ -154,12 +154,7 @@ pub fn compile_method(
     let js_name = js_function_name(&ctx.function_name);
     let params = params_js.join(", ");
     let compiled = compile_statement(body, ctx, true)?;
-    Ok(format!(
-        "{}({}) {{\n{}\n}}",
-        js_name,
-        params,
-        indent_block(&compiled)
-    ))
+    Ok(format!("{}({}) {{ {} }}", js_name, params, compiled))
 }
 
 pub fn compile_term(term: &Term, ctx: &CompileContext) -> Result<String> {
@@ -202,10 +197,8 @@ fn compile_statement(term: &Term, ctx: &CompileContext, emit_return: bool) -> Re
             let then_js = compile_statement(then_branch, ctx, emit_return)?;
             let else_js = compile_statement(else_branch, ctx, emit_return)?;
             Ok(format!(
-                "if ({}) {{\n{}\n}} else {{\n{}\n}}",
-                cond_js,
-                indent_block(&then_js),
-                indent_block(&else_js)
+                "if ({}) {{ {} }} else {{ {} }}",
+                cond_js, then_js, else_js
             ))
         }
         _ => {
@@ -217,13 +210,6 @@ fn compile_statement(term: &Term, ctx: &CompileContext, emit_return: bool) -> Re
             }
         }
     }
-}
-
-fn indent_block(body: &str) -> String {
-    body.lines()
-        .map(|line| format!("    {}", line))
-        .collect::<Vec<_>>()
-        .join("\n")
 }
 
 fn compile_component(name: &str, args: &[Term], ctx: &CompileContext) -> Result<String> {
@@ -662,7 +648,7 @@ mod tests {
         };
         let params_js = vec!["arg0".to_string(), "arg1".to_string()];
         let js = compile_method(&params_js, &term, &ctx).expect("compile");
-        let expected = "lastPtr(arg0, arg1) {\n    if (((arg1) === null)) {\n        return arg1;\n    } else {\n        return lastPtr((arg1).next);\n    }\n}";
+        let expected = "lastPtr(arg0, arg1) { if (((arg1) === null)) { return arg1; } else { return lastPtr((arg1).next); } }";
         assert_js_eq(&js, expected);
     }
 
@@ -742,7 +728,8 @@ mod tests {
             receiver_arg_index: Some(0),
         };
         let js = compile_method(&[], &term, &ctx).expect("compile");
-        let expected = "last_ptr() {\n    if (((this).next === null)) {\n        return this;\n    } else {\n        return ((this).next).last_ptr();\n    }\n}";
+        let expected =
+            "last_ptr() { if (((this).next === null)) { return this; } else { return ((this).next).last_ptr(); } }";
         assert_js_eq(&js, expected);
     }
 
@@ -803,7 +790,8 @@ mod tests {
 
         let js = translate_rendered_method(rendered, &[], &ctx).expect("compile");
 
-        let expected = "last_ptr() {\n    if (((this).next === null)) {\n        return this;\n    } else {\n        return ((this).next).last_ptr();\n    }\n}";
+        let expected =
+            "last_ptr() { if (((this).next === null)) { return this; } else { return ((this).next).last_ptr(); } }";
         assert_js_eq(&js, expected);
     }
 
@@ -827,7 +815,7 @@ mod tests {
         };
         let js = translate_rendered_method(rendered, &["target".to_string()], &ctx)
             .expect("compile");
-        let expected = "find(target) {\n    if (((target) === ((this).val))) {\n        return (this).val;\n    } else {\n        if (((this).next === null)) {\n            return null;\n        } else {\n            return ((this).next).find(target);\n        }\n    }\n}";
+        let expected = "find(target) { if (((target) === ((this).val))) { return (this).val; } else { if (((this).next === null)) { return null; } else { return ((this).next).find(target); } } }";
         assert_js_eq(&js, expected);
     }
 
