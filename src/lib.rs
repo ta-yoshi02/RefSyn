@@ -10,9 +10,8 @@ pub mod server;
 pub mod unify_ops;
 
 use crate::escher_bridge::{
-    build_escher_spec, derive_spec_meta_with_fields, run_escher_js, specs_to_json,
-    resolve_field_order, write_spec_to_file, EscherCase, EscherJsOutcome, EscherSpec,
-    EscherSpecMeta,
+    build_escher_spec, derive_spec_meta_with_fields, resolve_field_order, run_escher_js,
+    specs_to_json, write_spec_to_file, EscherCase, EscherJsOutcome, EscherSpec, EscherSpecMeta,
 };
 use crate::escher_js::{build_context_from_spec, translate_rendered_method};
 use anyhow;
@@ -31,6 +30,12 @@ pub struct MethodCallOperation {
     pub receiver_object: String,
     #[serde(rename = "methodName")]
     pub method_name: String,
+    #[serde(default)]
+    pub arguments: Vec<serde_json::Value>,
+    #[serde(rename = "argumentTypes")]
+    pub argument_types: Option<Vec<String>>,
+    #[serde(rename = "argumentNames")]
+    pub argument_names: Option<Vec<String>>,
     pub operations: Vec<serde_json::Value>,
     #[serde(rename = "actualGraph")]
     pub actual_graph: Option<VisGraph>,
@@ -276,6 +281,26 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
                 &base_env_b,
                 receiver_object_a,
                 receiver_object_b,
+                req.method_calls
+                    .get(0)
+                    .map(|m| m.arguments.as_slice())
+                    .unwrap_or(&[]),
+                req.method_calls
+                    .get(1)
+                    .map(|m| m.arguments.as_slice())
+                    .unwrap_or(&[]),
+                req.method_calls
+                    .get(0)
+                    .and_then(|m| m.argument_types.as_deref()),
+                req.method_calls
+                    .get(1)
+                    .and_then(|m| m.argument_types.as_deref()),
+                req.method_calls
+                    .get(0)
+                    .and_then(|m| m.argument_names.as_deref()),
+                req.method_calls
+                    .get(1)
+                    .and_then(|m| m.argument_names.as_deref()),
                 &operations_list[0],
                 &operations_list[1],
                 uni,
@@ -349,7 +374,10 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
 
                 for out in &results {
                     if let Some(rendered) = &out.rendered {
-                        match (spec_by_name.get(&out.name), spec_meta_by_name.get(&out.name)) {
+                        match (
+                            spec_by_name.get(&out.name),
+                            spec_meta_by_name.get(&out.name),
+                        ) {
                             (Some(spec), Some(meta)) => {
                                 match build_context_from_spec(&out.name, spec, meta) {
                                     Ok((ctx, params_js)) => {
@@ -367,16 +395,13 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
                                         }
                                     }
                                     Err(e) => {
-                                        individual_codes
-                                            .push(format!("{}: ERROR {}", out.name, e));
+                                        individual_codes.push(format!("{}: ERROR {}", out.name, e));
                                     }
                                 }
                             }
                             _ => {
-                                individual_codes.push(format!(
-                                    "{}: ERROR missing spec metadata",
-                                    out.name
-                                ));
+                                individual_codes
+                                    .push(format!("{}: ERROR missing spec metadata", out.name));
                             }
                         }
                     } else if let Some(err) = &out.error {
@@ -986,7 +1011,9 @@ fn build_case_arguments_from_variables(
                 continue;
             }
             if literal_ids.contains(edge.to.as_str()) {
-                kind_by_name.entry(var_name.to_string()).or_insert(ArgKind::Int);
+                kind_by_name
+                    .entry(var_name.to_string())
+                    .or_insert(ArgKind::Int);
             } else if object_ids.contains(edge.to.as_str()) {
                 kind_by_name.insert(var_name.to_string(), ArgKind::Ptr);
             }
@@ -1108,6 +1135,191 @@ fn build_case_arguments_from_variables(
     })
 }
 
+fn append_method_call_arguments(
+    bundle: &mut ArgBundle,
+    call_arguments: &[serde_json::Value],
+    call_argument_types: Option<&[String]>,
+    call_argument_names: Option<&[String]>,
+    env: &crate::list_env::ListEnvironment,
+    vis_graph: &models::VisGraph,
+    pointer_fields: &[String],
+) -> anyhow::Result<()> {
+    use std::collections::HashMap;
+
+    if call_arguments.is_empty() {
+        return Ok(());
+    }
+
+    if let Some(types) = call_argument_types {
+        if types.len() != call_arguments.len() {
+            return Err(anyhow::anyhow!(
+                "argument type count {} does not match argument count {}",
+                types.len(),
+                call_arguments.len()
+            ));
+        }
+    }
+    if let Some(names) = call_argument_names {
+        if names.len() != call_arguments.len() {
+            return Err(anyhow::anyhow!(
+                "argument name count {} does not match argument count {}",
+                names.len(),
+                call_arguments.len()
+            ));
+        }
+    }
+
+    let mut arg_kinds: Vec<ArgKind> = Vec::with_capacity(call_arguments.len());
+    for (idx, value) in call_arguments.iter().enumerate() {
+        let declared = call_argument_types
+            .and_then(|types| types.get(idx))
+            .map(String::as_str);
+        arg_kinds.push(resolve_call_argument_kind(value, declared, env)?);
+    }
+
+    let needs_bfs = arg_kinds.iter().any(|k| *k == ArgKind::Ptr);
+    let idx_to_bfs: HashMap<usize, usize> = if needs_bfs {
+        build_bfs_index_map(env, vis_graph, pointer_fields)?
+    } else {
+        HashMap::new()
+    };
+
+    for (idx, value) in call_arguments.iter().enumerate() {
+        let base_name = call_argument_names
+            .and_then(|names| names.get(idx))
+            .filter(|name| !name.trim().is_empty())
+            .cloned()
+            .unwrap_or_else(|| format!("arg{}", idx));
+        let mut name = base_name.clone();
+        let mut suffix = 1usize;
+        while bundle.names.contains(&name) {
+            name = format!("{}_{}", base_name, suffix);
+            suffix += 1;
+        }
+        bundle.names.push(name);
+
+        match arg_kinds[idx] {
+            ArgKind::Int => {
+                let int_value = value_to_i32(value).ok_or_else(|| {
+                    anyhow::anyhow!("failed to encode argument {} as Int: {}", idx, value)
+                })?;
+                bundle.types.push("Int".to_string());
+                bundle.values.push(serde_json::json!(int_value));
+            }
+            ArgKind::Ptr => {
+                let ptr_value = encode_call_argument_ptr(value, env, &idx_to_bfs, idx)?;
+                bundle.types.push("Ptr".to_string());
+                bundle.values.push(ptr_value);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn resolve_call_argument_kind(
+    value: &serde_json::Value,
+    declared: Option<&str>,
+    env: &crate::list_env::ListEnvironment,
+) -> anyhow::Result<ArgKind> {
+    if let Some(ty) = declared {
+        return match ty {
+            "Int" => Ok(ArgKind::Int),
+            "Ptr" => Ok(ArgKind::Ptr),
+            other => Err(anyhow::anyhow!("unsupported argument type '{}'", other)),
+        };
+    }
+
+    if value_to_i32(value).is_some() {
+        return Ok(ArgKind::Int);
+    }
+
+    if value.is_null() {
+        return Ok(ArgKind::Ptr);
+    }
+
+    if let Some(id) = value.as_str() {
+        if env.obj_id_to_index.contains_key(id) {
+            return Ok(ArgKind::Ptr);
+        }
+    }
+    if let Some(id) = value.get("id").and_then(|v| v.as_str()) {
+        if env.obj_id_to_index.contains_key(id) {
+            return Ok(ArgKind::Ptr);
+        }
+    }
+
+    Err(anyhow::anyhow!(
+        "cannot infer argument type from value {}; supply argumentTypes",
+        value
+    ))
+}
+
+fn encode_call_argument_ptr(
+    value: &serde_json::Value,
+    env: &crate::list_env::ListEnvironment,
+    idx_to_bfs: &HashMap<usize, usize>,
+    arg_index: usize,
+) -> anyhow::Result<serde_json::Value> {
+    if value.is_null() {
+        return Ok(serde_json::Value::Null);
+    }
+
+    if let Some(num) = value.as_i64() {
+        if let Ok(v) = i32::try_from(num) {
+            if v >= 0 {
+                return Ok(serde_json::json!(v));
+            }
+        }
+        return Err(anyhow::anyhow!(
+            "invalid Ptr argument {} value {}",
+            arg_index,
+            value
+        ));
+    }
+
+    if let Some(id) = value.as_str() {
+        return encode_call_argument_ptr_from_id(id, env, idx_to_bfs, arg_index);
+    }
+    if let Some(id) = value.get("id").and_then(|v| v.as_str()) {
+        return encode_call_argument_ptr_from_id(id, env, idx_to_bfs, arg_index);
+    }
+
+    Err(anyhow::anyhow!(
+        "unsupported Ptr argument {} value {}",
+        arg_index,
+        value
+    ))
+}
+
+fn encode_call_argument_ptr_from_id(
+    raw: &str,
+    env: &crate::list_env::ListEnvironment,
+    idx_to_bfs: &HashMap<usize, usize>,
+    arg_index: usize,
+) -> anyhow::Result<serde_json::Value> {
+    if let Ok(num) = raw.parse::<i64>() {
+        if let Ok(v) = i32::try_from(num) {
+            if v >= 0 {
+                return Ok(serde_json::json!(v));
+            }
+        }
+    }
+
+    let orig_idx =
+        env.obj_id_to_index.get(raw).copied().ok_or_else(|| {
+            anyhow::anyhow!("unknown Ptr argument {} object id '{}'", arg_index, raw)
+        })?;
+    let mapped_idx = idx_to_bfs.get(&orig_idx).copied().ok_or_else(|| {
+        anyhow::anyhow!(
+            "Ptr argument {} object '{}' is not reachable from receiver root",
+            arg_index,
+            raw
+        )
+    })?;
+    Ok(serde_json::json!(mapped_idx as i32))
+}
+
 fn build_bfs_index_map(
     env: &crate::list_env::ListEnvironment,
     vis_graph: &models::VisGraph,
@@ -1116,7 +1328,8 @@ fn build_bfs_index_map(
     use crate::list_env::PtrValue;
     use std::collections::{HashMap, HashSet, VecDeque};
 
-    let root = detect_root_index(env, vis_graph).ok_or_else(|| anyhow::anyhow!("root not found"))?;
+    let root =
+        detect_root_index(env, vis_graph).ok_or_else(|| anyhow::anyhow!("root not found"))?;
     let mut adj: HashMap<usize, Vec<usize>> = HashMap::new();
     for pf in pointer_fields {
         if let Some(vec) = env.field_lists.get(pf) {
@@ -1156,8 +1369,8 @@ fn bfs_local_index_for_object(
     vis_graph: &models::VisGraph,
     object_id: &str,
 ) -> anyhow::Result<Option<i32>> {
-    use std::collections::{HashMap, HashSet, VecDeque};
     use crate::list_env::PtrValue;
+    use std::collections::{HashMap, HashSet, VecDeque};
     let (_value_fields, mut pointer_fields) = analyze_fields_for_graph(vis_graph);
     pointer_fields.sort();
     let root =
@@ -1197,10 +1410,7 @@ fn bfs_local_index_for_object(
     }
     // map object id to original index then to bfs index
     if let Some(&orig_idx) = env.obj_id_to_index.get(object_id) {
-        Ok(idx_to_bfs
-            .get(&orig_idx)
-            .copied()
-            .map(|x| x as i32))
+        Ok(idx_to_bfs.get(&orig_idx).copied().map(|x| x as i32))
     } else {
         Ok(None)
     }
@@ -1402,6 +1612,12 @@ fn generate_specs_from_unification(
     base_env_b: &crate::list_env::ListEnvironment,
     receiver_object_a: Option<&str>,
     receiver_object_b: Option<&str>,
+    call_arguments_a: &[serde_json::Value],
+    call_arguments_b: &[serde_json::Value],
+    call_argument_types_a: Option<&[String]>,
+    call_argument_types_b: Option<&[String]>,
+    call_argument_names_a: Option<&[String]>,
+    call_argument_names_b: Option<&[String]>,
     operations_a: &[serde_json::Value],
     operations_b: &[serde_json::Value],
     analysis: &UnificationAnalysisResult,
@@ -2075,21 +2291,40 @@ fn generate_specs_from_unification(
                 output: serde_json::Value::Null,
             },
         ];
-        let (_value_fields, pointer_fields) =
-            resolve_field_order(&field_stub_cases, field_tables)?;
+        let (_value_fields, pointer_fields) = resolve_field_order(&field_stub_cases, field_tables)?;
 
-        let arg_bundle_a = build_case_arguments_from_variables(
+        let mut arg_bundle_a = build_case_arguments_from_variables(
             &env_a,
             vis_graph_a,
             &pointer_fields,
             receiver_object_a,
         )?;
-        let arg_bundle_b = build_case_arguments_from_variables(
+        let mut arg_bundle_b = build_case_arguments_from_variables(
             &env_b,
             vis_graph_b,
             &pointer_fields,
             receiver_object_b,
         )?;
+
+        append_method_call_arguments(
+            &mut arg_bundle_a,
+            call_arguments_a,
+            call_argument_types_a,
+            call_argument_names_a,
+            &env_a,
+            vis_graph_a,
+            &pointer_fields,
+        )?;
+        append_method_call_arguments(
+            &mut arg_bundle_b,
+            call_arguments_b,
+            call_argument_types_b,
+            call_argument_names_b,
+            &env_b,
+            vis_graph_b,
+            &pointer_fields,
+        )?;
+
         if arg_bundle_a.names != arg_bundle_b.names {
             return Err(anyhow::anyhow!(
                 "argument variable names differ across cases: {:?} vs {:?}",
@@ -2153,8 +2388,12 @@ fn generate_specs_from_unification(
         let meta = derive_spec_meta_with_fields(&cases, field_tables)?;
         spec_meta_by_name.insert(spec_name.clone(), meta);
 
-        let spec =
-            build_escher_spec(&spec_name, return_type.as_escher_type(), &cases, field_tables)?;
+        let spec = build_escher_spec(
+            &spec_name,
+            return_type.as_escher_type(),
+            &cases,
+            field_tables,
+        )?;
         trace_json(&format!("EscherSpec {}", spec.name), &spec);
         specs.push(spec);
     }
@@ -2417,5 +2656,85 @@ mod tests {
             serde_json::Value::Null
         );
         assert_eq!(missing_output_for_type(OutputType::Int), json!(-1));
+    }
+
+    #[test]
+    fn append_method_call_arguments_appends_int_values() {
+        let vis_graph = simple_vis_graph_with_root();
+        let env = list_env::ListEnvironment::from_vis_graph(&vis_graph);
+        let mut bundle =
+            build_case_arguments_from_variables(&env, &vis_graph, &[], Some("obj1")).unwrap();
+        let call_arguments = vec![json!(26)];
+        let call_argument_types = vec!["Int".to_string()];
+
+        append_method_call_arguments(
+            &mut bundle,
+            &call_arguments,
+            Some(&call_argument_types),
+            None,
+            &env,
+            &vis_graph,
+            &[],
+        )
+        .unwrap();
+
+        assert_eq!(bundle.types, vec!["Ptr".to_string(), "Int".to_string()]);
+        assert_eq!(bundle.values[1], json!(26));
+    }
+
+    #[test]
+    fn append_method_call_arguments_maps_ptr_object_id() {
+        let vis_graph = VisGraph {
+            nodes: vec![
+                crate::models::Node {
+                    id: "__Variable-lst".to_string(),
+                    is_literal: false,
+                    label: json!("lst"),
+                },
+                crate::models::Node {
+                    id: "obj1".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "obj2".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+            ],
+            edges: vec![
+                crate::models::Edge {
+                    from: "__Variable-lst".to_string(),
+                    to: "obj1".to_string(),
+                    label: "lst".to_string(),
+                },
+                crate::models::Edge {
+                    from: "obj1".to_string(),
+                    to: "obj2".to_string(),
+                    label: "next".to_string(),
+                },
+            ],
+        };
+        let env = list_env::ListEnvironment::from_vis_graph(&vis_graph);
+        let pointer_fields = vec!["next".to_string()];
+        let mut bundle =
+            build_case_arguments_from_variables(&env, &vis_graph, &pointer_fields, Some("obj1"))
+                .unwrap();
+        let call_arguments = vec![json!("obj2")];
+        let call_argument_types = vec!["Ptr".to_string()];
+
+        append_method_call_arguments(
+            &mut bundle,
+            &call_arguments,
+            Some(&call_argument_types),
+            None,
+            &env,
+            &vis_graph,
+            &pointer_fields,
+        )
+        .unwrap();
+
+        assert_eq!(bundle.types, vec!["Ptr".to_string(), "Ptr".to_string()]);
+        assert_eq!(bundle.values[1], json!(1));
     }
 }

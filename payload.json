@@ -5,6 +5,9 @@
       "contextSensitiveID": "main",
       "receiverObject": "main-new1",
       "methodName": "call1",
+      "arguments": [26],
+      "argumentTypes": ["Int"],
+      "argumentNames": ["arg"],
       "actual_graph": {
         "nodes": [
           {"id": "main-new1", "is_literal": false, "label": "Node"},
@@ -29,6 +32,9 @@
       "contextSensitiveID": "main",
       "receiverObject": "main-new1",
       "methodName": "call2",
+      "arguments": [10],
+      "argumentTypes": ["Int"],
+      "argumentNames": ["arg"],
       "actual_graph": {
         "nodes": [
           {"id": "main-new1", "is_literal": false, "label": "Node"},

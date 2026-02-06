@@ -6,7 +6,10 @@ use crate::escher_bridge::{EscherSpec, EscherSpecMeta};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Term {
     Var(String),
-    Component { name: String, args: Vec<Term> },
+    Component {
+        name: String,
+        args: Vec<Term>,
+    },
     If {
         cond: Box<Term>,
         then_branch: Box<Term>,
@@ -146,11 +149,7 @@ pub fn build_context_from_spec(
     ))
 }
 
-pub fn compile_method(
-    params_js: &[String],
-    body: &Term,
-    ctx: &CompileContext,
-) -> Result<String> {
+pub fn compile_method(params_js: &[String], body: &Term, ctx: &CompileContext) -> Result<String> {
     let js_name = js_function_name(&ctx.function_name);
     let params = params_js.join(", ");
     let compiled = compile_statement(body, ctx, true)?;
@@ -172,10 +171,7 @@ pub fn compile_term(term: &Term, ctx: &CompileContext) -> Result<String> {
             let cond_js = compile_term(cond, ctx)?;
             let then_js = compile_term(then_branch, ctx)?;
             let else_js = compile_term(else_branch, ctx)?;
-            Ok(format!(
-                "(({}) ? ({}) : ({}))",
-                cond_js, then_js, else_js
-            ))
+            Ok(format!("(({}) ? ({}) : ({}))", cond_js, then_js, else_js))
         }
         Term::Component { name, args } => {
             if name == &ctx.function_name {
@@ -295,7 +291,10 @@ fn compile_is_null_at_ptr(args: &[Term], ctx: &CompileContext) -> Result<String>
             ));
         }
         let ptr_expr = compile_term(&args[0], ctx)?;
-        return Ok(format!("({} === null)", format_field_access(&ptr_expr, field)));
+        return Ok(format!(
+            "({} === null)",
+            format_field_access(&ptr_expr, field)
+        ));
     }
     Err(anyhow!(
         "is_null_at_ptr requires list field (sigma) on second arg"
@@ -622,7 +621,10 @@ mod tests {
     use std::collections::{HashMap, HashSet};
 
     fn normalize_lines(input: &str) -> Vec<String> {
-        input.lines().map(|line| line.trim_end().to_string()).collect()
+        input
+            .lines()
+            .map(|line| line.trim_end().to_string())
+            .collect()
     }
 
     fn assert_js_eq(actual: &str, expected: &str) {
@@ -631,8 +633,7 @@ mod tests {
 
     #[test]
     fn compile_recursive_call_without_methodization() {
-        let term_src =
-            "if is_null(@x1) then @x1 else lastPtr(index_ptr(@x1, @x2), @x2)";
+        let term_src = "if is_null(@x1) then @x1 else lastPtr(index_ptr(@x1, @x2), @x2)";
         let term = parse_term_text(term_src).expect("parse term");
         let mut gamma = HashMap::new();
         gamma.insert("x0".to_string(), "arg0".to_string());
@@ -712,7 +713,8 @@ mod tests {
 
     #[test]
     fn compile_recursive_call_with_receiver_and_sigma() {
-        let term_src = "if is_null_at_ptr(@x0, @x1) then @x0 else last_ptr(index_ptr(@x0, @x1), @x1)";
+        let term_src =
+            "if is_null_at_ptr(@x0, @x1) then @x0 else last_ptr(index_ptr(@x0, @x1), @x1)";
         let term = parse_term_text(term_src).expect("parse term");
         let mut gamma = HashMap::new();
         gamma.insert("x0".to_string(), "this".to_string());
@@ -759,10 +761,7 @@ mod tests {
             build_context_from_spec("last_ptr", &spec, &meta).expect("build context");
 
         assert_eq!(ctx.gamma.get("x0").map(String::as_str), Some("this"));
-        assert_eq!(
-            ctx.gamma.get("x1").map(String::as_str),
-            Some("arg1_this")
-        );
+        assert_eq!(ctx.gamma.get("x1").map(String::as_str), Some("arg1_this"));
         assert_eq!(params_js, vec!["arg1_this".to_string()]);
         assert_eq!(ctx.sigma.get("x2").map(String::as_str), Some("val"));
         assert_eq!(ctx.sigma.get("x3").map(String::as_str), Some("next"));
@@ -813,10 +812,9 @@ mod tests {
             function_name: "find".to_string(),
             receiver_arg_index: Some(0),
         };
-        let js = translate_rendered_method(rendered, &["target".to_string()], &ctx)
-            .expect("compile");
+        let js =
+            translate_rendered_method(rendered, &["target".to_string()], &ctx).expect("compile");
         let expected = "find(target) { if (((target) === ((this).val))) { return (this).val; } else { if (((this).next === null)) { return null; } else { return ((this).next).find(target); } } }";
         assert_js_eq(&js, expected);
     }
-
 }

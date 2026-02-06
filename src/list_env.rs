@@ -372,7 +372,6 @@ impl ListEnvironment {
         }
         Value::Null
     }
-
 }
 
 #[cfg(test)]

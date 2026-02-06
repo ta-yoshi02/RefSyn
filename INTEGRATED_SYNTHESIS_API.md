@@ -20,6 +20,9 @@ POST http://127.0.0.1:3030/synthesize
       "contextSensitiveID": "ctx1",
       "receiverObject": "obj1",
       "methodName": "test",
+      "arguments": [26],
+      "argumentTypes": ["Int"],
+      "argumentNames": ["arg"],
       "fieldTables": {
         "value": ["val"],
         "pointer": ["next"]
@@ -43,6 +46,9 @@ POST http://127.0.0.1:3030/synthesize
       "contextSensitiveID": "ctx2", 
       "receiverObject": "obj2",
       "methodName": "test",
+      "arguments": [10],
+      "argumentTypes": ["Int"],
+      "argumentNames": ["arg"],
       "fieldTables": {
         "value": ["val"],
         "pointer": ["next"]
@@ -167,6 +173,8 @@ fetch('http://127.0.0.1:3030/synthesize', {
         contextSensitiveID: "ctx1",
         receiverObject: "graph1",
         methodName: "modify",
+        arguments: [26],
+        argumentTypes: ["Int"],
         operations: [...] // Kanon operations
       },
       // 操作列2  
@@ -175,6 +183,8 @@ fetch('http://127.0.0.1:3030/synthesize', {
         contextSensitiveID: "ctx2",
         receiverObject: "graph2", 
         methodName: "modify",
+        arguments: [10],
+        argumentTypes: ["Int"],
         operations: [...] // 異なるKanon operations
       }
     ],
