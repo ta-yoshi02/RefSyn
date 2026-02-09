@@ -36,6 +36,8 @@ pub struct MethodCallOperation {
     pub argument_types: Option<Vec<String>>,
     #[serde(rename = "argumentNames")]
     pub argument_names: Option<Vec<String>>,
+    #[serde(rename = "methodParamNames")]
+    pub method_param_names: Option<Vec<String>>,
     pub operations: Vec<serde_json::Value>,
     #[serde(rename = "actualGraph")]
     pub actual_graph: Option<VisGraph>,
@@ -62,6 +64,8 @@ pub struct SynthesisResponse {
     pub common_pattern: Option<String>,
     pub hole_information: Option<HashMap<String, Vec<String>>>,
     pub code: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub composed_method_code: Option<String>,
     pub individual_codes: Vec<String>,
     pub list_environment_info: Option<String>, // ListEnvironmentの情報を追加
     // 操作分析結果のフィールド（複数の操作列が提供された場合のみ設定）
@@ -77,6 +81,13 @@ pub struct OperationAnalysisData {
     pub difference_summary: String,
     pub differences_found: usize,
     pub synthesis_matches: Option<usize>, // 合成で見つかった共通パターン数
+}
+
+#[derive(Debug, Clone)]
+struct CommonPlanArtifact {
+    pattern_text: String,
+    hole_information: HashMap<String, Vec<String>>,
+    composed_method_code: Option<String>,
 }
 
 fn trace_enabled() -> bool {
@@ -113,6 +124,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
                 common_pattern: None,
                 hole_information: None,
                 code: vec![],
+                composed_method_code: None,
                 individual_codes: vec![],
                 list_environment_info: None,
                 operation_analysis: None,
@@ -131,6 +143,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
             common_pattern: None,
             hole_information: None,
             code: vec![],
+            composed_method_code: None,
             individual_codes: vec![],
             list_environment_info: None,
             operation_analysis: None,
@@ -142,12 +155,52 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         ));
     }
 
+    let unique_method_names = collect_unique_method_names(&req.method_calls);
+    if unique_method_names.len() > 1 {
+        let message = format!(
+            "Mismatched method names in method_calls: {}",
+            unique_method_names.join(", ")
+        );
+        eprintln!("{}", message);
+        let response = SynthesisResponse {
+            common_pattern: None,
+            hole_information: None,
+            code: vec![],
+            composed_method_code: None,
+            individual_codes: vec![],
+            list_environment_info: Some(message),
+            operation_analysis: None,
+            escher_results: None,
+        };
+        return Ok(warp::reply::with_status(
+            warp::reply::json(&response),
+            StatusCode::BAD_REQUEST,
+        ));
+    }
+
     // Gather raw operation traces for later analysis/spec generation.
     let operations_list: Vec<Vec<serde_json::Value>> = req
         .method_calls
         .iter()
         .map(|call| call.operations.clone())
         .collect();
+    if let Some(message) = detect_unsupported_remove_operation(&operations_list) {
+        eprintln!("{}", message);
+        let response = SynthesisResponse {
+            common_pattern: None,
+            hole_information: None,
+            code: vec![],
+            composed_method_code: None,
+            individual_codes: vec![],
+            list_environment_info: Some(message),
+            operation_analysis: None,
+            escher_results: None,
+        };
+        return Ok(warp::reply::with_status(
+            warp::reply::json(&response),
+            StatusCode::BAD_REQUEST,
+        ));
+    }
 
     // Provide a summary of the current list environment derived from the base VisGraph.
     use crate::list_env::ListEnvironment;
@@ -244,6 +297,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     let spec_base_name = derive_spec_base_name(&req.method_calls);
     let mut aggregated_specs: Vec<EscherSpec> = Vec::new();
     let mut spec_meta_by_name: HashMap<String, EscherSpecMeta> = HashMap::new();
+    let mut common_plan_artifact: Option<CommonPlanArtifact> = None;
     let mut escher_json: Option<String> = None;
     let mut escher_outcomes: Option<Vec<EscherJsOutcome>> = None;
     let mut synthesized_codes: Vec<String> = Vec::new();
@@ -301,18 +355,32 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
                 req.method_calls
                     .get(1)
                     .and_then(|m| m.argument_names.as_deref()),
+                req.method_calls
+                    .get(0)
+                    .and_then(|m| m.method_param_names.as_deref()),
+                req.method_calls
+                    .get(1)
+                    .and_then(|m| m.method_param_names.as_deref()),
                 &operations_list[0],
                 &operations_list[1],
                 uni,
                 &spec_base_name,
+                req.method_calls
+                    .get(0)
+                    .map(|m| m.method_name.as_str())
+                    .unwrap_or("method"),
                 merged_field_tables.as_ref(),
                 &mut spec_meta_by_name,
             ) {
-                Ok(specs) => {
+                Ok(spec_result) => {
+                    let GeneratedSpecsResult { specs, common_plan } = spec_result;
                     if specs.is_empty() {
                         println!("Unification diff groups were empty; no Escher specs generated.");
                     } else {
                         aggregated_specs.extend(specs);
+                    }
+                    if common_plan_artifact.is_none() {
+                        common_plan_artifact = common_plan;
                     }
                 }
                 Err(e) => {
@@ -426,9 +494,16 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     }
 
     let response = SynthesisResponse {
-        common_pattern: None,
-        hole_information: None,
+        common_pattern: common_plan_artifact
+            .as_ref()
+            .map(|artifact| artifact.pattern_text.clone()),
+        hole_information: common_plan_artifact
+            .as_ref()
+            .map(|artifact| artifact.hole_information.clone()),
         code: synthesized_codes,
+        composed_method_code: common_plan_artifact
+            .as_ref()
+            .and_then(|artifact| artifact.composed_method_code.clone()),
         individual_codes,
         list_environment_info: Some(list_env_info),
         operation_analysis: operation_analysis_data,
@@ -485,6 +560,9 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         for (i, c) in response.code.iter().enumerate() {
             println!("  [{}] {}", i, c);
         }
+    }
+    if let Some(composed) = &response.composed_method_code {
+        println!("Composed method code:\n{}", composed);
     }
 
     if let Some(results) = &response.escher_results {
@@ -1526,6 +1604,25 @@ struct DiffCandidate {
     index: usize,
 }
 
+#[derive(Clone)]
+struct HoleBinding {
+    hole_key: String,
+    spec_name: String,
+    return_type: String,
+    js_method_name: String,
+    js_call_template: String,
+    side_a: String,
+    side_b: String,
+    anchor_a: Option<usize>,
+    anchor_b: Option<usize>,
+}
+
+#[derive(Clone)]
+struct GeneratedSpecsResult {
+    specs: Vec<EscherSpec>,
+    common_plan: Option<CommonPlanArtifact>,
+}
+
 fn diff_op_index(op: &DiffOp) -> Option<usize> {
     match op {
         DiffOp::Json { index, .. } => Some(*index),
@@ -1637,6 +1734,394 @@ fn canonicalize_object_id(id: &str, mapping: &HashMap<String, String>) -> String
     mapping.get(id).cloned().unwrap_or_else(|| id.to_string())
 }
 
+fn sanitize_js_identifier(name: &str) -> String {
+    let mut out = String::with_capacity(name.len());
+    for ch in name.chars() {
+        let valid = ch.is_ascii_alphanumeric() || ch == '_' || ch == '$';
+        out.push(if valid { ch } else { '_' });
+    }
+    if out.is_empty() {
+        "_".to_string()
+    } else {
+        if out
+            .chars()
+            .next()
+            .map(|c| c.is_ascii_digit())
+            .unwrap_or(false)
+        {
+            format!("_{}", out)
+        } else {
+            out
+        }
+    }
+}
+
+fn spec_name_to_js_method_name(spec_name: &str) -> String {
+    sanitize_js_identifier(spec_name)
+}
+
+fn default_method_param_names(arg_count: usize) -> Vec<String> {
+    match arg_count {
+        0 => vec![],
+        1 => vec!["arg".to_string()],
+        n => (0..n).map(|i| format!("arg{}", i)).collect(),
+    }
+}
+
+fn build_hole_call_template(js_method_name: &str, method_param_names: &[String]) -> String {
+    if method_param_names.is_empty() {
+        format!("this.{}()", js_method_name)
+    } else {
+        format!("this.{}({})", js_method_name, method_param_names.join(", "))
+    }
+}
+
+fn is_valid_js_identifier(name: &str) -> bool {
+    let mut chars = name.chars();
+    let first = match chars.next() {
+        Some(c) => c,
+        None => return false,
+    };
+    if !(first.is_ascii_alphabetic() || first == '_' || first == '$') {
+        return false;
+    }
+    chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$')
+}
+
+fn resolve_method_param_names(
+    method_param_names_a: Option<&[String]>,
+    method_param_names_b: Option<&[String]>,
+    fallback_arg_count: usize,
+) -> Vec<String> {
+    let normalize = |names: &[String]| -> Vec<String> {
+        names
+            .iter()
+            .enumerate()
+            .map(|(i, name)| {
+                let trimmed = name.trim();
+                if trimmed.is_empty() {
+                    format!("arg{}", i)
+                } else {
+                    sanitize_js_identifier(trimmed)
+                }
+            })
+            .collect()
+    };
+
+    let candidate_a = method_param_names_a
+        .filter(|names| !names.is_empty())
+        .map(normalize);
+    let candidate_b = method_param_names_b
+        .filter(|names| !names.is_empty())
+        .map(normalize);
+
+    match (candidate_a, candidate_b) {
+        (Some(a), Some(b)) if a == b => a,
+        (Some(a), None) => a,
+        (None, Some(b)) => b,
+        (Some(a), Some(_b)) => a,
+        (None, None) => default_method_param_names(fallback_arg_count),
+    }
+}
+
+fn js_literal_expr_from_graph_label(label: Option<&serde_json::Value>) -> String {
+    match label {
+        Some(serde_json::Value::Number(num)) => num.to_string(),
+        Some(serde_json::Value::Bool(b)) => b.to_string(),
+        Some(serde_json::Value::Null) => "null".to_string(),
+        Some(serde_json::Value::String(s)) => {
+            if let Ok(int_value) = s.parse::<i64>() {
+                int_value.to_string()
+            } else if let Ok(float_value) = s.parse::<f64>() {
+                if float_value.is_finite() {
+                    float_value.to_string()
+                } else {
+                    serde_json::to_string(s).unwrap_or_else(|_| "\"\"".to_string())
+                }
+            } else {
+                serde_json::to_string(s).unwrap_or_else(|_| "\"\"".to_string())
+            }
+        }
+        Some(other) => serde_json::to_string(other).unwrap_or_else(|_| "null".to_string()),
+        None => "undefined".to_string(),
+    }
+}
+
+fn js_field_assignment(lhs: &str, field: &str, rhs: &str) -> String {
+    if is_valid_js_identifier(field) {
+        format!("{}.{} = {};", lhs, field, rhs)
+    } else {
+        let quoted = serde_json::to_string(field).unwrap_or_else(|_| "\"\"".to_string());
+        format!("{}[{}] = {};", lhs, quoted, rhs)
+    }
+}
+
+fn resolve_object_expression(
+    object_id: &str,
+    receiver_object_id: Option<&str>,
+    object_expr_by_id: &HashMap<String, String>,
+    hole_by_object_id: &HashMap<String, String>,
+    hole_expr_by_key: &HashMap<String, String>,
+) -> Option<String> {
+    if let Some(hole_key) = hole_by_object_id.get(object_id) {
+        if let Some(expr) = hole_expr_by_key.get(hole_key) {
+            return Some(expr.clone());
+        }
+    }
+    if let Some(expr) = object_expr_by_id.get(object_id) {
+        return Some(expr.clone());
+    }
+    if receiver_object_id == Some(object_id) {
+        return Some("this".to_string());
+    }
+    None
+}
+
+fn build_composed_method_code(
+    method_name: &str,
+    method_param_names: &[String],
+    ordered_common_ops: &[(usize, crate::list_env::GraphOperation)],
+    hole_bindings: &[HoleBinding],
+    hole_by_object_id: &HashMap<String, String>,
+    receiver_object_id: Option<&str>,
+) -> anyhow::Result<String> {
+    let method_name = sanitize_js_identifier(method_name);
+    let mut lines: Vec<String> = Vec::new();
+    let mut hole_expr_by_key: HashMap<String, String> = HashMap::new();
+    let mut object_expr_by_id: HashMap<String, String> = HashMap::new();
+    if let Some(receiver_id) = receiver_object_id {
+        object_expr_by_id.insert(receiver_id.to_string(), "this".to_string());
+    }
+
+    let mut ptr_idx = 0usize;
+    let mut int_idx = 0usize;
+    for binding in hole_bindings {
+        let var_name = if binding.return_type == "Ptr" {
+            let name = format!("h_ptr_{}", ptr_idx);
+            ptr_idx += 1;
+            name
+        } else {
+            let name = format!("h_int_{}", int_idx);
+            int_idx += 1;
+            name
+        };
+        lines.push(format!(
+            "const {} = {};",
+            var_name, binding.js_call_template
+        ));
+        hole_expr_by_key.insert(binding.hole_key.clone(), var_name);
+    }
+
+    let mut tmp_index = 0usize;
+    for (_op_index, op) in ordered_common_ops {
+        match op.edit_type.as_str() {
+            "addNode" => {
+                let node_id = op
+                    .id
+                    .as_deref()
+                    .ok_or_else(|| anyhow::anyhow!("addNode op missing id"))?;
+                if op.is_literal.unwrap_or(false) {
+                    object_expr_by_id.insert(
+                        node_id.to_string(),
+                        js_literal_expr_from_graph_label(op.label.as_ref()),
+                    );
+                } else {
+                    let var_name = format!("tmp{}", tmp_index);
+                    tmp_index += 1;
+                    let ctor = graph_op_label_string(op).unwrap_or_else(|| "Object".to_string());
+                    if is_valid_js_identifier(&ctor) {
+                        lines.push(format!("const {} = new {}();", var_name, ctor));
+                    } else {
+                        lines.push(format!("const {} = {{}};", var_name));
+                    }
+                    object_expr_by_id.insert(node_id.to_string(), var_name);
+                }
+            }
+            "addEdge" => {
+                let from_id = op
+                    .from
+                    .as_deref()
+                    .ok_or_else(|| anyhow::anyhow!("addEdge op missing from"))?;
+                let to_id = op
+                    .to
+                    .as_deref()
+                    .ok_or_else(|| anyhow::anyhow!("addEdge op missing to"))?;
+                let field = graph_op_label_string(op).unwrap_or_default();
+
+                let from_expr = resolve_object_expression(
+                    from_id,
+                    receiver_object_id,
+                    &object_expr_by_id,
+                    hole_by_object_id,
+                    &hole_expr_by_key,
+                )
+                .ok_or_else(|| {
+                    anyhow::anyhow!("failed to resolve from expression for {}", from_id)
+                })?;
+                let to_expr = resolve_object_expression(
+                    to_id,
+                    receiver_object_id,
+                    &object_expr_by_id,
+                    hole_by_object_id,
+                    &hole_expr_by_key,
+                )
+                .ok_or_else(|| anyhow::anyhow!("failed to resolve to expression for {}", to_id))?;
+
+                lines.push(js_field_assignment(&from_expr, &field, &to_expr));
+            }
+            "removeNode" | "removeEdge" => {
+                return Err(anyhow::anyhow!(
+                    "remove operations are not supported yet in composed method generation"
+                ));
+            }
+            other => {
+                return Err(anyhow::anyhow!(
+                    "unsupported operation in common plan for composed generation: {}",
+                    other
+                ));
+            }
+        }
+    }
+
+    let mut code_lines = Vec::new();
+    code_lines.push(format!(
+        "{}({}) {{",
+        method_name,
+        method_param_names.join(", ")
+    ));
+    for line in lines {
+        code_lines.push(format!("    {}", line));
+    }
+    code_lines.push("}".to_string());
+    Ok(code_lines.join("\n"))
+}
+
+fn common_ops_in_source_order(
+    common_ops: &[crate::unify_ops::Op],
+    graph_ops: &[crate::list_env::GraphOperation],
+) -> Vec<(usize, crate::list_env::GraphOperation)> {
+    let mut pairs: Vec<(usize, crate::list_env::GraphOperation)> = common_ops
+        .iter()
+        .filter_map(|op| {
+            parse_op_index(&op.id)
+                .and_then(|idx| graph_ops.get(idx).cloned().map(|graph_op| (idx, graph_op)))
+        })
+        .collect();
+    pairs.sort_by_key(|(idx, _)| *idx);
+    pairs.dedup_by_key(|(idx, _)| *idx);
+    pairs
+}
+
+fn diff_op_primary_object_id(op: &DiffOp) -> Option<String> {
+    match op {
+        DiffOp::Json { graph_op, .. } => match graph_op.edit_type.as_str() {
+            "addNode" | "removeNode" => graph_op.id.clone(),
+            "addEdge" | "removeEdge" => graph_op.to.clone(),
+            _ => None,
+        },
+        DiffOp::ExistNode { id, .. } => Some(id.clone()),
+    }
+}
+
+fn render_common_graph_op(
+    index: usize,
+    op: &crate::list_env::GraphOperation,
+    hole_by_object_id: &HashMap<String, String>,
+) -> String {
+    let resolve_id = |id: &str| {
+        hole_by_object_id
+            .get(id)
+            .cloned()
+            .unwrap_or_else(|| id.to_string())
+    };
+
+    match op.edit_type.as_str() {
+        "addNode" | "removeNode" => {
+            let id = op
+                .id
+                .as_deref()
+                .map(resolve_id)
+                .unwrap_or_else(|| "-".to_string());
+            let label = graph_op_label_string(op).unwrap_or_else(|| "<none>".to_string());
+            let is_literal = op.is_literal.unwrap_or(false);
+            format!(
+                "[op_{}] {}(id={}, label={}, isLiteral={})",
+                index, op.edit_type, id, label, is_literal
+            )
+        }
+        "addEdge" | "removeEdge" => {
+            let from = op
+                .from
+                .as_deref()
+                .map(resolve_id)
+                .unwrap_or_else(|| "-".to_string());
+            let to = op
+                .to
+                .as_deref()
+                .map(resolve_id)
+                .unwrap_or_else(|| "-".to_string());
+            let label = graph_op_label_string(op).unwrap_or_else(|| "<none>".to_string());
+            format!(
+                "[op_{}] {}(from={}, to={}, label={})",
+                index, op.edit_type, from, to, label
+            )
+        }
+        _ => format!("[op_{}] {}", index, format_graph_op(op)),
+    }
+}
+
+fn build_common_plan_artifact(
+    ordered_common_ops: &[(usize, crate::list_env::GraphOperation)],
+    hole_bindings: &[HoleBinding],
+    hole_by_object_id: &HashMap<String, String>,
+    composed_method_code: Option<String>,
+) -> Option<CommonPlanArtifact> {
+    if ordered_common_ops.is_empty() && hole_bindings.is_empty() {
+        return None;
+    }
+
+    let mut lines: Vec<String> = Vec::new();
+    lines.push("COMMON_PLAN (operation-level, ordered)".to_string());
+    for (index, op) in ordered_common_ops {
+        lines.push(render_common_graph_op(*index, op, hole_by_object_id));
+    }
+    if !hole_bindings.is_empty() {
+        lines.push(String::new());
+        lines.push("HOLE_BINDINGS".to_string());
+        for binding in hole_bindings {
+            lines.push(format!(
+                "{} -> {} ({})",
+                binding.hole_key, binding.spec_name, binding.return_type
+            ));
+        }
+    }
+
+    let mut hole_information: HashMap<String, Vec<String>> = HashMap::new();
+    for binding in hole_bindings {
+        let mut values = vec![
+            format!("spec={}", binding.spec_name),
+            format!("return={}", binding.return_type),
+            format!("jsMethod={}", binding.js_method_name),
+            format!("jsCall={}", binding.js_call_template),
+            format!("sideA={}", binding.side_a),
+            format!("sideB={}", binding.side_b),
+        ];
+        if let Some(anchor) = binding.anchor_a {
+            values.push(format!("anchorA={}", anchor));
+        }
+        if let Some(anchor) = binding.anchor_b {
+            values.push(format!("anchorB={}", anchor));
+        }
+        hole_information.insert(binding.hole_key.clone(), values);
+    }
+
+    Some(CommonPlanArtifact {
+        pattern_text: lines.join("\n"),
+        hole_information,
+        composed_method_code,
+    })
+}
+
 fn generate_specs_from_unification(
     vis_graph_a: &models::VisGraph,
     vis_graph_b: &models::VisGraph,
@@ -1650,13 +2135,16 @@ fn generate_specs_from_unification(
     call_argument_types_b: Option<&[String]>,
     call_argument_names_a: Option<&[String]>,
     call_argument_names_b: Option<&[String]>,
+    method_param_names_a: Option<&[String]>,
+    method_param_names_b: Option<&[String]>,
     operations_a: &[serde_json::Value],
     operations_b: &[serde_json::Value],
     analysis: &UnificationAnalysisResult,
     base_name: &str,
+    method_name: &str,
     field_tables: Option<&FieldTables>,
     spec_meta_by_name: &mut HashMap<String, EscherSpecMeta>,
-) -> anyhow::Result<Vec<EscherSpec>> {
+) -> anyhow::Result<GeneratedSpecsResult> {
     let graph_ops_a: Vec<crate::list_env::GraphOperation> = operations_a
         .iter()
         .map(|op| serde_json::from_value(op.clone()))
@@ -1688,6 +2176,13 @@ fn generate_specs_from_unification(
             env_boundary_b.to_debug_string()
         );
     }
+    let ordered_common_ops =
+        common_ops_in_source_order(&analysis.unification_result.common_a, &graph_ops_a);
+    let method_param_names = resolve_method_param_names(
+        method_param_names_a,
+        method_param_names_b,
+        call_arguments_a.len().max(call_arguments_b.len()),
+    );
 
     let mut diff_pairs = Vec::new();
     let mut used_indices_a: HashSet<usize> = HashSet::new();
@@ -2234,6 +2729,8 @@ fn generate_specs_from_unification(
     }
 
     let mut specs = Vec::new();
+    let mut hole_bindings: Vec<HoleBinding> = Vec::new();
+    let mut hole_by_object_id: HashMap<String, String> = HashMap::new();
     let mut suffix_index = 0usize;
 
     for (pair_index, pair) in diff_pairs.into_iter().enumerate() {
@@ -2447,6 +2944,43 @@ fn generate_specs_from_unification(
 
         let spec_name = build_spec_name(base_name, suffix_index);
         suffix_index += 1;
+        let hole_key = format!("__hole_{}", pair_index);
+        let js_method_name = spec_name_to_js_method_name(&spec_name);
+        let js_call_template = build_hole_call_template(&js_method_name, &method_param_names);
+
+        if let Some(id_a) = pair.op_a.as_ref().and_then(diff_op_primary_object_id) {
+            hole_by_object_id
+                .entry(id_a)
+                .or_insert_with(|| hole_key.clone());
+        }
+        if let Some(id_b) = pair.op_b.as_ref().and_then(diff_op_primary_object_id) {
+            let canonical_b = canonicalize_object_id(&id_b, &object_id_mapping_inv);
+            hole_by_object_id
+                .entry(canonical_b)
+                .or_insert_with(|| hole_key.clone());
+        }
+
+        let side_a = pair
+            .op_a
+            .as_ref()
+            .map(format_diff_op)
+            .unwrap_or_else(|| "<none>".to_string());
+        let side_b = pair
+            .op_b
+            .as_ref()
+            .map(format_diff_op)
+            .unwrap_or_else(|| "<none>".to_string());
+        hole_bindings.push(HoleBinding {
+            hole_key,
+            spec_name: spec_name.clone(),
+            return_type: return_type.as_escher_type().to_string(),
+            js_method_name,
+            js_call_template,
+            side_a,
+            side_b,
+            anchor_a,
+            anchor_b,
+        });
 
         let meta = derive_spec_meta_with_fields(&cases, field_tables)?;
         spec_meta_by_name.insert(spec_name.clone(), meta);
@@ -2461,7 +2995,29 @@ fn generate_specs_from_unification(
         specs.push(spec);
     }
 
-    Ok(specs)
+    let composed_method_code = match build_composed_method_code(
+        method_name,
+        &method_param_names,
+        &ordered_common_ops,
+        &hole_bindings,
+        &hole_by_object_id,
+        receiver_object_a,
+    ) {
+        Ok(code) => Some(code),
+        Err(err) => {
+            eprintln!("Failed to compose primary method code: {}", err);
+            None
+        }
+    };
+
+    let common_plan = build_common_plan_artifact(
+        &ordered_common_ops,
+        &hole_bindings,
+        &hole_by_object_id,
+        composed_method_code,
+    );
+
+    Ok(GeneratedSpecsResult { specs, common_plan })
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -2606,6 +3162,43 @@ fn derive_spec_base_name(method_calls: &[MethodCallOperation]) -> String {
     } else {
         sanitized
     }
+}
+
+fn collect_unique_method_names(method_calls: &[MethodCallOperation]) -> Vec<String> {
+    let mut names: Vec<String> = method_calls
+        .iter()
+        .map(|m| m.method_name.trim().to_string())
+        .filter(|name| !name.is_empty())
+        .collect();
+    names.sort();
+    names.dedup();
+    names
+}
+
+fn detect_unsupported_remove_operation(
+    operations_list: &[Vec<serde_json::Value>],
+) -> Option<String> {
+    for (call_index, operations) in operations_list.iter().enumerate() {
+        for (op_index, op) in operations.iter().enumerate() {
+            let edit_type = op
+                .get("editType")
+                .or_else(|| op.get("edit_type"))
+                .and_then(|v| v.as_str());
+            let Some(edit_type) = edit_type else {
+                continue;
+            };
+            if matches!(
+                edit_type,
+                "removeNode" | "removeEdge" | "deleteNode" | "deleteEdge"
+            ) {
+                return Some(format!(
+                    "Unsupported remove operation detected at call {} op {}: {}",
+                    call_index, op_index, edit_type
+                ));
+            }
+        }
+    }
+    None
 }
 
 fn sanitize_base_name(name: &str) -> String {
@@ -2862,5 +3455,286 @@ mod tests {
             to: Some("__temp1".to_string()),
         }];
         assert_eq!(diff_op_anchor_index(&op, &ops), Some(0));
+    }
+
+    #[test]
+    fn common_ops_in_source_order_uses_op_index_order() {
+        use crate::unify_ops::{GraphOp, NodeExpr, Op};
+
+        let graph_ops = vec![
+            crate::list_env::GraphOperation {
+                edit_type: "addNode".to_string(),
+                id: Some("n0".to_string()),
+                label: Some(json!("Node")),
+                is_literal: Some(false),
+                node_type: None,
+                from: None,
+                to: None,
+            },
+            crate::list_env::GraphOperation {
+                edit_type: "addNode".to_string(),
+                id: Some("n1".to_string()),
+                label: Some(json!("Node")),
+                is_literal: Some(false),
+                node_type: None,
+                from: None,
+                to: None,
+            },
+            crate::list_env::GraphOperation {
+                edit_type: "addEdge".to_string(),
+                id: None,
+                label: Some(json!("next")),
+                is_literal: None,
+                node_type: None,
+                from: Some("n0".to_string()),
+                to: Some("n1".to_string()),
+            },
+        ];
+
+        let common_ops = vec![
+            Op {
+                id: "op_2".to_string(),
+                kind: GraphOp::Node(NodeExpr::NullNode),
+            },
+            Op {
+                id: "op_0".to_string(),
+                kind: GraphOp::Node(NodeExpr::NullNode),
+            },
+        ];
+
+        let ordered = common_ops_in_source_order(&common_ops, &graph_ops);
+        let indices: Vec<usize> = ordered.into_iter().map(|(idx, _)| idx).collect();
+        assert_eq!(indices, vec![0, 2]);
+    }
+
+    #[test]
+    fn render_common_graph_op_replaces_hole_references() {
+        let op = crate::list_env::GraphOperation {
+            edit_type: "addEdge".to_string(),
+            id: None,
+            label: Some(json!("val")),
+            is_literal: None,
+            node_type: None,
+            from: Some("__temp1".to_string()),
+            to: Some("__temp2".to_string()),
+        };
+        let mut holes = HashMap::new();
+        holes.insert("__temp2".to_string(), "__hole_0".to_string());
+
+        let line = render_common_graph_op(3, &op, &holes);
+        assert_eq!(line, "[op_3] addEdge(from=__temp1, to=__hole_0, label=val)");
+    }
+
+    #[test]
+    fn spec_name_to_js_method_name_replaces_hyphen() {
+        assert_eq!(spec_name_to_js_method_name("aux-f"), "aux_f");
+        assert_eq!(spec_name_to_js_method_name("1bad-name"), "_1bad_name");
+    }
+
+    #[test]
+    fn default_method_param_names_prefers_arg_for_single_param() {
+        assert_eq!(default_method_param_names(0), Vec::<String>::new());
+        assert_eq!(default_method_param_names(1), vec!["arg".to_string()]);
+        assert_eq!(
+            default_method_param_names(2),
+            vec!["arg0".to_string(), "arg1".to_string()]
+        );
+    }
+
+    #[test]
+    fn build_hole_call_template_uses_this_receiver() {
+        let args = vec!["arg".to_string()];
+        assert_eq!(
+            build_hole_call_template("aux_f", &args),
+            "this.aux_f(arg)".to_string()
+        );
+    }
+
+    #[test]
+    fn resolve_method_param_names_prefers_explicit_names() {
+        let a = vec!["id".to_string(), "value".to_string()];
+        let b = vec!["id".to_string(), "value".to_string()];
+        assert_eq!(
+            resolve_method_param_names(Some(&a), Some(&b), 2),
+            vec!["id".to_string(), "value".to_string()]
+        );
+    }
+
+    #[test]
+    fn detect_unsupported_remove_operation_reports_error() {
+        let operations = vec![vec![json!({
+            "editType": "removeEdge",
+            "from": "n1",
+            "to": "n2",
+            "label": "next"
+        })]];
+        assert_eq!(
+            detect_unsupported_remove_operation(&operations),
+            Some("Unsupported remove operation detected at call 0 op 0: removeEdge".to_string())
+        );
+    }
+
+    #[test]
+    fn build_composed_method_code_from_common_ops() {
+        let ordered_common_ops = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp1".to_string()),
+                    label: Some(json!("Node")),
+                    is_literal: Some(false),
+                    node_type: None,
+                    from: None,
+                    to: None,
+                },
+            ),
+            (
+                1usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    id: None,
+                    label: Some(json!("next")),
+                    is_literal: None,
+                    node_type: None,
+                    from: Some("main-new1".to_string()),
+                    to: Some("__temp1".to_string()),
+                },
+            ),
+        ];
+        let code = build_composed_method_code(
+            "append",
+            &vec!["arg".to_string()],
+            &ordered_common_ops,
+            &[],
+            &HashMap::new(),
+            Some("main-new1"),
+        )
+        .unwrap();
+
+        let expected = [
+            "append(arg) {",
+            "    const tmp0 = new Node();",
+            "    this.next = tmp0;",
+            "}",
+        ]
+        .join("\n");
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn build_composed_method_code_with_holes_exact() {
+        let ordered_common_ops = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp1".to_string()),
+                    label: Some(json!("Node")),
+                    is_literal: Some(false),
+                    node_type: None,
+                    from: None,
+                    to: None,
+                },
+            ),
+            (
+                1usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    id: None,
+                    label: Some(json!("val")),
+                    is_literal: None,
+                    node_type: None,
+                    from: Some("__temp1".to_string()),
+                    to: Some("__temp2".to_string()),
+                },
+            ),
+            (
+                2usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    id: None,
+                    label: Some(json!("next")),
+                    is_literal: None,
+                    node_type: None,
+                    from: Some("main-new1".to_string()),
+                    to: Some("__temp1".to_string()),
+                },
+            ),
+        ];
+
+        let hole_bindings = vec![HoleBinding {
+            hole_key: "__hole_0".to_string(),
+            spec_name: "append-g".to_string(),
+            return_type: "Int".to_string(),
+            js_method_name: "append_g".to_string(),
+            js_call_template: "this.append_g(first, second)".to_string(),
+            side_a: "sideA".to_string(),
+            side_b: "sideB".to_string(),
+            anchor_a: Some(1),
+            anchor_b: Some(2),
+        }];
+
+        let mut hole_by_object_id = HashMap::new();
+        hole_by_object_id.insert("__temp2".to_string(), "__hole_0".to_string());
+
+        let code = build_composed_method_code(
+            "append",
+            &vec!["first".to_string(), "second".to_string()],
+            &ordered_common_ops,
+            &hole_bindings,
+            &hole_by_object_id,
+            Some("main-new1"),
+        )
+        .unwrap();
+
+        let expected = [
+            "append(first, second) {",
+            "    const h_int_0 = this.append_g(first, second);",
+            "    const tmp0 = new Node();",
+            "    tmp0.val = h_int_0;",
+            "    this.next = tmp0;",
+            "}",
+        ]
+        .join("\n");
+        assert_eq!(code, expected);
+    }
+
+    fn dummy_method_call(name: &str) -> MethodCallOperation {
+        MethodCallOperation {
+            call_label: "call1".to_string(),
+            context_sensitive_id: "main".to_string(),
+            receiver_object: "main-new1".to_string(),
+            method_name: name.to_string(),
+            arguments: vec![],
+            argument_types: None,
+            argument_names: None,
+            method_param_names: None,
+            operations: vec![],
+            actual_graph: None,
+            field_tables: None,
+        }
+    }
+
+    #[test]
+    fn collect_unique_method_names_single() {
+        let calls = vec![dummy_method_call("append"), dummy_method_call("append")];
+        assert_eq!(
+            collect_unique_method_names(&calls),
+            vec!["append".to_string()]
+        );
+    }
+
+    #[test]
+    fn collect_unique_method_names_multiple() {
+        let calls = vec![
+            dummy_method_call(" append "),
+            dummy_method_call("push"),
+            dummy_method_call("append"),
+        ];
+        assert_eq!(
+            collect_unique_method_names(&calls),
+            vec!["append".to_string(), "push".to_string()]
+        );
     }
 }

@@ -45,6 +45,58 @@ flowchart TB
 
 このパイプラインにより、ユーザ操作から高水準なプログラムを合成できる。
 
+## 共通部分の意味論と統合（設計メモ）
+
+### 先に結論
+- 現状の実装は「差分関数（`aux-f`, `aux-g`, ...）の合成と翻訳」までで止まっており、共通操作をJS文へ戻して差分解と統合する層が未実装。
+- `SynthesisResponse.common_pattern` / `hole_information` は現状 `None` 固定。
+
+### 操作の最小意味論（JS向け）
+- `addNode(isLiteral=false, id, label)`:
+  - 新規オブジェクトを作る。`label` がコンストラクタ名として有効なら `new <label>()`、不明なら `{}`。
+- `addNode(isLiteral=true, id, label)`:
+  - 値ノードを作る（JSでは即値として扱う）。
+- `addEdge(from, to, field)`:
+  - `from[field] = to` の代入。
+- `ExistNode(id)`:
+  - 既存オブジェクト参照（`this` か、差分ホール関数の返り値、または既知パス）。
+
+### 統合アルゴリズム（実装候補）
+1. `common_a` を「元の操作インデックス順」で再構築して `CommonPlan` を作る。
+2. `diff_pairs` を `HolePlan`（`hole_k -> aux_name, return_type, args`）へ変換。
+3. `CommonPlan` 上で、diffに属するノード参照を `hole_k` に置換する。
+4. 共通操作を順にJS文へ射影:
+   - ノード生成
+   - フィールド代入
+5. 先頭で `hole_k` を `aux_*` 呼び出しとして束縛し、共通文で利用する。
+6. 最終的に `common_pattern`（テンプレート）と統合済み `code`（実JS）を返す。
+
+### 実装状況（2026-02, stage 2）
+- `common_pattern` には操作レベルの計画文字列（`COMMON_PLAN` / `HOLE_BINDINGS`）を返す。
+- `hole_information` には `spec`, `return`, `jsMethod`, `jsCall`, `sideA`, `sideB`, `anchorA/B` を返す。
+- `common` の順序は `op_<index>` で復元し、`unify_ops` 内部ソート順（Debug文字列順）は直接使わない。
+- `method_calls[*].methodName` は同一値であることを前提とし、混在時は RefSyn が `400 Bad Request` を返す。
+- `method_calls[*].methodParamNames` があれば本体メソッド署名に使用し、未指定時は `arg` / `arg0..` を補完する。
+- 共通操作（`addNode`/`addEdge`）から `composed_method_code` を生成して返す（`addNode` は `const tmp*` 生成、`addEdge` は代入文に射影）。
+- Kanon 側は `receiverObject` のノードラベルをクラス名ヒントとして利用し、`methodName + arity + class` で対象メソッド定義位置を選んで `composed_method_code` を置換する。
+- 置換失敗時のフォールバック出力は editor を壊さないようコメント行で挿入する（無効JSを挿入しない）。
+- `removeNode`/`removeEdge`/`deleteNode`/`deleteEdge` を含む payload は現状 `400 Bad Request` とする。
+
+### append 例での期待形
+```js
+append(arg0) {
+  const h_ptr_0 = this.append_f(arg0);
+  const h_int_0 = this.append_g(arg0);
+  const tmp0 = new Node();
+  tmp0.val = h_int_0;
+  h_ptr_0.next = tmp0;
+}
+```
+
+### 注意点
+- `unify_ops` 内で `common/diff` を `Debug` 文字列で sort しているため、実行順は必ず元の `op_<index>` から再構成すること。
+- `removeNode/removeEdge` の意味論は `list_env` で未実装（no-op）なので、共通統合の対象はまず `addNode/addEdge` に限定するのが安全。
+
 ## 差分境界の環境エンコード方針（2026-02）
 
 ### 背景
