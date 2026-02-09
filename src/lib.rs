@@ -1533,6 +1533,38 @@ fn diff_op_index(op: &DiffOp) -> Option<usize> {
     }
 }
 
+fn first_reference_index_for_object(
+    object_id: &str,
+    graph_ops: &[crate::list_env::GraphOperation],
+) -> Option<usize> {
+    graph_ops.iter().position(|op| {
+        op.id.as_deref() == Some(object_id)
+            || op.from.as_deref() == Some(object_id)
+            || op.to.as_deref() == Some(object_id)
+    })
+}
+
+fn diff_op_anchor_index(
+    op: &DiffOp,
+    graph_ops: &[crate::list_env::GraphOperation],
+) -> Option<usize> {
+    match op {
+        DiffOp::Json { index, .. } => Some(*index),
+        DiffOp::ExistNode { id, .. } => first_reference_index_for_object(id, graph_ops),
+    }
+}
+
+fn anchor_index_for_side(
+    own_index: Option<usize>,
+    other_index: Option<usize>,
+    own_ops_len: usize,
+) -> Option<usize> {
+    if let Some(idx) = own_index {
+        return Some(idx.min(own_ops_len));
+    }
+    other_index.filter(|idx| *idx < own_ops_len)
+}
+
 fn diff_op_from_unify_node(
     op: &crate::unify_ops::Op,
     graph_ops: &[crate::list_env::GraphOperation],
@@ -2205,41 +2237,72 @@ fn generate_specs_from_unification(
     let mut suffix_index = 0usize;
 
     for (pair_index, pair) in diff_pairs.into_iter().enumerate() {
-        let env_a = match &pair.op_a {
-            Some(DiffOp::Json { index, .. }) => {
-                build_environment_prefix(base_env_a, operations_a, *index, true)?
-            }
-            _ => env_boundary_a.clone(),
+        let op_index_a = pair.op_a.as_ref().and_then(diff_op_index);
+        let op_index_b = pair.op_b.as_ref().and_then(diff_op_index);
+        let own_anchor_a = pair
+            .op_a
+            .as_ref()
+            .and_then(|op| diff_op_anchor_index(op, &graph_ops_a));
+        let own_anchor_b = pair
+            .op_b
+            .as_ref()
+            .and_then(|op| diff_op_anchor_index(op, &graph_ops_b));
+        let anchor_a = anchor_index_for_side(own_anchor_a, own_anchor_b, operations_a.len());
+        let anchor_b = anchor_index_for_side(own_anchor_b, own_anchor_a, operations_b.len());
+
+        // Input environment should be the state immediately before the target diff op.
+        // For ExistNode (no direct op index), we fall back to the paired side index.
+        let env_input_a = match anchor_a {
+            Some(index) => build_environment_prefix(base_env_a, operations_a, index, false)?,
+            None => env_boundary_a.clone(),
         };
-        let env_b = match &pair.op_b {
-            Some(DiffOp::Json { index, .. }) => {
-                build_environment_prefix(base_env_b, operations_b, *index, true)?
-            }
-            _ => env_boundary_b.clone(),
+        let env_input_b = match anchor_b {
+            Some(index) => build_environment_prefix(base_env_b, operations_b, index, false)?,
+            None => env_boundary_b.clone(),
+        };
+
+        // Output extraction for Json ops must observe the post-state of that op.
+        let env_output_a = match op_index_a {
+            Some(index) => build_environment_prefix(base_env_a, operations_a, index, true)?,
+            None => env_input_a.clone(),
+        };
+        let env_output_b = match op_index_b {
+            Some(index) => build_environment_prefix(base_env_b, operations_b, index, true)?,
+            None => env_input_b.clone(),
         };
         if trace_enabled() {
             println!(
-                "TRACE: diff_pair[{}] env_a:\n{}",
+                "TRACE: diff_pair[{}] env_input_a:\n{}",
                 pair_index,
-                env_a.to_debug_string()
+                env_input_a.to_debug_string()
             );
             println!(
-                "TRACE: diff_pair[{}] env_b:\n{}",
+                "TRACE: diff_pair[{}] env_input_b:\n{}",
                 pair_index,
-                env_b.to_debug_string()
+                env_input_b.to_debug_string()
+            );
+            println!(
+                "TRACE: diff_pair[{}] env_output_a:\n{}",
+                pair_index,
+                env_output_a.to_debug_string()
+            );
+            println!(
+                "TRACE: diff_pair[{}] env_output_b:\n{}",
+                pair_index,
+                env_output_b.to_debug_string()
             );
         }
 
         let (mut out_a, out_ty_a) = match &pair.op_a {
             Some(op) => {
-                let (out, ty) = output_for_diff_op(op, &env_a, vis_graph_a);
+                let (out, ty) = output_for_diff_op(op, &env_output_a, vis_graph_a);
                 (out, Some(ty))
             }
             None => (serde_json::json!(-1), None),
         };
         let (mut out_b, out_ty_b) = match &pair.op_b {
             Some(op) => {
-                let (out, ty) = output_for_diff_op(op, &env_b, vis_graph_b);
+                let (out, ty) = output_for_diff_op(op, &env_output_b, vis_graph_b);
                 (out, Some(ty))
             }
             None => (serde_json::json!(-1), None),
@@ -2273,7 +2336,7 @@ fn generate_specs_from_unification(
 
         let field_stub_cases = vec![
             EscherCase {
-                env: env_a.clone(),
+                env: env_input_a.clone(),
                 vis_graph: vis_graph_a.clone(),
                 arguments: Vec::new(),
                 arg_names: Vec::new(),
@@ -2282,7 +2345,7 @@ fn generate_specs_from_unification(
                 output: serde_json::Value::Null,
             },
             EscherCase {
-                env: env_b.clone(),
+                env: env_input_b.clone(),
                 vis_graph: vis_graph_b.clone(),
                 arguments: Vec::new(),
                 arg_names: Vec::new(),
@@ -2294,13 +2357,13 @@ fn generate_specs_from_unification(
         let (_value_fields, pointer_fields) = resolve_field_order(&field_stub_cases, field_tables)?;
 
         let mut arg_bundle_a = build_case_arguments_from_variables(
-            &env_a,
+            &env_input_a,
             vis_graph_a,
             &pointer_fields,
             receiver_object_a,
         )?;
         let mut arg_bundle_b = build_case_arguments_from_variables(
-            &env_b,
+            &env_input_b,
             vis_graph_b,
             &pointer_fields,
             receiver_object_b,
@@ -2311,7 +2374,7 @@ fn generate_specs_from_unification(
             call_arguments_a,
             call_argument_types_a,
             call_argument_names_a,
-            &env_a,
+            &env_input_a,
             vis_graph_a,
             &pointer_fields,
         )?;
@@ -2320,7 +2383,7 @@ fn generate_specs_from_unification(
             call_arguments_b,
             call_argument_types_b,
             call_argument_names_b,
-            &env_b,
+            &env_input_b,
             vis_graph_b,
             &pointer_fields,
         )?;
@@ -2363,7 +2426,7 @@ fn generate_specs_from_unification(
         let arg_names_b = arg_bundle_b.names.clone();
         let cases = vec![
             EscherCase {
-                env: env_a,
+                env: env_input_a,
                 vis_graph: vis_graph_a.clone(),
                 arguments: arg_bundle_a.values,
                 arg_names: arg_names_a,
@@ -2372,7 +2435,7 @@ fn generate_specs_from_unification(
                 output: out_a,
             },
             EscherCase {
-                env: env_b,
+                env: env_input_b,
                 vis_graph: vis_graph_b.clone(),
                 arguments: arg_bundle_b.values,
                 arg_names: arg_names_b,
@@ -2736,5 +2799,68 @@ mod tests {
 
         assert_eq!(bundle.types, vec!["Ptr".to_string(), "Ptr".to_string()]);
         assert_eq!(bundle.values[1], json!(1));
+    }
+
+    #[test]
+    fn anchor_index_prefers_own_index() {
+        let anchor = anchor_index_for_side(Some(3), Some(1), 10);
+        assert_eq!(anchor, Some(3));
+    }
+
+    #[test]
+    fn anchor_index_uses_other_index_when_own_missing() {
+        let anchor = anchor_index_for_side(None, Some(2), 5);
+        assert_eq!(anchor, Some(2));
+    }
+
+    #[test]
+    fn anchor_index_ignores_out_of_range_other_index() {
+        let anchor = anchor_index_for_side(None, Some(7), 3);
+        assert_eq!(anchor, None);
+    }
+
+    #[test]
+    fn first_reference_index_for_object_finds_edge_reference() {
+        let ops = vec![
+            crate::list_env::GraphOperation {
+                edit_type: "addNode".to_string(),
+                id: Some("__temp1".to_string()),
+                label: Some(json!("Node")),
+                is_literal: Some(false),
+                node_type: None,
+                from: None,
+                to: None,
+            },
+            crate::list_env::GraphOperation {
+                edit_type: "addEdge".to_string(),
+                id: None,
+                label: Some(json!("next")),
+                is_literal: None,
+                node_type: None,
+                from: Some("main-new1".to_string()),
+                to: Some("__temp1".to_string()),
+            },
+        ];
+        assert_eq!(first_reference_index_for_object("main-new1", &ops), Some(1));
+        assert_eq!(first_reference_index_for_object("__temp1", &ops), Some(0));
+    }
+
+    #[test]
+    fn diff_op_anchor_index_for_exist_node_uses_first_reference() {
+        let op = DiffOp::ExistNode {
+            id: "main-new1".to_string(),
+            is_literal: false,
+            label: None,
+        };
+        let ops = vec![crate::list_env::GraphOperation {
+            edit_type: "addEdge".to_string(),
+            id: None,
+            label: Some(json!("next")),
+            is_literal: None,
+            node_type: None,
+            from: Some("main-new1".to_string()),
+            to: Some("__temp1".to_string()),
+        }];
+        assert_eq!(diff_op_anchor_index(&op, &ops), Some(0));
     }
 }
