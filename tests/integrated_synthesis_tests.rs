@@ -1,6 +1,7 @@
 use refsyn::models::{Edge, Node, VisGraph};
 use refsyn::{handle_synthesis, MethodCallOperation, SynthesisRequest, SynthesisResponse};
 use serde_json::json;
+use std::fs;
 use warp::http::StatusCode;
 use warp::Reply;
 
@@ -46,6 +47,126 @@ fn make_call(
         operations,
         actual_graph: Some(actual_graph.clone()),
         field_tables: None,
+    }
+}
+
+fn fixture_vis_graph_for_operations_json() -> VisGraph {
+    VisGraph {
+        nodes: vec![
+            Node {
+                id: "main-new1".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "main-new2".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "main-new3".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "main-new4".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "main-new1-val".to_string(),
+                is_literal: true,
+                label: json!("1"),
+            },
+            Node {
+                id: "main-new2-val".to_string(),
+                is_literal: true,
+                label: json!("2"),
+            },
+            Node {
+                id: "main-new3-val".to_string(),
+                is_literal: true,
+                label: json!("3"),
+            },
+            Node {
+                id: "main-new4-val".to_string(),
+                is_literal: true,
+                label: json!("4"),
+            },
+        ],
+        edges: vec![
+            Edge {
+                from: "main-new1".to_string(),
+                to: "main-new1-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "main-new2".to_string(),
+                to: "main-new2-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "main-new3".to_string(),
+                to: "main-new3-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "main-new4".to_string(),
+                to: "main-new4-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "main-new1".to_string(),
+                to: "main-new2".to_string(),
+                label: "next".to_string(),
+            },
+            Edge {
+                from: "main-new2".to_string(),
+                to: "main-new3".to_string(),
+                label: "next".to_string(),
+            },
+            Edge {
+                from: "main-new3".to_string(),
+                to: "main-new4".to_string(),
+                label: "next".to_string(),
+            },
+        ],
+    }
+}
+
+fn load_fixture_method_calls(method_name: &str) -> Vec<MethodCallOperation> {
+    let content = fs::read_to_string("tests/data/operations.json")
+        .expect("tests/data/operations.json should be readable");
+    let root: serde_json::Value =
+        serde_json::from_str(&content).expect("operations.json should be valid json");
+    let method_calls = root
+        .get("methodCalls")
+        .and_then(|v| v.as_array())
+        .expect("operations.json should contain methodCalls array");
+
+    method_calls
+        .iter()
+        .filter(|call| call.get("methodName").and_then(|v| v.as_str()) == Some(method_name))
+        .map(|call| {
+            serde_json::from_value::<MethodCallOperation>(call.clone())
+                .expect("fixture method call should deserialize")
+        })
+        .collect()
+}
+
+fn duplicate_method_call(call: &MethodCallOperation, suffix: &str) -> MethodCallOperation {
+    MethodCallOperation {
+        call_label: format!("{}-{}", call.call_label, suffix),
+        context_sensitive_id: format!("{}-{}", call.context_sensitive_id, suffix),
+        receiver_object: call.receiver_object.clone(),
+        method_name: call.method_name.clone(),
+        arguments: call.arguments.clone(),
+        argument_types: call.argument_types.clone(),
+        argument_names: call.argument_names.clone(),
+        method_param_names: call.method_param_names.clone(),
+        operations: call.operations.clone(),
+        actual_graph: call.actual_graph.clone(),
+        field_tables: call.field_tables.clone(),
     }
 }
 
@@ -226,4 +347,198 @@ async fn test_integrated_synthesis_rejects_remove_operations() {
         response.list_environment_info,
         Some("Unsupported remove operation detected at call 0 op 0: removeEdge".to_string())
     );
+}
+
+#[tokio::test]
+async fn test_operations_json_removeval_rejects_delete_edge() {
+    let method_calls = load_fixture_method_calls("removeVal");
+    assert_eq!(method_calls.len(), 2, "removeVal should have two traces");
+    let request = SynthesisRequest {
+        method_calls,
+        vis_graph: fixture_vis_graph_for_operations_json(),
+    };
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    let info = response
+        .list_environment_info
+        .expect("error message should be present");
+    assert!(info.contains("Unsupported remove operation"));
+    assert!(info.contains("deleteEdge"));
+}
+
+#[tokio::test]
+async fn test_operations_json_set_supports_edit_edge_reference_analysis() {
+    let mut method_calls = load_fixture_method_calls("set");
+    assert_eq!(
+        method_calls.len(),
+        1,
+        "set should have one trace in fixture"
+    );
+    let base_call = method_calls.pop().expect("set call should exist");
+    let duplicate = duplicate_method_call(&base_call, "dup");
+
+    let request = SynthesisRequest {
+        method_calls: vec![base_call, duplicate],
+        vis_graph: fixture_vis_graph_for_operations_json(),
+    };
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::OK);
+    let analysis = response
+        .operation_analysis
+        .expect("operation analysis should exist for two traces");
+    assert_eq!(analysis.differences_found, 0);
+    let common_pattern = response
+        .common_pattern
+        .expect("common pattern should be generated");
+    assert!(common_pattern.contains("editEdgeReference"));
+}
+
+#[tokio::test]
+async fn test_operations_json_reverse_supports_edit_edge_reference_analysis() {
+    let mut method_calls = load_fixture_method_calls("reverse");
+    assert_eq!(
+        method_calls.len(),
+        1,
+        "reverse should have one trace in fixture"
+    );
+    let base_call = method_calls.pop().expect("reverse call should exist");
+    let duplicate = duplicate_method_call(&base_call, "dup");
+
+    let request = SynthesisRequest {
+        method_calls: vec![base_call, duplicate],
+        vis_graph: fixture_vis_graph_for_operations_json(),
+    };
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::OK);
+    let analysis = response
+        .operation_analysis
+        .expect("operation analysis should exist for two traces");
+    assert_eq!(analysis.differences_found, 0);
+    let common_pattern = response
+        .common_pattern
+        .expect("common pattern should be generated");
+    assert!(common_pattern.contains("editEdgeReference"));
+}
+
+#[tokio::test]
+async fn test_set_with_existing_kanon_id_and_mismatched_receiver_still_composes() {
+    let target_id = "main-call2-FunctionExpression2-new1";
+    let target_val_id = "main-call2-FunctionExpression2-new1-val";
+    let vis_graph = VisGraph {
+        nodes: vec![
+            Node {
+                id: "main-new2".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: target_id.to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: target_val_id.to_string(),
+                is_literal: true,
+                label: json!("25"),
+            },
+            Node {
+                id: "__Variable-lst".to_string(),
+                is_literal: false,
+                label: json!("lst"),
+            },
+        ],
+        edges: vec![
+            Edge {
+                from: "main-new2".to_string(),
+                to: target_id.to_string(),
+                label: "next".to_string(),
+            },
+            Edge {
+                from: target_id.to_string(),
+                to: target_val_id.to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "__Variable-lst".to_string(),
+                to: "main-new2".to_string(),
+                label: "lst".to_string(),
+            },
+        ],
+    };
+
+    let operations_a = vec![
+        json!({
+            "editType": "addNode",
+            "id": "__temp1",
+            "label": "10",
+            "isLiteral": true,
+            "type": "string"
+        }),
+        json!({
+            "editType": "editEdgeReference",
+            "from": target_id,
+            "oldTo": target_val_id,
+            "newTo": "__temp1",
+            "label": "val"
+        }),
+    ];
+    let operations_b = vec![
+        json!({
+            "editType": "addNode",
+            "id": "__temp2",
+            "label": "82",
+            "isLiteral": true,
+            "type": "string"
+        }),
+        json!({
+            "editType": "editEdgeReference",
+            "from": target_id,
+            "oldTo": target_val_id,
+            "newTo": "__temp2",
+            "label": "val"
+        }),
+    ];
+
+    let call_a = MethodCallOperation {
+        call_label: "call5".to_string(),
+        context_sensitive_id: "main".to_string(),
+        receiver_object: "main-new1".to_string(), // intentionally stale/mismatched
+        method_name: "set".to_string(),
+        arguments: vec![json!(10)],
+        argument_types: Some(vec!["Int".to_string()]),
+        argument_names: Some(vec!["arg0".to_string()]),
+        method_param_names: Some(vec!["arg".to_string()]),
+        operations: operations_a,
+        actual_graph: Some(vis_graph.clone()),
+        field_tables: None,
+    };
+    let call_b = MethodCallOperation {
+        call_label: "call6".to_string(),
+        context_sensitive_id: "main".to_string(),
+        receiver_object: "main-new1".to_string(), // intentionally stale/mismatched
+        method_name: "set".to_string(),
+        arguments: vec![json!(82)],
+        argument_types: Some(vec!["Int".to_string()]),
+        argument_names: Some(vec!["arg0".to_string()]),
+        method_param_names: Some(vec!["arg".to_string()]),
+        operations: operations_b,
+        actual_graph: Some(vis_graph.clone()),
+        field_tables: None,
+    };
+
+    let request = SynthesisRequest {
+        method_calls: vec![call_a, call_b],
+        vis_graph,
+    };
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::OK);
+    let composed = response
+        .composed_method_code
+        .expect("composed method should be generated");
+    assert!(composed.contains("set(arg) {"));
+    assert!(composed.contains("this.next.val = h_int_0;"));
 }
