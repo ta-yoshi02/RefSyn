@@ -8,8 +8,8 @@
 //! - Deterministic ordering of inputs (args, then value lists, then pointer lists)
 
 use crate::list_env::{FieldKind, ListEnvironment, PtrValue};
-use crate::FieldTables;
 use crate::models::VisGraph;
+use crate::FieldTables;
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -215,9 +215,7 @@ fn resolve_arg_names(cases: &[EscherCase], arg_count: usize) -> Result<Vec<Strin
             }
         }
     }
-    Ok(resolved.unwrap_or_else(|| {
-        (0..arg_count).map(|i| format!("arg{}", i)).collect()
-    }))
+    Ok(resolved.unwrap_or_else(|| (0..arg_count).map(|i| format!("arg{}", i)).collect()))
 }
 
 fn resolve_receiver_arg_index(cases: &[EscherCase], arg_count: usize) -> Result<Option<usize>> {

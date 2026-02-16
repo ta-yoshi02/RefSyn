@@ -62,7 +62,7 @@ pub struct ListEnvironment {
 }
 
 /// グラフ操作の種類
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct GraphOperation {
     pub edit_type: String,
@@ -73,6 +73,14 @@ pub struct GraphOperation {
     pub node_type: Option<String>,
     pub from: Option<String>,
     pub to: Option<String>,
+    #[serde(default)]
+    pub old_to: Option<String>,
+    #[serde(default)]
+    pub new_to: Option<String>,
+    #[serde(default)]
+    pub old_label: Option<String>,
+    #[serde(default)]
+    pub new_label: Option<String>,
 }
 
 impl ListEnvironment {
@@ -164,6 +172,9 @@ impl ListEnvironment {
         match operation.edit_type.as_str() {
             "addNode" => self.add_node(operation),
             "addEdge" => self.add_edge(operation),
+            "editEdgeReference" => self.edit_edge_reference(operation),
+            "addVariable" => self.add_variable(operation),
+            "editVariableReference" => self.edit_variable_reference(operation),
             "removeNode" => self.remove_node(operation),
             "removeEdge" => self.remove_edge(operation),
             _ => Err(format!("Unknown operation type: {}", operation.edit_type)),
@@ -205,40 +216,126 @@ impl ListEnvironment {
     fn add_edge(&mut self, operation: &GraphOperation) -> Result<(), String> {
         let from = operation.from.as_ref().ok_or("addEdge requires from")?;
         let to = operation.to.as_ref().ok_or("addEdge requires to")?;
-        let binding = json!("");
-        let label = operation
-            .label
-            .as_ref()
-            .unwrap_or(&binding)
-            .as_str()
-            .unwrap_or("");
+        let label = Self::label_string(operation);
+        self.set_edge_reference(from, &label, to)
+    }
 
-        // fromがオブジェクトでなければ無視
+    fn edit_edge_reference(&mut self, operation: &GraphOperation) -> Result<(), String> {
+        let from = operation
+            .from
+            .as_ref()
+            .ok_or("editEdgeReference requires from")?;
+        let new_to = operation
+            .new_to
+            .as_ref()
+            .or(operation.to.as_ref())
+            .ok_or("editEdgeReference requires newTo")?;
+        let label = Self::label_string(operation);
+        if let Some(old_to) = operation.old_to.as_deref() {
+            self.validate_old_target(from, &label, old_to);
+        }
+        self.set_edge_reference(from, &label, new_to)
+    }
+
+    fn add_variable(&mut self, operation: &GraphOperation) -> Result<(), String> {
+        let target = operation
+            .to
+            .as_ref()
+            .or(operation.new_to.as_ref())
+            .ok_or("addVariable requires to")?;
+        let label = Self::label_string(operation);
+        self.set_variable_reference(&label, target)
+    }
+
+    fn edit_variable_reference(&mut self, operation: &GraphOperation) -> Result<(), String> {
+        let target = operation
+            .new_to
+            .as_ref()
+            .or(operation.to.as_ref())
+            .ok_or("editVariableReference requires newTo")?;
+        let label = Self::label_string(operation);
+        let var_node_id = format!("__Variable-{}", label);
+        if let Some(old_to) = operation.old_to.as_deref() {
+            self.validate_old_target(&var_node_id, &label, old_to);
+        }
+        self.set_variable_reference(&label, target)
+    }
+
+    fn ensure_object_node(&mut self, object_id: &str) -> usize {
+        if let Some(&idx) = self.obj_id_to_index.get(object_id) {
+            return idx;
+        }
+
+        let new_index = self.next_index;
+        self.obj_id_to_index
+            .insert(object_id.to_string(), new_index);
+        self.index_to_obj_id
+            .insert(new_index, object_id.to_string());
+        self.next_index += 1;
+        for (field_name, field_vec) in self.field_lists.iter_mut() {
+            let default_value = self
+                .field_kinds
+                .get(field_name)
+                .copied()
+                .unwrap_or(FieldKind::Value)
+                .default_value();
+            field_vec.push(default_value);
+        }
+        new_index
+    }
+
+    fn label_string(operation: &GraphOperation) -> String {
+        match operation.label.as_ref() {
+            Some(Value::String(s)) => s.clone(),
+            Some(Value::Number(n)) => n.to_string(),
+            Some(Value::Bool(b)) => b.to_string(),
+            _ => String::new(),
+        }
+    }
+
+    fn resolve_target_value(&self, target_id: &str) -> (Value, FieldKind) {
+        if let Some(&to_index) = self.obj_id_to_index.get(target_id) {
+            (json!(to_index as i32), FieldKind::Pointer)
+        } else if let Some(literal_value) = self.literal_id_to_value.get(target_id) {
+            (literal_value.clone(), FieldKind::Value)
+        } else if target_id == "null" {
+            (Value::Null, FieldKind::Pointer)
+        } else {
+            (Value::Null, FieldKind::Pointer)
+        }
+    }
+
+    fn current_field_value(&self, from_id: &str, label: &str) -> Option<Value> {
+        let from_index = *self.obj_id_to_index.get(from_id)?;
+        let field_vec = self.field_lists.get(label)?;
+        field_vec.get(from_index).cloned()
+    }
+
+    fn validate_old_target(&self, from_id: &str, label: &str, old_target: &str) {
+        let Some(current_value) = self.current_field_value(from_id, label) else {
+            return;
+        };
+        let (expected_value, expected_kind) = self.resolve_target_value(old_target);
+        let normalized_current = if expected_kind == FieldKind::Value && current_value.is_null() {
+            json!(-1)
+        } else {
+            current_value
+        };
+        if normalized_current != expected_value {
+            eprintln!(
+                "WARN: oldTo mismatch for {}.{} (expected {:?}, found {:?})",
+                from_id, label, expected_value, normalized_current
+            );
+        }
+    }
+
+    fn set_edge_reference(&mut self, from: &str, label: &str, target: &str) -> Result<(), String> {
         let from_index = match self.obj_id_to_index.get(from) {
             Some(&index) => index,
-            None => return Ok(()), // fromがオブジェクトでない場合は無視
+            None => return Ok(()),
         };
 
-        // toの値を決定
-        let mut to_value = if let Some(&to_index) = self.obj_id_to_index.get(to) {
-            json!(to_index as i32)
-        } else if let Some(literal_value) = self.literal_id_to_value.get(to) {
-            // toがリテラルIDの場合、対応する値を使用
-            literal_value.clone()
-        } else {
-            // どちらでもない場合はnullPtrとして扱う
-            Value::Null
-        };
-
-        let inferred_kind = if self.obj_id_to_index.contains_key(to) {
-            FieldKind::Pointer
-        } else if self.literal_id_to_value.contains_key(to) {
-            FieldKind::Value
-        } else if to == "null" {
-            FieldKind::Pointer
-        } else {
-            FieldKind::Pointer
-        };
+        let (mut to_value, inferred_kind) = self.resolve_target_value(target);
         let field_kind = {
             let entry = self
                 .field_kinds
@@ -253,27 +350,29 @@ impl ListEnvironment {
             to_value = json!(-1);
         }
 
-        // フィールドリストを更新
         let field_vec = self
             .field_lists
             .entry(label.to_string())
             .or_insert_with(|| vec![field_kind.default_value(); self.next_index]);
         if field_kind == FieldKind::Pointer {
-            for v in field_vec.iter_mut() {
-                if v.as_i64() == Some(-1) {
-                    *v = Value::Null;
+            for value in field_vec.iter_mut() {
+                if value.as_i64() == Some(-1) {
+                    *value = Value::Null;
                 }
             }
         }
 
-        // リストサイズが足りない場合は拡張
         while field_vec.len() <= from_index {
             field_vec.push(field_kind.default_value());
         }
-
         field_vec[from_index] = to_value;
-
         Ok(())
+    }
+
+    fn set_variable_reference(&mut self, label: &str, target: &str) -> Result<(), String> {
+        let variable_node_id = format!("__Variable-{}", label);
+        self.ensure_object_node(&variable_node_id);
+        self.set_edge_reference(&variable_node_id, label, target)
     }
 
     fn remove_node(&mut self, _operation: &GraphOperation) -> Result<(), String> {
@@ -372,7 +471,6 @@ impl ListEnvironment {
         }
         Value::Null
     }
-
 }
 
 #[cfg(test)]
@@ -500,6 +598,10 @@ mod tests {
             node_type: None,
             from: None,
             to: None,
+            old_to: None,
+            new_to: None,
+            old_label: None,
+            new_label: None,
         };
 
         env.apply_operation(&add_node_op).unwrap();
@@ -534,6 +636,10 @@ mod tests {
             node_type: None,
             from: None,
             to: None,
+            old_to: None,
+            new_to: None,
+            old_label: None,
+            new_label: None,
         };
         env.apply_operation(&add_node_op).unwrap();
 
@@ -546,6 +652,10 @@ mod tests {
             node_type: None,
             from: None,
             to: None,
+            old_to: None,
+            new_to: None,
+            old_label: None,
+            new_label: None,
         };
         env.apply_operation(&add_literal_op).unwrap();
 
@@ -558,6 +668,10 @@ mod tests {
             node_type: None,
             from: Some("obj5".to_string()),
             to: Some("val5".to_string()),
+            old_to: None,
+            new_to: None,
+            old_label: None,
+            new_label: None,
         };
         env.apply_operation(&add_edge_op).unwrap();
 
@@ -567,5 +681,68 @@ mod tests {
         // エッジが追加されたことを確認
         let value_list = env.field_lists.get("value").unwrap();
         assert_eq!(value_list[4], json!(4)); // obj5.value = 4
+    }
+
+    #[test]
+    fn test_edit_edge_reference_operation() {
+        let graph = create_test_graph();
+        let mut env = ListEnvironment::from_vis_graph(&graph);
+
+        let edit_op = GraphOperation {
+            edit_type: "editEdgeReference".to_string(),
+            from: Some("obj1".to_string()),
+            label: Some(json!("next")),
+            old_to: Some("obj2".to_string()),
+            new_to: Some("obj3".to_string()),
+            ..GraphOperation::default()
+        };
+        env.apply_operation(&edit_op).unwrap();
+
+        let next_list = env.field_lists.get("next").unwrap();
+        assert_eq!(next_list[0], json!(2)); // obj1.next = obj3
+
+        let mismatch_old_to_op = GraphOperation {
+            edit_type: "editEdgeReference".to_string(),
+            from: Some("obj1".to_string()),
+            label: Some(json!("next")),
+            old_to: Some("obj2".to_string()),
+            new_to: Some("null".to_string()),
+            ..GraphOperation::default()
+        };
+        env.apply_operation(&mismatch_old_to_op).unwrap();
+        let next_list = env.field_lists.get("next").unwrap();
+        assert_eq!(next_list[0], Value::Null); // oldTo mismatchでも更新は継続
+    }
+
+    #[test]
+    fn test_variable_reference_operations() {
+        let graph = create_test_graph();
+        let mut env = ListEnvironment::from_vis_graph(&graph);
+
+        let add_var_op = GraphOperation {
+            edit_type: "addVariable".to_string(),
+            label: Some(json!("return")),
+            to: Some("obj2".to_string()),
+            ..GraphOperation::default()
+        };
+        env.apply_operation(&add_var_op).unwrap();
+
+        let var_idx = *env
+            .obj_id_to_index
+            .get("__Variable-return")
+            .expect("variable node should be created");
+        let return_list = env.field_lists.get("return").unwrap();
+        assert_eq!(return_list[var_idx], json!(1)); // return -> obj2
+
+        let edit_var_op = GraphOperation {
+            edit_type: "editVariableReference".to_string(),
+            label: Some(json!("return")),
+            old_to: Some("obj2".to_string()),
+            new_to: Some("obj4".to_string()),
+            ..GraphOperation::default()
+        };
+        env.apply_operation(&edit_var_op).unwrap();
+        let return_list = env.field_lists.get("return").unwrap();
+        assert_eq!(return_list[var_idx], json!(3)); // return -> obj4
     }
 }

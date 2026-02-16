@@ -176,6 +176,10 @@ fn test_kanon_operations_applied() {
             node_type: None,
             from: None,
             to: None,
+            old_to: None,
+            new_to: None,
+            old_label: None,
+            new_label: None,
         },
         GraphOperation {
             edit_type: "addNode".to_string(),
@@ -185,6 +189,10 @@ fn test_kanon_operations_applied() {
             node_type: Some("string".to_string()),
             from: None,
             to: None,
+            old_to: None,
+            new_to: None,
+            old_label: None,
+            new_label: None,
         },
         GraphOperation {
             edit_type: "addEdge".to_string(),
@@ -194,6 +202,10 @@ fn test_kanon_operations_applied() {
             node_type: None,
             from: Some("__temp1".to_string()),
             to: Some("__temp2".to_string()),
+            old_to: None,
+            new_to: None,
+            old_label: None,
+            new_label: None,
         },
         GraphOperation {
             edit_type: "addEdge".to_string(),
@@ -203,6 +215,10 @@ fn test_kanon_operations_applied() {
             node_type: None,
             from: Some("main-new1".to_string()),
             to: Some("__temp1".to_string()),
+            old_to: None,
+            new_to: None,
+            old_label: None,
+            new_label: None,
         },
     ];
 
@@ -234,6 +250,10 @@ fn test_kanon_operations_applied() {
             node_type: Some("string".to_string()),
             from: None,
             to: None,
+            old_to: None,
+            new_to: None,
+            old_label: None,
+            new_label: None,
         },
         GraphOperation {
             edit_type: "addNode".to_string(),
@@ -243,6 +263,10 @@ fn test_kanon_operations_applied() {
             node_type: None,
             from: None,
             to: None,
+            old_to: None,
+            new_to: None,
+            old_label: None,
+            new_label: None,
         },
         GraphOperation {
             edit_type: "addEdge".to_string(),
@@ -252,6 +276,10 @@ fn test_kanon_operations_applied() {
             node_type: None,
             from: Some("__temp1".to_string()),
             to: Some("__temp4".to_string()),
+            old_to: None,
+            new_to: None,
+            old_label: None,
+            new_label: None,
         },
         GraphOperation {
             edit_type: "addEdge".to_string(),
@@ -261,6 +289,10 @@ fn test_kanon_operations_applied() {
             node_type: None,
             from: Some("__temp4".to_string()),
             to: Some("__temp3".to_string()),
+            old_to: None,
+            new_to: None,
+            old_label: None,
+            new_label: None,
         },
     ];
 

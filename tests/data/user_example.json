@@ -5,6 +5,9 @@
       "contextSensitiveID": "call1",
       "receiverObject": "main-new1",
       "methodName": "append",
+      "arguments": [26],
+      "argumentTypes": ["Int"],
+      "argumentNames": ["arg"],
       "operations": [
         {
           "editType": "addNode",
@@ -38,6 +41,9 @@
       "contextSensitiveID": "call2", 
       "receiverObject": "main-new1",
       "methodName": "append",
+      "arguments": [10],
+      "argumentTypes": ["Int"],
+      "argumentNames": ["arg"],
       "operations": [
         {
           "editType": "addNode",

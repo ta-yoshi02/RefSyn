@@ -10,9 +10,8 @@ pub mod server;
 pub mod unify_ops;
 
 use crate::escher_bridge::{
-    build_escher_spec, derive_spec_meta_with_fields, run_escher_js, specs_to_json,
-    resolve_field_order, write_spec_to_file, EscherCase, EscherJsOutcome, EscherSpec,
-    EscherSpecMeta,
+    build_escher_spec, derive_spec_meta_with_fields, resolve_field_order, run_escher_js,
+    specs_to_json, write_spec_to_file, EscherCase, EscherJsOutcome, EscherSpec, EscherSpecMeta,
 };
 use crate::escher_js::{build_context_from_spec, translate_rendered_method};
 use anyhow;
@@ -31,6 +30,14 @@ pub struct MethodCallOperation {
     pub receiver_object: String,
     #[serde(rename = "methodName")]
     pub method_name: String,
+    #[serde(default)]
+    pub arguments: Vec<serde_json::Value>,
+    #[serde(rename = "argumentTypes")]
+    pub argument_types: Option<Vec<String>>,
+    #[serde(rename = "argumentNames")]
+    pub argument_names: Option<Vec<String>>,
+    #[serde(rename = "methodParamNames")]
+    pub method_param_names: Option<Vec<String>>,
     pub operations: Vec<serde_json::Value>,
     #[serde(rename = "actualGraph")]
     pub actual_graph: Option<VisGraph>,
@@ -57,6 +64,8 @@ pub struct SynthesisResponse {
     pub common_pattern: Option<String>,
     pub hole_information: Option<HashMap<String, Vec<String>>>,
     pub code: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub composed_method_code: Option<String>,
     pub individual_codes: Vec<String>,
     pub list_environment_info: Option<String>, // ListEnvironmentの情報を追加
     // 操作分析結果のフィールド（複数の操作列が提供された場合のみ設定）
@@ -72,6 +81,13 @@ pub struct OperationAnalysisData {
     pub difference_summary: String,
     pub differences_found: usize,
     pub synthesis_matches: Option<usize>, // 合成で見つかった共通パターン数
+}
+
+#[derive(Debug, Clone)]
+struct CommonPlanArtifact {
+    pattern_text: String,
+    hole_information: HashMap<String, Vec<String>>,
+    composed_method_code: Option<String>,
 }
 
 fn trace_enabled() -> bool {
@@ -108,6 +124,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
                 common_pattern: None,
                 hole_information: None,
                 code: vec![],
+                composed_method_code: None,
                 individual_codes: vec![],
                 list_environment_info: None,
                 operation_analysis: None,
@@ -126,6 +143,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
             common_pattern: None,
             hole_information: None,
             code: vec![],
+            composed_method_code: None,
             individual_codes: vec![],
             list_environment_info: None,
             operation_analysis: None,
@@ -137,12 +155,52 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         ));
     }
 
+    let unique_method_names = collect_unique_method_names(&req.method_calls);
+    if unique_method_names.len() > 1 {
+        let message = format!(
+            "Mismatched method names in method_calls: {}",
+            unique_method_names.join(", ")
+        );
+        eprintln!("{}", message);
+        let response = SynthesisResponse {
+            common_pattern: None,
+            hole_information: None,
+            code: vec![],
+            composed_method_code: None,
+            individual_codes: vec![],
+            list_environment_info: Some(message),
+            operation_analysis: None,
+            escher_results: None,
+        };
+        return Ok(warp::reply::with_status(
+            warp::reply::json(&response),
+            StatusCode::BAD_REQUEST,
+        ));
+    }
+
     // Gather raw operation traces for later analysis/spec generation.
     let operations_list: Vec<Vec<serde_json::Value>> = req
         .method_calls
         .iter()
         .map(|call| call.operations.clone())
         .collect();
+    if let Some(message) = detect_unsupported_remove_operation(&operations_list) {
+        eprintln!("{}", message);
+        let response = SynthesisResponse {
+            common_pattern: None,
+            hole_information: None,
+            code: vec![],
+            composed_method_code: None,
+            individual_codes: vec![],
+            list_environment_info: Some(message),
+            operation_analysis: None,
+            escher_results: None,
+        };
+        return Ok(warp::reply::with_status(
+            warp::reply::json(&response),
+            StatusCode::BAD_REQUEST,
+        ));
+    }
 
     // Provide a summary of the current list environment derived from the base VisGraph.
     use crate::list_env::ListEnvironment;
@@ -239,6 +297,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     let spec_base_name = derive_spec_base_name(&req.method_calls);
     let mut aggregated_specs: Vec<EscherSpec> = Vec::new();
     let mut spec_meta_by_name: HashMap<String, EscherSpecMeta> = HashMap::new();
+    let mut common_plan_artifact: Option<CommonPlanArtifact> = None;
     let mut escher_json: Option<String> = None;
     let mut escher_outcomes: Option<Vec<EscherJsOutcome>> = None;
     let mut synthesized_codes: Vec<String> = Vec::new();
@@ -257,8 +316,12 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
             .unwrap_or(&req.vis_graph);
         let base_env_a = ListEnvironment::from_vis_graph(vis_graph_a);
         let base_env_b = ListEnvironment::from_vis_graph(vis_graph_b);
-        let receiver_object_a = req.method_calls.get(0).map(|m| m.receiver_object.as_str());
-        let receiver_object_b = req.method_calls.get(1).map(|m| m.receiver_object.as_str());
+        let declared_receiver_a = req.method_calls.get(0).map(|m| m.receiver_object.as_str());
+        let declared_receiver_b = req.method_calls.get(1).map(|m| m.receiver_object.as_str());
+        let receiver_object_a =
+            resolve_effective_receiver_object(declared_receiver_a, &base_env_a, vis_graph_a);
+        let receiver_object_b =
+            resolve_effective_receiver_object(declared_receiver_b, &base_env_b, vis_graph_b);
 
         if let Some(uni) = &unification_analysis {
             let merged_field_tables = merge_field_tables(
@@ -274,20 +337,54 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
                 vis_graph_b,
                 &base_env_a,
                 &base_env_b,
-                receiver_object_a,
-                receiver_object_b,
+                receiver_object_a.as_deref(),
+                receiver_object_b.as_deref(),
+                req.method_calls
+                    .get(0)
+                    .map(|m| m.arguments.as_slice())
+                    .unwrap_or(&[]),
+                req.method_calls
+                    .get(1)
+                    .map(|m| m.arguments.as_slice())
+                    .unwrap_or(&[]),
+                req.method_calls
+                    .get(0)
+                    .and_then(|m| m.argument_types.as_deref()),
+                req.method_calls
+                    .get(1)
+                    .and_then(|m| m.argument_types.as_deref()),
+                req.method_calls
+                    .get(0)
+                    .and_then(|m| m.argument_names.as_deref()),
+                req.method_calls
+                    .get(1)
+                    .and_then(|m| m.argument_names.as_deref()),
+                req.method_calls
+                    .get(0)
+                    .and_then(|m| m.method_param_names.as_deref()),
+                req.method_calls
+                    .get(1)
+                    .and_then(|m| m.method_param_names.as_deref()),
                 &operations_list[0],
                 &operations_list[1],
                 uni,
                 &spec_base_name,
+                req.method_calls
+                    .get(0)
+                    .map(|m| m.method_name.as_str())
+                    .unwrap_or("method"),
                 merged_field_tables.as_ref(),
                 &mut spec_meta_by_name,
             ) {
-                Ok(specs) => {
+                Ok(spec_result) => {
+                    let GeneratedSpecsResult { specs, common_plan } = spec_result;
                     if specs.is_empty() {
                         println!("Unification diff groups were empty; no Escher specs generated.");
                     } else {
                         aggregated_specs.extend(specs);
+                    }
+                    if common_plan_artifact.is_none() {
+                        common_plan_artifact = common_plan;
                     }
                 }
                 Err(e) => {
@@ -349,7 +446,10 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
 
                 for out in &results {
                     if let Some(rendered) = &out.rendered {
-                        match (spec_by_name.get(&out.name), spec_meta_by_name.get(&out.name)) {
+                        match (
+                            spec_by_name.get(&out.name),
+                            spec_meta_by_name.get(&out.name),
+                        ) {
                             (Some(spec), Some(meta)) => {
                                 match build_context_from_spec(&out.name, spec, meta) {
                                     Ok((ctx, params_js)) => {
@@ -367,16 +467,13 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
                                         }
                                     }
                                     Err(e) => {
-                                        individual_codes
-                                            .push(format!("{}: ERROR {}", out.name, e));
+                                        individual_codes.push(format!("{}: ERROR {}", out.name, e));
                                     }
                                 }
                             }
                             _ => {
-                                individual_codes.push(format!(
-                                    "{}: ERROR missing spec metadata",
-                                    out.name
-                                ));
+                                individual_codes
+                                    .push(format!("{}: ERROR missing spec metadata", out.name));
                             }
                         }
                     } else if let Some(err) = &out.error {
@@ -401,9 +498,16 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     }
 
     let response = SynthesisResponse {
-        common_pattern: None,
-        hole_information: None,
+        common_pattern: common_plan_artifact
+            .as_ref()
+            .map(|artifact| artifact.pattern_text.clone()),
+        hole_information: common_plan_artifact
+            .as_ref()
+            .map(|artifact| artifact.hole_information.clone()),
         code: synthesized_codes,
+        composed_method_code: common_plan_artifact
+            .as_ref()
+            .and_then(|artifact| artifact.composed_method_code.clone()),
         individual_codes,
         list_environment_info: Some(list_env_info),
         operation_analysis: operation_analysis_data,
@@ -460,6 +564,9 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         for (i, c) in response.code.iter().enumerate() {
             println!("  [{}] {}", i, c);
         }
+    }
+    if let Some(composed) = &response.composed_method_code {
+        println!("Composed method code:\n{}", composed);
     }
 
     if let Some(results) = &response.escher_results {
@@ -554,7 +661,7 @@ pub fn analyze_operations_with_unification(
 fn convert_json_to_unify_ops(
     operations: &[serde_json::Value],
 ) -> anyhow::Result<Vec<crate::unify_ops::Op>> {
-    use crate::unify_ops::{EdgeExpr, GraphOp, NodeExpr, Op};
+    use crate::unify_ops::{EdgeExpr, GraphOp, NodeExpr, Op, VarOp};
 
     #[derive(Clone, serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
@@ -565,6 +672,42 @@ fn convert_json_to_unify_ops(
         is_literal: Option<bool>,
         from: Option<String>,
         to: Option<String>,
+        old_to: Option<String>,
+        new_to: Option<String>,
+    }
+
+    fn ensure_reference_node(
+        node_id: &str,
+        id_to_opnum: &mut std::collections::HashMap<String, String>,
+        result: &mut Vec<Op>,
+        exist_idx: &mut usize,
+    ) -> String {
+        if let Some(existing) = id_to_opnum.get(node_id) {
+            return existing.clone();
+        }
+
+        if node_id == "null" {
+            let op_id = "op_null".to_string();
+            result.push(Op {
+                id: op_id.clone(),
+                kind: GraphOp::Node(NodeExpr::NullNode),
+            });
+            id_to_opnum.insert(node_id.to_string(), op_id.clone());
+            return op_id;
+        }
+
+        let op_id = format!("op_exist_{}", *exist_idx);
+        *exist_idx += 1;
+        result.push(Op {
+            id: op_id.clone(),
+            kind: GraphOp::Node(NodeExpr::ExistNode {
+                id: node_id.to_string(),
+                label: String::new(),
+                is_literal: false,
+            }),
+        });
+        id_to_opnum.insert(node_id.to_string(), op_id.clone());
+        op_id
     }
 
     // 1) デコードして保持
@@ -597,16 +740,33 @@ fn convert_json_to_unify_ops(
         }
     }
 
-    // 3) 参照されるIDのうち、addNodeで定義されていないものに対して ExistNode を作る
+    // 3) 参照されるIDのうち、addNodeで定義されていないものに対して ExistNode/NullNode を作る
     let mut referenced_ids: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
     for (_i, op) in &decoded {
         match op.edit_type.as_str() {
-            "addEdge" | "deleteEdge" => {
+            "addEdge" | "deleteEdge" | "editEdgeReference" => {
                 if let Some(f) = &op.from {
                     referenced_ids.insert(f.clone());
                 }
                 if let Some(t) = &op.to {
                     referenced_ids.insert(t.clone());
+                }
+                if let Some(old_t) = &op.old_to {
+                    referenced_ids.insert(old_t.clone());
+                }
+                if let Some(new_t) = &op.new_to {
+                    referenced_ids.insert(new_t.clone());
+                }
+            }
+            "addVariable" | "editVariableReference" => {
+                if let Some(t) = &op.to {
+                    referenced_ids.insert(t.clone());
+                }
+                if let Some(old_t) = &op.old_to {
+                    referenced_ids.insert(old_t.clone());
+                }
+                if let Some(new_t) = &op.new_to {
+                    referenced_ids.insert(new_t.clone());
                 }
             }
             _ => {}
@@ -614,58 +774,57 @@ fn convert_json_to_unify_ops(
     }
     let mut exist_idx: usize = 0;
     for obj_id in referenced_ids {
-        if !id_to_opnum.contains_key(&obj_id) {
-            let op_id = format!("op_exist_{}", exist_idx);
-            exist_idx += 1;
-            // is_literal/label は厳密には不要（ExistNodeの等価判定はidのみ）
-            result.push(Op {
-                id: op_id.clone(),
-                kind: GraphOp::Node(NodeExpr::ExistNode {
-                    id: obj_id.clone(),
-                    label: String::new(),
-                    is_literal: false,
-                }),
-            });
-            id_to_opnum.insert(obj_id, op_id);
-        }
+        ensure_reference_node(&obj_id, &mut id_to_opnum, &mut result, &mut exist_idx);
     }
 
-    // 4) エッジ系を opId に解決して追加
+    // 4) エッジ系/変数系を opId に解決して追加（set-referenceへ正規化）
     for (i, op) in &decoded {
         match op.edit_type.as_str() {
-            "addEdge" => {
+            "addEdge" | "editEdgeReference" => {
+                let target = op.new_to.clone().or(op.to.clone());
                 if let (Some(from), Some(to), Some(label)) =
-                    (op.from.clone(), op.to.clone(), op.label.clone())
+                    (op.from.clone(), target, op.label.clone())
                 {
-                    if let (Some(from_op), Some(to_op)) =
-                        (id_to_opnum.get(&from), id_to_opnum.get(&to))
-                    {
-                        result.push(Op {
-                            id: format!("op_{}", i),
-                            kind: GraphOp::Edge(EdgeExpr::AddEdge {
-                                from: from_op.clone(),
-                                to: to_op.clone(),
-                                label,
-                            }),
-                        });
-                    }
+                    let from_op =
+                        ensure_reference_node(&from, &mut id_to_opnum, &mut result, &mut exist_idx);
+                    let to_op =
+                        ensure_reference_node(&to, &mut id_to_opnum, &mut result, &mut exist_idx);
+                    result.push(Op {
+                        id: format!("op_{}", i),
+                        kind: GraphOp::Edge(EdgeExpr::AddEdge {
+                            from: from_op,
+                            to: to_op,
+                            label,
+                        }),
+                    });
                 }
             }
             "deleteEdge" => {
                 if let (Some(from), Some(to)) = (op.from.clone(), op.to.clone()) {
                     let label = op.label.clone().unwrap_or_default();
-                    if let (Some(from_op), Some(to_op)) =
-                        (id_to_opnum.get(&from), id_to_opnum.get(&to))
-                    {
-                        result.push(Op {
-                            id: format!("op_{}", i),
-                            kind: GraphOp::Edge(EdgeExpr::DeleteEdge {
-                                from: from_op.clone(),
-                                to: to_op.clone(),
-                                label,
-                            }),
-                        });
-                    }
+                    let from_op =
+                        ensure_reference_node(&from, &mut id_to_opnum, &mut result, &mut exist_idx);
+                    let to_op =
+                        ensure_reference_node(&to, &mut id_to_opnum, &mut result, &mut exist_idx);
+                    result.push(Op {
+                        id: format!("op_{}", i),
+                        kind: GraphOp::Edge(EdgeExpr::DeleteEdge {
+                            from: from_op,
+                            to: to_op,
+                            label,
+                        }),
+                    });
+                }
+            }
+            "addVariable" | "editVariableReference" => {
+                let target = op.new_to.clone().or(op.to.clone());
+                if let (Some(to), Some(label)) = (target, op.label.clone()) {
+                    let to_op =
+                        ensure_reference_node(&to, &mut id_to_opnum, &mut result, &mut exist_idx);
+                    result.push(Op {
+                        id: format!("op_{}", i),
+                        kind: GraphOp::Variable(VarOp::AddVariable { to: to_op, label }),
+                    });
                 }
             }
             "deleteNode" => {
@@ -697,10 +856,11 @@ fn create_environment_at_unification_boundary(
 
     // 初期状態のList環境を作成
     let mut list_env = ListEnvironment::from_vis_graph(vis_graph);
+    let mut op_to_object_id: HashMap<String, String> = HashMap::new();
 
     // 共通操作を順次適用してホール境界までの状態を構築
     for op in common_operations {
-        apply_operation_to_list_env(&mut list_env, op)?;
+        apply_operation_to_list_env(&mut list_env, op, &mut op_to_object_id)?;
     }
 
     Ok(list_env)
@@ -710,9 +870,10 @@ fn create_environment_at_unification_boundary(
 fn apply_operation_to_list_env(
     list_env: &mut crate::list_env::ListEnvironment,
     op: &crate::unify_ops::Op,
+    op_to_object_id: &mut HashMap<String, String>,
 ) -> anyhow::Result<()> {
-    use crate::list_env::FieldKind;
-    use crate::unify_ops::{EdgeExpr, GraphOp, NodeExpr};
+    use crate::list_env::GraphOperation;
+    use crate::unify_ops::{EdgeExpr, GraphOp, NodeExpr, VarOp};
 
     match &op.kind {
         GraphOp::Node(NodeExpr::AddNode {
@@ -732,89 +893,118 @@ fn apply_operation_to_list_env(
                     .insert(id.clone(), serde_json::Value::String(label.clone()));
             } else {
                 // 新しいオブジェクトインデックスを追加
-                let new_index = list_env.obj_id_to_index.len();
+                let new_index = list_env.next_index;
                 list_env.obj_id_to_index.insert(id.clone(), new_index);
                 list_env.index_to_obj_id.insert(new_index, id.clone());
+                list_env.next_index += 1;
+                for (field_name, field_vec) in list_env.field_lists.iter_mut() {
+                    let default_value = list_env
+                        .field_kinds
+                        .get(field_name)
+                        .copied()
+                        .unwrap_or(crate::list_env::FieldKind::Value)
+                        .default_value();
+                    field_vec.push(default_value);
+                }
             }
+            op_to_object_id.insert(op.id.clone(), id.clone());
         }
         GraphOp::Edge(EdgeExpr::AddEdge { from, to, label }) => {
-            // __RectForVariable__や__Variable-lstに関連するエッジは無視
-            if from == "__RectForVariable__"
-                || from == "__Variable-lst"
-                || to == "__RectForVariable__"
-                || to == "__Variable-lst"
-            {
-                return Ok(());
-            }
-
-            // エッジ追加をList環境に反映
-            if let Some(&from_index) = list_env.obj_id_to_index.get(from) {
-                let inferred_kind = if list_env.obj_id_to_index.contains_key(to) {
-                    FieldKind::Pointer
-                } else if list_env.literal_id_to_value.contains_key(to) {
-                    FieldKind::Value
-                } else if to == "null" {
-                    FieldKind::Pointer
-                } else {
-                    FieldKind::Pointer
-                };
-                let field_kind = {
-                    let entry = list_env
-                        .field_kinds
-                        .entry(label.clone())
-                        .or_insert(inferred_kind);
-                    if inferred_kind == FieldKind::Pointer {
-                        *entry = FieldKind::Pointer;
-                    }
-                    *entry
-                };
-                let default_value = field_kind.default_value();
-                let field_list = list_env
-                    .field_lists
-                    .entry(label.clone())
-                    .or_insert_with(|| vec![default_value.clone(); list_env.obj_id_to_index.len()]);
-
-                if field_kind == FieldKind::Pointer {
-                    for v in field_list.iter_mut() {
-                        if v.as_i64() == Some(-1) {
-                            *v = serde_json::Value::Null;
-                        }
-                    }
-                }
-
-                // インデックスが範囲外の場合はリストを拡張
-                while field_list.len() <= from_index {
-                    field_list.push(default_value.clone());
-                }
-
-                // toが既存オブジェクトか新しいリテラルかを判定
-                let mut to_value = if let Some(&to_index) = list_env.obj_id_to_index.get(to) {
-                    serde_json::json!(to_index as i32)
-                } else if let Some(literal_value) = list_env.literal_id_to_value.get(to) {
-                    literal_value.clone()
-                } else {
-                    serde_json::Value::Null
-                };
-                if field_kind == FieldKind::Value && to_value.is_null() {
-                    to_value = serde_json::json!(-1);
-                }
-                field_list[from_index] = to_value;
-            }
+            let from_id = op_to_object_id
+                .get(from)
+                .cloned()
+                .unwrap_or_else(|| from.clone());
+            let to_id = op_to_object_id
+                .get(to)
+                .cloned()
+                .unwrap_or_else(|| to.clone());
+            let graph_op = GraphOperation {
+                edit_type: "addEdge".to_string(),
+                from: Some(from_id),
+                to: Some(to_id),
+                label: Some(serde_json::json!(label)),
+                ..GraphOperation::default()
+            };
+            list_env
+                .apply_operation(&graph_op)
+                .map_err(|e| anyhow::anyhow!(e))?;
         }
         GraphOp::Node(NodeExpr::ExistNode { .. }) => {
-            // 既存ノード参照は環境変更なし
+            if let GraphOp::Node(NodeExpr::ExistNode { id, .. }) = &op.kind {
+                op_to_object_id.insert(op.id.clone(), id.clone());
+            }
         }
         GraphOp::Node(NodeExpr::NullNode) => {
-            // NullNode操作は環境変更なし
+            op_to_object_id.insert(op.id.clone(), "null".to_string());
         }
         GraphOp::Edge(EdgeExpr::DeleteEdge { .. }) => {
             // エッジ削除は複雑なため、現在は未実装
         }
-        GraphOp::Edge(EdgeExpr::EditEdgeReference { .. }) => {
-            // エッジ編集は複雑なため、現在は未実装
+        GraphOp::Edge(EdgeExpr::EditEdgeReference {
+            from,
+            new_to,
+            label,
+        }) => {
+            let from_id = op_to_object_id
+                .get(from)
+                .cloned()
+                .unwrap_or_else(|| from.clone());
+            let new_to_id = op_to_object_id
+                .get(new_to)
+                .cloned()
+                .unwrap_or_else(|| new_to.clone());
+            let graph_op = GraphOperation {
+                edit_type: "editEdgeReference".to_string(),
+                from: Some(from_id),
+                new_to: Some(new_to_id),
+                label: Some(serde_json::json!(label)),
+                ..GraphOperation::default()
+            };
+            list_env
+                .apply_operation(&graph_op)
+                .map_err(|e| anyhow::anyhow!(e))?;
         }
-        GraphOp::Variable(_) => {
-            // 変数操作は現在未実装
+        GraphOp::Variable(VarOp::AddVariable { to, label }) => {
+            let to_id = op_to_object_id
+                .get(to)
+                .cloned()
+                .unwrap_or_else(|| to.clone());
+            let graph_op = GraphOperation {
+                edit_type: "addVariable".to_string(),
+                to: Some(to_id),
+                label: Some(serde_json::json!(label)),
+                ..GraphOperation::default()
+            };
+            list_env
+                .apply_operation(&graph_op)
+                .map_err(|e| anyhow::anyhow!(e))?;
+        }
+        GraphOp::Variable(VarOp::EditVariableReference {
+            old_to,
+            new_to,
+            label,
+        }) => {
+            let old_to_id = op_to_object_id
+                .get(old_to)
+                .cloned()
+                .unwrap_or_else(|| old_to.clone());
+            let new_to_id = op_to_object_id
+                .get(new_to)
+                .cloned()
+                .unwrap_or_else(|| new_to.clone());
+            let graph_op = GraphOperation {
+                edit_type: "editVariableReference".to_string(),
+                old_to: Some(old_to_id),
+                new_to: Some(new_to_id),
+                label: Some(serde_json::json!(label)),
+                ..GraphOperation::default()
+            };
+            list_env
+                .apply_operation(&graph_op)
+                .map_err(|e| anyhow::anyhow!(e))?;
+        }
+        GraphOp::Variable(VarOp::DeleteVariable { .. }) => {
+            // 変数削除は現段階で未対応
         }
     }
 
@@ -911,6 +1101,175 @@ fn detect_root_index(
     None
 }
 
+fn detect_runtime_receiver_object_id(
+    env: &crate::list_env::ListEnvironment,
+    vis_graph: &models::VisGraph,
+) -> Option<String> {
+    let object_ids: HashSet<&str> = vis_graph
+        .nodes
+        .iter()
+        .filter(|n| !n.is_literal)
+        .map(|n| n.id.as_str())
+        .filter(|id| *id != "__RectForVariable__")
+        .filter(|id| !id.starts_with("__Variable-"))
+        .collect();
+
+    let pick_variable_target = |name: &str| -> Option<String> {
+        let var_id = format!("__Variable-{}", name);
+        vis_graph
+            .edges
+            .iter()
+            .find(|e| e.from == var_id && e.label == name && object_ids.contains(e.to.as_str()))
+            .map(|e| e.to.clone())
+    };
+
+    // Prefer explicit `this` binding if present.
+    if let Some(target) = pick_variable_target("this") {
+        return Some(target);
+    }
+    // Fallback to `lst` for list-style payloads.
+    if let Some(target) = pick_variable_target("lst") {
+        return Some(target);
+    }
+    // Generic fallback: any __Variable-<name> --(<name>)--> object
+    for edge in &vis_graph.edges {
+        let Some(var_name) = edge.from.strip_prefix("__Variable-") else {
+            continue;
+        };
+        if edge.label == var_name && object_ids.contains(edge.to.as_str()) {
+            return Some(edge.to.clone());
+        }
+    }
+    // Last fallback: root used by BFS encoding.
+    if let Some(root_idx) = detect_root_index(env, vis_graph) {
+        if let Some(id) = env.index_to_obj_id.get(&root_idx) {
+            return Some(id.clone());
+        }
+    }
+    None
+}
+
+fn resolve_effective_receiver_object(
+    declared_receiver: Option<&str>,
+    env: &crate::list_env::ListEnvironment,
+    vis_graph: &models::VisGraph,
+) -> Option<String> {
+    if let Some(id) = declared_receiver {
+        if env.obj_id_to_index.contains_key(id) {
+            return Some(id.to_string());
+        }
+    }
+    if let Some(runtime_receiver) = detect_runtime_receiver_object_id(env, vis_graph) {
+        return Some(runtime_receiver);
+    }
+    declared_receiver.map(|id| id.to_string())
+}
+
+fn js_field_access_expr(base: &str, field: &str) -> String {
+    if is_valid_js_identifier(field) {
+        format!("{}.{}", base, field)
+    } else {
+        let quoted = serde_json::to_string(field).unwrap_or_else(|_| "\"\"".to_string());
+        format!("{}[{}]", base, quoted)
+    }
+}
+
+fn build_runtime_object_expression_map(
+    vis_graph: &models::VisGraph,
+    receiver_object_id: Option<&str>,
+) -> HashMap<String, String> {
+    use std::collections::VecDeque;
+
+    let Some(receiver_id) = receiver_object_id else {
+        return HashMap::new();
+    };
+
+    let object_ids: HashSet<&str> = vis_graph
+        .nodes
+        .iter()
+        .filter(|n| !n.is_literal)
+        .map(|n| n.id.as_str())
+        .filter(|id| *id != "__RectForVariable__")
+        .filter(|id| !id.starts_with("__Variable-"))
+        .collect();
+    let literal_ids: HashSet<&str> = vis_graph
+        .nodes
+        .iter()
+        .filter(|n| n.is_literal)
+        .map(|n| n.id.as_str())
+        .collect();
+
+    if !object_ids.contains(receiver_id) {
+        return HashMap::new();
+    }
+
+    let mut adjacency: HashMap<String, Vec<(String, String)>> = HashMap::new();
+    let mut field_labels: HashSet<String> = HashSet::new();
+    for edge in &vis_graph.edges {
+        field_labels.insert(edge.label.clone());
+        if object_ids.contains(edge.from.as_str()) && object_ids.contains(edge.to.as_str()) {
+            adjacency
+                .entry(edge.from.clone())
+                .or_default()
+                .push((edge.label.clone(), edge.to.clone()));
+        }
+    }
+    for edges in adjacency.values_mut() {
+        edges.sort();
+    }
+
+    let mut expr_by_id: HashMap<String, String> = HashMap::new();
+    let mut queue: VecDeque<String> = VecDeque::new();
+    expr_by_id.insert(receiver_id.to_string(), "this".to_string());
+    queue.push_back(receiver_id.to_string());
+
+    while let Some(from_id) = queue.pop_front() {
+        let Some(from_expr) = expr_by_id.get(&from_id).cloned() else {
+            continue;
+        };
+        if let Some(edges) = adjacency.get(&from_id) {
+            for (label, to_id) in edges {
+                if expr_by_id.contains_key(to_id) {
+                    continue;
+                }
+                let to_expr = js_field_access_expr(&from_expr, label);
+                expr_by_id.insert(to_id.clone(), to_expr);
+                queue.push_back(to_id.clone());
+            }
+        }
+    }
+
+    // Map literal node ids reachable as object.<field> to support Kanon-style IDs like "...-val".
+    for edge in &vis_graph.edges {
+        if !literal_ids.contains(edge.to.as_str()) {
+            continue;
+        }
+        if let Some(from_expr) = expr_by_id.get(&edge.from).cloned() {
+            let to_expr = js_field_access_expr(&from_expr, &edge.label);
+            expr_by_id.entry(edge.to.clone()).or_insert(to_expr);
+        }
+    }
+
+    // Naming-based fallback for Kanon field nodes: <object-id>-<field>.
+    // Example: "main-call2-FunctionExpression2-new1-val" -> "this.next.val"
+    let mut extra_bindings: Vec<(String, String)> = Vec::new();
+    for node in &vis_graph.nodes {
+        if let Some((parent, field)) = node.id.rsplit_once('-') {
+            if !field_labels.contains(field) || !object_ids.contains(parent) {
+                continue;
+            }
+            if let Some(parent_expr) = expr_by_id.get(parent) {
+                extra_bindings.push((node.id.clone(), js_field_access_expr(parent_expr, field)));
+            }
+        }
+    }
+    for (id, expr) in extra_bindings {
+        expr_by_id.entry(id).or_insert(expr);
+    }
+
+    expr_by_id
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ArgKind {
     Ptr,
@@ -986,7 +1345,9 @@ fn build_case_arguments_from_variables(
                 continue;
             }
             if literal_ids.contains(edge.to.as_str()) {
-                kind_by_name.entry(var_name.to_string()).or_insert(ArgKind::Int);
+                kind_by_name
+                    .entry(var_name.to_string())
+                    .or_insert(ArgKind::Int);
             } else if object_ids.contains(edge.to.as_str()) {
                 kind_by_name.insert(var_name.to_string(), ArgKind::Ptr);
             }
@@ -1108,6 +1469,191 @@ fn build_case_arguments_from_variables(
     })
 }
 
+fn append_method_call_arguments(
+    bundle: &mut ArgBundle,
+    call_arguments: &[serde_json::Value],
+    call_argument_types: Option<&[String]>,
+    call_argument_names: Option<&[String]>,
+    env: &crate::list_env::ListEnvironment,
+    vis_graph: &models::VisGraph,
+    pointer_fields: &[String],
+) -> anyhow::Result<()> {
+    use std::collections::HashMap;
+
+    if call_arguments.is_empty() {
+        return Ok(());
+    }
+
+    if let Some(types) = call_argument_types {
+        if types.len() != call_arguments.len() {
+            return Err(anyhow::anyhow!(
+                "argument type count {} does not match argument count {}",
+                types.len(),
+                call_arguments.len()
+            ));
+        }
+    }
+    if let Some(names) = call_argument_names {
+        if names.len() != call_arguments.len() {
+            return Err(anyhow::anyhow!(
+                "argument name count {} does not match argument count {}",
+                names.len(),
+                call_arguments.len()
+            ));
+        }
+    }
+
+    let mut arg_kinds: Vec<ArgKind> = Vec::with_capacity(call_arguments.len());
+    for (idx, value) in call_arguments.iter().enumerate() {
+        let declared = call_argument_types
+            .and_then(|types| types.get(idx))
+            .map(String::as_str);
+        arg_kinds.push(resolve_call_argument_kind(value, declared, env)?);
+    }
+
+    let needs_bfs = arg_kinds.iter().any(|k| *k == ArgKind::Ptr);
+    let idx_to_bfs: HashMap<usize, usize> = if needs_bfs {
+        build_bfs_index_map(env, vis_graph, pointer_fields)?
+    } else {
+        HashMap::new()
+    };
+
+    for (idx, value) in call_arguments.iter().enumerate() {
+        let base_name = call_argument_names
+            .and_then(|names| names.get(idx))
+            .filter(|name| !name.trim().is_empty())
+            .cloned()
+            .unwrap_or_else(|| format!("arg{}", idx));
+        let mut name = base_name.clone();
+        let mut suffix = 1usize;
+        while bundle.names.contains(&name) {
+            name = format!("{}_{}", base_name, suffix);
+            suffix += 1;
+        }
+        bundle.names.push(name);
+
+        match arg_kinds[idx] {
+            ArgKind::Int => {
+                let int_value = value_to_i32(value).ok_or_else(|| {
+                    anyhow::anyhow!("failed to encode argument {} as Int: {}", idx, value)
+                })?;
+                bundle.types.push("Int".to_string());
+                bundle.values.push(serde_json::json!(int_value));
+            }
+            ArgKind::Ptr => {
+                let ptr_value = encode_call_argument_ptr(value, env, &idx_to_bfs, idx)?;
+                bundle.types.push("Ptr".to_string());
+                bundle.values.push(ptr_value);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn resolve_call_argument_kind(
+    value: &serde_json::Value,
+    declared: Option<&str>,
+    env: &crate::list_env::ListEnvironment,
+) -> anyhow::Result<ArgKind> {
+    if let Some(ty) = declared {
+        return match ty {
+            "Int" => Ok(ArgKind::Int),
+            "Ptr" => Ok(ArgKind::Ptr),
+            other => Err(anyhow::anyhow!("unsupported argument type '{}'", other)),
+        };
+    }
+
+    if value_to_i32(value).is_some() {
+        return Ok(ArgKind::Int);
+    }
+
+    if value.is_null() {
+        return Ok(ArgKind::Ptr);
+    }
+
+    if let Some(id) = value.as_str() {
+        if env.obj_id_to_index.contains_key(id) {
+            return Ok(ArgKind::Ptr);
+        }
+    }
+    if let Some(id) = value.get("id").and_then(|v| v.as_str()) {
+        if env.obj_id_to_index.contains_key(id) {
+            return Ok(ArgKind::Ptr);
+        }
+    }
+
+    Err(anyhow::anyhow!(
+        "cannot infer argument type from value {}; supply argumentTypes",
+        value
+    ))
+}
+
+fn encode_call_argument_ptr(
+    value: &serde_json::Value,
+    env: &crate::list_env::ListEnvironment,
+    idx_to_bfs: &HashMap<usize, usize>,
+    arg_index: usize,
+) -> anyhow::Result<serde_json::Value> {
+    if value.is_null() {
+        return Ok(serde_json::Value::Null);
+    }
+
+    if let Some(num) = value.as_i64() {
+        if let Ok(v) = i32::try_from(num) {
+            if v >= 0 {
+                return Ok(serde_json::json!(v));
+            }
+        }
+        return Err(anyhow::anyhow!(
+            "invalid Ptr argument {} value {}",
+            arg_index,
+            value
+        ));
+    }
+
+    if let Some(id) = value.as_str() {
+        return encode_call_argument_ptr_from_id(id, env, idx_to_bfs, arg_index);
+    }
+    if let Some(id) = value.get("id").and_then(|v| v.as_str()) {
+        return encode_call_argument_ptr_from_id(id, env, idx_to_bfs, arg_index);
+    }
+
+    Err(anyhow::anyhow!(
+        "unsupported Ptr argument {} value {}",
+        arg_index,
+        value
+    ))
+}
+
+fn encode_call_argument_ptr_from_id(
+    raw: &str,
+    env: &crate::list_env::ListEnvironment,
+    idx_to_bfs: &HashMap<usize, usize>,
+    arg_index: usize,
+) -> anyhow::Result<serde_json::Value> {
+    if let Ok(num) = raw.parse::<i64>() {
+        if let Ok(v) = i32::try_from(num) {
+            if v >= 0 {
+                return Ok(serde_json::json!(v));
+            }
+        }
+    }
+
+    let orig_idx =
+        env.obj_id_to_index.get(raw).copied().ok_or_else(|| {
+            anyhow::anyhow!("unknown Ptr argument {} object id '{}'", arg_index, raw)
+        })?;
+    let mapped_idx = idx_to_bfs.get(&orig_idx).copied().ok_or_else(|| {
+        anyhow::anyhow!(
+            "Ptr argument {} object '{}' is not reachable from receiver root",
+            arg_index,
+            raw
+        )
+    })?;
+    Ok(serde_json::json!(mapped_idx as i32))
+}
+
 fn build_bfs_index_map(
     env: &crate::list_env::ListEnvironment,
     vis_graph: &models::VisGraph,
@@ -1116,7 +1662,8 @@ fn build_bfs_index_map(
     use crate::list_env::PtrValue;
     use std::collections::{HashMap, HashSet, VecDeque};
 
-    let root = detect_root_index(env, vis_graph).ok_or_else(|| anyhow::anyhow!("root not found"))?;
+    let root =
+        detect_root_index(env, vis_graph).ok_or_else(|| anyhow::anyhow!("root not found"))?;
     let mut adj: HashMap<usize, Vec<usize>> = HashMap::new();
     for pf in pointer_fields {
         if let Some(vec) = env.field_lists.get(pf) {
@@ -1156,8 +1703,8 @@ fn bfs_local_index_for_object(
     vis_graph: &models::VisGraph,
     object_id: &str,
 ) -> anyhow::Result<Option<i32>> {
-    use std::collections::{HashMap, HashSet, VecDeque};
     use crate::list_env::PtrValue;
+    use std::collections::{HashMap, HashSet, VecDeque};
     let (_value_fields, mut pointer_fields) = analyze_fields_for_graph(vis_graph);
     pointer_fields.sort();
     let root =
@@ -1197,10 +1744,7 @@ fn bfs_local_index_for_object(
     }
     // map object id to original index then to bfs index
     if let Some(&orig_idx) = env.obj_id_to_index.get(object_id) {
-        Ok(idx_to_bfs
-            .get(&orig_idx)
-            .copied()
-            .map(|x| x as i32))
+        Ok(idx_to_bfs.get(&orig_idx).copied().map(|x| x as i32))
     } else {
         Ok(None)
     }
@@ -1278,11 +1822,16 @@ fn format_graph_op(graph_op: &crate::list_env::GraphOperation) -> String {
     let label = graph_op_label_string(graph_op).unwrap_or_else(|| "<none>".to_string());
     let id = graph_op.id.as_deref().unwrap_or("-");
     let from = graph_op.from.as_deref().unwrap_or("-");
-    let to = graph_op.to.as_deref().unwrap_or("-");
+    let to = graph_op
+        .new_to
+        .as_deref()
+        .or(graph_op.to.as_deref())
+        .unwrap_or("-");
+    let old_to = graph_op.old_to.as_deref().unwrap_or("-");
     let is_literal = graph_op.is_literal.unwrap_or(false);
     format!(
-        "{} id={} from={} to={} label={} is_literal={}",
-        graph_op.edit_type, id, from, to, label, is_literal
+        "{} id={} from={} to={} old_to={} label={} is_literal={}",
+        graph_op.edit_type, id, from, to, old_to, label, is_literal
     )
 }
 
@@ -1316,11 +1865,64 @@ struct DiffCandidate {
     index: usize,
 }
 
+#[derive(Clone)]
+struct HoleBinding {
+    hole_key: String,
+    spec_name: String,
+    return_type: String,
+    js_method_name: String,
+    js_call_template: String,
+    side_a: String,
+    side_b: String,
+    anchor_a: Option<usize>,
+    anchor_b: Option<usize>,
+}
+
+#[derive(Clone)]
+struct GeneratedSpecsResult {
+    specs: Vec<EscherSpec>,
+    common_plan: Option<CommonPlanArtifact>,
+}
+
 fn diff_op_index(op: &DiffOp) -> Option<usize> {
     match op {
         DiffOp::Json { index, .. } => Some(*index),
         DiffOp::ExistNode { .. } => None,
     }
+}
+
+fn first_reference_index_for_object(
+    object_id: &str,
+    graph_ops: &[crate::list_env::GraphOperation],
+) -> Option<usize> {
+    graph_ops.iter().position(|op| {
+        op.id.as_deref() == Some(object_id)
+            || op.from.as_deref() == Some(object_id)
+            || op.to.as_deref() == Some(object_id)
+            || op.old_to.as_deref() == Some(object_id)
+            || op.new_to.as_deref() == Some(object_id)
+    })
+}
+
+fn diff_op_anchor_index(
+    op: &DiffOp,
+    graph_ops: &[crate::list_env::GraphOperation],
+) -> Option<usize> {
+    match op {
+        DiffOp::Json { index, .. } => Some(*index),
+        DiffOp::ExistNode { id, .. } => first_reference_index_for_object(id, graph_ops),
+    }
+}
+
+fn anchor_index_for_side(
+    own_index: Option<usize>,
+    other_index: Option<usize>,
+    own_ops_len: usize,
+) -> Option<usize> {
+    if let Some(idx) = own_index {
+        return Some(idx.min(own_ops_len));
+    }
+    other_index.filter(|idx| *idx < own_ops_len)
 }
 
 fn diff_op_from_unify_node(
@@ -1376,7 +1978,10 @@ fn extract_node_object_id(op: &crate::unify_ops::Op) -> Option<String> {
 
 fn graph_op_parent_id(op: &crate::list_env::GraphOperation) -> Option<String> {
     match op.edit_type.as_str() {
-        "addEdge" | "removeEdge" => op.from.clone(),
+        "addEdge" | "editEdgeReference" | "removeEdge" => op.from.clone(),
+        "addVariable" | "editVariableReference" => {
+            graph_op_label_string(op).map(|label| format!("__Variable-{}", label))
+        }
         "addNode" | "removeNode" => op.id.clone(),
         _ => None,
     }
@@ -1391,8 +1996,456 @@ fn graph_op_label_string(op: &crate::list_env::GraphOperation) -> Option<String>
     })
 }
 
+fn graph_op_target_id(op: &crate::list_env::GraphOperation) -> Option<String> {
+    match op.edit_type.as_str() {
+        "editEdgeReference" | "editVariableReference" => op.new_to.clone().or(op.to.clone()),
+        "addEdge" | "removeEdge" | "addVariable" => op.to.clone(),
+        _ => op.to.clone(),
+    }
+}
+
 fn canonicalize_object_id(id: &str, mapping: &HashMap<String, String>) -> String {
     mapping.get(id).cloned().unwrap_or_else(|| id.to_string())
+}
+
+fn sanitize_js_identifier(name: &str) -> String {
+    let mut out = String::with_capacity(name.len());
+    for ch in name.chars() {
+        let valid = ch.is_ascii_alphanumeric() || ch == '_' || ch == '$';
+        out.push(if valid { ch } else { '_' });
+    }
+    if out.is_empty() {
+        "_".to_string()
+    } else {
+        if out
+            .chars()
+            .next()
+            .map(|c| c.is_ascii_digit())
+            .unwrap_or(false)
+        {
+            format!("_{}", out)
+        } else {
+            out
+        }
+    }
+}
+
+fn spec_name_to_js_method_name(spec_name: &str) -> String {
+    sanitize_js_identifier(spec_name)
+}
+
+fn default_method_param_names(arg_count: usize) -> Vec<String> {
+    match arg_count {
+        0 => vec![],
+        1 => vec!["arg".to_string()],
+        n => (0..n).map(|i| format!("arg{}", i)).collect(),
+    }
+}
+
+fn build_hole_call_template(js_method_name: &str, method_param_names: &[String]) -> String {
+    if method_param_names.is_empty() {
+        format!("this.{}()", js_method_name)
+    } else {
+        format!("this.{}({})", js_method_name, method_param_names.join(", "))
+    }
+}
+
+fn is_valid_js_identifier(name: &str) -> bool {
+    let mut chars = name.chars();
+    let first = match chars.next() {
+        Some(c) => c,
+        None => return false,
+    };
+    if !(first.is_ascii_alphabetic() || first == '_' || first == '$') {
+        return false;
+    }
+    chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$')
+}
+
+fn resolve_method_param_names(
+    method_param_names_a: Option<&[String]>,
+    method_param_names_b: Option<&[String]>,
+    fallback_arg_count: usize,
+) -> Vec<String> {
+    let normalize = |names: &[String]| -> Vec<String> {
+        names
+            .iter()
+            .enumerate()
+            .map(|(i, name)| {
+                let trimmed = name.trim();
+                if trimmed.is_empty() {
+                    format!("arg{}", i)
+                } else {
+                    sanitize_js_identifier(trimmed)
+                }
+            })
+            .collect()
+    };
+
+    let candidate_a = method_param_names_a
+        .filter(|names| !names.is_empty())
+        .map(normalize);
+    let candidate_b = method_param_names_b
+        .filter(|names| !names.is_empty())
+        .map(normalize);
+
+    match (candidate_a, candidate_b) {
+        (Some(a), Some(b)) if a == b => a,
+        (Some(a), None) => a,
+        (None, Some(b)) => b,
+        (Some(a), Some(_b)) => a,
+        (None, None) => default_method_param_names(fallback_arg_count),
+    }
+}
+
+fn js_literal_expr_from_graph_label(label: Option<&serde_json::Value>) -> String {
+    match label {
+        Some(serde_json::Value::Number(num)) => num.to_string(),
+        Some(serde_json::Value::Bool(b)) => b.to_string(),
+        Some(serde_json::Value::Null) => "null".to_string(),
+        Some(serde_json::Value::String(s)) => {
+            if let Ok(int_value) = s.parse::<i64>() {
+                int_value.to_string()
+            } else if let Ok(float_value) = s.parse::<f64>() {
+                if float_value.is_finite() {
+                    float_value.to_string()
+                } else {
+                    serde_json::to_string(s).unwrap_or_else(|_| "\"\"".to_string())
+                }
+            } else {
+                serde_json::to_string(s).unwrap_or_else(|_| "\"\"".to_string())
+            }
+        }
+        Some(other) => serde_json::to_string(other).unwrap_or_else(|_| "null".to_string()),
+        None => "undefined".to_string(),
+    }
+}
+
+fn js_field_assignment(lhs: &str, field: &str, rhs: &str) -> String {
+    if is_valid_js_identifier(field) {
+        format!("{}.{} = {};", lhs, field, rhs)
+    } else {
+        let quoted = serde_json::to_string(field).unwrap_or_else(|_| "\"\"".to_string());
+        format!("{}[{}] = {};", lhs, quoted, rhs)
+    }
+}
+
+fn resolve_object_expression(
+    object_id: &str,
+    receiver_object_id: Option<&str>,
+    object_expr_by_id: &HashMap<String, String>,
+    hole_by_object_id: &HashMap<String, String>,
+    hole_expr_by_key: &HashMap<String, String>,
+) -> Option<String> {
+    if object_id == "null" {
+        return Some("null".to_string());
+    }
+    if let Some(hole_key) = hole_by_object_id.get(object_id) {
+        if let Some(expr) = hole_expr_by_key.get(hole_key) {
+            return Some(expr.clone());
+        }
+    }
+    if let Some(expr) = object_expr_by_id.get(object_id) {
+        return Some(expr.clone());
+    }
+    if receiver_object_id == Some(object_id) {
+        return Some("this".to_string());
+    }
+    None
+}
+
+fn build_composed_method_code(
+    method_name: &str,
+    method_param_names: &[String],
+    ordered_common_ops: &[(usize, crate::list_env::GraphOperation)],
+    hole_bindings: &[HoleBinding],
+    hole_by_object_id: &HashMap<String, String>,
+    receiver_object_id: Option<&str>,
+    runtime_object_expr_by_id: &HashMap<String, String>,
+) -> anyhow::Result<String> {
+    let method_name = sanitize_js_identifier(method_name);
+    let mut lines: Vec<String> = Vec::new();
+    let mut hole_expr_by_key: HashMap<String, String> = HashMap::new();
+    let mut object_expr_by_id: HashMap<String, String> = runtime_object_expr_by_id.clone();
+    if let Some(receiver_id) = receiver_object_id {
+        object_expr_by_id.insert(receiver_id.to_string(), "this".to_string());
+    }
+
+    let mut ptr_idx = 0usize;
+    let mut int_idx = 0usize;
+    for binding in hole_bindings {
+        let var_name = if binding.return_type == "Ptr" {
+            let name = format!("h_ptr_{}", ptr_idx);
+            ptr_idx += 1;
+            name
+        } else {
+            let name = format!("h_int_{}", int_idx);
+            int_idx += 1;
+            name
+        };
+        lines.push(format!(
+            "const {} = {};",
+            var_name, binding.js_call_template
+        ));
+        hole_expr_by_key.insert(binding.hole_key.clone(), var_name);
+    }
+
+    let mut tmp_index = 0usize;
+    let mut return_expr: Option<String> = None;
+    for (_op_index, op) in ordered_common_ops {
+        match op.edit_type.as_str() {
+            "addNode" => {
+                let node_id = op
+                    .id
+                    .as_deref()
+                    .ok_or_else(|| anyhow::anyhow!("addNode op missing id"))?;
+                if op.is_literal.unwrap_or(false) {
+                    object_expr_by_id.insert(
+                        node_id.to_string(),
+                        js_literal_expr_from_graph_label(op.label.as_ref()),
+                    );
+                } else {
+                    let var_name = format!("tmp{}", tmp_index);
+                    tmp_index += 1;
+                    let ctor = graph_op_label_string(op).unwrap_or_else(|| "Object".to_string());
+                    if is_valid_js_identifier(&ctor) {
+                        lines.push(format!("const {} = new {}();", var_name, ctor));
+                    } else {
+                        lines.push(format!("const {} = {{}};", var_name));
+                    }
+                    object_expr_by_id.insert(node_id.to_string(), var_name);
+                }
+            }
+            "addEdge" | "editEdgeReference" => {
+                let from_id = op
+                    .from
+                    .as_deref()
+                    .ok_or_else(|| anyhow::anyhow!("edge op missing from"))?;
+                let to_id = op
+                    .new_to
+                    .as_deref()
+                    .or(op.to.as_deref())
+                    .ok_or_else(|| anyhow::anyhow!("edge op missing target"))?;
+                let field = graph_op_label_string(op).unwrap_or_default();
+
+                let from_expr = resolve_object_expression(
+                    from_id,
+                    receiver_object_id,
+                    &object_expr_by_id,
+                    hole_by_object_id,
+                    &hole_expr_by_key,
+                )
+                .ok_or_else(|| {
+                    anyhow::anyhow!("failed to resolve from expression for {}", from_id)
+                })?;
+                let to_expr = resolve_object_expression(
+                    to_id,
+                    receiver_object_id,
+                    &object_expr_by_id,
+                    hole_by_object_id,
+                    &hole_expr_by_key,
+                )
+                .ok_or_else(|| anyhow::anyhow!("failed to resolve to expression for {}", to_id))?;
+
+                lines.push(js_field_assignment(&from_expr, &field, &to_expr));
+            }
+            "addVariable" | "editVariableReference" => {
+                let label = graph_op_label_string(op).unwrap_or_default();
+                let to_id = op
+                    .new_to
+                    .as_deref()
+                    .or(op.to.as_deref())
+                    .ok_or_else(|| anyhow::anyhow!("variable op missing target"))?;
+                let to_expr = resolve_object_expression(
+                    to_id,
+                    receiver_object_id,
+                    &object_expr_by_id,
+                    hole_by_object_id,
+                    &hole_expr_by_key,
+                )
+                .ok_or_else(|| anyhow::anyhow!("failed to resolve to expression for {}", to_id))?;
+
+                if label == "return" {
+                    return_expr = Some(to_expr);
+                } else {
+                    lines.push(format!(
+                        "// NOTE: variable '{}' update is omitted in composed code",
+                        label
+                    ));
+                }
+            }
+            "removeNode" | "removeEdge" => {
+                return Err(anyhow::anyhow!(
+                    "remove operations are not supported yet in composed method generation"
+                ));
+            }
+            other => {
+                return Err(anyhow::anyhow!(
+                    "unsupported operation in common plan for composed generation: {}",
+                    other
+                ));
+            }
+        }
+    }
+    if let Some(expr) = return_expr {
+        lines.push(format!("return {};", expr));
+    }
+
+    let mut code_lines = Vec::new();
+    code_lines.push(format!(
+        "{}({}) {{",
+        method_name,
+        method_param_names.join(", ")
+    ));
+    for line in lines {
+        code_lines.push(format!("    {}", line));
+    }
+    code_lines.push("}".to_string());
+    Ok(code_lines.join("\n"))
+}
+
+fn common_ops_in_source_order(
+    common_ops: &[crate::unify_ops::Op],
+    graph_ops: &[crate::list_env::GraphOperation],
+) -> Vec<(usize, crate::list_env::GraphOperation)> {
+    let mut pairs: Vec<(usize, crate::list_env::GraphOperation)> = common_ops
+        .iter()
+        .filter_map(|op| {
+            parse_op_index(&op.id)
+                .and_then(|idx| graph_ops.get(idx).cloned().map(|graph_op| (idx, graph_op)))
+        })
+        .collect();
+    pairs.sort_by_key(|(idx, _)| *idx);
+    pairs.dedup_by_key(|(idx, _)| *idx);
+    pairs
+}
+
+fn diff_op_primary_object_id(op: &DiffOp) -> Option<String> {
+    match op {
+        DiffOp::Json { graph_op, .. } => match graph_op.edit_type.as_str() {
+            "addNode" | "removeNode" => graph_op.id.clone(),
+            "addEdge"
+            | "editEdgeReference"
+            | "removeEdge"
+            | "addVariable"
+            | "editVariableReference" => graph_op_target_id(graph_op),
+            _ => None,
+        },
+        DiffOp::ExistNode { id, .. } => Some(id.clone()),
+    }
+}
+
+fn render_common_graph_op(
+    index: usize,
+    op: &crate::list_env::GraphOperation,
+    hole_by_object_id: &HashMap<String, String>,
+) -> String {
+    let resolve_id = |id: &str| {
+        hole_by_object_id
+            .get(id)
+            .cloned()
+            .unwrap_or_else(|| id.to_string())
+    };
+
+    match op.edit_type.as_str() {
+        "addNode" | "removeNode" => {
+            let id = op
+                .id
+                .as_deref()
+                .map(resolve_id)
+                .unwrap_or_else(|| "-".to_string());
+            let label = graph_op_label_string(op).unwrap_or_else(|| "<none>".to_string());
+            let is_literal = op.is_literal.unwrap_or(false);
+            format!(
+                "[op_{}] {}(id={}, label={}, isLiteral={})",
+                index, op.edit_type, id, label, is_literal
+            )
+        }
+        "addEdge" | "editEdgeReference" | "removeEdge" => {
+            let from = op
+                .from
+                .as_deref()
+                .map(resolve_id)
+                .unwrap_or_else(|| "-".to_string());
+            let to = op
+                .new_to
+                .as_deref()
+                .or(op.to.as_deref())
+                .map(resolve_id)
+                .unwrap_or_else(|| "-".to_string());
+            let label = graph_op_label_string(op).unwrap_or_else(|| "<none>".to_string());
+            format!(
+                "[op_{}] {}(from={}, to={}, label={})",
+                index, op.edit_type, from, to, label
+            )
+        }
+        "addVariable" | "editVariableReference" => {
+            let to = op
+                .new_to
+                .as_deref()
+                .or(op.to.as_deref())
+                .map(resolve_id)
+                .unwrap_or_else(|| "-".to_string());
+            let label = graph_op_label_string(op).unwrap_or_else(|| "<none>".to_string());
+            format!(
+                "[op_{}] {}(label={}, to={})",
+                index, op.edit_type, label, to
+            )
+        }
+        _ => format!("[op_{}] {}", index, format_graph_op(op)),
+    }
+}
+
+fn build_common_plan_artifact(
+    ordered_common_ops: &[(usize, crate::list_env::GraphOperation)],
+    hole_bindings: &[HoleBinding],
+    hole_by_object_id: &HashMap<String, String>,
+    composed_method_code: Option<String>,
+) -> Option<CommonPlanArtifact> {
+    if ordered_common_ops.is_empty() && hole_bindings.is_empty() {
+        return None;
+    }
+
+    let mut lines: Vec<String> = Vec::new();
+    lines.push("COMMON_PLAN (operation-level, ordered)".to_string());
+    for (index, op) in ordered_common_ops {
+        lines.push(render_common_graph_op(*index, op, hole_by_object_id));
+    }
+    if !hole_bindings.is_empty() {
+        lines.push(String::new());
+        lines.push("HOLE_BINDINGS".to_string());
+        for binding in hole_bindings {
+            lines.push(format!(
+                "{} -> {} ({})",
+                binding.hole_key, binding.spec_name, binding.return_type
+            ));
+        }
+    }
+
+    let mut hole_information: HashMap<String, Vec<String>> = HashMap::new();
+    for binding in hole_bindings {
+        let mut values = vec![
+            format!("spec={}", binding.spec_name),
+            format!("return={}", binding.return_type),
+            format!("jsMethod={}", binding.js_method_name),
+            format!("jsCall={}", binding.js_call_template),
+            format!("sideA={}", binding.side_a),
+            format!("sideB={}", binding.side_b),
+        ];
+        if let Some(anchor) = binding.anchor_a {
+            values.push(format!("anchorA={}", anchor));
+        }
+        if let Some(anchor) = binding.anchor_b {
+            values.push(format!("anchorB={}", anchor));
+        }
+        hole_information.insert(binding.hole_key.clone(), values);
+    }
+
+    Some(CommonPlanArtifact {
+        pattern_text: lines.join("\n"),
+        hole_information,
+        composed_method_code,
+    })
 }
 
 fn generate_specs_from_unification(
@@ -1402,13 +2455,22 @@ fn generate_specs_from_unification(
     base_env_b: &crate::list_env::ListEnvironment,
     receiver_object_a: Option<&str>,
     receiver_object_b: Option<&str>,
+    call_arguments_a: &[serde_json::Value],
+    call_arguments_b: &[serde_json::Value],
+    call_argument_types_a: Option<&[String]>,
+    call_argument_types_b: Option<&[String]>,
+    call_argument_names_a: Option<&[String]>,
+    call_argument_names_b: Option<&[String]>,
+    method_param_names_a: Option<&[String]>,
+    method_param_names_b: Option<&[String]>,
     operations_a: &[serde_json::Value],
     operations_b: &[serde_json::Value],
     analysis: &UnificationAnalysisResult,
     base_name: &str,
+    method_name: &str,
     field_tables: Option<&FieldTables>,
     spec_meta_by_name: &mut HashMap<String, EscherSpecMeta>,
-) -> anyhow::Result<Vec<EscherSpec>> {
+) -> anyhow::Result<GeneratedSpecsResult> {
     let graph_ops_a: Vec<crate::list_env::GraphOperation> = operations_a
         .iter()
         .map(|op| serde_json::from_value(op.clone()))
@@ -1440,6 +2502,13 @@ fn generate_specs_from_unification(
             env_boundary_b.to_debug_string()
         );
     }
+    let ordered_common_ops =
+        common_ops_in_source_order(&analysis.unification_result.common_a, &graph_ops_a);
+    let method_param_names = resolve_method_param_names(
+        method_param_names_a,
+        method_param_names_b,
+        call_arguments_a.len().max(call_arguments_b.len()),
+    );
 
     let mut diff_pairs = Vec::new();
     let mut used_indices_a: HashSet<usize> = HashSet::new();
@@ -1986,44 +3055,77 @@ fn generate_specs_from_unification(
     }
 
     let mut specs = Vec::new();
+    let mut hole_bindings: Vec<HoleBinding> = Vec::new();
+    let mut hole_by_object_id: HashMap<String, String> = HashMap::new();
     let mut suffix_index = 0usize;
 
     for (pair_index, pair) in diff_pairs.into_iter().enumerate() {
-        let env_a = match &pair.op_a {
-            Some(DiffOp::Json { index, .. }) => {
-                build_environment_prefix(base_env_a, operations_a, *index, true)?
-            }
-            _ => env_boundary_a.clone(),
+        let op_index_a = pair.op_a.as_ref().and_then(diff_op_index);
+        let op_index_b = pair.op_b.as_ref().and_then(diff_op_index);
+        let own_anchor_a = pair
+            .op_a
+            .as_ref()
+            .and_then(|op| diff_op_anchor_index(op, &graph_ops_a));
+        let own_anchor_b = pair
+            .op_b
+            .as_ref()
+            .and_then(|op| diff_op_anchor_index(op, &graph_ops_b));
+        let anchor_a = anchor_index_for_side(own_anchor_a, own_anchor_b, operations_a.len());
+        let anchor_b = anchor_index_for_side(own_anchor_b, own_anchor_a, operations_b.len());
+
+        // Input environment should be the state immediately before the target diff op.
+        // For ExistNode (no direct op index), we fall back to the paired side index.
+        let env_input_a = match anchor_a {
+            Some(index) => build_environment_prefix(base_env_a, operations_a, index, false)?,
+            None => env_boundary_a.clone(),
         };
-        let env_b = match &pair.op_b {
-            Some(DiffOp::Json { index, .. }) => {
-                build_environment_prefix(base_env_b, operations_b, *index, true)?
-            }
-            _ => env_boundary_b.clone(),
+        let env_input_b = match anchor_b {
+            Some(index) => build_environment_prefix(base_env_b, operations_b, index, false)?,
+            None => env_boundary_b.clone(),
+        };
+
+        // Output extraction for Json ops must observe the post-state of that op.
+        let env_output_a = match op_index_a {
+            Some(index) => build_environment_prefix(base_env_a, operations_a, index, true)?,
+            None => env_input_a.clone(),
+        };
+        let env_output_b = match op_index_b {
+            Some(index) => build_environment_prefix(base_env_b, operations_b, index, true)?,
+            None => env_input_b.clone(),
         };
         if trace_enabled() {
             println!(
-                "TRACE: diff_pair[{}] env_a:\n{}",
+                "TRACE: diff_pair[{}] env_input_a:\n{}",
                 pair_index,
-                env_a.to_debug_string()
+                env_input_a.to_debug_string()
             );
             println!(
-                "TRACE: diff_pair[{}] env_b:\n{}",
+                "TRACE: diff_pair[{}] env_input_b:\n{}",
                 pair_index,
-                env_b.to_debug_string()
+                env_input_b.to_debug_string()
+            );
+            println!(
+                "TRACE: diff_pair[{}] env_output_a:\n{}",
+                pair_index,
+                env_output_a.to_debug_string()
+            );
+            println!(
+                "TRACE: diff_pair[{}] env_output_b:\n{}",
+                pair_index,
+                env_output_b.to_debug_string()
             );
         }
 
         let (mut out_a, out_ty_a) = match &pair.op_a {
             Some(op) => {
-                let (out, ty) = output_for_diff_op(op, &env_a, vis_graph_a);
+                let (out, ty) = output_for_diff_op(op, &env_output_a, vis_graph_a);
                 (out, Some(ty))
             }
             None => (serde_json::json!(-1), None),
         };
         let (mut out_b, out_ty_b) = match &pair.op_b {
             Some(op) => {
-                let (out, ty) = output_for_diff_op(op, &env_b, vis_graph_b);
+                let (out, ty) = output_for_diff_op(op, &env_output_b, vis_graph_b);
                 (out, Some(ty))
             }
             None => (serde_json::json!(-1), None),
@@ -2057,7 +3159,7 @@ fn generate_specs_from_unification(
 
         let field_stub_cases = vec![
             EscherCase {
-                env: env_a.clone(),
+                env: env_input_a.clone(),
                 vis_graph: vis_graph_a.clone(),
                 arguments: Vec::new(),
                 arg_names: Vec::new(),
@@ -2066,7 +3168,7 @@ fn generate_specs_from_unification(
                 output: serde_json::Value::Null,
             },
             EscherCase {
-                env: env_b.clone(),
+                env: env_input_b.clone(),
                 vis_graph: vis_graph_b.clone(),
                 arguments: Vec::new(),
                 arg_names: Vec::new(),
@@ -2075,21 +3177,40 @@ fn generate_specs_from_unification(
                 output: serde_json::Value::Null,
             },
         ];
-        let (_value_fields, pointer_fields) =
-            resolve_field_order(&field_stub_cases, field_tables)?;
+        let (_value_fields, pointer_fields) = resolve_field_order(&field_stub_cases, field_tables)?;
 
-        let arg_bundle_a = build_case_arguments_from_variables(
-            &env_a,
+        let mut arg_bundle_a = build_case_arguments_from_variables(
+            &env_input_a,
             vis_graph_a,
             &pointer_fields,
             receiver_object_a,
         )?;
-        let arg_bundle_b = build_case_arguments_from_variables(
-            &env_b,
+        let mut arg_bundle_b = build_case_arguments_from_variables(
+            &env_input_b,
             vis_graph_b,
             &pointer_fields,
             receiver_object_b,
         )?;
+
+        append_method_call_arguments(
+            &mut arg_bundle_a,
+            call_arguments_a,
+            call_argument_types_a,
+            call_argument_names_a,
+            &env_input_a,
+            vis_graph_a,
+            &pointer_fields,
+        )?;
+        append_method_call_arguments(
+            &mut arg_bundle_b,
+            call_arguments_b,
+            call_argument_types_b,
+            call_argument_names_b,
+            &env_input_b,
+            vis_graph_b,
+            &pointer_fields,
+        )?;
+
         if arg_bundle_a.names != arg_bundle_b.names {
             return Err(anyhow::anyhow!(
                 "argument variable names differ across cases: {:?} vs {:?}",
@@ -2128,7 +3249,7 @@ fn generate_specs_from_unification(
         let arg_names_b = arg_bundle_b.names.clone();
         let cases = vec![
             EscherCase {
-                env: env_a,
+                env: env_input_a,
                 vis_graph: vis_graph_a.clone(),
                 arguments: arg_bundle_a.values,
                 arg_names: arg_names_a,
@@ -2137,7 +3258,7 @@ fn generate_specs_from_unification(
                 output: out_a,
             },
             EscherCase {
-                env: env_b,
+                env: env_input_b,
                 vis_graph: vis_graph_b.clone(),
                 arguments: arg_bundle_b.values,
                 arg_names: arg_names_b,
@@ -2149,17 +3270,83 @@ fn generate_specs_from_unification(
 
         let spec_name = build_spec_name(base_name, suffix_index);
         suffix_index += 1;
+        let hole_key = format!("__hole_{}", pair_index);
+        let js_method_name = spec_name_to_js_method_name(&spec_name);
+        let js_call_template = build_hole_call_template(&js_method_name, &method_param_names);
+
+        if let Some(id_a) = pair.op_a.as_ref().and_then(diff_op_primary_object_id) {
+            hole_by_object_id
+                .entry(id_a)
+                .or_insert_with(|| hole_key.clone());
+        }
+        if let Some(id_b) = pair.op_b.as_ref().and_then(diff_op_primary_object_id) {
+            let canonical_b = canonicalize_object_id(&id_b, &object_id_mapping_inv);
+            hole_by_object_id
+                .entry(canonical_b)
+                .or_insert_with(|| hole_key.clone());
+        }
+
+        let side_a = pair
+            .op_a
+            .as_ref()
+            .map(format_diff_op)
+            .unwrap_or_else(|| "<none>".to_string());
+        let side_b = pair
+            .op_b
+            .as_ref()
+            .map(format_diff_op)
+            .unwrap_or_else(|| "<none>".to_string());
+        hole_bindings.push(HoleBinding {
+            hole_key,
+            spec_name: spec_name.clone(),
+            return_type: return_type.as_escher_type().to_string(),
+            js_method_name,
+            js_call_template,
+            side_a,
+            side_b,
+            anchor_a,
+            anchor_b,
+        });
 
         let meta = derive_spec_meta_with_fields(&cases, field_tables)?;
         spec_meta_by_name.insert(spec_name.clone(), meta);
 
-        let spec =
-            build_escher_spec(&spec_name, return_type.as_escher_type(), &cases, field_tables)?;
+        let spec = build_escher_spec(
+            &spec_name,
+            return_type.as_escher_type(),
+            &cases,
+            field_tables,
+        )?;
         trace_json(&format!("EscherSpec {}", spec.name), &spec);
         specs.push(spec);
     }
 
-    Ok(specs)
+    let runtime_object_expr_by_id =
+        build_runtime_object_expression_map(vis_graph_a, receiver_object_a);
+    let composed_method_code = match build_composed_method_code(
+        method_name,
+        &method_param_names,
+        &ordered_common_ops,
+        &hole_bindings,
+        &hole_by_object_id,
+        receiver_object_a,
+        &runtime_object_expr_by_id,
+    ) {
+        Ok(code) => Some(code),
+        Err(err) => {
+            eprintln!("Failed to compose primary method code: {}", err);
+            None
+        }
+    };
+
+    let common_plan = build_common_plan_artifact(
+        &ordered_common_ops,
+        &hole_bindings,
+        &hole_by_object_id,
+        composed_method_code,
+    );
+
+    Ok(GeneratedSpecsResult { specs, common_plan })
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -2182,26 +3369,33 @@ fn determine_output_value(
     env: &crate::list_env::ListEnvironment,
     vis_graph: &models::VisGraph,
 ) -> (serde_json::Value, OutputType) {
-    match operation.edit_type.as_str() {
-        "addEdge" | "removeEdge" => {
-            if let Some(to_id) = operation.to.as_deref() {
-                if env.obj_id_to_index.contains_key(to_id) {
-                    let value = match bfs_local_index_for_object(env, vis_graph, to_id) {
-                        Ok(Some(idx)) => serde_json::json!(idx),
-                        Ok(None) | Err(_) => serde_json::Value::Null,
-                    };
-                    (value, OutputType::Ptr)
-                } else if let Some(val) = env.literal_id_to_value.get(to_id) {
-                    let value = value_to_i32(val)
-                        .map(|v| serde_json::json!(v))
-                        .unwrap_or_else(|| serde_json::json!(-1));
-                    (value, OutputType::Int)
-                } else {
-                    (serde_json::json!(-1), OutputType::Int)
-                }
+    let resolve_target_output = |target_id: Option<&str>| -> (serde_json::Value, OutputType) {
+        if let Some(to_id) = target_id {
+            if env.obj_id_to_index.contains_key(to_id) {
+                let value = match bfs_local_index_for_object(env, vis_graph, to_id) {
+                    Ok(Some(idx)) => serde_json::json!(idx),
+                    Ok(None) | Err(_) => serde_json::Value::Null,
+                };
+                (value, OutputType::Ptr)
+            } else if let Some(val) = env.literal_id_to_value.get(to_id) {
+                let value = value_to_i32(val)
+                    .map(|v| serde_json::json!(v))
+                    .unwrap_or_else(|| serde_json::json!(-1));
+                (value, OutputType::Int)
+            } else if to_id == "null" {
+                (serde_json::Value::Null, OutputType::Ptr)
             } else {
                 (serde_json::json!(-1), OutputType::Int)
             }
+        } else {
+            (serde_json::json!(-1), OutputType::Int)
+        }
+    };
+
+    match operation.edit_type.as_str() {
+        "addEdge" | "removeEdge" | "addVariable" => resolve_target_output(operation.to.as_deref()),
+        "editEdgeReference" | "editVariableReference" => {
+            resolve_target_output(operation.new_to.as_deref().or(operation.to.as_deref()))
         }
         "addNode" | "removeNode" => {
             if operation.is_literal.unwrap_or(false) {
@@ -2304,6 +3498,43 @@ fn derive_spec_base_name(method_calls: &[MethodCallOperation]) -> String {
     } else {
         sanitized
     }
+}
+
+fn collect_unique_method_names(method_calls: &[MethodCallOperation]) -> Vec<String> {
+    let mut names: Vec<String> = method_calls
+        .iter()
+        .map(|m| m.method_name.trim().to_string())
+        .filter(|name| !name.is_empty())
+        .collect();
+    names.sort();
+    names.dedup();
+    names
+}
+
+fn detect_unsupported_remove_operation(
+    operations_list: &[Vec<serde_json::Value>],
+) -> Option<String> {
+    for (call_index, operations) in operations_list.iter().enumerate() {
+        for (op_index, op) in operations.iter().enumerate() {
+            let edit_type = op
+                .get("editType")
+                .or_else(|| op.get("edit_type"))
+                .and_then(|v| v.as_str());
+            let Some(edit_type) = edit_type else {
+                continue;
+            };
+            if matches!(
+                edit_type,
+                "removeNode" | "removeEdge" | "deleteNode" | "deleteEdge" | "deleteVariable"
+            ) {
+                return Some(format!(
+                    "Unsupported remove operation detected at call {} op {}: {}",
+                    call_index, op_index, edit_type
+                ));
+            }
+        }
+    }
+    None
 }
 
 fn sanitize_base_name(name: &str) -> String {
@@ -2417,5 +3648,811 @@ mod tests {
             serde_json::Value::Null
         );
         assert_eq!(missing_output_for_type(OutputType::Int), json!(-1));
+    }
+
+    #[test]
+    fn append_method_call_arguments_appends_int_values() {
+        let vis_graph = simple_vis_graph_with_root();
+        let env = list_env::ListEnvironment::from_vis_graph(&vis_graph);
+        let mut bundle =
+            build_case_arguments_from_variables(&env, &vis_graph, &[], Some("obj1")).unwrap();
+        let call_arguments = vec![json!(26)];
+        let call_argument_types = vec!["Int".to_string()];
+
+        append_method_call_arguments(
+            &mut bundle,
+            &call_arguments,
+            Some(&call_argument_types),
+            None,
+            &env,
+            &vis_graph,
+            &[],
+        )
+        .unwrap();
+
+        assert_eq!(bundle.types, vec!["Ptr".to_string(), "Int".to_string()]);
+        assert_eq!(bundle.values[1], json!(26));
+    }
+
+    #[test]
+    fn append_method_call_arguments_maps_ptr_object_id() {
+        let vis_graph = VisGraph {
+            nodes: vec![
+                crate::models::Node {
+                    id: "__Variable-lst".to_string(),
+                    is_literal: false,
+                    label: json!("lst"),
+                },
+                crate::models::Node {
+                    id: "obj1".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "obj2".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+            ],
+            edges: vec![
+                crate::models::Edge {
+                    from: "__Variable-lst".to_string(),
+                    to: "obj1".to_string(),
+                    label: "lst".to_string(),
+                },
+                crate::models::Edge {
+                    from: "obj1".to_string(),
+                    to: "obj2".to_string(),
+                    label: "next".to_string(),
+                },
+            ],
+        };
+        let env = list_env::ListEnvironment::from_vis_graph(&vis_graph);
+        let pointer_fields = vec!["next".to_string()];
+        let mut bundle =
+            build_case_arguments_from_variables(&env, &vis_graph, &pointer_fields, Some("obj1"))
+                .unwrap();
+        let call_arguments = vec![json!("obj2")];
+        let call_argument_types = vec!["Ptr".to_string()];
+
+        append_method_call_arguments(
+            &mut bundle,
+            &call_arguments,
+            Some(&call_argument_types),
+            None,
+            &env,
+            &vis_graph,
+            &pointer_fields,
+        )
+        .unwrap();
+
+        assert_eq!(bundle.types, vec!["Ptr".to_string(), "Ptr".to_string()]);
+        assert_eq!(bundle.values[1], json!(1));
+    }
+
+    #[test]
+    fn anchor_index_prefers_own_index() {
+        let anchor = anchor_index_for_side(Some(3), Some(1), 10);
+        assert_eq!(anchor, Some(3));
+    }
+
+    #[test]
+    fn anchor_index_uses_other_index_when_own_missing() {
+        let anchor = anchor_index_for_side(None, Some(2), 5);
+        assert_eq!(anchor, Some(2));
+    }
+
+    #[test]
+    fn anchor_index_ignores_out_of_range_other_index() {
+        let anchor = anchor_index_for_side(None, Some(7), 3);
+        assert_eq!(anchor, None);
+    }
+
+    #[test]
+    fn first_reference_index_for_object_finds_edge_reference() {
+        let ops = vec![
+            crate::list_env::GraphOperation {
+                edit_type: "addNode".to_string(),
+                id: Some("__temp1".to_string()),
+                label: Some(json!("Node")),
+                is_literal: Some(false),
+                node_type: None,
+                from: None,
+                to: None,
+                old_to: None,
+                new_to: None,
+                old_label: None,
+                new_label: None,
+            },
+            crate::list_env::GraphOperation {
+                edit_type: "addEdge".to_string(),
+                id: None,
+                label: Some(json!("next")),
+                is_literal: None,
+                node_type: None,
+                from: Some("main-new1".to_string()),
+                to: Some("__temp1".to_string()),
+                old_to: None,
+                new_to: None,
+                old_label: None,
+                new_label: None,
+            },
+        ];
+        assert_eq!(first_reference_index_for_object("main-new1", &ops), Some(1));
+        assert_eq!(first_reference_index_for_object("__temp1", &ops), Some(0));
+    }
+
+    #[test]
+    fn first_reference_index_for_object_finds_old_to_and_new_to() {
+        let ops = vec![
+            crate::list_env::GraphOperation {
+                edit_type: "editEdgeReference".to_string(),
+                id: None,
+                label: Some(json!("next")),
+                is_literal: None,
+                node_type: None,
+                from: Some("main-new1".to_string()),
+                to: None,
+                old_to: Some("old-target".to_string()),
+                new_to: Some("new-target".to_string()),
+                old_label: None,
+                new_label: None,
+            },
+            crate::list_env::GraphOperation {
+                edit_type: "addEdge".to_string(),
+                id: None,
+                label: Some(json!("next")),
+                is_literal: None,
+                node_type: None,
+                from: Some("__temp1".to_string()),
+                to: Some("old-target".to_string()),
+                old_to: None,
+                new_to: None,
+                old_label: None,
+                new_label: None,
+            },
+        ];
+
+        // Should prefer the earliest mention, including oldTo/newTo.
+        assert_eq!(first_reference_index_for_object("old-target", &ops), Some(0));
+        assert_eq!(first_reference_index_for_object("new-target", &ops), Some(0));
+    }
+
+    #[test]
+    fn diff_op_anchor_index_for_exist_node_uses_first_reference() {
+        let op = DiffOp::ExistNode {
+            id: "main-new1".to_string(),
+            is_literal: false,
+            label: None,
+        };
+        let ops = vec![crate::list_env::GraphOperation {
+            edit_type: "addEdge".to_string(),
+            id: None,
+            label: Some(json!("next")),
+            is_literal: None,
+            node_type: None,
+            from: Some("main-new1".to_string()),
+            to: Some("__temp1".to_string()),
+            old_to: None,
+            new_to: None,
+            old_label: None,
+            new_label: None,
+        }];
+        assert_eq!(diff_op_anchor_index(&op, &ops), Some(0));
+    }
+
+    #[test]
+    fn common_ops_in_source_order_uses_op_index_order() {
+        use crate::unify_ops::{GraphOp, NodeExpr, Op};
+
+        let graph_ops = vec![
+            crate::list_env::GraphOperation {
+                edit_type: "addNode".to_string(),
+                id: Some("n0".to_string()),
+                label: Some(json!("Node")),
+                is_literal: Some(false),
+                node_type: None,
+                from: None,
+                to: None,
+                old_to: None,
+                new_to: None,
+                old_label: None,
+                new_label: None,
+            },
+            crate::list_env::GraphOperation {
+                edit_type: "addNode".to_string(),
+                id: Some("n1".to_string()),
+                label: Some(json!("Node")),
+                is_literal: Some(false),
+                node_type: None,
+                from: None,
+                to: None,
+                old_to: None,
+                new_to: None,
+                old_label: None,
+                new_label: None,
+            },
+            crate::list_env::GraphOperation {
+                edit_type: "addEdge".to_string(),
+                id: None,
+                label: Some(json!("next")),
+                is_literal: None,
+                node_type: None,
+                from: Some("n0".to_string()),
+                to: Some("n1".to_string()),
+                old_to: None,
+                new_to: None,
+                old_label: None,
+                new_label: None,
+            },
+        ];
+
+        let common_ops = vec![
+            Op {
+                id: "op_2".to_string(),
+                kind: GraphOp::Node(NodeExpr::NullNode),
+            },
+            Op {
+                id: "op_0".to_string(),
+                kind: GraphOp::Node(NodeExpr::NullNode),
+            },
+        ];
+
+        let ordered = common_ops_in_source_order(&common_ops, &graph_ops);
+        let indices: Vec<usize> = ordered.into_iter().map(|(idx, _)| idx).collect();
+        assert_eq!(indices, vec![0, 2]);
+    }
+
+    #[test]
+    fn render_common_graph_op_replaces_hole_references() {
+        let op = crate::list_env::GraphOperation {
+            edit_type: "addEdge".to_string(),
+            id: None,
+            label: Some(json!("val")),
+            is_literal: None,
+            node_type: None,
+            from: Some("__temp1".to_string()),
+            to: Some("__temp2".to_string()),
+            old_to: None,
+            new_to: None,
+            old_label: None,
+            new_label: None,
+        };
+        let mut holes = HashMap::new();
+        holes.insert("__temp2".to_string(), "__hole_0".to_string());
+
+        let line = render_common_graph_op(3, &op, &holes);
+        assert_eq!(line, "[op_3] addEdge(from=__temp1, to=__hole_0, label=val)");
+    }
+
+    #[test]
+    fn spec_name_to_js_method_name_replaces_hyphen() {
+        assert_eq!(spec_name_to_js_method_name("aux-f"), "aux_f");
+        assert_eq!(spec_name_to_js_method_name("1bad-name"), "_1bad_name");
+    }
+
+    #[test]
+    fn default_method_param_names_prefers_arg_for_single_param() {
+        assert_eq!(default_method_param_names(0), Vec::<String>::new());
+        assert_eq!(default_method_param_names(1), vec!["arg".to_string()]);
+        assert_eq!(
+            default_method_param_names(2),
+            vec!["arg0".to_string(), "arg1".to_string()]
+        );
+    }
+
+    #[test]
+    fn build_hole_call_template_uses_this_receiver() {
+        let args = vec!["arg".to_string()];
+        assert_eq!(
+            build_hole_call_template("aux_f", &args),
+            "this.aux_f(arg)".to_string()
+        );
+    }
+
+    #[test]
+    fn resolve_method_param_names_prefers_explicit_names() {
+        let a = vec!["id".to_string(), "value".to_string()];
+        let b = vec!["id".to_string(), "value".to_string()];
+        assert_eq!(
+            resolve_method_param_names(Some(&a), Some(&b), 2),
+            vec!["id".to_string(), "value".to_string()]
+        );
+    }
+
+    #[test]
+    fn detect_unsupported_remove_operation_reports_error() {
+        let operations = vec![vec![json!({
+            "editType": "removeEdge",
+            "from": "n1",
+            "to": "n2",
+            "label": "next"
+        })]];
+        assert_eq!(
+            detect_unsupported_remove_operation(&operations),
+            Some("Unsupported remove operation detected at call 0 op 0: removeEdge".to_string())
+        );
+    }
+
+    #[test]
+    fn build_composed_method_code_from_common_ops() {
+        let ordered_common_ops = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp1".to_string()),
+                    label: Some(json!("Node")),
+                    is_literal: Some(false),
+                    node_type: None,
+                    from: None,
+                    to: None,
+                    old_to: None,
+                    new_to: None,
+                    old_label: None,
+                    new_label: None,
+                },
+            ),
+            (
+                1usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    id: None,
+                    label: Some(json!("next")),
+                    is_literal: None,
+                    node_type: None,
+                    from: Some("main-new1".to_string()),
+                    to: Some("__temp1".to_string()),
+                    old_to: None,
+                    new_to: None,
+                    old_label: None,
+                    new_label: None,
+                },
+            ),
+        ];
+        let code = build_composed_method_code(
+            "append",
+            &vec!["arg".to_string()],
+            &ordered_common_ops,
+            &[],
+            &HashMap::new(),
+            Some("main-new1"),
+            &HashMap::new(),
+        )
+        .unwrap();
+
+        let expected = [
+            "append(arg) {",
+            "    const tmp0 = new Node();",
+            "    this.next = tmp0;",
+            "}",
+        ]
+        .join("\n");
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn build_composed_method_code_with_holes_exact() {
+        let ordered_common_ops = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp1".to_string()),
+                    label: Some(json!("Node")),
+                    is_literal: Some(false),
+                    node_type: None,
+                    from: None,
+                    to: None,
+                    old_to: None,
+                    new_to: None,
+                    old_label: None,
+                    new_label: None,
+                },
+            ),
+            (
+                1usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    id: None,
+                    label: Some(json!("val")),
+                    is_literal: None,
+                    node_type: None,
+                    from: Some("__temp1".to_string()),
+                    to: Some("__temp2".to_string()),
+                    old_to: None,
+                    new_to: None,
+                    old_label: None,
+                    new_label: None,
+                },
+            ),
+            (
+                2usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    id: None,
+                    label: Some(json!("next")),
+                    is_literal: None,
+                    node_type: None,
+                    from: Some("main-new1".to_string()),
+                    to: Some("__temp1".to_string()),
+                    old_to: None,
+                    new_to: None,
+                    old_label: None,
+                    new_label: None,
+                },
+            ),
+        ];
+
+        let hole_bindings = vec![HoleBinding {
+            hole_key: "__hole_0".to_string(),
+            spec_name: "append-g".to_string(),
+            return_type: "Int".to_string(),
+            js_method_name: "append_g".to_string(),
+            js_call_template: "this.append_g(first, second)".to_string(),
+            side_a: "sideA".to_string(),
+            side_b: "sideB".to_string(),
+            anchor_a: Some(1),
+            anchor_b: Some(2),
+        }];
+
+        let mut hole_by_object_id = HashMap::new();
+        hole_by_object_id.insert("__temp2".to_string(), "__hole_0".to_string());
+
+        let code = build_composed_method_code(
+            "append",
+            &vec!["first".to_string(), "second".to_string()],
+            &ordered_common_ops,
+            &hole_bindings,
+            &hole_by_object_id,
+            Some("main-new1"),
+            &HashMap::new(),
+        )
+        .unwrap();
+
+        let expected = [
+            "append(first, second) {",
+            "    const h_int_0 = this.append_g(first, second);",
+            "    const tmp0 = new Node();",
+            "    tmp0.val = h_int_0;",
+            "    this.next = tmp0;",
+            "}",
+        ]
+        .join("\n");
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn convert_json_to_unify_ops_normalizes_set_reference_ops() {
+        use crate::unify_ops::{EdgeExpr, GraphOp, NodeExpr, VarOp};
+
+        let operations = vec![
+            json!({
+                "editType": "addNode",
+                "id": "__temp1",
+                "label": "Node",
+                "isLiteral": false
+            }),
+            json!({
+                "editType": "editEdgeReference",
+                "from": "__temp1",
+                "oldTo": "null",
+                "newTo": "null",
+                "label": "next"
+            }),
+            json!({
+                "editType": "addVariable",
+                "to": "__temp1",
+                "label": "return"
+            }),
+            json!({
+                "editType": "editVariableReference",
+                "oldTo": "__temp1",
+                "newTo": "null",
+                "label": "return"
+            }),
+        ];
+
+        let ops = convert_json_to_unify_ops(&operations).expect("conversion should succeed");
+
+        assert!(
+            ops.iter()
+                .any(|op| matches!(op.kind, GraphOp::Node(NodeExpr::NullNode))),
+            "null should be normalized into NullNode"
+        );
+
+        let edge_op = ops
+            .iter()
+            .find(|op| op.id == "op_1")
+            .expect("editEdgeReference op should exist");
+        assert!(
+            matches!(edge_op.kind, GraphOp::Edge(EdgeExpr::AddEdge { .. })),
+            "editEdgeReference should normalize to AddEdge"
+        );
+
+        let add_var_op = ops
+            .iter()
+            .find(|op| op.id == "op_2")
+            .expect("addVariable op should exist");
+        assert!(
+            matches!(
+                add_var_op.kind,
+                GraphOp::Variable(VarOp::AddVariable { .. })
+            ),
+            "addVariable should be represented as VarOp::AddVariable"
+        );
+
+        let edit_var_op = ops
+            .iter()
+            .find(|op| op.id == "op_3")
+            .expect("editVariableReference op should exist");
+        assert!(
+            matches!(
+                edit_var_op.kind,
+                GraphOp::Variable(VarOp::AddVariable { .. })
+            ),
+            "editVariableReference should normalize to VarOp::AddVariable"
+        );
+    }
+
+    #[test]
+    fn build_composed_method_code_supports_edit_edge_and_return_variable() {
+        let ordered_common_ops = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp1".to_string()),
+                    label: Some(json!("Node")),
+                    is_literal: Some(false),
+                    node_type: None,
+                    from: None,
+                    to: None,
+                    old_to: None,
+                    new_to: None,
+                    old_label: None,
+                    new_label: None,
+                },
+            ),
+            (
+                1usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp2".to_string()),
+                    label: Some(json!("3")),
+                    is_literal: Some(true),
+                    node_type: Some("string".to_string()),
+                    from: None,
+                    to: None,
+                    old_to: None,
+                    new_to: None,
+                    old_label: None,
+                    new_label: None,
+                },
+            ),
+            (
+                2usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "editEdgeReference".to_string(),
+                    id: None,
+                    label: Some(json!("val")),
+                    is_literal: None,
+                    node_type: None,
+                    from: Some("__temp1".to_string()),
+                    to: None,
+                    old_to: Some("null".to_string()),
+                    new_to: Some("__temp2".to_string()),
+                    old_label: None,
+                    new_label: None,
+                },
+            ),
+            (
+                3usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addVariable".to_string(),
+                    id: None,
+                    label: Some(json!("return")),
+                    is_literal: None,
+                    node_type: None,
+                    from: None,
+                    to: Some("__temp1".to_string()),
+                    old_to: None,
+                    new_to: None,
+                    old_label: None,
+                    new_label: None,
+                },
+            ),
+        ];
+
+        let code = build_composed_method_code(
+            "setVal",
+            &vec!["arg".to_string()],
+            &ordered_common_ops,
+            &[],
+            &HashMap::new(),
+            Some("main-new1"),
+            &HashMap::new(),
+        )
+        .unwrap();
+
+        let expected = [
+            "setVal(arg) {",
+            "    const tmp0 = new Node();",
+            "    tmp0.val = 3;",
+            "    return tmp0;",
+            "}",
+        ]
+        .join("\n");
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn resolve_effective_receiver_object_prefers_runtime_binding() {
+        let vis_graph = VisGraph {
+            nodes: vec![
+                crate::models::Node {
+                    id: "main-new2".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "__Variable-lst".to_string(),
+                    is_literal: false,
+                    label: json!("lst"),
+                },
+            ],
+            edges: vec![crate::models::Edge {
+                from: "__Variable-lst".to_string(),
+                to: "main-new2".to_string(),
+                label: "lst".to_string(),
+            }],
+        };
+        let env = list_env::ListEnvironment::from_vis_graph(&vis_graph);
+        let resolved = resolve_effective_receiver_object(Some("main-new1"), &env, &vis_graph);
+        assert_eq!(resolved.as_deref(), Some("main-new2"));
+    }
+
+    #[test]
+    fn build_composed_method_code_resolves_existing_kanon_ids_via_runtime_graph() {
+        let target_id = "main-call2-FunctionExpression2-new1";
+        let target_val_id = "main-call2-FunctionExpression2-new1-val";
+        let vis_graph = VisGraph {
+            nodes: vec![
+                crate::models::Node {
+                    id: "main-new2".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: target_id.to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: target_val_id.to_string(),
+                    is_literal: true,
+                    label: json!("25"),
+                },
+                crate::models::Node {
+                    id: "__Variable-lst".to_string(),
+                    is_literal: false,
+                    label: json!("lst"),
+                },
+            ],
+            edges: vec![
+                crate::models::Edge {
+                    from: "main-new2".to_string(),
+                    to: target_id.to_string(),
+                    label: "next".to_string(),
+                },
+                crate::models::Edge {
+                    from: target_id.to_string(),
+                    to: target_val_id.to_string(),
+                    label: "val".to_string(),
+                },
+                crate::models::Edge {
+                    from: "__Variable-lst".to_string(),
+                    to: "main-new2".to_string(),
+                    label: "lst".to_string(),
+                },
+            ],
+        };
+
+        let runtime_map = build_runtime_object_expression_map(&vis_graph, Some("main-new2"));
+        assert_eq!(
+            runtime_map.get(target_id).map(String::as_str),
+            Some("this.next")
+        );
+        assert_eq!(
+            runtime_map.get(target_val_id).map(String::as_str),
+            Some("this.next.val")
+        );
+
+        let ordered_common_ops = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp1".to_string()),
+                    label: Some(json!("10")),
+                    is_literal: Some(true),
+                    node_type: Some("string".to_string()),
+                    from: None,
+                    to: None,
+                    old_to: None,
+                    new_to: None,
+                    old_label: None,
+                    new_label: None,
+                },
+            ),
+            (
+                1usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "editEdgeReference".to_string(),
+                    id: None,
+                    label: Some(json!("val")),
+                    is_literal: None,
+                    node_type: None,
+                    from: Some(target_id.to_string()),
+                    to: None,
+                    old_to: Some(target_val_id.to_string()),
+                    new_to: Some("__temp1".to_string()),
+                    old_label: None,
+                    new_label: None,
+                },
+            ),
+        ];
+
+        let code = build_composed_method_code(
+            "set",
+            &vec!["arg".to_string()],
+            &ordered_common_ops,
+            &[],
+            &HashMap::new(),
+            Some("main-new2"),
+            &runtime_map,
+        )
+        .unwrap();
+
+        let expected = ["set(arg) {", "    this.next.val = 10;", "}"].join("\n");
+        assert_eq!(code, expected);
+    }
+
+    fn dummy_method_call(name: &str) -> MethodCallOperation {
+        MethodCallOperation {
+            call_label: "call1".to_string(),
+            context_sensitive_id: "main".to_string(),
+            receiver_object: "main-new1".to_string(),
+            method_name: name.to_string(),
+            arguments: vec![],
+            argument_types: None,
+            argument_names: None,
+            method_param_names: None,
+            operations: vec![],
+            actual_graph: None,
+            field_tables: None,
+        }
+    }
+
+    #[test]
+    fn collect_unique_method_names_single() {
+        let calls = vec![dummy_method_call("append"), dummy_method_call("append")];
+        assert_eq!(
+            collect_unique_method_names(&calls),
+            vec!["append".to_string()]
+        );
+    }
+
+    #[test]
+    fn collect_unique_method_names_multiple() {
+        let calls = vec![
+            dummy_method_call(" append "),
+            dummy_method_call("push"),
+            dummy_method_call("append"),
+        ];
+        assert_eq!(
+            collect_unique_method_names(&calls),
+            vec!["append".to_string(), "push".to_string()]
+        );
     }
 }

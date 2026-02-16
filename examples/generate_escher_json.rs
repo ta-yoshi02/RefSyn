@@ -83,7 +83,7 @@ fn main() -> anyhow::Result<()> {
         arg_names: vec!["this".to_string()],
         arg_types: Some(vec!["Ptr".to_string()]),
         receiver_arg_index: Some(0),
-        output: json!(0),          // example expected output
+        output: json!(0), // example expected output
     };
 
     // 6) Emit JSON and write to Escher-Scala resource path

@@ -1,183 +1,544 @@
 use refsyn::models::{Edge, Node, VisGraph};
-use refsyn::{handle_synthesis, MethodCallOperation, SynthesisRequest};
-use serde_json;
+use refsyn::{handle_synthesis, MethodCallOperation, SynthesisRequest, SynthesisResponse};
+use serde_json::json;
+use std::fs;
+use warp::http::StatusCode;
+use warp::Reply;
 
-/// 統合されたsynthesizeエンドポイントのテスト - 単一の操作列
-#[tokio::test]
-async fn test_integrated_synthesis_single_operation_list() {
-    // 基本的なVisGraphを作成
-    let vis_graph = VisGraph {
+fn base_vis_graph() -> VisGraph {
+    VisGraph {
         nodes: vec![
             Node {
                 id: "n1".to_string(),
                 is_literal: false,
-                label: serde_json::json!("node1"),
+                label: json!("Node"),
             },
             Node {
                 id: "n2".to_string(),
                 is_literal: false,
-                label: serde_json::json!("node2"),
+                label: json!("Node"),
             },
         ],
         edges: vec![Edge {
             from: "n1".to_string(),
             to: "n2".to_string(),
-            label: "edge1".to_string(),
+            label: "next".to_string(),
         }],
-    };
+    }
+}
 
-    // 単一の操作列を作成
+fn make_call(
+    label: &str,
+    context_id: &str,
+    receiver: &str,
+    method_name: &str,
+    operations: Vec<serde_json::Value>,
+    actual_graph: &VisGraph,
+) -> MethodCallOperation {
+    MethodCallOperation {
+        call_label: label.to_string(),
+        context_sensitive_id: context_id.to_string(),
+        receiver_object: receiver.to_string(),
+        method_name: method_name.to_string(),
+        arguments: vec![],
+        argument_types: None,
+        argument_names: None,
+        method_param_names: None,
+        operations,
+        actual_graph: Some(actual_graph.clone()),
+        field_tables: None,
+    }
+}
+
+fn fixture_vis_graph_for_operations_json() -> VisGraph {
+    VisGraph {
+        nodes: vec![
+            Node {
+                id: "main-new1".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "main-new2".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "main-new3".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "main-new4".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "main-new1-val".to_string(),
+                is_literal: true,
+                label: json!("1"),
+            },
+            Node {
+                id: "main-new2-val".to_string(),
+                is_literal: true,
+                label: json!("2"),
+            },
+            Node {
+                id: "main-new3-val".to_string(),
+                is_literal: true,
+                label: json!("3"),
+            },
+            Node {
+                id: "main-new4-val".to_string(),
+                is_literal: true,
+                label: json!("4"),
+            },
+        ],
+        edges: vec![
+            Edge {
+                from: "main-new1".to_string(),
+                to: "main-new1-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "main-new2".to_string(),
+                to: "main-new2-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "main-new3".to_string(),
+                to: "main-new3-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "main-new4".to_string(),
+                to: "main-new4-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "main-new1".to_string(),
+                to: "main-new2".to_string(),
+                label: "next".to_string(),
+            },
+            Edge {
+                from: "main-new2".to_string(),
+                to: "main-new3".to_string(),
+                label: "next".to_string(),
+            },
+            Edge {
+                from: "main-new3".to_string(),
+                to: "main-new4".to_string(),
+                label: "next".to_string(),
+            },
+        ],
+    }
+}
+
+fn load_fixture_method_calls(method_name: &str) -> Vec<MethodCallOperation> {
+    let content = fs::read_to_string("tests/data/operations.json")
+        .expect("tests/data/operations.json should be readable");
+    let root: serde_json::Value =
+        serde_json::from_str(&content).expect("operations.json should be valid json");
+    let method_calls = root
+        .get("methodCalls")
+        .and_then(|v| v.as_array())
+        .expect("operations.json should contain methodCalls array");
+
+    method_calls
+        .iter()
+        .filter(|call| call.get("methodName").and_then(|v| v.as_str()) == Some(method_name))
+        .map(|call| {
+            serde_json::from_value::<MethodCallOperation>(call.clone())
+                .expect("fixture method call should deserialize")
+        })
+        .collect()
+}
+
+fn duplicate_method_call(call: &MethodCallOperation, suffix: &str) -> MethodCallOperation {
+    MethodCallOperation {
+        call_label: format!("{}-{}", call.call_label, suffix),
+        context_sensitive_id: format!("{}-{}", call.context_sensitive_id, suffix),
+        receiver_object: call.receiver_object.clone(),
+        method_name: call.method_name.clone(),
+        arguments: call.arguments.clone(),
+        argument_types: call.argument_types.clone(),
+        argument_names: call.argument_names.clone(),
+        method_param_names: call.method_param_names.clone(),
+        operations: call.operations.clone(),
+        actual_graph: call.actual_graph.clone(),
+        field_tables: call.field_tables.clone(),
+    }
+}
+
+async fn run_synthesis_and_decode(request: SynthesisRequest) -> (StatusCode, SynthesisResponse) {
+    let request_body = serde_json::to_vec(&request).unwrap();
+    let body_bytes = bytes::Bytes::from(request_body);
+
+    let reply = handle_synthesis(body_bytes)
+        .await
+        .expect("handle_synthesis should not return a warp error");
+    let response = reply.into_response();
+    let status = response.status();
+    let body = hyper::body::to_bytes(response.into_body())
+        .await
+        .expect("response body should be readable");
+    let parsed: SynthesisResponse =
+        serde_json::from_slice(&body).expect("response body should be valid synthesis json");
+    (status, parsed)
+}
+
+/// 統合されたsynthesizeエンドポイントのテスト - 単一の操作列
+#[tokio::test]
+async fn test_integrated_synthesis_single_operation_list() {
+    let vis_graph = base_vis_graph();
     let operations = vec![
-        serde_json::json!({
-            "edit_type": "addNode",
-            "node_id": "n3",
-            "node_data": {"type": "Node"}
+        json!({
+            "editType": "addNode",
+            "id": "n3",
+            "label": "Node",
+            "isLiteral": false
         }),
-        serde_json::json!({
-            "edit_type": "addEdge",
+        json!({
+            "editType": "addEdge",
             "from": "n1",
             "to": "n3",
-            "edge_data": {"type": "Edge"}
+            "label": "next"
         }),
     ];
-
-    let method_call = MethodCallOperation {
-        call_label: "test_method".to_string(),
-        context_sensitive_id: "ctx1".to_string(),
-        receiver_object: "obj1".to_string(),
-        method_name: "test".to_string(),
-        operations: operations,
-        actual_graph: Some(vis_graph.clone()),
-        field_tables: None,
-    };
+    let method_call = make_call("call1", "main", "n1", "append", operations, &vis_graph);
 
     let request = SynthesisRequest {
         method_calls: vec![method_call],
         vis_graph,
     };
+    let (status, response) = run_synthesis_and_decode(request).await;
 
-    let request_body = serde_json::to_vec(&request).unwrap();
-    let body_bytes = bytes::Bytes::from(request_body);
-
-    let response = handle_synthesis(body_bytes).await;
-    assert!(response.is_ok(), "Handle synthesis should succeed");
-
-    // レスポンスのステータスコードが成功であることを確認
-    println!("Single operation list test completed successfully");
+    assert_eq!(status, StatusCode::OK);
+    assert!(response.code.is_empty());
+    assert!(response.individual_codes.is_empty());
+    assert_eq!(response.common_pattern, None);
+    assert_eq!(response.hole_information, None);
+    assert_eq!(response.composed_method_code, None);
+    assert!(response.operation_analysis.is_none());
+    let info = response
+        .list_environment_info
+        .expect("list environment summary should be present");
+    assert!(info.contains("List Environment Summary:"));
+    assert!(info.contains("- 2 objects tracked"));
+    assert!(info.contains("Current state:"));
 }
 
 /// 統合されたsynthesizeエンドポイントのテスト - 複数の操作列（操作分析が含まれる）
 #[tokio::test]
 async fn test_integrated_synthesis_multiple_operation_lists() {
-    // 基本的なVisGraphを作成
+    let vis_graph = base_vis_graph();
+    let operations_a = vec![
+        json!({
+            "editType": "addNode",
+            "id": "n3",
+            "label": "Node",
+            "isLiteral": false
+        }),
+        json!({
+            "editType": "addEdge",
+            "from": "n1",
+            "to": "n3",
+            "label": "next"
+        }),
+    ];
+    let operations_b = vec![
+        json!({
+            "editType": "addNode",
+            "id": "n4",
+            "label": "Node",
+            "isLiteral": false
+        }),
+        json!({
+            "editType": "addEdge",
+            "from": "n2",
+            "to": "n4",
+            "label": "next"
+        }),
+    ];
+
+    let method_call_a = make_call("call1", "main", "n1", "append", operations_a, &vis_graph);
+    let method_call_b = make_call("call2", "main", "n2", "append", operations_b, &vis_graph);
+
+    let request = SynthesisRequest {
+        method_calls: vec![method_call_a, method_call_b],
+        vis_graph,
+    };
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::OK);
+    let analysis = response
+        .operation_analysis
+        .expect("operation analysis should be generated for two traces");
+    assert_eq!(analysis.total_operations_counts, vec![3, 3]);
+    assert!(analysis.common_operations_count <= 2);
+    assert!(analysis.differences_found <= 2);
+}
+
+/// 統合されたsynthesizeエンドポイントのテスト - 空のmethod_calls
+#[tokio::test]
+async fn test_integrated_synthesis_empty_method_calls() {
+    let request = SynthesisRequest {
+        method_calls: vec![],
+        vis_graph: base_vis_graph(),
+    };
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert!(response.code.is_empty());
+    assert!(response.individual_codes.is_empty());
+    assert_eq!(response.common_pattern, None);
+    assert_eq!(response.hole_information, None);
+    assert_eq!(response.composed_method_code, None);
+    assert_eq!(response.list_environment_info, None);
+    assert!(response.operation_analysis.is_none());
+}
+
+#[tokio::test]
+async fn test_integrated_synthesis_rejects_mixed_method_names() {
+    let vis_graph = base_vis_graph();
+    let call_a = make_call("call1", "main", "n1", "append", vec![], &vis_graph);
+    let call_b = make_call("call2", "main", "n1", "insert", vec![], &vis_graph);
+    let request = SynthesisRequest {
+        method_calls: vec![call_a, call_b],
+        vis_graph,
+    };
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(response.common_pattern, None);
+    assert_eq!(response.hole_information, None);
+    assert_eq!(response.composed_method_code, None);
+    assert_eq!(response.code, Vec::<String>::new());
+    assert_eq!(response.individual_codes, Vec::<String>::new());
+    assert_eq!(
+        response.list_environment_info,
+        Some("Mismatched method names in method_calls: append, insert".to_string())
+    );
+}
+
+#[tokio::test]
+async fn test_integrated_synthesis_rejects_remove_operations() {
+    let vis_graph = base_vis_graph();
+    let operations = vec![json!({
+        "editType": "removeEdge",
+        "from": "n1",
+        "to": "n2",
+        "label": "next"
+    })];
+    let call = make_call("call1", "main", "n1", "append", operations, &vis_graph);
+    let request = SynthesisRequest {
+        method_calls: vec![call],
+        vis_graph,
+    };
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(response.common_pattern, None);
+    assert_eq!(response.hole_information, None);
+    assert_eq!(response.composed_method_code, None);
+    assert_eq!(response.code, Vec::<String>::new());
+    assert_eq!(response.individual_codes, Vec::<String>::new());
+    assert_eq!(
+        response.list_environment_info,
+        Some("Unsupported remove operation detected at call 0 op 0: removeEdge".to_string())
+    );
+}
+
+#[tokio::test]
+async fn test_operations_json_removeval_rejects_delete_edge() {
+    let method_calls = load_fixture_method_calls("removeVal");
+    assert_eq!(method_calls.len(), 2, "removeVal should have two traces");
+    let request = SynthesisRequest {
+        method_calls,
+        vis_graph: fixture_vis_graph_for_operations_json(),
+    };
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    let info = response
+        .list_environment_info
+        .expect("error message should be present");
+    assert!(info.contains("Unsupported remove operation"));
+    assert!(info.contains("deleteEdge"));
+}
+
+#[tokio::test]
+async fn test_operations_json_set_supports_edit_edge_reference_analysis() {
+    let mut method_calls = load_fixture_method_calls("set");
+    assert_eq!(
+        method_calls.len(),
+        1,
+        "set should have one trace in fixture"
+    );
+    let base_call = method_calls.pop().expect("set call should exist");
+    let duplicate = duplicate_method_call(&base_call, "dup");
+
+    let request = SynthesisRequest {
+        method_calls: vec![base_call, duplicate],
+        vis_graph: fixture_vis_graph_for_operations_json(),
+    };
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::OK);
+    let analysis = response
+        .operation_analysis
+        .expect("operation analysis should exist for two traces");
+    assert_eq!(analysis.differences_found, 0);
+    let common_pattern = response
+        .common_pattern
+        .expect("common pattern should be generated");
+    assert!(common_pattern.contains("editEdgeReference"));
+}
+
+#[tokio::test]
+async fn test_operations_json_reverse_supports_edit_edge_reference_analysis() {
+    let mut method_calls = load_fixture_method_calls("reverse");
+    assert_eq!(
+        method_calls.len(),
+        1,
+        "reverse should have one trace in fixture"
+    );
+    let base_call = method_calls.pop().expect("reverse call should exist");
+    let duplicate = duplicate_method_call(&base_call, "dup");
+
+    let request = SynthesisRequest {
+        method_calls: vec![base_call, duplicate],
+        vis_graph: fixture_vis_graph_for_operations_json(),
+    };
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::OK);
+    let analysis = response
+        .operation_analysis
+        .expect("operation analysis should exist for two traces");
+    assert_eq!(analysis.differences_found, 0);
+    let common_pattern = response
+        .common_pattern
+        .expect("common pattern should be generated");
+    assert!(common_pattern.contains("editEdgeReference"));
+}
+
+#[tokio::test]
+async fn test_set_with_existing_kanon_id_and_mismatched_receiver_still_composes() {
+    let target_id = "main-call2-FunctionExpression2-new1";
+    let target_val_id = "main-call2-FunctionExpression2-new1-val";
     let vis_graph = VisGraph {
         nodes: vec![
             Node {
-                id: "n1".to_string(),
+                id: "main-new2".to_string(),
                 is_literal: false,
-                label: serde_json::json!("node1"),
+                label: json!("Node"),
             },
             Node {
-                id: "n2".to_string(),
+                id: target_id.to_string(),
                 is_literal: false,
-                label: serde_json::json!("node2"),
+                label: json!("Node"),
+            },
+            Node {
+                id: target_val_id.to_string(),
+                is_literal: true,
+                label: json!("25"),
+            },
+            Node {
+                id: "__Variable-lst".to_string(),
+                is_literal: false,
+                label: json!("lst"),
             },
         ],
-        edges: vec![Edge {
-            from: "n1".to_string(),
-            to: "n2".to_string(),
-            label: "edge1".to_string(),
-        }],
+        edges: vec![
+            Edge {
+                from: "main-new2".to_string(),
+                to: target_id.to_string(),
+                label: "next".to_string(),
+            },
+            Edge {
+                from: target_id.to_string(),
+                to: target_val_id.to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "__Variable-lst".to_string(),
+                to: "main-new2".to_string(),
+                label: "lst".to_string(),
+            },
+        ],
     };
 
-    // 最初の操作列
     let operations_a = vec![
-        serde_json::json!({
-            "edit_type": "addNode",
-            "node_id": "n3",
-            "node_data": {"type": "Node"}
+        json!({
+            "editType": "addNode",
+            "id": "__temp1",
+            "label": "10",
+            "isLiteral": true,
+            "type": "string"
         }),
-        serde_json::json!({
-            "edit_type": "addEdge",
-            "from": "n1",
-            "to": "n3",
-            "edge_data": {"type": "Edge"}
+        json!({
+            "editType": "editEdgeReference",
+            "from": target_id,
+            "oldTo": target_val_id,
+            "newTo": "__temp1",
+            "label": "val"
         }),
     ];
-
-    // 二番目の操作列（異なる）
     let operations_b = vec![
-        serde_json::json!({
-            "edit_type": "addNode",
-            "node_id": "n3",
-            "node_data": {"type": "Node"}
+        json!({
+            "editType": "addNode",
+            "id": "__temp2",
+            "label": "82",
+            "isLiteral": true,
+            "type": "string"
         }),
-        serde_json::json!({
-            "edit_type": "addEdge",
-            "from": "n2", // 異なる
-            "to": "n3",
-            "edge_data": {"type": "Edge"}
+        json!({
+            "editType": "editEdgeReference",
+            "from": target_id,
+            "oldTo": target_val_id,
+            "newTo": "__temp2",
+            "label": "val"
         }),
     ];
 
-    let method_call_a = MethodCallOperation {
-        call_label: "test_method_a".to_string(),
-        context_sensitive_id: "ctx1".to_string(),
-        receiver_object: "obj1".to_string(),
-        method_name: "test".to_string(),
+    let call_a = MethodCallOperation {
+        call_label: "call5".to_string(),
+        context_sensitive_id: "main".to_string(),
+        receiver_object: "main-new1".to_string(), // intentionally stale/mismatched
+        method_name: "set".to_string(),
+        arguments: vec![json!(10)],
+        argument_types: Some(vec!["Int".to_string()]),
+        argument_names: Some(vec!["arg0".to_string()]),
+        method_param_names: Some(vec!["arg".to_string()]),
         operations: operations_a,
         actual_graph: Some(vis_graph.clone()),
         field_tables: None,
     };
-
-    let method_call_b = MethodCallOperation {
-        call_label: "test_method_b".to_string(),
-        context_sensitive_id: "ctx2".to_string(),
-        receiver_object: "obj2".to_string(),
-        method_name: "test".to_string(),
+    let call_b = MethodCallOperation {
+        call_label: "call6".to_string(),
+        context_sensitive_id: "main".to_string(),
+        receiver_object: "main-new1".to_string(), // intentionally stale/mismatched
+        method_name: "set".to_string(),
+        arguments: vec![json!(82)],
+        argument_types: Some(vec!["Int".to_string()]),
+        argument_names: Some(vec!["arg0".to_string()]),
+        method_param_names: Some(vec!["arg".to_string()]),
         operations: operations_b,
         actual_graph: Some(vis_graph.clone()),
         field_tables: None,
     };
 
     let request = SynthesisRequest {
-        method_calls: vec![method_call_a, method_call_b],
+        method_calls: vec![call_a, call_b],
         vis_graph,
     };
+    let (status, response) = run_synthesis_and_decode(request).await;
 
-    let request_body = serde_json::to_vec(&request).unwrap();
-    let body_bytes = bytes::Bytes::from(request_body);
-
-    let response = handle_synthesis(body_bytes).await;
-    assert!(
-        response.is_ok(),
-        "Handle synthesis with multiple operation lists should succeed"
-    );
-
-    println!("Multiple operation lists test completed successfully");
-}
-
-/// 統合されたsynthesizeエンドポイントのテスト - 空のmethod_calls
-#[tokio::test]
-async fn test_integrated_synthesis_empty_method_calls() {
-    let vis_graph = VisGraph {
-        nodes: vec![],
-        edges: vec![],
-    };
-
-    let request = SynthesisRequest {
-        method_calls: vec![],
-        vis_graph,
-    };
-
-    let request_body = serde_json::to_vec(&request).unwrap();
-    let body_bytes = bytes::Bytes::from(request_body);
-
-    let response = handle_synthesis(body_bytes).await;
-    assert!(
-        response.is_ok(),
-        "Handle synthesis with empty method calls should succeed"
-    );
-
-    println!("Empty method calls test completed successfully");
+    assert_eq!(status, StatusCode::OK);
+    let composed = response
+        .composed_method_code
+        .expect("composed method should be generated");
+    assert!(composed.contains("set(arg) {"));
+    assert!(composed.contains("this.next.val = h_int_0;"));
 }

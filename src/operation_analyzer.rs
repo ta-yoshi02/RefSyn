@@ -99,6 +99,8 @@ fn operations_equivalent(op_a: &GraphOperation, op_b: &GraphOperation) -> bool {
         && op_a.is_literal == op_b.is_literal
         && op_a.from == op_b.from
         && op_a.to == op_b.to
+        && op_a.old_to == op_b.old_to
+        && op_a.new_to == op_b.new_to
 }
 
 /// 操作の詳細情報をフォーマットする
@@ -119,6 +121,14 @@ pub fn format_operation_details(op: &GraphOperation) -> String {
 
     if let Some(to) = &op.to {
         details.push(format!("to: {}", to));
+    }
+
+    if let Some(old_to) = &op.old_to {
+        details.push(format!("oldTo: {}", old_to));
+    }
+
+    if let Some(new_to) = &op.new_to {
+        details.push(format!("newTo: {}", new_to));
     }
 
     if details.is_empty() {

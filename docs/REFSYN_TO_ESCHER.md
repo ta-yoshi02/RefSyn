@@ -152,6 +152,8 @@ write_spec_to_file("Escher-Scala/src/main/resources/escher/tests.json", &json_te
 - Kanon のリテラルが文字列（例: `"2"`）でも、ブリッジは値リストとして数値へパースします。
 - ルートの変数ノード（例: `__Variable-lst` → ラベル `lst`）が存在することを確認してください。ない場合はルート検出に失敗します。
 - `Ptr` 引数が複数ある場合は `receiver_arg_index` を指定して受け取り位置を明示してください。
+- `method_calls[].arguments`（および任意の `argumentTypes` / `argumentNames`）を渡すと、呼び出し引数が Escher 入力引数へそのまま反映されます。
+  これにより `append(26)` と `append(10)` のような差は、環境差分ではなくメソッド引数として表現できます。
 - Unification を使わず位置ベースのフォールバックが必要な場合は、
   - `operation_analyzer::analyze_operations_with_environments` を利用できます。差分ごとに `environment_before` を返すので、そのまま `EscherCase` に変換可能です。
 - `lib.rs` 内部の一部ヘルパは出力整形上、エッジ表現が文字列になる箇所があります。ブリッジ用途では、本ドキュメントの `ListEnvironment` API を推奨します。
