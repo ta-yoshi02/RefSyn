@@ -12,6 +12,7 @@ pub mod unify_ops;
 use crate::escher_bridge::{
     build_escher_spec, derive_spec_meta_with_fields, resolve_field_order, run_escher_js,
     specs_to_json, write_spec_to_file, EscherCase, EscherJsOutcome, EscherSpec, EscherSpecMeta,
+    ExampleJson,
 };
 use crate::escher_js::{build_context_from_spec, translate_rendered_method};
 use anyhow;
@@ -39,8 +40,12 @@ pub struct MethodCallOperation {
     #[serde(rename = "methodParamNames")]
     pub method_param_names: Option<Vec<String>>,
     pub operations: Vec<serde_json::Value>,
+    #[serde(rename = "precondGraph")]
+    pub precond_graph: Option<VisGraph>,
     #[serde(rename = "actualGraph")]
     pub actual_graph: Option<VisGraph>,
+    #[serde(rename = "idMapping")]
+    pub id_mapping: Option<HashMap<String, String>>,
     #[serde(rename = "fieldTables")]
     pub field_tables: Option<FieldTables>,
 }
@@ -178,12 +183,31 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         ));
     }
 
-    // Gather raw operation traces for later analysis/spec generation.
+    // Normalize runtime-scoped IDs in operations by using all known temp/runtime mappings.
+    let runtime_to_temp_map = build_runtime_to_temp_map(&req.method_calls);
     let operations_list: Vec<Vec<serde_json::Value>> = req
         .method_calls
         .iter()
-        .map(|call| call.operations.clone())
+        .map(|call| normalize_operations_with_runtime_map(&call.operations, &runtime_to_temp_map))
         .collect();
+    if let Some(message) = detect_unresolved_runtime_scoped_ids(&operations_list) {
+        eprintln!("{}", message);
+        let response = SynthesisResponse {
+            common_pattern: None,
+            hole_information: None,
+            code: vec![],
+            composed_method_code: None,
+            individual_codes: vec![],
+            list_environment_info: Some(message),
+            operation_analysis: None,
+            escher_results: None,
+        };
+        return Ok(warp::reply::with_status(
+            warp::reply::json(&response),
+            StatusCode::BAD_REQUEST,
+        ));
+    }
+
     if let Some(message) = detect_unsupported_remove_operation(&operations_list) {
         eprintln!("{}", message);
         let response = SynthesisResponse {
@@ -202,9 +226,16 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         ));
     }
 
+    let resolved_call_graphs: Vec<VisGraph> = req
+        .method_calls
+        .iter()
+        .map(|call| resolve_method_call_vis_graph(call, &req.vis_graph, &runtime_to_temp_map))
+        .collect();
+    let primary_vis_graph = resolved_call_graphs.first().unwrap_or(&req.vis_graph);
+
     // Provide a summary of the current list environment derived from the base VisGraph.
     use crate::list_env::ListEnvironment;
-    let list_env = ListEnvironment::from_vis_graph(&req.vis_graph);
+    let list_env = ListEnvironment::from_vis_graph(primary_vis_graph);
     let field_count = list_env.field_lists.len();
     let object_count = list_env.obj_id_to_index.len();
     let literal_count = list_env.literal_id_to_value.len();
@@ -220,71 +251,105 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
 
     println!("List Environment Summary: {}", list_env_info);
 
-    // Run structural analysis across the first two traces (if present).
+    // Run structural analysis.
     let mut unification_analysis: Option<UnificationAnalysisResult> = None;
+    let mut incremental_unification: Option<IncrementalUnificationResult> = None;
     let operation_analysis_data = if operations_list.len() > 1 {
         println!(
             "Starting operation analysis with {} operation sequences",
             operations_list.len()
         );
-        match analyze_operations_with_unification(
-            &req.vis_graph,
-            &operations_list[0],
-            &operations_list[1],
-        ) {
-            Ok(analysis_result) => {
-                unification_analysis = Some(analysis_result.clone());
-                let difference_summary = if analysis_result.common_operations_count == 0 {
-                    "統合ベース分析: 共通する操作パターンが見つかりませんでした".to_string()
-                } else {
-                    format!(
-                        "統合ベース分析: {}個の共通操作パターンを特定。差異部分では{}個と{}個の異なる操作。",
-                        analysis_result.common_operations_count,
-                        analysis_result.differences_found,
-                        analysis_result
-                            .total_operations_counts
-                            .get(1)
-                            .unwrap_or(&0)
-                            - analysis_result.common_operations_count
-                    )
-                };
-
-                Some(OperationAnalysisData {
-                    common_operations_count: analysis_result.common_operations_count,
-                    total_operations_counts: analysis_result.total_operations_counts.clone(),
-                    difference_summary,
-                    differences_found: analysis_result.differences_found,
-                    synthesis_matches: Some(analysis_result.common_operations_count),
-                })
-            }
-            Err(e) => {
-                eprintln!("Error during unification-based operation analysis: {}", e);
-                match crate::operation_analyzer::analyze_operations_with_environments(
-                    &req.vis_graph,
-                    &operations_list[0],
-                    &operations_list[1],
-                ) {
-                    Ok(analysis_result) => {
-                        let difference_summary = format!(
-                            "位置ベース分析（フォールバック）: {}個の共通操作、{}個の差異点",
+        if operations_list.len() == 2 {
+            match analyze_operations_with_unification(
+                primary_vis_graph,
+                &operations_list[0],
+                &operations_list[1],
+            ) {
+                Ok(analysis_result) => {
+                    unification_analysis = Some(analysis_result.clone());
+                    let difference_summary = if analysis_result.common_operations_count == 0 {
+                        "統合ベース分析: 共通する操作パターンが見つかりませんでした".to_string()
+                    } else {
+                        format!(
+                            "統合ベース分析: {}個の共通操作パターンを特定。差異部分では{}個と{}個の異なる操作。",
                             analysis_result.common_operations_count,
-                            analysis_result.difference_points.len()
-                        );
-                        Some(OperationAnalysisData {
-                            common_operations_count: analysis_result.common_operations_count,
-                            total_operations_counts: vec![
-                                analysis_result.total_operations_a,
-                                analysis_result.total_operations_b,
-                            ],
-                            difference_summary,
-                            differences_found: analysis_result.difference_points.len(),
-                            synthesis_matches: None,
-                        })
+                            analysis_result.differences_found,
+                            analysis_result
+                                .total_operations_counts
+                                .get(1)
+                                .unwrap_or(&0)
+                                - analysis_result.common_operations_count
+                        )
+                    };
+
+                    Some(OperationAnalysisData {
+                        common_operations_count: analysis_result.common_operations_count,
+                        total_operations_counts: analysis_result.total_operations_counts.clone(),
+                        difference_summary,
+                        differences_found: analysis_result.differences_found,
+                        synthesis_matches: Some(analysis_result.common_operations_count),
+                    })
+                }
+                Err(e) => {
+                    eprintln!("Error during unification-based operation analysis: {}", e);
+                    match crate::operation_analyzer::analyze_operations_with_environments(
+                        primary_vis_graph,
+                        &operations_list[0],
+                        &operations_list[1],
+                    ) {
+                        Ok(analysis_result) => {
+                            let difference_summary = format!(
+                                "位置ベース分析（フォールバック）: {}個の共通操作、{}個の差異点",
+                                analysis_result.common_operations_count,
+                                analysis_result.difference_points.len()
+                            );
+                            Some(OperationAnalysisData {
+                                common_operations_count: analysis_result.common_operations_count,
+                                total_operations_counts: vec![
+                                    analysis_result.total_operations_a,
+                                    analysis_result.total_operations_b,
+                                ],
+                                difference_summary,
+                                differences_found: analysis_result.difference_points.len(),
+                                synthesis_matches: None,
+                            })
+                        }
+                        Err(e2) => {
+                            eprintln!("Error during fallback operation analysis: {}", e2);
+                            None
+                        }
                     }
-                    Err(e2) => {
-                        eprintln!("Error during fallback operation analysis: {}", e2);
-                        None
-                    }
+                }
+            }
+        } else {
+            match analyze_operations_incrementally(&operations_list) {
+                Ok(result) => {
+                    incremental_unification = Some(result.clone());
+                    let difference_summary = if result.common_operations_count == 0 {
+                        format!(
+                            "統合ベース分析（多仕様）: {}件の仕様に共通する操作が見つかりませんでした",
+                            operations_list.len()
+                        )
+                    } else {
+                        format!(
+                            "統合ベース分析（多仕様）: {}件の仕様に共通する操作を{}個特定。各仕様との差分は最大{}個。",
+                            operations_list.len(),
+                            result.common_operations_count,
+                            result.differences_found
+                        )
+                    };
+
+                    Some(OperationAnalysisData {
+                        common_operations_count: result.common_operations_count,
+                        total_operations_counts: result.total_operations_counts.clone(),
+                        difference_summary,
+                        differences_found: result.differences_found,
+                        synthesis_matches: Some(result.common_operations_count),
+                    })
+                }
+                Err(e) => {
+                    eprintln!("Error during incremental unification analysis: {}", e);
+                    None
                 }
             }
         }
@@ -304,99 +369,272 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     let mut individual_codes: Vec<String> = Vec::new();
 
     if operations_list.len() >= 2 {
-        let vis_graph_a = req
-            .method_calls
-            .get(0)
-            .and_then(|m| m.actual_graph.as_ref())
-            .unwrap_or(&req.vis_graph);
-        let vis_graph_b = req
-            .method_calls
-            .get(1)
-            .and_then(|m| m.actual_graph.as_ref())
-            .unwrap_or(&req.vis_graph);
-        let base_env_a = ListEnvironment::from_vis_graph(vis_graph_a);
-        let base_env_b = ListEnvironment::from_vis_graph(vis_graph_b);
-        let declared_receiver_a = req.method_calls.get(0).map(|m| m.receiver_object.as_str());
-        let declared_receiver_b = req.method_calls.get(1).map(|m| m.receiver_object.as_str());
-        let receiver_object_a =
-            resolve_effective_receiver_object(declared_receiver_a, &base_env_a, vis_graph_a);
-        let receiver_object_b =
-            resolve_effective_receiver_object(declared_receiver_b, &base_env_b, vis_graph_b);
+        if operations_list.len() == 2 {
+            let vis_graph_a = resolved_call_graphs.get(0).unwrap_or(primary_vis_graph);
+            let vis_graph_b = resolved_call_graphs.get(1).unwrap_or(primary_vis_graph);
+            let base_env_a = ListEnvironment::from_vis_graph(vis_graph_a);
+            let base_env_b = ListEnvironment::from_vis_graph(vis_graph_b);
+            let declared_receiver_a = req.method_calls.get(0).map(|m| m.receiver_object.as_str());
+            let declared_receiver_b = req.method_calls.get(1).map(|m| m.receiver_object.as_str());
+            let receiver_object_a =
+                resolve_effective_receiver_object(declared_receiver_a, &base_env_a, vis_graph_a);
+            let receiver_object_b =
+                resolve_effective_receiver_object(declared_receiver_b, &base_env_b, vis_graph_b);
 
-        if let Some(uni) = &unification_analysis {
-            let merged_field_tables = merge_field_tables(
-                req.method_calls
-                    .get(0)
-                    .and_then(|m| m.field_tables.as_ref()),
-                req.method_calls
-                    .get(1)
-                    .and_then(|m| m.field_tables.as_ref()),
-            );
-            match generate_specs_from_unification(
-                vis_graph_a,
-                vis_graph_b,
-                &base_env_a,
-                &base_env_b,
-                receiver_object_a.as_deref(),
-                receiver_object_b.as_deref(),
-                req.method_calls
-                    .get(0)
-                    .map(|m| m.arguments.as_slice())
-                    .unwrap_or(&[]),
-                req.method_calls
-                    .get(1)
-                    .map(|m| m.arguments.as_slice())
-                    .unwrap_or(&[]),
-                req.method_calls
-                    .get(0)
-                    .and_then(|m| m.argument_types.as_deref()),
-                req.method_calls
-                    .get(1)
-                    .and_then(|m| m.argument_types.as_deref()),
-                req.method_calls
-                    .get(0)
-                    .and_then(|m| m.argument_names.as_deref()),
-                req.method_calls
-                    .get(1)
-                    .and_then(|m| m.argument_names.as_deref()),
-                req.method_calls
-                    .get(0)
-                    .and_then(|m| m.method_param_names.as_deref()),
-                req.method_calls
-                    .get(1)
-                    .and_then(|m| m.method_param_names.as_deref()),
-                &operations_list[0],
-                &operations_list[1],
-                uni,
-                &spec_base_name,
-                req.method_calls
-                    .get(0)
-                    .map(|m| m.method_name.as_str())
-                    .unwrap_or("method"),
-                merged_field_tables.as_ref(),
-                &mut spec_meta_by_name,
-            ) {
-                Ok(spec_result) => {
-                    let GeneratedSpecsResult { specs, common_plan } = spec_result;
-                    if specs.is_empty() {
-                        println!("Unification diff groups were empty; no Escher specs generated.");
-                    } else {
-                        aggregated_specs.extend(specs);
+            if let Some(uni) = &unification_analysis {
+                let merged_field_tables = merge_field_tables(
+                    req.method_calls
+                        .get(0)
+                        .and_then(|m| m.field_tables.as_ref()),
+                    req.method_calls
+                        .get(1)
+                        .and_then(|m| m.field_tables.as_ref()),
+                );
+                match generate_specs_from_unification(
+                    vis_graph_a,
+                    vis_graph_b,
+                    &base_env_a,
+                    &base_env_b,
+                    receiver_object_a.as_deref(),
+                    receiver_object_b.as_deref(),
+                    req.method_calls
+                        .get(0)
+                        .map(|m| m.arguments.as_slice())
+                        .unwrap_or(&[]),
+                    req.method_calls
+                        .get(1)
+                        .map(|m| m.arguments.as_slice())
+                        .unwrap_or(&[]),
+                    req.method_calls
+                        .get(0)
+                        .and_then(|m| m.argument_types.as_deref()),
+                    req.method_calls
+                        .get(1)
+                        .and_then(|m| m.argument_types.as_deref()),
+                    req.method_calls
+                        .get(0)
+                        .and_then(|m| m.argument_names.as_deref()),
+                    req.method_calls
+                        .get(1)
+                        .and_then(|m| m.argument_names.as_deref()),
+                    req.method_calls
+                        .get(0)
+                        .and_then(|m| m.method_param_names.as_deref()),
+                    req.method_calls
+                        .get(1)
+                        .and_then(|m| m.method_param_names.as_deref()),
+                    &operations_list[0],
+                    &operations_list[1],
+                    uni,
+                    &spec_base_name,
+                    req.method_calls
+                        .get(0)
+                        .map(|m| m.method_name.as_str())
+                        .unwrap_or("method"),
+                    merged_field_tables.as_ref(),
+                    &mut spec_meta_by_name,
+                ) {
+                    Ok(spec_result) => {
+                        let GeneratedSpecsResult { specs, common_plan } = spec_result;
+                        if specs.is_empty() {
+                            println!(
+                                "Unification diff groups were empty; no Escher specs generated."
+                            );
+                        } else {
+                            aggregated_specs.extend(specs);
+                        }
+                        if common_plan_artifact.is_none() {
+                            common_plan_artifact = common_plan;
+                        }
                     }
-                    if common_plan_artifact.is_none() {
-                        common_plan_artifact = common_plan;
+                    Err(e) => {
+                        eprintln!(
+                            "Failed to generate Escher specs from unification diffs: {}",
+                            e
+                        );
                     }
                 }
-                Err(e) => {
-                    eprintln!(
-                        "Failed to generate Escher specs from unification diffs: {}",
-                        e
-                    );
+            } else {
+                println!("Unification analysis unavailable; skipping Escher spec generation.");
+            }
+        } else if let Some(incremental) = &incremental_unification {
+            let reference_call = match req.method_calls.first() {
+                Some(call) => call,
+                None => unreachable!("method_calls is non-empty when operations_list.len() >= 2"),
+            };
+            let global_field_tables = infer_field_tables_for_method_calls(
+                &req.method_calls,
+                primary_vis_graph,
+                &runtime_to_temp_map,
+            );
+            let vis_graph_consensus = resolved_call_graphs.get(0).unwrap_or(primary_vis_graph);
+            let base_env_consensus = ListEnvironment::from_vis_graph(vis_graph_consensus);
+            let receiver_object_consensus = resolve_effective_receiver_object(
+                Some(reference_call.receiver_object.as_str()),
+                &base_env_consensus,
+                vis_graph_consensus,
+            );
+            let mut multi_candidates: Vec<MultiTraceSpecCandidate> = Vec::new();
+            let mut multi_common_plans: Vec<CommonPlanArtifact> = Vec::new();
+
+            for (call_index, call) in req.method_calls.iter().enumerate() {
+                let vis_graph_b = resolved_call_graphs
+                    .get(call_index)
+                    .unwrap_or(vis_graph_consensus);
+                let base_env_b = ListEnvironment::from_vis_graph(vis_graph_b);
+                let receiver_object_b = resolve_effective_receiver_object(
+                    Some(call.receiver_object.as_str()),
+                    &base_env_b,
+                    vis_graph_b,
+                );
+
+                let analysis = match analyze_operations_pair_unification(
+                    &incremental.consensus_operations,
+                    &operations_list[call_index],
+                ) {
+                    Ok(analysis) => analysis,
+                    Err(e) => {
+                        eprintln!(
+                            "Failed to compare consensus against call {}: {}",
+                            call_index, e
+                        );
+                        continue;
+                    }
+                };
+
+                let pair_base_name = format!("{}-trace{}", spec_base_name, call_index);
+
+                match generate_specs_from_unification(
+                    vis_graph_consensus,
+                    vis_graph_b,
+                    &base_env_consensus,
+                    &base_env_b,
+                    receiver_object_consensus.as_deref(),
+                    receiver_object_b.as_deref(),
+                    reference_call.arguments.as_slice(),
+                    call.arguments.as_slice(),
+                    reference_call.argument_types.as_deref(),
+                    call.argument_types.as_deref(),
+                    reference_call.argument_names.as_deref(),
+                    call.argument_names.as_deref(),
+                    reference_call.method_param_names.as_deref(),
+                    call.method_param_names.as_deref(),
+                    &incremental.consensus_operations,
+                    &operations_list[call_index],
+                    &analysis,
+                    &pair_base_name,
+                    reference_call.method_name.as_str(),
+                    global_field_tables.as_ref(),
+                    &mut spec_meta_by_name,
+                ) {
+                    Ok(spec_result) => {
+                        let GeneratedSpecsResult { specs, common_plan } = spec_result;
+                        if let Some(plan) = common_plan.clone() {
+                            multi_common_plans.push(plan);
+                        }
+                        if specs.is_empty() {
+                            println!(
+                                "No Escher specs generated for consensus vs call {}",
+                                call_index
+                            );
+                        } else if let Some(plan) = common_plan.as_ref() {
+                            let descriptors = parse_hole_descriptors_by_spec(plan);
+                            for spec in specs {
+                                let Some(meta) = spec_meta_by_name.get(&spec.name).cloned() else {
+                                    continue;
+                                };
+                                let Some(desc) = descriptors.get(&spec.name) else {
+                                    continue;
+                                };
+                                let Some(signature) = hole_signature(desc) else {
+                                    continue;
+                                };
+                                let Some(trace_example) = spec.examples.get(1).cloned() else {
+                                    continue;
+                                };
+                                let reference_example = spec.examples.get(0).cloned();
+                                let mut trace_spec = spec.clone();
+                                trace_spec.examples = vec![trace_example];
+                                multi_candidates.push(MultiTraceSpecCandidate {
+                                    signature: signature.clone(),
+                                    trace_index: call_index,
+                                    meta: meta.clone(),
+                                    original_spec_name: spec.name.clone(),
+                                    spec: trace_spec,
+                                });
+
+                                // For call>0, example[0] corresponds to the consensus/reference trace.
+                                // Keep it when it is a meaningful output so pointer holes can cover all traces.
+                                if call_index > 0 {
+                                    if let Some(reference_example) = reference_example {
+                                        if !is_missing_example_output(
+                                            &reference_example,
+                                            &desc.return_type,
+                                        ) {
+                                            let mut ref_spec = spec.clone();
+                                            ref_spec.examples = vec![reference_example];
+                                            multi_candidates.push(MultiTraceSpecCandidate {
+                                                signature,
+                                                trace_index: 0,
+                                                meta,
+                                                original_spec_name: spec.name.clone(),
+                                                spec: ref_spec,
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!(
+                            "Failed to generate Escher specs for consensus vs call {}: {}",
+                            call_index, e
+                        );
+                    }
+                }
+            }
+
+            let (grouped_specs, grouped_meta, spec_renames) = aggregate_multi_trace_specs(
+                &multi_candidates,
+                req.method_calls.len(),
+                &spec_base_name,
+            );
+            if grouped_specs.is_empty() {
+                println!("No multi-trace grouped Escher specs were produced.");
+            } else {
+                let (dedup_specs, dedup_meta, dedup_renames) =
+                    dedupe_equivalent_specs(grouped_specs, grouped_meta);
+                let mut combined_spec_renames = spec_renames;
+                for grouped_name in combined_spec_renames.values_mut() {
+                    if let Some(canonical_name) = dedup_renames.get(grouped_name) {
+                        *grouped_name = canonical_name.clone();
+                    }
+                }
+                println!(
+                    "Grouped multi-trace Escher specs: {} candidates -> {} grouped specs (dedup: {})",
+                    multi_candidates.len(),
+                    dedup_specs.len() + dedup_renames.len(),
+                    dedup_specs.len()
+                );
+                aggregated_specs.extend(dedup_specs);
+                spec_meta_by_name = dedup_meta;
+                if let Some(best_plan) =
+                    choose_best_common_plan_artifact(&multi_common_plans, &combined_spec_renames)
+                {
+                    common_plan_artifact = Some(remap_common_plan_artifact(
+                        best_plan,
+                        &combined_spec_renames,
+                    ));
                 }
             }
         } else {
-            println!("Unification analysis unavailable; skipping Escher spec generation.");
+            println!("Incremental unification unavailable; skipping Escher spec generation.");
         }
+    }
+
+    if let Some(artifact) = common_plan_artifact.as_mut() {
+        prune_unused_holes_and_specs(artifact, &mut aggregated_specs, &mut spec_meta_by_name);
     }
 
     if !aggregated_specs.is_empty() {
@@ -593,17 +831,37 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     ))
 }
 
+fn analyze_operations_pair_unification(
+    operations_a: &[serde_json::Value],
+    operations_b: &[serde_json::Value],
+) -> anyhow::Result<UnificationAnalysisResult> {
+    use crate::unify_ops::unify_operation_graphs;
+
+    let ops_a = convert_json_to_unify_ops(operations_a)?;
+    let ops_b = convert_json_to_unify_ops(operations_b)?;
+    let unification_result = unify_operation_graphs(&ops_a, &ops_b);
+
+    let common_count = unification_result.common_a.len();
+    let diff_a_count = unification_result.diff_a.len();
+    let diff_b_count = unification_result.diff_b.len();
+
+    Ok(UnificationAnalysisResult {
+        common_operations_count: common_count,
+        total_operations_counts: vec![ops_a.len(), ops_b.len()],
+        differences_found: std::cmp::max(diff_a_count, diff_b_count),
+        unification_result,
+    })
+}
+
 // unify_isomorphic_graphsを使用した統合ベースの操作分析
 pub fn analyze_operations_with_unification(
     vis_graph: &models::VisGraph,
     operations_a: &[serde_json::Value],
     operations_b: &[serde_json::Value],
 ) -> anyhow::Result<UnificationAnalysisResult> {
-    use crate::unify_ops::unify_operation_graphs;
-
     println!("=== UNIFICATION-BASED OPERATION ANALYSIS ===");
 
-    // JSON操作をunify_ops::Op形式に変換
+    let analysis = analyze_operations_pair_unification(operations_a, operations_b)?;
     let ops_a = convert_json_to_unify_ops(operations_a)?;
     let ops_b = convert_json_to_unify_ops(operations_b)?;
 
@@ -612,49 +870,53 @@ pub fn analyze_operations_with_unification(
     trace_json("Unify ops A", &ops_a);
     trace_json("Unify ops B", &ops_b);
 
-    // unify_isomorphic_graphsを呼び出し
-    let unification_result = unify_operation_graphs(&ops_a, &ops_b);
-
-    // 統合結果を分析
-    let common_count = unification_result.common_a.len();
-    let diff_a_count = unification_result.diff_a.len();
-    let diff_b_count = unification_result.diff_b.len();
-
     println!("Unification results:");
-    println!("  - Common operations: {}", common_count);
-    println!("  - Differences in A: {}", diff_a_count);
-    println!("  - Differences in B: {}", diff_b_count);
+    println!(
+        "  - Common operations: {}",
+        analysis.common_operations_count
+    );
+    println!(
+        "  - Differences in A: {}",
+        analysis.unification_result.diff_a.len()
+    );
+    println!(
+        "  - Differences in B: {}",
+        analysis.unification_result.diff_b.len()
+    );
     if trace_enabled() {
-        let mut mapping_pairs: Vec<(String, String)> = unification_result
+        let mut mapping_pairs: Vec<(String, String)> = analysis
+            .unification_result
             .final_mapping
             .iter()
             .map(|(a, b)| (a.clone(), b.clone()))
             .collect();
         mapping_pairs.sort();
         trace_json("Unification final_mapping", &mapping_pairs);
-        trace_json("Unification common_a", &unification_result.common_a);
-        trace_json("Unification common_b", &unification_result.common_b);
-        trace_json("Unification diff_a", &unification_result.diff_a);
-        trace_json("Unification diff_b", &unification_result.diff_b);
+        trace_json(
+            "Unification common_a",
+            &analysis.unification_result.common_a,
+        );
+        trace_json(
+            "Unification common_b",
+            &analysis.unification_result.common_b,
+        );
+        trace_json("Unification diff_a", &analysis.unification_result.diff_a);
+        trace_json("Unification diff_b", &analysis.unification_result.diff_b);
     }
 
-    // List環境を共通操作のポイントまで構築
-    if common_count > 0 {
-        let list_env =
-            create_environment_at_unification_boundary(vis_graph, &unification_result.common_a)?;
+    if analysis.common_operations_count > 0 {
+        let list_env = create_environment_at_unification_boundary(
+            vis_graph,
+            &analysis.unification_result.common_a,
+        )?;
         println!(
             "Created List environment at unification boundary with {} common operations",
-            common_count
+            analysis.common_operations_count
         );
         println!("Environment state: {}", list_env.to_debug_string());
     }
 
-    Ok(UnificationAnalysisResult {
-        common_operations_count: common_count,
-        total_operations_counts: vec![ops_a.len(), ops_b.len()],
-        differences_found: std::cmp::max(diff_a_count, diff_b_count),
-        unification_result,
-    })
+    Ok(analysis)
 }
 
 // JSON操作をunify_ops::Op形式に変換
@@ -1018,6 +1280,31 @@ pub struct UnificationAnalysisResult {
     pub total_operations_counts: Vec<usize>,
     pub differences_found: usize,
     pub unification_result: crate::unify_ops::UnificationResult,
+}
+
+#[derive(Debug, Clone)]
+struct IncrementalUnificationResult {
+    consensus_operations: Vec<serde_json::Value>,
+    common_operations_count: usize,
+    total_operations_counts: Vec<usize>,
+    differences_found: usize,
+}
+
+#[derive(Debug, Clone, Default)]
+struct HoleDescriptor {
+    spec_name: String,
+    return_type: String,
+    side_b: String,
+    anchor_b: Option<usize>,
+}
+
+#[derive(Debug, Clone)]
+struct MultiTraceSpecCandidate {
+    signature: String,
+    trace_index: usize,
+    spec: EscherSpec,
+    meta: EscherSpecMeta,
+    original_spec_name: String,
 }
 
 // ===== helper fns for diff-based Escher output =====
@@ -1966,6 +2253,463 @@ fn parse_op_index(op_id: &str) -> Option<usize> {
         .and_then(|rest| rest.parse::<usize>().ok())
 }
 
+fn project_common_ops_to_source_operations(
+    source_operations: &[serde_json::Value],
+    common_ops: &[crate::unify_ops::Op],
+) -> Vec<serde_json::Value> {
+    let mut indices: Vec<usize> = common_ops
+        .iter()
+        .filter_map(|op| parse_op_index(&op.id))
+        .collect();
+    indices.sort_unstable();
+    indices.dedup();
+
+    indices
+        .into_iter()
+        .filter_map(|idx| source_operations.get(idx).cloned())
+        .collect()
+}
+
+fn analyze_operations_incrementally(
+    operations_list: &[Vec<serde_json::Value>],
+) -> anyhow::Result<IncrementalUnificationResult> {
+    if operations_list.len() < 2 {
+        return Err(anyhow::anyhow!(
+            "incremental unification requires at least two operation sequences"
+        ));
+    }
+
+    let mut consensus_operations = operations_list[0].clone();
+    let mut common_operations_count = 0usize;
+
+    for operations in operations_list.iter().skip(1) {
+        let analysis = analyze_operations_pair_unification(&consensus_operations, operations)?;
+        common_operations_count = analysis.common_operations_count;
+        consensus_operations = project_common_ops_to_source_operations(
+            &consensus_operations,
+            &analysis.unification_result.common_a,
+        );
+    }
+
+    let mut total_operations_counts = Vec::with_capacity(operations_list.len());
+    let mut differences_found = 0usize;
+    for operations in operations_list {
+        let analysis = analyze_operations_pair_unification(&consensus_operations, operations)?;
+        if let Some(count) = analysis.total_operations_counts.get(1) {
+            total_operations_counts.push(*count);
+        } else {
+            total_operations_counts.push(operations.len());
+        }
+        differences_found = differences_found.max(analysis.differences_found);
+    }
+
+    Ok(IncrementalUnificationResult {
+        consensus_operations,
+        common_operations_count,
+        total_operations_counts,
+        differences_found,
+    })
+}
+
+fn parse_hole_descriptors_by_spec(
+    common_plan: &CommonPlanArtifact,
+) -> HashMap<String, HoleDescriptor> {
+    let mut result = HashMap::new();
+    for values in common_plan.hole_information.values() {
+        let mut desc = HoleDescriptor::default();
+        for item in values {
+            if let Some((key, value)) = item.split_once('=') {
+                match key {
+                    "spec" => desc.spec_name = value.to_string(),
+                    "return" => desc.return_type = value.to_string(),
+                    "sideB" => desc.side_b = value.to_string(),
+                    "anchorB" => desc.anchor_b = value.parse::<usize>().ok(),
+                    _ => {}
+                }
+            }
+        }
+        if !desc.spec_name.is_empty() {
+            result.insert(desc.spec_name.clone(), desc);
+        }
+    }
+    result
+}
+
+fn token_value(desc: &str, key: &str) -> Option<String> {
+    let prefix = format!("{}=", key);
+    for token in desc.split_whitespace() {
+        if let Some(rest) = token.strip_prefix(&prefix) {
+            return Some(rest.to_string());
+        }
+    }
+    None
+}
+
+fn normalize_side_descriptor(desc: &str) -> String {
+    let op = desc.split_whitespace().next().unwrap_or("<none>");
+    let is_literal = token_value(desc, "is_literal").unwrap_or_else(|| "<none>".to_string());
+    let mut label = token_value(desc, "label").unwrap_or_else(|| "<none>".to_string());
+    // Literal payload values differ per trace (e.g. 25/93/48) and should not split hole groups.
+    if is_literal == "true" {
+        label = "<literal>".to_string();
+    }
+    format!("op={}|label={}|is_literal={}", op, label, is_literal)
+}
+
+fn hole_signature(desc: &HoleDescriptor) -> Option<String> {
+    if desc.side_b.is_empty() || desc.side_b == "<none>" {
+        return None;
+    }
+    let normalized_side = normalize_side_descriptor(&desc.side_b);
+    Some(format!("ret={}|{}", desc.return_type, normalized_side))
+}
+
+fn example_to_input_output_key(example: &ExampleJson) -> Option<(String, String)> {
+    let value = serde_json::to_value(example).ok()?;
+    let input = value.get("input")?;
+    let output = value.get("output")?;
+    let input_key = serde_json::to_string(input).ok()?;
+    let output_key = serde_json::to_string(output).ok()?;
+    Some((input_key, output_key))
+}
+
+fn has_conflicting_examples(examples: &[ExampleJson]) -> bool {
+    let mut seen: HashMap<String, String> = HashMap::new();
+    for ex in examples {
+        let (input_key, output_key) = match example_to_input_output_key(ex) {
+            Some(v) => v,
+            None => continue,
+        };
+        if let Some(existing) = seen.get(&input_key) {
+            if existing != &output_key {
+                return true;
+            }
+        } else {
+            seen.insert(input_key, output_key);
+        }
+    }
+    false
+}
+
+fn spec_equivalence_key(spec: &EscherSpec) -> Option<String> {
+    let input_types = serde_json::to_string(&spec.input_types).ok()?;
+    let examples = serde_json::to_string(&spec.examples).ok()?;
+    Some(format!(
+        "ret={}|in={}|ex={}",
+        spec.return_type, input_types, examples
+    ))
+}
+
+fn dedupe_equivalent_specs(
+    specs: Vec<EscherSpec>,
+    metas: HashMap<String, EscherSpecMeta>,
+) -> (
+    Vec<EscherSpec>,
+    HashMap<String, EscherSpecMeta>,
+    HashMap<String, String>,
+) {
+    let mut key_to_name: HashMap<String, String> = HashMap::new();
+    let mut dedup_specs: Vec<EscherSpec> = Vec::new();
+    let mut dedup_meta: HashMap<String, EscherSpecMeta> = HashMap::new();
+    let mut renames: HashMap<String, String> = HashMap::new();
+
+    for spec in specs {
+        let key = spec_equivalence_key(&spec).unwrap_or_else(|| format!("name={}", spec.name));
+        if let Some(existing_name) = key_to_name.get(&key) {
+            renames.insert(spec.name.clone(), existing_name.clone());
+            continue;
+        }
+        key_to_name.insert(key, spec.name.clone());
+        if let Some(meta) = metas.get(&spec.name) {
+            dedup_meta.insert(spec.name.clone(), meta.clone());
+        }
+        dedup_specs.push(spec);
+    }
+
+    (dedup_specs, dedup_meta, renames)
+}
+
+fn is_missing_example_output(example: &ExampleJson, return_type: &str) -> bool {
+    if return_type == "Ptr" {
+        example.output.is_null()
+    } else {
+        value_to_i32(&example.output) == Some(-1)
+    }
+}
+
+fn aggregate_multi_trace_specs(
+    candidates: &[MultiTraceSpecCandidate],
+    trace_count: usize,
+    base_name: &str,
+) -> (
+    Vec<EscherSpec>,
+    HashMap<String, EscherSpecMeta>,
+    HashMap<String, String>,
+) {
+    let mut grouped: BTreeMap<String, Vec<&MultiTraceSpecCandidate>> = BTreeMap::new();
+    for candidate in candidates {
+        grouped
+            .entry(candidate.signature.clone())
+            .or_default()
+            .push(candidate);
+    }
+
+    let mut specs: Vec<EscherSpec> = Vec::new();
+    let mut metas: HashMap<String, EscherSpecMeta> = HashMap::new();
+    let mut renames: HashMap<String, String> = HashMap::new();
+    let mut suffix_index = 0usize;
+
+    for members in grouped.values() {
+        let representative = match members.first() {
+            Some(rep) => *rep,
+            None => continue,
+        };
+
+        let mut by_trace: HashMap<usize, &MultiTraceSpecCandidate> = HashMap::new();
+        for candidate in members {
+            if candidate.spec.input_types != representative.spec.input_types
+                || candidate.spec.return_type != representative.spec.return_type
+            {
+                continue;
+            }
+            by_trace.entry(candidate.trace_index).or_insert(*candidate);
+        }
+
+        if by_trace.len() != trace_count {
+            continue;
+        }
+
+        let mut ordered: Vec<(usize, &MultiTraceSpecCandidate)> = by_trace.into_iter().collect();
+        ordered.sort_by_key(|(idx, _)| *idx);
+
+        let examples: Vec<ExampleJson> = ordered
+            .iter()
+            .filter_map(|(_, candidate)| candidate.spec.examples.first().cloned())
+            .collect();
+        if examples.len() != trace_count {
+            continue;
+        }
+        if has_conflicting_examples(&examples) {
+            continue;
+        }
+
+        let spec_name = build_spec_name(base_name, suffix_index);
+        suffix_index += 1;
+
+        specs.push(EscherSpec {
+            name: spec_name.clone(),
+            input_types: representative.spec.input_types.clone(),
+            return_type: representative.spec.return_type.clone(),
+            examples,
+        });
+        metas.insert(spec_name.clone(), representative.meta.clone());
+        for (_, candidate) in &ordered {
+            renames.insert(candidate.original_spec_name.clone(), spec_name.clone());
+        }
+    }
+
+    (specs, metas, renames)
+}
+
+fn choose_best_common_plan_artifact(
+    artifacts: &[CommonPlanArtifact],
+    spec_renames: &HashMap<String, String>,
+) -> Option<CommonPlanArtifact> {
+    let mut best: Option<(usize, usize, CommonPlanArtifact)> = None;
+    for artifact in artifacts {
+        let descriptors = parse_hole_descriptors_by_spec(artifact);
+        let covered = descriptors
+            .keys()
+            .filter(|spec_name| spec_renames.contains_key(*spec_name))
+            .count();
+        let total = descriptors.len();
+        match &best {
+            None => best = Some((covered, total, artifact.clone())),
+            Some((best_covered, best_total, _)) => {
+                if covered > *best_covered || (covered == *best_covered && total > *best_total) {
+                    best = Some((covered, total, artifact.clone()));
+                }
+            }
+        }
+    }
+    best.map(|(_, _, artifact)| artifact)
+}
+
+fn is_js_identifier_char(ch: char) -> bool {
+    ch.is_ascii_alphanumeric() || ch == '_' || ch == '$'
+}
+
+fn extract_called_js_methods_from_code(code: &str) -> HashSet<String> {
+    let mut methods: HashSet<String> = HashSet::new();
+    let mut cursor = 0usize;
+
+    while cursor < code.len() {
+        let Some(pos) = code[cursor..].find("this.") else {
+            break;
+        };
+        let start = cursor + pos + "this.".len();
+        let mut end = start;
+        while end < code.len() {
+            let ch = code[end..].chars().next().unwrap_or('\0');
+            if !is_js_identifier_char(ch) {
+                break;
+            }
+            end += ch.len_utf8();
+        }
+        if end > start {
+            let method = &code[start..end];
+            if code[end..].starts_with('(') {
+                methods.insert(method.to_string());
+            }
+        }
+        cursor = end.saturating_add(1);
+    }
+
+    methods
+}
+
+fn filter_common_plan_hole_bindings(pattern_text: &str, keep_specs: &HashSet<String>) -> String {
+    let mut lines_out: Vec<String> = Vec::new();
+    let mut in_hole_bindings = false;
+
+    for line in pattern_text.lines() {
+        let trimmed = line.trim();
+        if trimmed == "HOLE_BINDINGS" {
+            in_hole_bindings = true;
+            lines_out.push(line.to_string());
+            continue;
+        }
+
+        if in_hole_bindings {
+            if trimmed.is_empty() {
+                lines_out.push(line.to_string());
+                continue;
+            }
+            if let Some((_, right)) = line.split_once("->") {
+                let spec = right.trim().split_whitespace().next().unwrap_or_default();
+                if keep_specs.contains(spec) {
+                    lines_out.push(line.to_string());
+                }
+                continue;
+            }
+            in_hole_bindings = false;
+        }
+
+        lines_out.push(line.to_string());
+    }
+
+    lines_out.join("\n")
+}
+
+fn prune_unused_holes_and_specs(
+    artifact: &mut CommonPlanArtifact,
+    specs: &mut Vec<EscherSpec>,
+    spec_meta_by_name: &mut HashMap<String, EscherSpecMeta>,
+) {
+    let Some(code) = artifact.composed_method_code.as_ref() else {
+        return;
+    };
+    let used_js_methods = extract_called_js_methods_from_code(code);
+    if used_js_methods.is_empty() {
+        return;
+    }
+
+    let mut keep_specs: HashSet<String> = HashSet::new();
+    artifact.hole_information.retain(|_, values| {
+        let mut spec_name: Option<String> = None;
+        let mut js_method: Option<String> = None;
+        for value in values {
+            if let Some(spec) = value.strip_prefix("spec=") {
+                spec_name = Some(spec.to_string());
+            } else if let Some(method) = value.strip_prefix("jsMethod=") {
+                js_method = Some(method.to_string());
+            }
+        }
+        let keep = js_method
+            .as_ref()
+            .map(|method| used_js_methods.contains(method))
+            .unwrap_or(false);
+        if keep {
+            if let Some(spec) = spec_name {
+                keep_specs.insert(spec);
+            }
+        }
+        keep
+    });
+
+    if keep_specs.is_empty() {
+        return;
+    }
+
+    specs.retain(|spec| keep_specs.contains(&spec.name));
+    spec_meta_by_name.retain(|name, _| keep_specs.contains(name));
+    artifact.pattern_text = filter_common_plan_hole_bindings(&artifact.pattern_text, &keep_specs);
+}
+
+fn remap_common_plan_artifact(
+    artifact: CommonPlanArtifact,
+    spec_renames: &HashMap<String, String>,
+) -> CommonPlanArtifact {
+    if spec_renames.is_empty() {
+        return artifact;
+    }
+
+    let mut pattern_text = artifact.pattern_text;
+    for (old, new) in spec_renames {
+        pattern_text = pattern_text.replace(old, new);
+    }
+
+    let mut hole_information: HashMap<String, Vec<String>> = HashMap::new();
+    for (hole, values) in artifact.hole_information {
+        let mut spec_name: Option<String> = None;
+        for item in &values {
+            if let Some((key, value)) = item.split_once('=') {
+                if key == "spec" {
+                    spec_name = Some(value.to_string());
+                    break;
+                }
+            }
+        }
+        let Some(old_spec_name) = spec_name else {
+            continue;
+        };
+        let Some(new_spec_name) = spec_renames.get(&old_spec_name) else {
+            continue;
+        };
+        let old_js = spec_name_to_js_method_name(&old_spec_name);
+        let new_js = spec_name_to_js_method_name(new_spec_name);
+        let mut remapped_values = Vec::new();
+        for item in values {
+            if item.starts_with("spec=") {
+                remapped_values.push(format!("spec={}", new_spec_name));
+            } else if item.starts_with("jsMethod=") {
+                remapped_values.push(format!("jsMethod={}", new_js));
+            } else if item.starts_with("jsCall=") {
+                remapped_values
+                    .push(item.replace(&format!("this.{}(", old_js), &format!("this.{}(", new_js)));
+            } else {
+                remapped_values.push(item);
+            }
+        }
+        hole_information.insert(hole, remapped_values);
+    }
+
+    let mut composed_method_code = artifact.composed_method_code;
+    if let Some(code) = composed_method_code.as_mut() {
+        for (old, new) in spec_renames {
+            let old_js = spec_name_to_js_method_name(old);
+            let new_js = spec_name_to_js_method_name(new);
+            *code = code.replace(&format!("this.{}(", old_js), &format!("this.{}(", new_js));
+        }
+    }
+
+    CommonPlanArtifact {
+        pattern_text,
+        hole_information,
+        composed_method_code,
+    }
+}
+
 fn extract_node_object_id(op: &crate::unify_ops::Op) -> Option<String> {
     use crate::unify_ops::{GraphOp, NodeExpr};
 
@@ -2060,6 +2804,26 @@ fn is_valid_js_identifier(name: &str) -> bool {
         return false;
     }
     chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$')
+}
+
+fn contains_js_identifier_reference(text: &str, ident: &str) -> bool {
+    if ident.is_empty() {
+        return false;
+    }
+    let mut cursor = 0usize;
+    while let Some(pos) = text[cursor..].find(ident) {
+        let start = cursor + pos;
+        let end = start + ident.len();
+        let prev = text[..start].chars().next_back();
+        let next = text[end..].chars().next();
+        let prev_ok = prev.map(|ch| !is_js_identifier_char(ch)).unwrap_or(true);
+        let next_ok = next.map(|ch| !is_js_identifier_char(ch)).unwrap_or(true);
+        if prev_ok && next_ok {
+            return true;
+        }
+        cursor = end;
+    }
+    false
 }
 
 fn resolve_method_param_names(
@@ -2164,7 +2928,8 @@ fn build_composed_method_code(
     runtime_object_expr_by_id: &HashMap<String, String>,
 ) -> anyhow::Result<String> {
     let method_name = sanitize_js_identifier(method_name);
-    let mut lines: Vec<String> = Vec::new();
+    let mut body_lines: Vec<String> = Vec::new();
+    let mut hole_declarations: Vec<(String, String)> = Vec::new();
     let mut hole_expr_by_key: HashMap<String, String> = HashMap::new();
     let mut object_expr_by_id: HashMap<String, String> = runtime_object_expr_by_id.clone();
     if let Some(receiver_id) = receiver_object_id {
@@ -2183,14 +2948,15 @@ fn build_composed_method_code(
             int_idx += 1;
             name
         };
-        lines.push(format!(
-            "const {} = {};",
-            var_name, binding.js_call_template
+        hole_declarations.push((
+            var_name.clone(),
+            format!("const {} = {};", var_name, binding.js_call_template),
         ));
         hole_expr_by_key.insert(binding.hole_key.clone(), var_name);
     }
 
     let mut tmp_index = 0usize;
+    let mut last_created_object_expr: Option<String> = None;
     let mut return_expr: Option<String> = None;
     for (_op_index, op) in ordered_common_ops {
         match op.edit_type.as_str() {
@@ -2209,10 +2975,11 @@ fn build_composed_method_code(
                     tmp_index += 1;
                     let ctor = graph_op_label_string(op).unwrap_or_else(|| "Object".to_string());
                     if is_valid_js_identifier(&ctor) {
-                        lines.push(format!("const {} = new {}();", var_name, ctor));
+                        body_lines.push(format!("const {} = new {}();", var_name, ctor));
                     } else {
-                        lines.push(format!("const {} = {{}};", var_name));
+                        body_lines.push(format!("const {} = {{}};", var_name));
                     }
+                    last_created_object_expr = Some(var_name.clone());
                     object_expr_by_id.insert(node_id.to_string(), var_name);
                 }
             }
@@ -2247,7 +3014,7 @@ fn build_composed_method_code(
                 )
                 .ok_or_else(|| anyhow::anyhow!("failed to resolve to expression for {}", to_id))?;
 
-                lines.push(js_field_assignment(&from_expr, &field, &to_expr));
+                body_lines.push(js_field_assignment(&from_expr, &field, &to_expr));
             }
             "addVariable" | "editVariableReference" => {
                 let label = graph_op_label_string(op).unwrap_or_default();
@@ -2268,7 +3035,7 @@ fn build_composed_method_code(
                 if label == "return" {
                     return_expr = Some(to_expr);
                 } else {
-                    lines.push(format!(
+                    body_lines.push(format!(
                         "// NOTE: variable '{}' update is omitted in composed code",
                         label
                     ));
@@ -2287,9 +3054,60 @@ fn build_composed_method_code(
             }
         }
     }
-    if let Some(expr) = return_expr {
-        lines.push(format!("return {};", expr));
+
+    // If value-setting edges stayed in diff (not in common ops), recover a minimal assignment
+    // from hole metadata so composed code can still connect synthesized value holes.
+    let mut recovered_assignments: HashSet<String> = HashSet::new();
+    for binding in hole_bindings {
+        if binding.return_type != "Int" || !binding.side_b.starts_with("addEdge ") {
+            continue;
+        }
+        let Some(from_id) = token_value(&binding.side_b, "from") else {
+            continue;
+        };
+        if from_id == "-" {
+            continue;
+        }
+        let Some(field) = token_value(&binding.side_b, "label") else {
+            continue;
+        };
+        if field.is_empty() || field == "<none>" || field == "-" {
+            continue;
+        }
+        let from_expr = resolve_object_expression(
+            &from_id,
+            receiver_object_id,
+            &object_expr_by_id,
+            hole_by_object_id,
+            &hole_expr_by_key,
+        )
+        .or_else(|| last_created_object_expr.clone());
+        let Some(from_expr) = from_expr else {
+            continue;
+        };
+        let Some(hole_expr) = hole_expr_by_key.get(&binding.hole_key) else {
+            continue;
+        };
+        let line = js_field_assignment(&from_expr, &field, hole_expr);
+        if recovered_assignments.insert(line.clone()) {
+            body_lines.push(line);
+        }
     }
+
+    if let Some(expr) = return_expr {
+        body_lines.push(format!("return {};", expr));
+    }
+
+    let mut lines: Vec<String> = Vec::new();
+    for (var_name, decl) in hole_declarations {
+        let used = body_lines
+            .iter()
+            .any(|line| contains_js_identifier_reference(line, &var_name));
+        if used {
+            lines.push(decl);
+        }
+    }
+    lines.extend(body_lines);
 
     let mut code_lines = Vec::new();
     code_lines.push(format!(
@@ -3537,11 +4355,384 @@ fn detect_unsupported_remove_operation(
     None
 }
 
+fn is_runtime_scoped_id(id: &str) -> bool {
+    id.contains("-call")
+}
+
+fn canonicalize_runtime_scope_segment(input: &str, marker: &str) -> String {
+    if !input.contains(marker) {
+        return input.to_string();
+    }
+
+    let mut out = String::with_capacity(input.len());
+    let bytes = input.as_bytes();
+    let mut i: usize = 0;
+    while i < bytes.len() {
+        if input[i..].starts_with(marker) {
+            out.push_str(marker);
+            i += marker.len();
+            let digit_start = i;
+            while i < bytes.len() && bytes[i].is_ascii_digit() {
+                i += 1;
+            }
+            if i > digit_start {
+                out.push('*');
+            }
+        } else {
+            out.push(bytes[i] as char);
+            i += 1;
+        }
+    }
+    out
+}
+
+fn canonicalize_runtime_scoped_id(id: &str) -> String {
+    let mut canonical = id.to_string();
+    for marker in [
+        "FunctionExpression",
+        "FunctionDeclaration",
+        "ArrowFunction",
+        "MethodDefinition",
+    ] {
+        canonical = canonicalize_runtime_scope_segment(&canonical, marker);
+    }
+    canonical
+}
+
+fn build_runtime_to_temp_map(method_calls: &[MethodCallOperation]) -> HashMap<String, String> {
+    let mut runtime_to_temp: HashMap<String, String> = HashMap::new();
+    let mut canonical_to_temp: HashMap<String, String> = HashMap::new();
+    let mut conflicting_canonical: HashSet<String> = HashSet::new();
+    for call in method_calls {
+        let Some(id_mapping) = call.id_mapping.as_ref() else {
+            continue;
+        };
+        for (temp_id, runtime_id) in id_mapping {
+            if temp_id.is_empty() || runtime_id.is_empty() {
+                continue;
+            }
+            runtime_to_temp
+                .entry(runtime_id.clone())
+                .or_insert_with(|| temp_id.clone());
+            if is_runtime_scoped_id(runtime_id) {
+                let canonical_runtime = canonicalize_runtime_scoped_id(runtime_id);
+                if canonical_runtime != *runtime_id {
+                    match canonical_to_temp.get(&canonical_runtime) {
+                        Some(existing) if existing != temp_id => {
+                            conflicting_canonical.insert(canonical_runtime.clone());
+                        }
+                        Some(_) => {}
+                        None => {
+                            canonical_to_temp.insert(canonical_runtime.clone(), temp_id.clone());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    for canonical in conflicting_canonical {
+        canonical_to_temp.remove(&canonical);
+    }
+    for (canonical_runtime, temp_id) in canonical_to_temp {
+        runtime_to_temp.entry(canonical_runtime).or_insert(temp_id);
+    }
+    runtime_to_temp
+}
+
+fn remap_id_with_runtime_map(id: &str, runtime_to_temp: &HashMap<String, String>) -> String {
+    if let Some(mapped) = runtime_to_temp.get(id) {
+        return mapped.clone();
+    }
+    if is_runtime_scoped_id(id) {
+        let canonical_id = canonicalize_runtime_scoped_id(id);
+        if canonical_id != id {
+            if let Some(mapped) = runtime_to_temp.get(&canonical_id) {
+                return mapped.clone();
+            }
+            let mut matched: Option<&String> = None;
+            let mut conflict = false;
+            for (runtime_id, temp_id) in runtime_to_temp.iter() {
+                if !is_runtime_scoped_id(runtime_id) {
+                    continue;
+                }
+                if canonicalize_runtime_scoped_id(runtime_id) == canonical_id {
+                    match matched {
+                        Some(existing) if existing != temp_id => {
+                            conflict = true;
+                            break;
+                        }
+                        Some(_) => {}
+                        None => matched = Some(temp_id),
+                    }
+                }
+            }
+            if !conflict {
+                if let Some(mapped) = matched {
+                    return mapped.clone();
+                }
+            }
+        }
+    }
+    id.to_string()
+}
+
+fn normalize_operations_with_runtime_map(
+    operations: &[serde_json::Value],
+    runtime_to_temp: &HashMap<String, String>,
+) -> Vec<serde_json::Value> {
+    let mut normalized: Vec<serde_json::Value> = Vec::with_capacity(operations.len());
+    for op in operations {
+        let mut next = op.clone();
+        if let Some(obj) = next.as_object_mut() {
+            for key in ["id", "from", "to", "oldTo", "newTo", "old_to", "new_to"] {
+                if let Some(value) = obj.get_mut(key) {
+                    if let Some(id) = value.as_str() {
+                        let mapped = remap_id_with_runtime_map(id, runtime_to_temp);
+                        if mapped != id {
+                            *value = serde_json::Value::String(mapped);
+                        }
+                    }
+                }
+            }
+        }
+        normalized.push(next);
+    }
+    normalized
+}
+
+fn detect_unresolved_runtime_scoped_ids(
+    operations_list: &[Vec<serde_json::Value>],
+) -> Option<String> {
+    for (call_index, operations) in operations_list.iter().enumerate() {
+        for (op_index, op) in operations.iter().enumerate() {
+            let Some(obj) = op.as_object() else {
+                continue;
+            };
+            for key in ["id", "from", "to", "oldTo", "newTo", "old_to", "new_to"] {
+                let Some(value) = obj.get(key) else {
+                    continue;
+                };
+                let Some(id) = value.as_str() else {
+                    continue;
+                };
+                if is_runtime_scoped_id(id) {
+                    return Some(format!(
+                        "Unresolved runtime-scoped id detected at call {} op {} key {}: {}. Normalize operations to temp IDs before synthesis.",
+                        call_index, op_index, key, id
+                    ));
+                }
+            }
+        }
+    }
+    None
+}
+
 fn sanitize_base_name(name: &str) -> String {
     if name.starts_with("call") && name[4..].chars().all(|c| c.is_ascii_digit()) {
         "aux".to_string()
     } else {
         name.to_string()
+    }
+}
+
+fn normalize_actual_graph_with_id_mapping(
+    actual_graph: &VisGraph,
+    id_mapping: &HashMap<String, String>,
+) -> Option<VisGraph> {
+    if id_mapping.is_empty() {
+        return Some(actual_graph.clone());
+    }
+
+    let mut actual_to_temp: HashMap<&str, &str> = HashMap::new();
+    for (temp_id, actual_id) in id_mapping {
+        if temp_id.is_empty() || actual_id.is_empty() {
+            continue;
+        }
+        if let Some(existing) = actual_to_temp.insert(actual_id.as_str(), temp_id.as_str()) {
+            if existing != temp_id.as_str() {
+                eprintln!(
+                    "Conflicting id mapping for runtime id '{}': '{}' vs '{}'",
+                    actual_id, existing, temp_id
+                );
+                return None;
+            }
+        }
+    }
+
+    if actual_to_temp.is_empty() {
+        return None;
+    }
+
+    let remap_id = |id: &str| {
+        actual_to_temp
+            .get(id)
+            .map(|mapped| (*mapped).to_string())
+            .unwrap_or_else(|| id.to_string())
+    };
+
+    let nodes: Vec<crate::models::Node> = actual_graph
+        .nodes
+        .iter()
+        .map(|node| crate::models::Node {
+            id: remap_id(&node.id),
+            is_literal: node.is_literal,
+            label: node.label.clone(),
+        })
+        .collect();
+
+    let mut seen_node_ids: HashSet<&str> = HashSet::new();
+    for node in &nodes {
+        if !seen_node_ids.insert(node.id.as_str()) {
+            eprintln!(
+                "Failed to normalize actualGraph: duplicate node id '{}' after remapping",
+                node.id
+            );
+            return None;
+        }
+    }
+
+    let edges: Vec<crate::models::Edge> = actual_graph
+        .edges
+        .iter()
+        .map(|edge| crate::models::Edge {
+            from: remap_id(&edge.from),
+            to: remap_id(&edge.to),
+            label: edge.label.clone(),
+        })
+        .collect();
+
+    Some(VisGraph { nodes, edges })
+}
+
+fn normalize_vis_graph_with_runtime_map(
+    vis_graph: &VisGraph,
+    runtime_to_temp: &HashMap<String, String>,
+) -> VisGraph {
+    if runtime_to_temp.is_empty() {
+        return vis_graph.clone();
+    }
+
+    let remap_id = |id: &str| remap_id_with_runtime_map(id, runtime_to_temp);
+    let nodes = vis_graph
+        .nodes
+        .iter()
+        .map(|node| crate::models::Node {
+            id: remap_id(&node.id),
+            is_literal: node.is_literal,
+            label: node.label.clone(),
+        })
+        .collect();
+    let edges = vis_graph
+        .edges
+        .iter()
+        .map(|edge| crate::models::Edge {
+            from: remap_id(&edge.from),
+            to: remap_id(&edge.to),
+            label: edge.label.clone(),
+        })
+        .collect();
+    VisGraph { nodes, edges }
+}
+
+fn resolve_method_call_vis_graph(
+    call: &MethodCallOperation,
+    fallback: &VisGraph,
+    runtime_to_temp: &HashMap<String, String>,
+) -> VisGraph {
+    let base_graph = if let Some(precond_graph) = call.precond_graph.as_ref() {
+        if let Some(id_mapping) = call.id_mapping.as_ref() {
+            if let Some(remapped) =
+                normalize_actual_graph_with_id_mapping(precond_graph, id_mapping)
+            {
+                remapped
+            } else {
+                eprintln!(
+                    "Failed to normalize precondGraph for {} ({}) - using raw precondGraph",
+                    call.call_label, call.context_sensitive_id
+                );
+                precond_graph.clone()
+            }
+        } else {
+            precond_graph.clone()
+        }
+    } else if let Some(actual_graph) = call.actual_graph.as_ref() {
+        if let Some(id_mapping) = call.id_mapping.as_ref() {
+            if let Some(remapped) = normalize_actual_graph_with_id_mapping(actual_graph, id_mapping)
+            {
+                remapped
+            } else {
+                eprintln!(
+                    "Failed to normalize actualGraph for {} ({}) - using raw actualGraph",
+                    call.call_label, call.context_sensitive_id
+                );
+                actual_graph.clone()
+            }
+        } else {
+            actual_graph.clone()
+        }
+    } else {
+        fallback.clone()
+    };
+    normalize_vis_graph_with_runtime_map(&base_graph, runtime_to_temp)
+}
+
+fn infer_field_tables_for_method_calls(
+    method_calls: &[MethodCallOperation],
+    fallback_vis_graph: &VisGraph,
+    runtime_to_temp: &HashMap<String, String>,
+) -> Option<FieldTables> {
+    let mut value_fields: Vec<String> = Vec::new();
+    let mut pointer_fields: Vec<String> = Vec::new();
+    let mut seen_values: HashSet<String> = HashSet::new();
+    let mut seen_pointers: HashSet<String> = HashSet::new();
+
+    for call in method_calls {
+        if let Some(tables) = call.field_tables.as_ref() {
+            for field in &tables.value {
+                if seen_pointers.contains(field) {
+                    continue;
+                }
+                if seen_values.insert(field.clone()) {
+                    value_fields.push(field.clone());
+                }
+            }
+            for field in &tables.pointer {
+                if seen_values.contains(field) {
+                    continue;
+                }
+                if seen_pointers.insert(field.clone()) {
+                    pointer_fields.push(field.clone());
+                }
+            }
+        }
+
+        let vis_graph = resolve_method_call_vis_graph(call, fallback_vis_graph, runtime_to_temp);
+        let (values, pointers) = analyze_fields_for_graph(&vis_graph);
+        for field in values {
+            if seen_pointers.contains(&field) {
+                continue;
+            }
+            if seen_values.insert(field.clone()) {
+                value_fields.push(field);
+            }
+        }
+        for field in pointers {
+            if seen_values.contains(&field) {
+                continue;
+            }
+            if seen_pointers.insert(field.clone()) {
+                pointer_fields.push(field);
+            }
+        }
+    }
+
+    if value_fields.is_empty() && pointer_fields.is_empty() {
+        None
+    } else {
+        Some(FieldTables {
+            value: value_fields,
+            pointer: pointer_fields,
+        })
     }
 }
 
@@ -3619,6 +4810,239 @@ mod tests {
                 label: "lst".to_string(),
             }],
         }
+    }
+
+    #[test]
+    fn infer_field_tables_prefers_actual_graph_without_mapping() {
+        let fallback_vis_graph = VisGraph {
+            nodes: vec![
+                crate::models::Node {
+                    id: "obj1".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "obj2".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "lit1".to_string(),
+                    is_literal: true,
+                    label: json!("42"),
+                },
+            ],
+            edges: vec![
+                crate::models::Edge {
+                    from: "obj1".to_string(),
+                    to: "obj2".to_string(),
+                    label: "next".to_string(),
+                },
+                crate::models::Edge {
+                    from: "obj1".to_string(),
+                    to: "lit1".to_string(),
+                    label: "val".to_string(),
+                },
+            ],
+        };
+        let actual_graph = VisGraph {
+            nodes: vec![
+                crate::models::Node {
+                    id: "objX".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "objY".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+            ],
+            edges: vec![crate::models::Edge {
+                from: "objX".to_string(),
+                to: "objY".to_string(),
+                label: "evil".to_string(),
+            }],
+        };
+        let method_calls = vec![MethodCallOperation {
+            call_label: "call1".to_string(),
+            context_sensitive_id: "main".to_string(),
+            receiver_object: "obj1".to_string(),
+            method_name: "append".to_string(),
+            arguments: vec![],
+            argument_types: None,
+            argument_names: None,
+            method_param_names: None,
+            operations: vec![],
+            precond_graph: None,
+            actual_graph: Some(actual_graph),
+            id_mapping: None,
+            field_tables: None,
+        }];
+
+        let runtime_to_temp: HashMap<String, String> = HashMap::new();
+        let tables = infer_field_tables_for_method_calls(
+            &method_calls,
+            &fallback_vis_graph,
+            &runtime_to_temp,
+        )
+        .unwrap();
+        assert!(tables.pointer.contains(&"evil".to_string()));
+        assert!(!tables.value.contains(&"val".to_string()));
+        assert!(!tables.pointer.contains(&"next".to_string()));
+    }
+
+    #[test]
+    fn normalize_operations_with_runtime_map_remaps_runtime_ids() {
+        let operations = vec![json!({
+            "editType": "addEdge",
+            "from": "main-call2-FunctionExpression4-new2",
+            "to": "__temp5",
+            "label": "next"
+        })];
+        let runtime_to_temp = HashMap::from([(
+            "main-call2-FunctionExpression4-new2".to_string(),
+            "__temp4".to_string(),
+        )]);
+        let normalized = normalize_operations_with_runtime_map(&operations, &runtime_to_temp);
+        assert_eq!(
+            normalized[0]
+                .get("from")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default(),
+            "__temp4"
+        );
+        assert!(detect_unresolved_runtime_scoped_ids(&[normalized]).is_none());
+    }
+
+    #[test]
+    fn normalize_operations_with_runtime_map_accepts_generation_shifted_runtime_ids() {
+        let operations = vec![json!({
+            "editType": "addEdge",
+            "from": "main-call2-FunctionExpression4-new2",
+            "to": "__temp5",
+            "label": "next"
+        })];
+        let runtime_to_temp = HashMap::from([(
+            "main-call2-FunctionExpression5-new2".to_string(),
+            "__temp4".to_string(),
+        )]);
+        let normalized = normalize_operations_with_runtime_map(&operations, &runtime_to_temp);
+        assert_eq!(
+            normalized[0]
+                .get("from")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default(),
+            "__temp4"
+        );
+        assert!(detect_unresolved_runtime_scoped_ids(&[normalized]).is_none());
+    }
+
+    #[test]
+    fn normalize_operations_with_runtime_map_supports_snake_case_edge_keys() {
+        let operations = vec![json!({
+            "editType": "editEdgeReference",
+            "old_to": "main-call2-FunctionExpression4-new2",
+            "new_to": "main-call2-FunctionExpression4-new3",
+            "label": "next"
+        })];
+        let runtime_to_temp = HashMap::from([
+            (
+                "main-call2-FunctionExpression5-new2".to_string(),
+                "__temp4".to_string(),
+            ),
+            (
+                "main-call2-FunctionExpression5-new3".to_string(),
+                "__temp5".to_string(),
+            ),
+        ]);
+        let normalized = normalize_operations_with_runtime_map(&operations, &runtime_to_temp);
+        assert_eq!(
+            normalized[0]
+                .get("old_to")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default(),
+            "__temp4"
+        );
+        assert_eq!(
+            normalized[0]
+                .get("new_to")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default(),
+            "__temp5"
+        );
+        assert!(detect_unresolved_runtime_scoped_ids(&[normalized]).is_none());
+    }
+
+    #[test]
+    fn detect_unresolved_runtime_scoped_ids_reports_unmapped_ids() {
+        let operations = vec![vec![json!({
+            "editType": "addEdge",
+            "from": "main-call9-FunctionExpression1-new1",
+            "to": "__temp1",
+            "label": "next"
+        })]];
+        let message = detect_unresolved_runtime_scoped_ids(&operations)
+            .expect("unresolved runtime id should be reported");
+        assert!(message.contains("Unresolved runtime-scoped id detected"));
+    }
+
+    #[test]
+    fn infer_field_tables_uses_actual_graph_when_id_mapping_is_present() {
+        let fallback_vis_graph = VisGraph {
+            nodes: vec![crate::models::Node {
+                id: "obj1".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            }],
+            edges: vec![],
+        };
+        let actual_graph = VisGraph {
+            nodes: vec![
+                crate::models::Node {
+                    id: "runtime-root".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "runtime-lit".to_string(),
+                    is_literal: true,
+                    label: json!("99"),
+                },
+            ],
+            edges: vec![crate::models::Edge {
+                from: "runtime-root".to_string(),
+                to: "runtime-lit".to_string(),
+                label: "payload".to_string(),
+            }],
+        };
+        let method_calls = vec![MethodCallOperation {
+            call_label: "call1".to_string(),
+            context_sensitive_id: "main".to_string(),
+            receiver_object: "__temp1".to_string(),
+            method_name: "append".to_string(),
+            arguments: vec![],
+            argument_types: None,
+            argument_names: None,
+            method_param_names: None,
+            operations: vec![],
+            precond_graph: None,
+            actual_graph: Some(actual_graph),
+            id_mapping: Some(HashMap::from([
+                ("__temp1".to_string(), "runtime-root".to_string()),
+                ("__temp2".to_string(), "runtime-lit".to_string()),
+            ])),
+            field_tables: None,
+        }];
+
+        let runtime_to_temp: HashMap<String, String> = HashMap::new();
+        let tables = infer_field_tables_for_method_calls(
+            &method_calls,
+            &fallback_vis_graph,
+            &runtime_to_temp,
+        )
+        .unwrap();
+        assert!(tables.value.contains(&"payload".to_string()));
     }
 
     #[test]
@@ -3814,8 +5238,14 @@ mod tests {
         ];
 
         // Should prefer the earliest mention, including oldTo/newTo.
-        assert_eq!(first_reference_index_for_object("old-target", &ops), Some(0));
-        assert_eq!(first_reference_index_for_object("new-target", &ops), Some(0));
+        assert_eq!(
+            first_reference_index_for_object("old-target", &ops),
+            Some(0)
+        );
+        assert_eq!(
+            first_reference_index_for_object("new-target", &ops),
+            Some(0)
+        );
     }
 
     #[test]
@@ -4120,6 +5550,52 @@ mod tests {
         ]
         .join("\n");
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn build_composed_method_code_drops_unused_hole_calls() {
+        let ordered_common_ops = vec![(
+            0usize,
+            crate::list_env::GraphOperation {
+                edit_type: "addNode".to_string(),
+                id: Some("__temp1".to_string()),
+                label: Some(json!("Node")),
+                is_literal: Some(false),
+                node_type: None,
+                from: None,
+                to: None,
+                old_to: None,
+                new_to: None,
+                old_label: None,
+                new_label: None,
+            },
+        )];
+
+        let hole_bindings = vec![HoleBinding {
+            hole_key: "__hole_0".to_string(),
+            spec_name: "append-g".to_string(),
+            return_type: "Int".to_string(),
+            js_method_name: "append_g".to_string(),
+            js_call_template: "this.append_g(arg)".to_string(),
+            side_a: "sideA".to_string(),
+            side_b: "sideB".to_string(),
+            anchor_a: Some(0),
+            anchor_b: Some(0),
+        }];
+
+        let code = build_composed_method_code(
+            "append",
+            &vec!["arg".to_string()],
+            &ordered_common_ops,
+            &hole_bindings,
+            &HashMap::new(),
+            Some("main-new1"),
+            &HashMap::new(),
+        )
+        .unwrap();
+
+        assert!(!code.contains("const h_int_0 = this.append_g(arg);"));
+        assert!(code.contains("const tmp0 = new Node();"));
     }
 
     #[test]
@@ -4429,7 +5905,9 @@ mod tests {
             argument_names: None,
             method_param_names: None,
             operations: vec![],
+            precond_graph: None,
             actual_graph: None,
+            id_mapping: None,
             field_tables: None,
         }
     }
@@ -4454,5 +5932,133 @@ mod tests {
             collect_unique_method_names(&calls),
             vec!["append".to_string(), "push".to_string()]
         );
+    }
+
+    fn example_json(input: serde_json::Value, output: serde_json::Value) -> ExampleJson {
+        serde_json::from_value(json!({
+            "input": input,
+            "output": output
+        }))
+        .expect("example json should deserialize")
+    }
+
+    fn dummy_meta() -> EscherSpecMeta {
+        EscherSpecMeta {
+            arg_count: 2,
+            arg_names: vec!["this".to_string(), "arg".to_string()],
+            value_fields: vec!["val".to_string()],
+            pointer_fields: vec!["next".to_string()],
+            receiver_arg_index: Some(0),
+        }
+    }
+
+    #[test]
+    fn aggregate_multi_trace_specs_groups_full_coverage() {
+        let meta = dummy_meta();
+        let mut candidates = Vec::new();
+        for trace_index in 0..3 {
+            candidates.push(MultiTraceSpecCandidate {
+                signature: "ret=Int|anchor=1|op=addNode|label=<none>|is_literal=true".to_string(),
+                trace_index,
+                original_spec_name: format!("append-trace{}-f", trace_index),
+                meta: meta.clone(),
+                spec: EscherSpec {
+                    name: format!("append-trace{}-f", trace_index),
+                    input_types: vec![
+                        "Ptr".to_string(),
+                        "Int".to_string(),
+                        "List[Int]".to_string(),
+                        "List[Ptr]".to_string(),
+                    ],
+                    return_type: "Int".to_string(),
+                    examples: vec![example_json(
+                        json!([0, trace_index as i32, [2], [null]]),
+                        json!(trace_index as i32),
+                    )],
+                },
+            });
+        }
+
+        let (specs, metas, renames) = aggregate_multi_trace_specs(&candidates, 3, "append");
+        assert_eq!(specs.len(), 1);
+        assert_eq!(specs[0].examples.len(), 3);
+        assert_eq!(metas.len(), 1);
+        assert_eq!(renames.len(), 3);
+    }
+
+    #[test]
+    fn dedupe_equivalent_specs_merges_identical_specs() {
+        let meta = dummy_meta();
+        let spec_a = EscherSpec {
+            name: "append-f".to_string(),
+            input_types: vec![
+                "Ptr".to_string(),
+                "Int".to_string(),
+                "List[Int]".to_string(),
+                "List[Ptr]".to_string(),
+            ],
+            return_type: "Int".to_string(),
+            examples: vec![example_json(json!([0, 25, [2], [null]]), json!(25))],
+        };
+        let spec_b = EscherSpec {
+            name: "append-g".to_string(),
+            input_types: spec_a.input_types.clone(),
+            return_type: "Int".to_string(),
+            examples: spec_a.examples.clone(),
+        };
+        let mut metas = HashMap::new();
+        metas.insert(spec_a.name.clone(), meta.clone());
+        metas.insert(spec_b.name.clone(), meta);
+
+        let (specs, dedup_metas, renames) = dedupe_equivalent_specs(vec![spec_a, spec_b], metas);
+        assert_eq!(specs.len(), 1);
+        assert_eq!(dedup_metas.len(), 1);
+        assert_eq!(renames.get("append-g"), Some(&"append-f".to_string()));
+    }
+
+    #[test]
+    fn aggregate_multi_trace_specs_skips_conflicting_examples() {
+        let meta = dummy_meta();
+        let candidates = vec![
+            MultiTraceSpecCandidate {
+                signature: "ret=Int|anchor=1|op=addNode|label=<none>|is_literal=true".to_string(),
+                trace_index: 0,
+                original_spec_name: "append-trace0-f".to_string(),
+                meta: meta.clone(),
+                spec: EscherSpec {
+                    name: "append-trace0-f".to_string(),
+                    input_types: vec![
+                        "Ptr".to_string(),
+                        "Int".to_string(),
+                        "List[Int]".to_string(),
+                        "List[Ptr]".to_string(),
+                    ],
+                    return_type: "Int".to_string(),
+                    examples: vec![example_json(json!([0, 1, [2], [null]]), json!(10))],
+                },
+            },
+            MultiTraceSpecCandidate {
+                signature: "ret=Int|anchor=1|op=addNode|label=<none>|is_literal=true".to_string(),
+                trace_index: 1,
+                original_spec_name: "append-trace1-f".to_string(),
+                meta,
+                spec: EscherSpec {
+                    name: "append-trace1-f".to_string(),
+                    input_types: vec![
+                        "Ptr".to_string(),
+                        "Int".to_string(),
+                        "List[Int]".to_string(),
+                        "List[Ptr]".to_string(),
+                    ],
+                    return_type: "Int".to_string(),
+                    examples: vec![example_json(json!([0, 1, [2], [null]]), json!(20))],
+                },
+            },
+        ];
+
+        let (specs, metas, renames) = aggregate_multi_trace_specs(&candidates, 2, "append");
+        assert!(specs.is_empty());
+        assert!(metas.is_empty());
+        assert!(renames.is_empty());
     }
 }

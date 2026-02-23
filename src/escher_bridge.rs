@@ -30,10 +30,10 @@ pub struct EscherCase {
     pub output: Value,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ExampleJson {
-    input: Vec<Value>,
-    output: Value,
+    pub input: Vec<Value>,
+    pub output: Value,
 }
 
 #[derive(Serialize, Debug, Clone)]

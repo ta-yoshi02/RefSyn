@@ -1,6 +1,7 @@
 use refsyn::models::{Edge, Node, VisGraph};
 use refsyn::{handle_synthesis, MethodCallOperation, SynthesisRequest, SynthesisResponse};
 use serde_json::json;
+use std::collections::HashMap;
 use std::fs;
 use warp::http::StatusCode;
 use warp::Reply;
@@ -45,7 +46,9 @@ fn make_call(
         argument_names: None,
         method_param_names: None,
         operations,
+        precond_graph: None,
         actual_graph: Some(actual_graph.clone()),
+        id_mapping: None,
         field_tables: None,
     }
 }
@@ -165,7 +168,9 @@ fn duplicate_method_call(call: &MethodCallOperation, suffix: &str) -> MethodCall
         argument_names: call.argument_names.clone(),
         method_param_names: call.method_param_names.clone(),
         operations: call.operations.clone(),
+        precond_graph: call.precond_graph.clone(),
         actual_graph: call.actual_graph.clone(),
+        id_mapping: call.id_mapping.clone(),
         field_tables: call.field_tables.clone(),
     }
 }
@@ -185,6 +190,18 @@ async fn run_synthesis_and_decode(request: SynthesisRequest) -> (StatusCode, Syn
     let parsed: SynthesisResponse =
         serde_json::from_slice(&body).expect("response body should be valid synthesis json");
     (status, parsed)
+}
+
+fn extract_escher_spec_path(summary: &str) -> Option<String> {
+    let marker = "Escher JSON saved:";
+    let start = summary.find(marker)?;
+    let after = summary[start + marker.len()..].trim();
+    let first = after.split(',').next()?.trim();
+    if first.is_empty() {
+        None
+    } else {
+        Some(first.to_string())
+    }
 }
 
 /// 統合されたsynthesizeエンドポイントのテスト - 単一の操作列
@@ -277,6 +294,63 @@ async fn test_integrated_synthesis_multiple_operation_lists() {
     assert_eq!(analysis.total_operations_counts, vec![3, 3]);
     assert!(analysis.common_operations_count <= 2);
     assert!(analysis.differences_found <= 2);
+}
+
+#[tokio::test]
+async fn test_integrated_synthesis_three_operation_lists_recompute_consensus() {
+    let vis_graph = base_vis_graph();
+    let operations_a = vec![
+        json!({
+            "editType": "addNode",
+            "id": "n3",
+            "label": "Node",
+            "isLiteral": false
+        }),
+        json!({
+            "editType": "addEdge",
+            "from": "n1",
+            "to": "n3",
+            "label": "next"
+        }),
+    ];
+    let operations_b = vec![
+        json!({
+            "editType": "addNode",
+            "id": "n4",
+            "label": "Node",
+            "isLiteral": false
+        }),
+        json!({
+            "editType": "addEdge",
+            "from": "n2",
+            "to": "n4",
+            "label": "next"
+        }),
+    ];
+    let operations_c = vec![json!({
+        "editType": "addNode",
+        "id": "n5",
+        "label": "Node",
+        "isLiteral": false
+    })];
+
+    let method_call_a = make_call("call1", "main", "n1", "append", operations_a, &vis_graph);
+    let method_call_b = make_call("call2", "main", "n2", "append", operations_b, &vis_graph);
+    let method_call_c = make_call("call3", "main", "n1", "append", operations_c, &vis_graph);
+
+    let request = SynthesisRequest {
+        method_calls: vec![method_call_a, method_call_b, method_call_c],
+        vis_graph,
+    };
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::OK);
+    let analysis = response
+        .operation_analysis
+        .expect("operation analysis should be generated for three traces");
+    assert_eq!(analysis.total_operations_counts.len(), 3);
+    assert!(analysis.common_operations_count <= 1);
+    assert!(analysis.differences_found >= 1);
 }
 
 /// 統合されたsynthesizeエンドポイントのテスト - 空のmethod_calls
@@ -512,7 +586,12 @@ async fn test_set_with_existing_kanon_id_and_mismatched_receiver_still_composes(
         argument_names: Some(vec!["arg0".to_string()]),
         method_param_names: Some(vec!["arg".to_string()]),
         operations: operations_a,
+        precond_graph: None,
         actual_graph: Some(vis_graph.clone()),
+        id_mapping: Some(HashMap::from([
+            ("__temp_target".to_string(), target_id.to_string()),
+            ("__temp_target_val".to_string(), target_val_id.to_string()),
+        ])),
         field_tables: None,
     };
     let call_b = MethodCallOperation {
@@ -525,7 +604,12 @@ async fn test_set_with_existing_kanon_id_and_mismatched_receiver_still_composes(
         argument_names: Some(vec!["arg0".to_string()]),
         method_param_names: Some(vec!["arg".to_string()]),
         operations: operations_b,
+        precond_graph: None,
         actual_graph: Some(vis_graph.clone()),
+        id_mapping: Some(HashMap::from([
+            ("__temp_target".to_string(), target_id.to_string()),
+            ("__temp_target_val".to_string(), target_val_id.to_string()),
+        ])),
         field_tables: None,
     };
 
@@ -541,4 +625,307 @@ async fn test_set_with_existing_kanon_id_and_mismatched_receiver_still_composes(
         .expect("composed method should be generated");
     assert!(composed.contains("set(arg) {"));
     assert!(composed.contains("this.next.val = h_int_0;"));
+}
+
+#[tokio::test]
+async fn test_integrated_synthesis_three_append_like_specs_group_holes() {
+    let graph_call1 = VisGraph {
+        nodes: vec![
+            Node {
+                id: "main-new1".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "main-new1-val".to_string(),
+                is_literal: true,
+                label: json!(2),
+            },
+            Node {
+                id: "__Variable-lst".to_string(),
+                is_literal: false,
+                label: json!("lst"),
+            },
+        ],
+        edges: vec![
+            Edge {
+                from: "main-new1".to_string(),
+                to: "main-new1-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "__Variable-lst".to_string(),
+                to: "main-new1".to_string(),
+                label: "lst".to_string(),
+            },
+        ],
+    };
+
+    let graph_call2 = VisGraph {
+        nodes: vec![
+            Node {
+                id: "main-new1".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "main-new1-val".to_string(),
+                is_literal: true,
+                label: json!(2),
+            },
+            Node {
+                id: "__temp1".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "__temp1-val".to_string(),
+                is_literal: true,
+                label: json!("25"),
+            },
+            Node {
+                id: "__Variable-lst".to_string(),
+                is_literal: false,
+                label: json!("lst"),
+            },
+        ],
+        edges: vec![
+            Edge {
+                from: "main-new1".to_string(),
+                to: "main-new1-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "__temp1".to_string(),
+                to: "__temp1-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "main-new1".to_string(),
+                to: "__temp1".to_string(),
+                label: "next".to_string(),
+            },
+            Edge {
+                from: "__Variable-lst".to_string(),
+                to: "main-new1".to_string(),
+                label: "lst".to_string(),
+            },
+        ],
+    };
+
+    let graph_call3 = VisGraph {
+        nodes: vec![
+            Node {
+                id: "main-new1".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "main-new1-val".to_string(),
+                is_literal: true,
+                label: json!(2),
+            },
+            Node {
+                id: "__temp1".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "__temp1-val".to_string(),
+                is_literal: true,
+                label: json!("25"),
+            },
+            Node {
+                id: "__temp4".to_string(),
+                is_literal: false,
+                label: json!("Node"),
+            },
+            Node {
+                id: "__temp4-val".to_string(),
+                is_literal: true,
+                label: json!("93"),
+            },
+            Node {
+                id: "__Variable-lst".to_string(),
+                is_literal: false,
+                label: json!("lst"),
+            },
+        ],
+        edges: vec![
+            Edge {
+                from: "main-new1".to_string(),
+                to: "main-new1-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "__temp1".to_string(),
+                to: "__temp1-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "__temp4".to_string(),
+                to: "__temp4-val".to_string(),
+                label: "val".to_string(),
+            },
+            Edge {
+                from: "__temp1".to_string(),
+                to: "__temp4".to_string(),
+                label: "next".to_string(),
+            },
+            Edge {
+                from: "main-new1".to_string(),
+                to: "__temp1".to_string(),
+                label: "next".to_string(),
+            },
+            Edge {
+                from: "__Variable-lst".to_string(),
+                to: "main-new1".to_string(),
+                label: "lst".to_string(),
+            },
+        ],
+    };
+
+    let call1 = MethodCallOperation {
+        call_label: "call1".to_string(),
+        context_sensitive_id: "main".to_string(),
+        receiver_object: "main-new1".to_string(),
+        method_name: "append".to_string(),
+        arguments: vec![json!(25)],
+        argument_types: Some(vec!["Int".to_string()]),
+        argument_names: Some(vec!["arg0".to_string()]),
+        method_param_names: Some(vec!["arg".to_string()]),
+        operations: vec![
+            json!({"editType":"addNode","id":"__temp1","label":"Node","isLiteral":false}),
+            json!({"editType":"addNode","id":"__temp2","label":"25","isLiteral":true,"type":"string"}),
+            json!({"editType":"addEdge","from":"__temp1","to":"__temp2","label":"val"}),
+            json!({"editType":"addEdge","from":"main-new1","to":"__temp1","label":"next"}),
+        ],
+        precond_graph: None,
+        actual_graph: Some(graph_call1.clone()),
+        id_mapping: None,
+        field_tables: None,
+    };
+
+    let call2 = MethodCallOperation {
+        call_label: "call2".to_string(),
+        context_sensitive_id: "main".to_string(),
+        receiver_object: "main-new1".to_string(),
+        method_name: "append".to_string(),
+        arguments: vec![json!(93)],
+        argument_types: Some(vec!["Int".to_string()]),
+        argument_names: Some(vec!["arg0".to_string()]),
+        method_param_names: Some(vec!["arg".to_string()]),
+        operations: vec![
+            json!({"editType":"addNode","id":"__temp3","label":"93","isLiteral":true,"type":"string"}),
+            json!({"editType":"addNode","id":"__temp4","label":"Node","isLiteral":false}),
+            json!({"editType":"addEdge","from":"__temp1","to":"__temp4","label":"next"}),
+            json!({"editType":"addEdge","from":"__temp4","to":"__temp3","label":"val"}),
+        ],
+        precond_graph: None,
+        actual_graph: Some(graph_call2),
+        id_mapping: None,
+        field_tables: None,
+    };
+
+    let call3 = MethodCallOperation {
+        call_label: "call3".to_string(),
+        context_sensitive_id: "main".to_string(),
+        receiver_object: "main-new1".to_string(),
+        method_name: "append".to_string(),
+        arguments: vec![json!(48)],
+        argument_types: Some(vec!["Int".to_string()]),
+        argument_names: Some(vec!["arg0".to_string()]),
+        method_param_names: Some(vec!["arg".to_string()]),
+        operations: vec![
+            json!({"editType":"addNode","id":"__temp5","label":"Node","isLiteral":false}),
+            json!({"editType":"addEdge","from":"__temp4","to":"__temp5","label":"next"}),
+            json!({"editType":"addNode","id":"__temp6","label":"48","isLiteral":true,"type":"string"}),
+            json!({"editType":"addEdge","from":"__temp5","to":"__temp6","label":"val"}),
+        ],
+        precond_graph: None,
+        actual_graph: Some(graph_call3),
+        id_mapping: None,
+        field_tables: None,
+    };
+
+    let request = SynthesisRequest {
+        method_calls: vec![call1, call2, call3],
+        vis_graph: graph_call1,
+    };
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::OK);
+    let analysis = response
+        .operation_analysis
+        .expect("operation analysis should be generated");
+    assert_eq!(analysis.total_operations_counts.len(), 3);
+    assert!(analysis
+        .total_operations_counts
+        .iter()
+        .all(|count| *count >= 4));
+    assert!(analysis.common_operations_count >= 1);
+
+    let list_info = response
+        .list_environment_info
+        .expect("list environment info should be present");
+    let spec_path =
+        extract_escher_spec_path(&list_info).expect("escher json path should be reported");
+    let spec_json_text =
+        fs::read_to_string(&spec_path).expect("generated escher json should be readable");
+    let specs: serde_json::Value =
+        serde_json::from_str(&spec_json_text).expect("generated escher json should parse");
+    let spec_list = specs
+        .as_array()
+        .expect("generated escher json should be an array of specs");
+    assert!(
+        spec_list.len() >= 2,
+        "append-like 3 traces should produce at least two grouped hole specs"
+    );
+
+    let mut has_ptr = false;
+    let mut has_int = false;
+    for spec in spec_list {
+        let return_type = spec
+            .get("returnType")
+            .and_then(|v| v.as_str())
+            .expect("spec should contain returnType");
+        if return_type == "Ptr" {
+            has_ptr = true;
+        }
+        if return_type == "Int" {
+            has_int = true;
+        }
+    }
+    assert!(has_ptr, "grouped specs should include a Ptr-returning hole");
+    assert!(
+        has_int,
+        "grouped specs should include an Int-returning hole"
+    );
+
+    for spec in spec_list {
+        let examples = spec
+            .get("examples")
+            .and_then(|v| v.as_array())
+            .expect("each spec should contain examples");
+        assert_eq!(
+            examples.len(),
+            3,
+            "each grouped spec should carry one example per trace"
+        );
+
+        let mut seen_by_input: HashMap<String, String> = HashMap::new();
+        for ex in examples {
+            let input = serde_json::to_string(ex.get("input").expect("example should have input"))
+                .expect("input should serialize");
+            let output =
+                serde_json::to_string(ex.get("output").expect("example should have output"))
+                    .expect("output should serialize");
+            if let Some(existing) = seen_by_input.insert(input.clone(), output.clone()) {
+                assert_eq!(
+                    existing, output,
+                    "same input must not map to conflicting outputs"
+                );
+            }
+        }
+    }
 }
