@@ -86,19 +86,12 @@ POST http://127.0.0.1:3030/synthesize
 ```json
 {
   "common_pattern": "...",
-  "hole_information": {...},
-  "code": [...],
-  "individual_codes": [...],
+  "hole_information": {},
+  "code": [],
+  "composed_method_code": "append() {\\n  const tmp0 = new Node();\\n  this.next = tmp0;\\n}",
+  "individual_codes": [],
   "list_environment_info": "...",
-  "operation_analysis": null,
-  "escher_results": [
-    {
-      "name": "idInt",
-      "success": true,
-      "rendered": "idInt(@x0: Int): Int =\n  @x0",
-      "error": null
-    }
-  ]
+  "operation_analysis": null
 }
 ```
 
@@ -133,7 +126,9 @@ POST http://127.0.0.1:3030/synthesize
 
 ## 機能
 
-1. **コード合成**: 従来の合成機能（共通パターンの抽出、ホール情報の生成）
+1. **コード合成**:
+   - 1件の操作列でも `common_pattern` と `composed_method_code`（操作列のリプレイ）を生成
+   - 2件以上の操作列がある場合、差分からホール/補助関数（Escher仕様）を生成し、必要なら `composed_method_code` を補助関数呼び出しとして構成
 2. **List環境生成**: VisGraphからListEnvironmentへの変換
 3. **操作分析**: 複数操作列が提供された場合、自動的に差異分析を実行
    - 共通操作の数

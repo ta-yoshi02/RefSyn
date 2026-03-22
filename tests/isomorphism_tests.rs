@@ -759,6 +759,7 @@ fn remove_last_ops_a() -> Vec<Op> {
             id: "a_2".to_string(),
             kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
                 from: "a_0".to_string(),
+                old_to: None,
                 new_to: "a_1".to_string(),
                 label: "next".to_string(),
             }),
@@ -784,6 +785,7 @@ fn remove_last_ops_b() -> Vec<Op> {
             id: "b_2".to_string(),
             kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
                 from: "b_1".to_string(),
+                old_to: None,
                 new_to: "b_0".to_string(),
                 label: "next".to_string(),
             }),
@@ -805,6 +807,7 @@ fn test_unify_remove_last() {
             id: "a_2".to_string(),
             kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
                 from: "a_0".to_string(),
+                old_to: None,
                 new_to: "a_1".to_string(),
                 label: "next".to_string(),
             }),
@@ -819,6 +822,7 @@ fn test_unify_remove_last() {
             id: "b_2".to_string(),
             kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
                 from: "b_1".to_string(),
+                old_to: None,
                 new_to: "b_0".to_string(),
                 label: "next".to_string(),
             }),
@@ -1339,6 +1343,7 @@ fn set_ops_a() -> Vec<Op> {
             id: "a_2".to_string(),
             kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
                 from: "a_1".to_string(),
+                old_to: None,
                 new_to: "a_0".to_string(),
                 label: "val".to_string(),
             }),
@@ -1368,6 +1373,7 @@ fn set_ops_b() -> Vec<Op> {
             id: "b_2".to_string(),
             kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
                 from: "b_0".to_string(),
+                old_to: None,
                 new_to: "b_1".to_string(),
                 label: "val".to_string(),
             }),
@@ -1384,6 +1390,7 @@ fn test_unify_set() {
         id: "a_2".to_string(),
         kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
             from: "a_1".to_string(),
+            old_to: None,
             new_to: "a_0".to_string(),
             label: "val".to_string(),
         }),
@@ -1392,6 +1399,7 @@ fn test_unify_set() {
         id: "b_2".to_string(),
         kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
             from: "b_0".to_string(),
+            old_to: None,
             new_to: "b_1".to_string(),
             label: "val".to_string(),
         }),

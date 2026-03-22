@@ -31,6 +31,7 @@ pub enum EdgeExpr {
     },
     EditEdgeReference {
         from: OpNum,
+        old_to: Option<OpNum>,
         new_to: OpNum,
         label: String,
     },
@@ -80,6 +81,22 @@ pub struct UnificationResult {
     pub diff_b: Vec<Op>,
     /// Mapping from operation IDs in sequence A to their counterparts in sequence B
     pub final_mapping: HashMap<OpNum, OpNum>,
+}
+
+fn relation_endpoint_attributes_match(
+    op_a_id: &OpNum,
+    op_b_id: &OpNum,
+    ops_a_map: &HashMap<OpNum, &Op>,
+    ops_b_map: &HashMap<OpNum, &Op>,
+) -> bool {
+    match (&ops_a_map[op_a_id].kind, &ops_b_map[op_b_id].kind) {
+        (
+            GraphOp::Node(NodeExpr::ExistNode { id: id_a, .. }),
+            GraphOp::Node(NodeExpr::ExistNode { id: id_b, .. }),
+        ) => id_a == id_b,
+        (GraphOp::Node(_), GraphOp::Node(_)) => true,
+        _ => false,
+    }
 }
 
 pub fn unify_operation_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
@@ -197,25 +214,58 @@ pub fn unify_operation_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
                 }
                 EdgeExpr::EditEdgeReference {
                     from: from_a,
+                    old_to: old_to_a,
                     new_to: new_to_a,
                     label: label_a,
                 } => {
                     if let (Some(from_b), Some(new_to_b)) =
                         (final_mapping.get(from_a), final_mapping.get(new_to_a))
                     {
-                        b.iter().find_map(|op_b| {
-                            if let GraphOp::Edge(EdgeExpr::EditEdgeReference {
-                                from,
-                                new_to,
-                                label,
-                            }) = &op_b.kind
-                            {
-                                if label == label_a && from == from_b && new_to == new_to_b {
-                                    return Some(op_b.id.clone());
+                        let old_to_matches = match old_to_a {
+                            Some(old_to_a) => final_mapping
+                                .get(old_to_a)
+                                .filter(|old_to_b| {
+                                    relation_endpoint_attributes_match(
+                                        old_to_a, old_to_b, &ops_a_map, &ops_b_map,
+                                    )
+                                })
+                                .is_some(),
+                            None => true,
+                        };
+                        if relation_endpoint_attributes_match(
+                            from_a, from_b, &ops_a_map, &ops_b_map,
+                        ) && relation_endpoint_attributes_match(
+                            new_to_a, new_to_b, &ops_a_map, &ops_b_map,
+                        ) && old_to_matches
+                        {
+                            b.iter().find_map(|op_b| {
+                                if let GraphOp::Edge(EdgeExpr::EditEdgeReference {
+                                    from,
+                                    old_to,
+                                    new_to,
+                                    label,
+                                }) = &op_b.kind
+                                {
+                                    let old_to_is_equal = match (old_to_a, old_to.as_ref()) {
+                                        (Some(old_to_a), Some(old_to_b)) => {
+                                            final_mapping.get(old_to_a) == Some(old_to_b)
+                                        }
+                                        (None, None) => true,
+                                        _ => false,
+                                    };
+                                    if label == label_a
+                                        && from == from_b
+                                        && new_to == new_to_b
+                                        && old_to_is_equal
+                                    {
+                                        return Some(op_b.id.clone());
+                                    }
                                 }
-                            }
+                                None
+                            })
+                        } else {
                             None
-                        })
+                        }
                     } else {
                         None
                     }
@@ -394,15 +444,40 @@ fn calculate_structural_score(
                 }
                 EdgeExpr::EditEdgeReference {
                     from: from_a,
+                    old_to: old_to_a,
                     new_to: new_to_a,
                     label: label_a,
                 } => {
                     if let (Some(from_b), Some(new_to_b)) =
                         (mapping.get(from_a), mapping.get(new_to_a))
                     {
-                        ops_b_map.values().any(|edge_b| {
-                            matches!(&edge_b.kind, GraphOp::Edge(EdgeExpr::EditEdgeReference { from, new_to, label }) if label == label_a && from == from_b && new_to == new_to_b)
-                        })
+                        let old_to_matches = match old_to_a {
+                            Some(old_to_a) => mapping
+                                .get(old_to_a)
+                                .filter(|old_to_b| {
+                                    relation_endpoint_attributes_match(
+                                        old_to_a, old_to_b, ops_a_map, ops_b_map,
+                                    )
+                                })
+                                .is_some(),
+                            None => true,
+                        };
+                        relation_endpoint_attributes_match(from_a, from_b, ops_a_map, ops_b_map)
+                            && relation_endpoint_attributes_match(
+                                new_to_a, new_to_b, ops_a_map, ops_b_map,
+                            )
+                            && old_to_matches
+                            && ops_b_map.values().any(|edge_b| {
+                                matches!(
+                                    &edge_b.kind,
+                                    GraphOp::Edge(EdgeExpr::EditEdgeReference {
+                                        from,
+                                        new_to,
+                                        label,
+                                        ..
+                                    }) if label == label_a && from == from_b && new_to == new_to_b
+                                )
+                            })
                     } else {
                         false
                     }
@@ -493,7 +568,9 @@ fn find_best_mapping_recursive<'a>(
 ) {
     if nodes_to_map_a.is_empty() {
         let score = calculate_structural_score(current_mapping, ops_a_map, ops_b_map);
-        if score > best_mapping.1 {
+        if score > best_mapping.1
+            || (score == best_mapping.1 && current_mapping.len() > best_mapping.0.len())
+        {
             best_mapping.0 = current_mapping.clone();
             best_mapping.1 = score;
         }

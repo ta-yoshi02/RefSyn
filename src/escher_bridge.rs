@@ -30,10 +30,10 @@ pub struct EscherCase {
     pub output: Value,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ExampleJson {
-    input: Vec<Value>,
-    output: Value,
+    pub input: Vec<Value>,
+    pub output: Value,
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -529,6 +529,39 @@ pub struct EscherJsOutcome {
     pub error: Option<String>,
 }
 
+fn parse_escher_js_max_old_space_mb(raw: Option<&str>) -> Result<usize> {
+    const DEFAULT_MB: usize = 8192;
+    const MIN_MB: usize = 256;
+
+    let Some(raw) = raw else {
+        return Ok(DEFAULT_MB);
+    };
+
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return Ok(DEFAULT_MB);
+    }
+
+    let parsed = trimmed.parse::<usize>().map_err(|_| {
+        anyhow!(
+            "Invalid ESCHER_JS_MAX_OLD_SPACE_MB='{}'. Expected a positive integer (MB).",
+            trimmed
+        )
+    })?;
+    if parsed < MIN_MB {
+        return Err(anyhow!(
+            "ESCHER_JS_MAX_OLD_SPACE_MB must be >= {} (got {}).",
+            MIN_MB,
+            parsed
+        ));
+    }
+    Ok(parsed)
+}
+
+fn resolve_escher_js_max_old_space_mb() -> Result<usize> {
+    parse_escher_js_max_old_space_mb(std::env::var("ESCHER_JS_MAX_OLD_SPACE_MB").ok().as_deref())
+}
+
 /// Invoke Scala.js build via Node and parse normalized results.
 pub fn run_escher_js(spec_json: &str) -> Result<Vec<EscherJsOutcome>> {
     let default_runner = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -545,12 +578,17 @@ pub fn run_escher_js(spec_json: &str) -> Result<Vec<EscherJsOutcome>> {
         ));
     }
 
-    let mut child = Command::new("node")
+    let max_old_space_mb = resolve_escher_js_max_old_space_mb()?;
+    let mut command = Command::new("node");
+    command
+        .arg(format!("--max-old-space-size={}", max_old_space_mb))
         .arg(&runner)
         .arg("--quiet")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())
+        .stderr(Stdio::inherit());
+
+    let mut child = command
         .spawn()
         .map_err(|e| anyhow!("Failed to spawn Node runner: {}", e))?;
 
@@ -565,8 +603,9 @@ pub fn run_escher_js(spec_json: &str) -> Result<Vec<EscherJsOutcome>> {
     let output = child.wait_with_output()?;
     if !output.status.success() {
         return Err(anyhow!(
-            "Escher JS runner exited with status {}",
-            output.status
+            "Escher JS runner exited with status {} (node max-old-space-size={} MB; override via ESCHER_JS_MAX_OLD_SPACE_MB)",
+            output.status,
+            max_old_space_mb
         ));
     }
 
@@ -590,6 +629,32 @@ mod tests {
     use super::*;
     use crate::models::{Edge, Node};
     use serde_json::json;
+
+    #[test]
+    fn parse_escher_js_max_old_space_mb_defaults_to_8192() {
+        let mb = parse_escher_js_max_old_space_mb(None).expect("default");
+        assert_eq!(mb, 8192);
+    }
+
+    #[test]
+    fn parse_escher_js_max_old_space_mb_accepts_valid_integer() {
+        let mb = parse_escher_js_max_old_space_mb(Some("12288")).expect("parsed");
+        assert_eq!(mb, 12288);
+    }
+
+    #[test]
+    fn parse_escher_js_max_old_space_mb_rejects_small_value() {
+        let err = parse_escher_js_max_old_space_mb(Some("128")).expect_err("must fail");
+        assert!(err.to_string().contains("must be >= 256"));
+    }
+
+    #[test]
+    fn parse_escher_js_max_old_space_mb_rejects_non_numeric() {
+        let err = parse_escher_js_max_old_space_mb(Some("abc")).expect_err("must fail");
+        assert!(err
+            .to_string()
+            .contains("Invalid ESCHER_JS_MAX_OLD_SPACE_MB"));
+    }
 
     fn graph_for_linear_list() -> (VisGraph, ListEnvironment) {
         // Objects: n1 -> n2 -> n3, values 10, 20, 30, and variable lst bound to n1

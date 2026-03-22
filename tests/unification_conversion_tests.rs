@@ -29,7 +29,7 @@ fn test_convert_and_unify_with_exist_nodes_and_edges() {
     ];
 
     let vis = make_min_vis_graph();
-    let result = analyze_operations_with_unification(&vis, &ops_a, &ops_b).expect("analysis");
+    let result = analyze_operations_with_unification(&vis, &vis, &ops_a, &ops_b).expect("analysis");
     let uni = result.unification_result;
 
     // 期待: 共通に含まれるもの（厳密）

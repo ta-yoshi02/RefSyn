@@ -758,6 +758,7 @@ fn remove_last_ops_a() -> Vec<Op> {
             id: "a_2".to_string(),
             kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
                 from: "a_0".to_string(),
+                old_to: None,
                 new_to: "a_1".to_string(),
                 label: "next".to_string(),
             }),
@@ -783,6 +784,7 @@ fn remove_last_ops_b() -> Vec<Op> {
             id: "b_2".to_string(),
             kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
                 from: "b_1".to_string(),
+                old_to: None,
                 new_to: "b_0".to_string(),
                 label: "next".to_string(),
             }),
@@ -795,50 +797,52 @@ fn test_unify_remove_last() {
     let a = remove_last_ops_a();
     let b = remove_last_ops_b();
     let result = unify_operation_graphs(&a, &b);
-    let mut expected_common_a = vec![
+    let mut expected_common_a = vec![Op {
+        id: "a_1".to_string(),
+        kind: GraphOp::Node(NodeExpr::NullNode {}),
+    }];
+    let mut expected_common_b = vec![Op {
+        id: "b_0".to_string(),
+        kind: GraphOp::Node(NodeExpr::NullNode {}),
+    }];
+    let mut expected_diff_a = vec![
         Op {
-            id: "a_1".to_string(),
-            kind: GraphOp::Node(NodeExpr::NullNode {}),
+            id: "a_0".to_string(),
+            kind: GraphOp::Node(NodeExpr::ExistNode {
+                is_literal: false,
+                label: "Node".to_string(),
+                id: "main-new2".to_string(),
+            }),
         },
         Op {
             id: "a_2".to_string(),
             kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
                 from: "a_0".to_string(),
+                old_to: None,
                 new_to: "a_1".to_string(),
                 label: "next".to_string(),
             }),
         },
     ];
-    let mut expected_common_b = vec![
+    let mut expected_diff_b = vec![
         Op {
-            id: "b_0".to_string(),
-            kind: GraphOp::Node(NodeExpr::NullNode {}),
+            id: "b_1".to_string(),
+            kind: GraphOp::Node(NodeExpr::ExistNode {
+                is_literal: false,
+                label: "Node".to_string(),
+                id: "main-new1".to_string(),
+            }),
         },
         Op {
             id: "b_2".to_string(),
             kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
                 from: "b_1".to_string(),
+                old_to: None,
                 new_to: "b_0".to_string(),
                 label: "next".to_string(),
             }),
         },
     ];
-    let mut expected_diff_a = vec![Op {
-        id: "a_0".to_string(),
-        kind: GraphOp::Node(NodeExpr::ExistNode {
-            is_literal: false,
-            label: "Node".to_string(),
-            id: "main-new2".to_string(),
-        }),
-    }];
-    let mut expected_diff_b = vec![Op {
-        id: "b_1".to_string(),
-        kind: GraphOp::Node(NodeExpr::ExistNode {
-            is_literal: false,
-            label: "Node".to_string(),
-            id: "main-new1".to_string(),
-        }),
-    }];
     expected_common_a.sort_by_key(|k| format!("{:?}", k));
     expected_common_b.sort_by_key(|k| format!("{:?}", k));
     expected_diff_a.sort_by_key(|k| format!("{:?}", k));
@@ -1338,6 +1342,7 @@ fn set_ops_a() -> Vec<Op> {
             id: "a_2".to_string(),
             kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
                 from: "a_1".to_string(),
+                old_to: None,
                 new_to: "a_0".to_string(),
                 label: "val".to_string(),
             }),
@@ -1367,6 +1372,7 @@ fn set_ops_b() -> Vec<Op> {
             id: "b_2".to_string(),
             kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
                 from: "b_0".to_string(),
+                old_to: None,
                 new_to: "b_1".to_string(),
                 label: "val".to_string(),
             }),
@@ -1379,22 +1385,8 @@ fn test_unify_set() {
     let a = set_ops_a();
     let b = set_ops_b();
     let result = unify_operation_graphs(&a, &b);
-    let mut expected_common_a = vec![Op {
-        id: "a_2".to_string(),
-        kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
-            from: "a_1".to_string(),
-            new_to: "a_0".to_string(),
-            label: "val".to_string(),
-        }),
-    }];
-    let mut expected_common_b = vec![Op {
-        id: "b_2".to_string(),
-        kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
-            from: "b_0".to_string(),
-            new_to: "b_1".to_string(),
-            label: "val".to_string(),
-        }),
-    }];
+    let mut expected_common_a = vec![];
+    let mut expected_common_b = vec![];
     let mut expected_diff_a = vec![
         Op {
             id: "a_0".to_string(),
@@ -1410,6 +1402,15 @@ fn test_unify_set() {
                 is_literal: false,
                 label: "Node".to_string(),
                 id: "main-new3".to_string(),
+            }),
+        },
+        Op {
+            id: "a_2".to_string(),
+            kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
+                from: "a_1".to_string(),
+                old_to: None,
+                new_to: "a_0".to_string(),
+                label: "val".to_string(),
             }),
         },
     ];
@@ -1428,6 +1429,15 @@ fn test_unify_set() {
                 is_literal: true,
                 label: "4".to_string(),
                 id: "__temp2".to_string(),
+            }),
+        },
+        Op {
+            id: "b_2".to_string(),
+            kind: GraphOp::Edge(EdgeExpr::EditEdgeReference {
+                from: "b_0".to_string(),
+                old_to: None,
+                new_to: "b_1".to_string(),
+                label: "val".to_string(),
             }),
         },
     ];
