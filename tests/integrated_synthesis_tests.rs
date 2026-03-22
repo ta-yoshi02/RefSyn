@@ -233,9 +233,22 @@ async fn test_integrated_synthesis_single_operation_list() {
     assert_eq!(status, StatusCode::OK);
     assert!(response.code.is_empty());
     assert!(response.individual_codes.is_empty());
-    assert_eq!(response.common_pattern, None);
-    assert_eq!(response.hole_information, None);
-    assert_eq!(response.composed_method_code, None);
+    let pattern = response
+        .common_pattern
+        .expect("single-trace synthesis should produce a common plan");
+    assert!(pattern.contains("COMMON_PLAN"));
+    assert!(pattern.contains("addNode"));
+    assert!(pattern.contains("addEdge"));
+    let holes = response
+        .hole_information
+        .expect("single-trace synthesis should include hole info (empty)");
+    assert!(holes.is_empty());
+    let composed = response
+        .composed_method_code
+        .expect("single-trace synthesis should produce composed method code");
+    assert!(composed.contains("append("));
+    assert!(composed.contains("const tmp0"));
+    assert!(composed.contains("this.next = tmp0"));
     assert!(response.operation_analysis.is_none());
     let info = response
         .list_environment_info
@@ -928,4 +941,362 @@ async fn test_integrated_synthesis_three_append_like_specs_group_holes() {
             }
         }
     }
+}
+
+#[tokio::test]
+async fn test_integrated_synthesis_insert_groups_value_and_edge_source_holes() {
+    let request: SynthesisRequest = serde_json::from_value(json!({
+        "method_calls": [
+            {
+                "callLabel": "call1",
+                "contextSensitiveID": "main",
+                "receiverObject": "main-new2",
+                "methodName": "insert",
+                "arguments": [0, 80],
+                "argumentTypes": ["Int", "Int"],
+                "argumentNames": ["arg0", "arg1"],
+                "methodParamNames": ["i", "arg"],
+                "operations": [
+                    {"editType":"addNode","id":"__temp1","label":"Node","isLiteral":false},
+                    {"editType":"addNode","id":"__temp2","label":"80","isLiteral":true,"type":"string"},
+                    {"editType":"addEdge","from":"__temp1","to":"__temp2","label":"val"},
+                    {"editType":"editEdgeReference","from":"main-new2","oldTo":"__temp1","newTo":"__temp1","label":"next"},
+                    {"editType":"addEdge","from":"__temp1","to":"__temp1","label":"next"}
+                ],
+                "precondGraph": {
+                    "nodes": [
+                        {"id":"main-new2","isLiteral":false,"label":"Node"},
+                        {"id":"main-new2-val","isLiteral":true,"label":"37"},
+                        {"id":"main-new3","isLiteral":false,"label":"Node"},
+                        {"id":"main-new3-val","isLiteral":true,"label":"25"},
+                        {"id":"__Variable-lst","isLiteral":false,"label":"lst"}
+                    ],
+                    "edges": [
+                        {"from":"main-new2","to":"main-new2-val","label":"val"},
+                        {"from":"main-new3","to":"main-new3-val","label":"val"},
+                        {"from":"main-new2","to":"main-new3","label":"next"},
+                        {"from":"__Variable-lst","to":"main-new2","label":"lst"}
+                    ]
+                },
+                "actualGraph": {
+                    "nodes": [
+                        {"id":"main-new2","isLiteral":false,"label":"Node"},
+                        {"id":"main-new2-val","isLiteral":true,"label":"37"},
+                        {"id":"main-new3","isLiteral":false,"label":"Node"},
+                        {"id":"main-new3-val","isLiteral":true,"label":"25"},
+                        {"id":"__Variable-lst","isLiteral":false,"label":"lst"}
+                    ],
+                    "edges": [
+                        {"from":"main-new2","to":"main-new2-val","label":"val"},
+                        {"from":"main-new3","to":"main-new3-val","label":"val"},
+                        {"from":"main-new2","to":"main-new3","label":"next"},
+                        {"from":"__Variable-lst","to":"main-new2","label":"lst"}
+                    ]
+                },
+                "idMapping": {"__temp1":"main-new3"}
+            },
+            {
+                "callLabel": "call2",
+                "contextSensitiveID": "main",
+                "receiverObject": "main-new1",
+                "methodName": "insert",
+                "arguments": [1, 71],
+                "argumentTypes": ["Int", "Int"],
+                "argumentNames": ["arg0", "arg1"],
+                "methodParamNames": ["i", "arg"],
+                "operations": [
+                    {"editType":"addNode","id":"__temp3","label":"71","isLiteral":true,"type":"string"},
+                    {"editType":"addNode","id":"__temp4","label":"Node","isLiteral":false},
+                    {"editType":"addEdge","from":"__temp4","to":"__temp3","label":"val"},
+                    {"editType":"editEdgeReference","from":"__temp1","oldTo":"__temp1","newTo":"__temp4","label":"next"},
+                    {"editType":"addEdge","from":"__temp4","to":"__temp1","label":"next"}
+                ],
+                "precondGraph": {
+                    "nodes": [
+                        {"id":"main-new2","isLiteral":false,"label":"Node"},
+                        {"id":"main-new2-val","isLiteral":true,"label":"37"},
+                        {"id":"__temp1","isLiteral":false,"label":"Node"},
+                        {"id":"__temp1-val","isLiteral":true,"label":"80"},
+                        {"id":"main-new3","isLiteral":false,"label":"Node"},
+                        {"id":"main-new3-val","isLiteral":true,"label":"25"},
+                        {"id":"__Variable-lst","isLiteral":false,"label":"lst"}
+                    ],
+                    "edges": [
+                        {"from":"main-new2","to":"main-new2-val","label":"val"},
+                        {"from":"__temp1","to":"__temp1-val","label":"val"},
+                        {"from":"main-new3","to":"main-new3-val","label":"val"},
+                        {"from":"__temp1","to":"main-new3","label":"next"},
+                        {"from":"main-new2","to":"__temp1","label":"next"},
+                        {"from":"__Variable-lst","to":"main-new2","label":"lst"}
+                    ]
+                },
+                "actualGraph": {
+                    "nodes": [
+                        {"id":"main-new2","isLiteral":false,"label":"Node"},
+                        {"id":"main-new2-val","isLiteral":true,"label":"37"},
+                        {"id":"__temp1","isLiteral":false,"label":"Node"},
+                        {"id":"__temp1-val","isLiteral":true,"label":"80"},
+                        {"id":"main-new3","isLiteral":false,"label":"Node"},
+                        {"id":"main-new3-val","isLiteral":true,"label":"25"},
+                        {"id":"__Variable-lst","isLiteral":false,"label":"lst"}
+                    ],
+                    "edges": [
+                        {"from":"main-new2","to":"main-new2-val","label":"val"},
+                        {"from":"__temp1","to":"__temp1-val","label":"val"},
+                        {"from":"main-new3","to":"main-new3-val","label":"val"},
+                        {"from":"__temp1","to":"main-new3","label":"next"},
+                        {"from":"main-new2","to":"__temp1","label":"next"},
+                        {"from":"__Variable-lst","to":"main-new2","label":"lst"}
+                    ]
+                },
+                "idMapping": {"__temp1":"__temp1","__temp1-val":"__temp1-val","__temp4":"main-new3"}
+            }
+        ],
+        "vis_graph": {
+            "nodes": [
+                {"id":"main-new2","isLiteral":false,"label":"Node"},
+                {"id":"main-new2-val","isLiteral":true,"label":"37"},
+                {"id":"main-new3","isLiteral":false,"label":"Node"},
+                {"id":"main-new3-val","isLiteral":true,"label":"25"},
+                {"id":"__Variable-lst","isLiteral":false,"label":"lst"},
+                {"id":"__temp1","isLiteral":false,"label":"Node"},
+                {"id":"__temp2","isLiteral":true,"label":"80"}
+            ],
+            "edges": [
+                {"from":"main-new2","to":"main-new2-val","label":"val"},
+                {"from":"main-new3","to":"main-new3-val","label":"val"},
+                {"from":"main-new2","to":"__temp1","label":"next"},
+                {"from":"__Variable-lst","to":"main-new2","label":"lst"},
+                {"from":"__temp1","to":"__temp2","label":"val"},
+                {"from":"__temp1","to":"main-new3","label":"next"}
+            ]
+        }
+    }))
+    .expect("insert request fixture should deserialize");
+
+    let (status, response) = run_synthesis_and_decode(request).await;
+    assert_eq!(status, StatusCode::OK);
+
+    let list_info = response
+        .list_environment_info
+        .expect("list environment info should be present");
+    let spec_path =
+        extract_escher_spec_path(&list_info).expect("escher json path should be reported");
+    let spec_json_text =
+        fs::read_to_string(&spec_path).expect("generated escher json should be readable");
+    let specs: serde_json::Value =
+        serde_json::from_str(&spec_json_text).expect("generated escher json should parse");
+    let spec_list = specs
+        .as_array()
+        .expect("generated escher json should be an array of specs");
+
+    let mut has_ptr = false;
+    let mut has_int = false;
+    for spec in spec_list {
+        let return_type = spec
+            .get("returnType")
+            .and_then(|v| v.as_str())
+            .expect("spec should contain returnType");
+        if return_type == "Ptr" {
+            has_ptr = true;
+        }
+        if return_type == "Int" {
+            has_int = true;
+        }
+    }
+    assert!(has_ptr, "insert decomposition should retain a Ptr hole");
+    assert!(has_int, "insert decomposition should retain an Int hole");
+
+    let hole_info = response
+        .hole_information
+        .expect("hole information should be present");
+    let mut has_edge_source = false;
+    let mut has_value = false;
+    for values in hole_info.values() {
+        for value in values {
+            if value == "role=edge_source" {
+                has_edge_source = true;
+            }
+            if value == "role=value" {
+                has_value = true;
+            }
+        }
+    }
+    assert!(
+        has_edge_source,
+        "insert decomposition should expose an edge_source hole"
+    );
+    assert!(has_value, "insert decomposition should expose a value hole");
+}
+
+#[tokio::test]
+async fn test_integrated_synthesis_insert_keeps_edge_source_with_runtime_scoped_precond_ids() {
+    let request: SynthesisRequest = serde_json::from_value(json!({
+        "method_calls": [
+            {
+                "callLabel": "call1",
+                "contextSensitiveID": "main",
+                "receiverObject": "main-new1",
+                "methodName": "insert",
+                "arguments": [0, 80],
+                "argumentTypes": ["Int", "Int"],
+                "argumentNames": ["arg0", "arg1"],
+                "methodParamNames": ["i", "arg"],
+                "operations": [
+                    {"editType":"addNode","id":"__temp1","label":"Node","isLiteral":false},
+                    {"editType":"addNode","id":"__temp2","label":"80","isLiteral":true,"type":"string"},
+                    {"editType":"addEdge","from":"__temp1","to":"__temp2","label":"val"},
+                    {"editType":"editEdgeReference","from":"main-new1","oldTo":"main-new2","newTo":"__temp1","label":"next"},
+                    {"editType":"addEdge","from":"__temp1","to":"main-new2","label":"next"}
+                ],
+                "precondGraph": {
+                    "nodes": [
+                        {"id":"main-new1","isLiteral":false,"label":"Node"},
+                        {"id":"main-new2","isLiteral":false,"label":"Node"},
+                        {"id":"main-new1-val","isLiteral":true,"label":"37"},
+                        {"id":"main-new2-val","isLiteral":true,"label":"25"},
+                        {"id":"__Variable-lst","isLiteral":false,"label":"lst"}
+                    ],
+                    "edges": [
+                        {"from":"main-new1","to":"main-new1-val","label":"val"},
+                        {"from":"main-new2","to":"main-new2-val","label":"val"},
+                        {"from":"main-new1","to":"main-new2","label":"next"},
+                        {"from":"__Variable-lst","to":"main-new1","label":"lst"}
+                    ]
+                },
+                "actualGraph": {
+                    "nodes": [
+                        {"id":"main-new1","isLiteral":false,"label":"Node"},
+                        {"id":"main-new2","isLiteral":false,"label":"Node"},
+                        {"id":"main-call1-FunctionExpression2-new3","isLiteral":false,"label":"Node"},
+                        {"id":"main-new1-val","isLiteral":true,"label":"37"},
+                        {"id":"main-new2-val","isLiteral":true,"label":"25"},
+                        {"id":"main-call1-FunctionExpression2-new3-val","isLiteral":true,"label":"80"},
+                        {"id":"__Variable-lst","isLiteral":false,"label":"lst"}
+                    ],
+                    "edges": [
+                        {"from":"main-new1","to":"main-new1-val","label":"val"},
+                        {"from":"main-new2","to":"main-new2-val","label":"val"},
+                        {"from":"main-call1-FunctionExpression2-new3","to":"main-call1-FunctionExpression2-new3-val","label":"val"},
+                        {"from":"main-new1","to":"main-call1-FunctionExpression2-new3","label":"next"},
+                        {"from":"main-call1-FunctionExpression2-new3","to":"main-new2","label":"next"},
+                        {"from":"__Variable-lst","to":"main-new1","label":"lst"}
+                    ]
+                },
+                "idMapping": {
+                    "__temp1":"main-call1-FunctionExpression2-new3",
+                    "__temp2":"main-call1-FunctionExpression2-new3-val"
+                }
+            },
+            {
+                "callLabel": "call2",
+                "contextSensitiveID": "main",
+                "receiverObject": "main-new1",
+                "methodName": "insert",
+                "arguments": [1, 71],
+                "argumentTypes": ["Int", "Int"],
+                "argumentNames": ["arg0", "arg1"],
+                "methodParamNames": ["i", "arg"],
+                "operations": [
+                    {"editType":"addNode","id":"__temp3","label":"Node","isLiteral":false},
+                    {"editType":"addNode","id":"__temp4","label":"71","isLiteral":true,"type":"string"},
+                    {"editType":"addEdge","from":"__temp3","to":"__temp4","label":"val"},
+                    {"editType":"editEdgeReference","from":"__temp1","oldTo":"main-new2","newTo":"__temp3","label":"next"},
+                    {"editType":"addEdge","from":"__temp3","to":"main-new2","label":"next"}
+                ],
+                "precondGraph": {
+                    "nodes": [
+                        {"id":"main-new1","isLiteral":false,"label":"Node"},
+                        {"id":"main-new2","isLiteral":false,"label":"Node"},
+                        {"id":"main-call1-FunctionExpression2-new3","isLiteral":false,"label":"Node"},
+                        {"id":"main-new1-val","isLiteral":true,"label":"37"},
+                        {"id":"main-new2-val","isLiteral":true,"label":"25"},
+                        {"id":"main-call1-FunctionExpression2-new3-val","isLiteral":true,"label":"80"},
+                        {"id":"__Variable-lst","isLiteral":false,"label":"lst"}
+                    ],
+                    "edges": [
+                        {"from":"main-new1","to":"main-new1-val","label":"val"},
+                        {"from":"main-new2","to":"main-new2-val","label":"val"},
+                        {"from":"main-call1-FunctionExpression2-new3","to":"main-call1-FunctionExpression2-new3-val","label":"val"},
+                        {"from":"main-new1","to":"main-call1-FunctionExpression2-new3","label":"next"},
+                        {"from":"main-call1-FunctionExpression2-new3","to":"main-new2","label":"next"},
+                        {"from":"__Variable-lst","to":"main-new1","label":"lst"}
+                    ]
+                },
+                "actualGraph": {
+                    "nodes": [
+                        {"id":"main-new1","isLiteral":false,"label":"Node"},
+                        {"id":"main-new2","isLiteral":false,"label":"Node"},
+                        {"id":"main-call1-FunctionExpression2-new3","isLiteral":false,"label":"Node"},
+                        {"id":"main-call2-FunctionExpression2-new3","isLiteral":false,"label":"Node"},
+                        {"id":"main-new1-val","isLiteral":true,"label":"37"},
+                        {"id":"main-new2-val","isLiteral":true,"label":"25"},
+                        {"id":"main-call1-FunctionExpression2-new3-val","isLiteral":true,"label":"80"},
+                        {"id":"main-call2-FunctionExpression2-new3-val","isLiteral":true,"label":"71"},
+                        {"id":"__Variable-lst","isLiteral":false,"label":"lst"}
+                    ],
+                    "edges": [
+                        {"from":"main-new1","to":"main-new1-val","label":"val"},
+                        {"from":"main-new2","to":"main-new2-val","label":"val"},
+                        {"from":"main-call1-FunctionExpression2-new3","to":"main-call1-FunctionExpression2-new3-val","label":"val"},
+                        {"from":"main-call2-FunctionExpression2-new3","to":"main-call2-FunctionExpression2-new3-val","label":"val"},
+                        {"from":"main-new1","to":"main-call2-FunctionExpression2-new3","label":"next"},
+                        {"from":"main-call2-FunctionExpression2-new3","to":"main-call1-FunctionExpression2-new3","label":"next"},
+                        {"from":"main-call1-FunctionExpression2-new3","to":"main-new2","label":"next"},
+                        {"from":"__Variable-lst","to":"main-new1","label":"lst"}
+                    ]
+                },
+                "idMapping": {
+                    "__temp3":"main-call1-FunctionExpression2-new3",
+                    "__temp4":"main-call1-FunctionExpression2-new3-val"
+                }
+            }
+        ],
+        "vis_graph": {
+            "nodes": [
+                {"id":"main-new1","isLiteral":false,"label":"Node"},
+                {"id":"main-new2","isLiteral":false,"label":"Node"},
+                {"id":"main-new1-val","isLiteral":true,"label":"37"},
+                {"id":"main-new2-val","isLiteral":true,"label":"25"},
+                {"id":"__temp1","isLiteral":false,"label":"Node"},
+                {"id":"__temp2","isLiteral":true,"label":"80"},
+                {"id":"__Variable-lst","isLiteral":false,"label":"lst"}
+            ],
+            "edges": [
+                {"from":"main-new1","to":"main-new1-val","label":"val"},
+                {"from":"main-new2","to":"main-new2-val","label":"val"},
+                {"from":"main-new1","to":"__temp1","label":"next"},
+                {"from":"__temp1","to":"__temp2","label":"val"},
+                {"from":"__temp1","to":"main-new2","label":"next"},
+                {"from":"__Variable-lst","to":"main-new1","label":"lst"}
+            ]
+        }
+    }))
+    .expect("runtime-scoped insert request should deserialize");
+
+    let (status, response) = run_synthesis_and_decode(request).await;
+    assert_eq!(status, StatusCode::OK);
+    let hole_info = response
+        .hole_information
+        .expect("hole information should be present");
+    let mut has_edge_source = false;
+    let mut has_value = false;
+    for values in hole_info.values() {
+        for value in values {
+            if value == "role=edge_source" {
+                has_edge_source = true;
+            }
+            if value == "role=value" {
+                has_value = true;
+            }
+        }
+    }
+    assert!(
+        has_edge_source,
+        "runtime-scoped precond ids should not erase edge_source holes"
+    );
+    assert!(
+        has_value,
+        "runtime-scoped precond ids should still keep value holes"
+    );
 }

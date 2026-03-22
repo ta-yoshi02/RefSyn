@@ -55,7 +55,8 @@ fn main() -> anyhow::Result<()> {
     ];
 
     // 3) Unification → common op ids (e.g., op_0)
-    let analysis = refsyn::analyze_operations_with_unification(&vis_graph, &ops_a, &ops_b)?;
+    let analysis =
+        refsyn::analyze_operations_with_unification(&vis_graph, &vis_graph, &ops_a, &ops_b)?;
     let mut env = ListEnvironment::from_vis_graph(&vis_graph);
 
     // 4) Apply common A-ops (in original order) to reach the boundary snapshot

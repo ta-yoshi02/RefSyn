@@ -225,6 +225,9 @@ fn compile_component(name: &str, args: &[Term], ctx: &CompileContext) -> Result<
         "is_null" => compile_unary_expr(name, args, ctx, "_a === null"),
         "index_ptr" => compile_index_ptr(args, ctx),
         "is_null_at_ptr" => compile_is_null_at_ptr(args, ctx),
+        "last_ptr" => compile_last_ptr(args, ctx),
+        "advance_ptr_n" => compile_advance_ptr_n(args, ctx),
+        "find_val_ptr" => compile_find_val_ptr(args, ctx),
         _ => Err(anyhow!(
             "unknown component '{}' in term {}",
             name,
@@ -298,6 +301,83 @@ fn compile_is_null_at_ptr(args: &[Term], ctx: &CompileContext) -> Result<String>
     }
     Err(anyhow!(
         "is_null_at_ptr requires list field (sigma) on second arg"
+    ))
+}
+
+fn compile_last_ptr(args: &[Term], ctx: &CompileContext) -> Result<String> {
+    ensure_arity("last_ptr", args, 2)?;
+    let field = sigma_field(&args[1], ctx)
+        .ok_or_else(|| anyhow!("last_ptr requires list field (sigma) on second arg"))?;
+    let ptr_expr = compile_term(&args[0], ctx)?;
+    let next_expr = format_field_access(&ptr_expr, field);
+    let method_name = js_function_name(&ctx.function_name);
+    let recurse_expr = format!("{}()", format_field_access(&next_expr, &method_name));
+    Ok(format!(
+        "(({} === null) ? null : (({} === null) ? {} : {}))",
+        ptr_expr, next_expr, ptr_expr, recurse_expr
+    ))
+}
+
+fn compile_advance_ptr_n(args: &[Term], ctx: &CompileContext) -> Result<String> {
+    ensure_arity("advance_ptr_n", args, 3)?;
+    if sigma_field(&args[0], ctx).is_some() {
+        return Err(anyhow!(
+            "advance_ptr_n expects Ptr first, Int second, List third"
+        ));
+    }
+    if sigma_field(&args[1], ctx).is_some() {
+        return Err(anyhow!(
+            "advance_ptr_n expects Int second (sigma should be on third arg)"
+        ));
+    }
+    let Some(field) = sigma_field(&args[2], ctx) else {
+        return Err(anyhow!(
+            "advance_ptr_n requires list field (sigma) on third arg"
+        ));
+    };
+    if !is_sigma_ptr_var(&args[2], ctx) {
+        return Err(anyhow!(
+            "advance_ptr_n requires Ptr field for {:?}",
+            args[2]
+        ));
+    }
+    let ptr_expr = compile_term(&args[0], ctx)?;
+    let steps_expr = compile_term(&args[1], ctx)?;
+    let next_expr = format_field_access("__ptr", field);
+    Ok(format!(
+        "(() => {{ const __go = (__ptr, __steps) => {{ if (__ptr === null || __steps <= 0) {{ return __ptr; }} return __go({}, (__steps - 1)); }}; return __go({}, {}); }})()",
+        next_expr, ptr_expr, steps_expr
+    ))
+}
+
+fn compile_find_val_ptr(args: &[Term], ctx: &CompileContext) -> Result<String> {
+    ensure_arity("find_val_ptr", args, 4)?;
+    if sigma_field(&args[0], ctx).is_some() || sigma_field(&args[1], ctx).is_some() {
+        return Err(anyhow!(
+            "find_val_ptr expects Int first, Ptr second, then value/ptr lists"
+        ));
+    }
+    let Some(val_field) = sigma_field(&args[2], ctx) else {
+        return Err(anyhow!(
+            "find_val_ptr requires value list field (sigma) on third arg"
+        ));
+    };
+    let Some(next_field) = sigma_field(&args[3], ctx) else {
+        return Err(anyhow!(
+            "find_val_ptr requires ptr list field (sigma) on fourth arg"
+        ));
+    };
+    if !is_sigma_ptr_var(&args[3], ctx) {
+        return Err(anyhow!("find_val_ptr requires Ptr field for {:?}", args[3]));
+    }
+
+    let target_expr = compile_term(&args[0], ctx)?;
+    let ptr_expr = compile_term(&args[1], ctx)?;
+    let val_expr = format_field_access("__ptr", val_field);
+    let next_expr = format_field_access("__ptr", next_field);
+    Ok(format!(
+        "(() => {{ const __target = {}; const __go = (__ptr) => {{ if (__ptr === null) {{ return null; }} if (({}) === __target) {{ return __ptr; }} return __go({}); }}; return __go({}); }})()",
+        target_expr, val_expr, next_expr, ptr_expr
     ))
 }
 
@@ -733,6 +813,79 @@ mod tests {
         let expected =
             "last_ptr() { if (((this).next === null)) { return this; } else { return ((this).next).last_ptr(); } }";
         assert_js_eq(&js, expected);
+    }
+
+    #[test]
+    fn compile_last_ptr_component_inlines_tail_walk() {
+        let term_src = "last_ptr(@x0, @x1)";
+        let term = parse_term_text(term_src).expect("parse term");
+        let mut gamma = HashMap::new();
+        gamma.insert("x0".to_string(), "this".to_string());
+        let mut sigma = HashMap::new();
+        sigma.insert("x1".to_string(), "next".to_string());
+        let mut sigma_ptr_vars = HashSet::new();
+        sigma_ptr_vars.insert("x1".to_string());
+        let ctx = CompileContext {
+            gamma,
+            sigma,
+            sigma_ptr_vars,
+            function_name: "append_h".to_string(),
+            receiver_arg_index: Some(0),
+        };
+
+        let js = compile_term(&term, &ctx).expect("compile");
+        let expected =
+            "((this === null) ? null : (((this).next === null) ? this : ((this).next).append_h()))";
+        assert_eq!(js, expected);
+    }
+
+    #[test]
+    fn compile_advance_ptr_n_component_walks_steps() {
+        let term_src = "advance_ptr_n(@x0, @x1, @x2)";
+        let term = parse_term_text(term_src).expect("parse term");
+        let mut gamma = HashMap::new();
+        gamma.insert("x0".to_string(), "this".to_string());
+        gamma.insert("x1".to_string(), "steps".to_string());
+        let mut sigma = HashMap::new();
+        sigma.insert("x2".to_string(), "next".to_string());
+        let mut sigma_ptr_vars = HashSet::new();
+        sigma_ptr_vars.insert("x2".to_string());
+        let ctx = CompileContext {
+            gamma,
+            sigma,
+            sigma_ptr_vars,
+            function_name: "append_h".to_string(),
+            receiver_arg_index: Some(0),
+        };
+
+        let js = compile_term(&term, &ctx).expect("compile");
+        let expected = "(() => { const __go = (__ptr, __steps) => { if (__ptr === null || __steps <= 0) { return __ptr; } return __go((__ptr).next, (__steps - 1)); }; return __go(this, steps); })()";
+        assert_eq!(js, expected);
+    }
+
+    #[test]
+    fn compile_find_val_ptr_component_walks_with_value_check() {
+        let term_src = "find_val_ptr(@x0, @x1, @x2, @x3)";
+        let term = parse_term_text(term_src).expect("parse term");
+        let mut gamma = HashMap::new();
+        gamma.insert("x0".to_string(), "target".to_string());
+        gamma.insert("x1".to_string(), "this".to_string());
+        let mut sigma = HashMap::new();
+        sigma.insert("x2".to_string(), "val".to_string());
+        sigma.insert("x3".to_string(), "next".to_string());
+        let mut sigma_ptr_vars = HashSet::new();
+        sigma_ptr_vars.insert("x3".to_string());
+        let ctx = CompileContext {
+            gamma,
+            sigma,
+            sigma_ptr_vars,
+            function_name: "append_h".to_string(),
+            receiver_arg_index: Some(1),
+        };
+
+        let js = compile_term(&term, &ctx).expect("compile");
+        let expected = "(() => { const __target = target; const __go = (__ptr) => { if (__ptr === null) { return null; } if (((__ptr).val) === __target) { return __ptr; } return __go((__ptr).next); }; return __go(this); })()";
+        assert_eq!(js, expected);
     }
 
     #[test]
