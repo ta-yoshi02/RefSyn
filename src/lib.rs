@@ -6,22 +6,32 @@ pub mod isomorphism;
 pub mod list_env;
 pub mod models;
 pub mod operation_analyzer;
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
 pub mod server;
 pub mod unify_ops;
 
 use crate::escher_bridge::{
-    build_escher_spec, derive_spec_meta_with_fields, resolve_field_order, run_escher_js,
-    specs_to_json, write_spec_to_file, EscherCase, EscherJsOutcome, EscherSpec, EscherSpecMeta,
-    ExampleJson,
+    build_escher_spec, build_escher_task_spec, derive_spec_meta_with_fields, resolve_field_order,
+    specs_to_json, tasks_to_json, EscherCase, EscherJsInternalOutcome, EscherJsOutcome,
+    EscherSpec, EscherSpecMeta, ExampleJson,
 };
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+use crate::escher_bridge::EscherBackend;
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
 use crate::escher_js::{build_context_from_spec, translate_rendered_method};
-use anyhow;
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+use crate::{
+    escher_bridge::{resolve_escher_backend, run_escher_js, write_spec_to_file},
+};
 use serde::{Deserialize, Serialize};
-use serde_json;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::sync::atomic::{AtomicBool, Ordering};
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
 use warp::http::StatusCode;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct MethodCallOperation {
     #[serde(rename = "callLabel")]
     pub call_label: String,
@@ -52,7 +62,7 @@ pub struct MethodCallOperation {
 
 use crate::models::VisGraph;
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SynthesisRequest {
     pub method_calls: Vec<MethodCallOperation>,
     pub vis_graph: VisGraph,
@@ -64,7 +74,7 @@ pub struct FieldTables {
     pub pointer: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SynthesisResponse {
     pub common_pattern: Option<String>,
     pub hole_information: Option<HashMap<String, Vec<String>>>,
@@ -79,7 +89,53 @@ pub struct SynthesisResponse {
     pub escher_results: Option<Vec<EscherJsOutcome>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SynthesisCoreOptions {
+    #[serde(default)]
+    pub trace: bool,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SynthesisArtifacts {
+    pub response: SynthesisResponse,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub task_json: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub spec_json: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub warnings: Vec<String>,
+    #[serde(skip_serializing)]
+    aggregated_specs: Vec<EscherSpec>,
+    #[serde(skip_serializing)]
+    spec_meta_by_name: HashMap<String, EscherSpecMeta>,
+    #[serde(skip_serializing)]
+    spec_base_name: Option<String>,
+    #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+    #[serde(skip_serializing)]
+    http_status: u16,
+}
+
+impl SynthesisArtifacts {
+    fn from_response(response: SynthesisResponse) -> Self {
+        Self::from_response_with_status(response, 200)
+    }
+
+    fn from_response_with_status(response: SynthesisResponse, _http_status: u16) -> Self {
+        Self {
+            response,
+            task_json: None,
+            spec_json: None,
+            warnings: Vec::new(),
+            aggregated_specs: Vec::new(),
+            spec_meta_by_name: HashMap::new(),
+            spec_base_name: None,
+            #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+            http_status: _http_status,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OperationAnalysisData {
     pub common_operations_count: usize,
     pub total_operations_counts: Vec<usize>,
@@ -95,11 +151,14 @@ struct CommonPlanArtifact {
     composed_method_code: Option<String>,
 }
 
+static TRACE_ENABLED: AtomicBool = AtomicBool::new(false);
+
+fn set_trace_enabled(enabled: bool) {
+    TRACE_ENABLED.store(enabled, Ordering::Relaxed);
+}
+
 fn trace_enabled() -> bool {
-    match std::env::var("REFSYN_TRACE") {
-        Ok(v) => matches!(v.as_str(), "1" | "true" | "yes" | "on"),
-        Err(_) => false,
-    }
+    TRACE_ENABLED.load(Ordering::Relaxed)
 }
 
 fn trace_json<T: serde::Serialize>(label: &str, value: &T) {
@@ -114,6 +173,20 @@ fn trace_json<T: serde::Serialize>(label: &str, value: &T) {
 
 // Types needed by the server module will be imported from main directly
 
+fn blank_synthesis_response(list_env_info: Option<String>) -> SynthesisResponse {
+    SynthesisResponse {
+        common_pattern: None,
+        hole_information: None,
+        code: vec![],
+        composed_method_code: None,
+        individual_codes: vec![],
+        list_environment_info: list_env_info,
+        operation_analysis: None,
+        escher_results: None,
+    }
+}
+
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
 pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, warp::Rejection> {
     if let Ok(body_str) = std::str::from_utf8(&body) {
         println!("--- RAW REQUEST PAYLOAD ---");
@@ -125,16 +198,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         Ok(r) => r,
         Err(e) => {
             eprintln!("Deserialization error: {}", e);
-            let response = SynthesisResponse {
-                common_pattern: None,
-                hole_information: None,
-                code: vec![],
-                composed_method_code: None,
-                individual_codes: vec![],
-                list_environment_info: None,
-                operation_analysis: None,
-                escher_results: None,
-            };
+            let response = blank_synthesis_response(None);
             return Ok(warp::reply::with_status(
                 warp::reply::json(&response),
                 StatusCode::BAD_REQUEST,
@@ -142,22 +206,42 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         }
     };
 
+    let trace = match std::env::var("REFSYN_TRACE") {
+        Ok(v) => matches!(v.as_str(), "1" | "true" | "yes" | "on"),
+        Err(_) => false,
+    };
+    let mut artifacts = match synthesize_core(req, SynthesisCoreOptions { trace }) {
+        Ok(artifacts) => artifacts,
+        Err(err) => {
+            eprintln!("Synthesis failed: {}", err);
+            let response = blank_synthesis_response(Some(format!(
+                "internal synthesis error: {}",
+                err
+            )));
+            return Ok(warp::reply::with_status(
+                warp::reply::json(&response),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ));
+        }
+    };
+    finalize_native_synthesis(&mut artifacts);
+    log_synthesis_response(&artifacts.response);
+
+    Ok(warp::reply::with_status(
+        warp::reply::json(&artifacts.response),
+        StatusCode::from_u16(artifacts.http_status).unwrap_or(StatusCode::OK),
+    ))
+}
+
+pub fn synthesize_core(
+    req: SynthesisRequest,
+    options: SynthesisCoreOptions,
+) -> anyhow::Result<SynthesisArtifacts> {
+    set_trace_enabled(options.trace);
+
     if req.method_calls.is_empty() {
         println!("No method calls provided in the request.");
-        let response = SynthesisResponse {
-            common_pattern: None,
-            hole_information: None,
-            code: vec![],
-            composed_method_code: None,
-            individual_codes: vec![],
-            list_environment_info: None,
-            operation_analysis: None,
-            escher_results: None,
-        };
-        return Ok(warp::reply::with_status(
-            warp::reply::json(&response),
-            StatusCode::OK,
-        ));
+        return Ok(SynthesisArtifacts::from_response(blank_synthesis_response(None)));
     }
 
     let unique_method_names = collect_unique_method_names(&req.method_calls);
@@ -167,19 +251,9 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
             unique_method_names.join(", ")
         );
         eprintln!("{}", message);
-        let response = SynthesisResponse {
-            common_pattern: None,
-            hole_information: None,
-            code: vec![],
-            composed_method_code: None,
-            individual_codes: vec![],
-            list_environment_info: Some(message),
-            operation_analysis: None,
-            escher_results: None,
-        };
-        return Ok(warp::reply::with_status(
-            warp::reply::json(&response),
-            StatusCode::BAD_REQUEST,
+        return Ok(SynthesisArtifacts::from_response_with_status(
+            blank_synthesis_response(Some(message)),
+            400,
         ));
     }
 
@@ -202,37 +276,17 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         .collect();
     if let Some(message) = detect_unresolved_runtime_scoped_ids(&operations_list) {
         eprintln!("{}", message);
-        let response = SynthesisResponse {
-            common_pattern: None,
-            hole_information: None,
-            code: vec![],
-            composed_method_code: None,
-            individual_codes: vec![],
-            list_environment_info: Some(message),
-            operation_analysis: None,
-            escher_results: None,
-        };
-        return Ok(warp::reply::with_status(
-            warp::reply::json(&response),
-            StatusCode::BAD_REQUEST,
+        return Ok(SynthesisArtifacts::from_response_with_status(
+            blank_synthesis_response(Some(message)),
+            400,
         ));
     }
 
     if let Some(message) = detect_unsupported_remove_operation(&operations_list) {
         eprintln!("{}", message);
-        let response = SynthesisResponse {
-            common_pattern: None,
-            hole_information: None,
-            code: vec![],
-            composed_method_code: None,
-            individual_codes: vec![],
-            list_environment_info: Some(message),
-            operation_analysis: None,
-            escher_results: None,
-        };
-        return Ok(warp::reply::with_status(
-            warp::reply::json(&response),
-            StatusCode::BAD_REQUEST,
+        return Ok(SynthesisArtifacts::from_response_with_status(
+            blank_synthesis_response(Some(message)),
+            400,
         ));
     }
 
@@ -420,15 +474,16 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     // Aggregate Escher specs when we have at least two traces.
     // For a single trace, we still generate a "common plan" + composed method code as a
     // hard-coded replay of the provided operations (no hole/spec synthesis).
-    let mut escher_written_paths: Vec<String> = Vec::new();
     let spec_base_name = derive_spec_base_name(&req.method_calls);
     let mut aggregated_specs: Vec<EscherSpec> = Vec::new();
     let mut spec_meta_by_name: HashMap<String, EscherSpecMeta> = HashMap::new();
     let mut common_plan_artifact: Option<CommonPlanArtifact> = None;
-    let mut escher_json: Option<String> = None;
     let mut escher_outcomes: Option<Vec<EscherJsOutcome>> = None;
-    let mut synthesized_codes: Vec<String> = Vec::new();
     let mut individual_codes: Vec<String> = Vec::new();
+    let mut task_json: Option<String> = None;
+    let mut spec_json: Option<String> = None;
+    let mut backend_preflight_failures: Vec<EscherJsInternalOutcome> = Vec::new();
+    let mut warnings: Vec<String> = Vec::new();
 
     if operations_list.len() == 1 {
         use crate::list_env::GraphOperation;
@@ -806,98 +861,65 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     if !aggregated_specs.is_empty() {
         match specs_to_json(&aggregated_specs) {
             Ok(json_text) => {
-                escher_json = Some(json_text.clone());
                 if trace_enabled() {
-                    println!("TRACE: Escher JSON:\n{}", json_text);
+                    println!("TRACE: Escher Scala JSON:\n{}", json_text);
                 }
-                let ts = std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .map(|d| d.as_secs())
-                    .unwrap_or(0);
-                let out_path = format!(
-                    "Escher-Scala/src/main/resources/escher/{}_{}.json",
-                    spec_base_name, ts
-                );
-                if let Err(e) = write_spec_to_file(&out_path, &json_text) {
-                    eprintln!("Failed to write aggregated Escher spec: {}", e);
-                } else {
-                    println!(
-                        "Wrote aggregated Escher spec to {} ({} functions)",
-                        out_path,
-                        aggregated_specs.len()
-                    );
-                    escher_written_paths.push(out_path);
-                }
+                spec_json = Some(json_text);
             }
-            Err(e) => eprintln!("Failed to serialize aggregated Escher specs: {}", e),
+            Err(err) => warnings.push(format!("Failed to serialize Scala specs: {}", err)),
         }
-    }
-
-    if let Some(json_text) = escher_json.as_ref() {
-        match run_escher_js(json_text) {
-            Ok(results) => {
-                let success_count = results.iter().filter(|r| r.success).count();
-                let failure_count = results.len().saturating_sub(success_count);
-                println!(
-                    "Escher JS synthesis completed ({} success / {} failure)",
-                    success_count, failure_count
-                );
-
-                let spec_by_name: HashMap<String, EscherSpec> = aggregated_specs
-                    .iter()
-                    .map(|spec| (spec.name.clone(), spec.clone()))
-                    .collect();
-
-                for out in &results {
-                    if let Some(rendered) = &out.rendered {
-                        match (
-                            spec_by_name.get(&out.name),
-                            spec_meta_by_name.get(&out.name),
-                        ) {
-                            (Some(spec), Some(meta)) => {
-                                match build_context_from_spec(&out.name, spec, meta) {
-                                    Ok((ctx, params_js)) => {
-                                        match translate_rendered_method(rendered, &params_js, &ctx)
-                                        {
-                                            Ok(js) => {
-                                                synthesized_codes.push(js.clone());
-                                                individual_codes
-                                                    .push(format!("{}: {}", out.name, js));
-                                            }
-                                            Err(e) => {
-                                                individual_codes
-                                                    .push(format!("{}: ERROR {}", out.name, e));
-                                            }
-                                        }
-                                    }
-                                    Err(e) => {
-                                        individual_codes.push(format!("{}: ERROR {}", out.name, e));
-                                    }
-                                }
-                            }
-                            _ => {
-                                individual_codes
-                                    .push(format!("{}: ERROR missing spec metadata", out.name));
-                            }
-                        }
-                    } else if let Some(err) = &out.error {
-                        individual_codes.push(format!("{}: ERROR {}", out.name, err));
-                    } else {
-                        individual_codes.push(format!("{}: no output", out.name));
+        let mut tasks = Vec::new();
+        for spec in &aggregated_specs {
+            let Some(meta) = spec_meta_by_name.get(&spec.name) else {
+                backend_preflight_failures.push(EscherJsInternalOutcome {
+                    name: spec.name.clone(),
+                    success: false,
+                    rendered: None,
+                    error: Some("missing spec metadata for task conversion".to_string()),
+                    compiled_js: None,
+                });
+                continue;
+            };
+            match build_escher_task_spec(spec, meta) {
+                Ok(task) => tasks.push(task),
+                Err(err) => backend_preflight_failures.push(EscherJsInternalOutcome {
+                    name: spec.name.clone(),
+                    success: false,
+                    rendered: None,
+                    error: Some(format!("escher-ts phase1 task conversion failed: {}", err)),
+                    compiled_js: None,
+                }),
+            }
+        }
+        if tasks.is_empty() {
+            warnings.push(format!(
+                "No escher-ts tasks were produced from {} grouped specs",
+                aggregated_specs.len()
+            ));
+        } else {
+            match tasks_to_json(&tasks) {
+                Ok(json_text) => {
+                    if trace_enabled() {
+                        println!("TRACE: Escher TS task JSON:\n{}", json_text);
                     }
+                    task_json = Some(json_text);
                 }
-
-                escher_outcomes = Some(results);
+                Err(err) => warnings.push(format!("Failed to serialize escher-ts tasks: {}", err)),
             }
-            Err(e) => eprintln!("Escher JS synthesis failed: {}", e),
         }
     }
 
-    if !escher_written_paths.is_empty() {
-        list_env_info = format!(
-            "{}\nEscher JSON saved: {}",
-            list_env_info,
-            escher_written_paths.join(", ")
+    if !backend_preflight_failures.is_empty() {
+        for out in &backend_preflight_failures {
+            if let Some(err) = &out.error {
+                individual_codes.push(format!("{}: ERROR {}", out.name, err));
+            }
+        }
+        escher_outcomes = Some(
+            backend_preflight_failures
+                .iter()
+                .map(EscherJsOutcome::from)
+                .collect(),
         );
     }
 
@@ -908,7 +930,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         hole_information: common_plan_artifact
             .as_ref()
             .map(|artifact| artifact.hole_information.clone()),
-        code: synthesized_codes,
+        code: Vec::new(),
         composed_method_code: common_plan_artifact
             .as_ref()
             .and_then(|artifact| artifact.composed_method_code.clone()),
@@ -918,7 +940,32 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         escher_results: escher_outcomes,
     };
 
-    // 改善されたレスポンス表示
+    let mut artifacts = SynthesisArtifacts::from_response(response);
+    artifacts.task_json = task_json;
+    artifacts.spec_json = spec_json;
+    artifacts.warnings = warnings;
+    artifacts.aggregated_specs = aggregated_specs;
+    artifacts.spec_meta_by_name = spec_meta_by_name;
+    artifacts.spec_base_name = Some(spec_base_name);
+
+    Ok(artifacts)
+}
+
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+fn append_list_env_info(list_env_info: &mut Option<String>, message: impl AsRef<str>) {
+    let message = message.as_ref();
+    match list_env_info {
+        Some(existing) if !existing.is_empty() => {
+            existing.push('\n');
+            existing.push_str(message);
+        }
+        Some(existing) => existing.push_str(message),
+        None => *list_env_info = Some(message.to_string()),
+    }
+}
+
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+fn log_synthesis_response(response: &SynthesisResponse) {
     println!("=== IMPROVED SYNTHESIS RESPONSE ===");
     println!(
         "Common Pattern: {}",
@@ -990,11 +1037,184 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
     }
 
     println!("=====================================");
+}
 
-    Ok(warp::reply::with_status(
-        warp::reply::json(&response),
-        StatusCode::OK,
-    ))
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+fn apply_escher_results(
+    artifacts: &mut SynthesisArtifacts,
+    backend: EscherBackend,
+    results: &[EscherJsInternalOutcome],
+) {
+    let spec_by_name: HashMap<String, EscherSpec> = artifacts
+        .aggregated_specs
+        .iter()
+        .map(|spec| (spec.name.clone(), spec.clone()))
+        .collect();
+
+    for out in results {
+        match backend {
+            EscherBackend::Scala => {
+                if let Some(rendered) = &out.rendered {
+                    match (
+                        spec_by_name.get(&out.name),
+                        artifacts.spec_meta_by_name.get(&out.name),
+                    ) {
+                        (Some(spec), Some(meta)) => {
+                            match build_context_from_spec(&out.name, spec, meta) {
+                                Ok((ctx, params_js)) => {
+                                    match translate_rendered_method(rendered, &params_js, &ctx) {
+                                        Ok(js) => {
+                                            artifacts.response.code.push(js.clone());
+                                            artifacts
+                                                .response
+                                                .individual_codes
+                                                .push(format!("{}: {}", out.name, js));
+                                        }
+                                        Err(err) => {
+                                            artifacts
+                                                .response
+                                                .individual_codes
+                                                .push(format!("{}: ERROR {}", out.name, err));
+                                        }
+                                    }
+                                }
+                                Err(err) => {
+                                    artifacts
+                                        .response
+                                        .individual_codes
+                                        .push(format!("{}: ERROR {}", out.name, err));
+                                }
+                            }
+                        }
+                        _ => {
+                            artifacts
+                                .response
+                                .individual_codes
+                                .push(format!("{}: ERROR missing spec metadata", out.name));
+                        }
+                    }
+                } else if let Some(err) = &out.error {
+                    artifacts
+                        .response
+                        .individual_codes
+                        .push(format!("{}: ERROR {}", out.name, err));
+                } else {
+                    artifacts
+                        .response
+                        .individual_codes
+                        .push(format!("{}: no output", out.name));
+                }
+            }
+            EscherBackend::Ts => {
+                if let Some(js) = &out.compiled_js {
+                    artifacts.response.code.push(js.clone());
+                    artifacts
+                        .response
+                        .individual_codes
+                        .push(format!("{}: {}", out.name, js));
+                } else if let Some(err) = &out.error {
+                    artifacts
+                        .response
+                        .individual_codes
+                        .push(format!("{}: ERROR {}", out.name, err));
+                } else if let Some(rendered) = &out.rendered {
+                    artifacts.response.individual_codes.push(format!(
+                        "{}: ERROR compiled_js missing for rendered term {}",
+                        out.name, rendered
+                    ));
+                } else {
+                    artifacts
+                        .response
+                        .individual_codes
+                        .push(format!("{}: no output", out.name));
+                }
+            }
+        }
+    }
+
+    let existing = artifacts.response.escher_results.take().unwrap_or_default();
+    let mut merged = existing;
+    merged.extend(results.iter().map(EscherJsOutcome::from));
+    artifacts.response.escher_results = Some(merged);
+}
+
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+fn finalize_native_synthesis(artifacts: &mut SynthesisArtifacts) {
+    for warning in artifacts.warnings.clone() {
+        append_list_env_info(&mut artifacts.response.list_environment_info, warning);
+    }
+
+    let backend = match resolve_escher_backend() {
+        Ok(backend) => backend,
+        Err(err) => {
+            eprintln!("{}", err);
+            append_list_env_info(
+                &mut artifacts.response.list_environment_info,
+                format!("Escher backend warning: {}", err),
+            );
+            EscherBackend::Ts
+        }
+    };
+
+    let selected_json = match backend {
+        EscherBackend::Scala => artifacts.spec_json.as_ref(),
+        EscherBackend::Ts => artifacts.task_json.as_ref(),
+    };
+
+    let Some(json_text) = selected_json else {
+        return;
+    };
+
+    let ts = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let base_name = artifacts
+        .spec_base_name
+        .as_deref()
+        .unwrap_or("refsyn-synthesis");
+    let out_path = format!("target/escher/{}/{}_{}.json", backend.as_str(), base_name, ts);
+    match write_spec_to_file(&out_path, json_text) {
+        Ok(()) => append_list_env_info(
+            &mut artifacts.response.list_environment_info,
+            format!("Escher JSON saved: {}", out_path),
+        ),
+        Err(err) => eprintln!("Failed to write aggregated Escher spec: {}", err),
+    }
+
+    match run_escher_js(json_text) {
+        Ok(results) => {
+            let success_count = results.iter().filter(|result| result.success).count();
+            let failure_count = results.len().saturating_sub(success_count);
+            println!(
+                "Escher JS synthesis completed (backend={}, {} success / {} failure)",
+                backend.as_str(),
+                success_count,
+                failure_count
+            );
+            apply_escher_results(artifacts, backend, &results);
+        }
+        Err(err) => eprintln!("Escher JS synthesis failed: {}", err),
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn synthesize_browser(
+    request_json: &str,
+    options_json: Option<String>,
+) -> Result<String, JsValue> {
+    let request: SynthesisRequest = serde_json::from_str(request_json)
+        .map_err(|err| JsValue::from_str(&format!("invalid request json: {}", err)))?;
+    let options = match options_json.as_deref() {
+        Some(raw) => serde_json::from_str(raw)
+            .map_err(|err| JsValue::from_str(&format!("invalid options json: {}", err)))?,
+        None => SynthesisCoreOptions::default(),
+    };
+    let artifacts = synthesize_core(request, options)
+        .map_err(|err| JsValue::from_str(&format!("browser synthesis failed: {}", err)))?;
+    serde_json::to_string(&artifacts)
+        .map_err(|err| JsValue::from_str(&format!("failed to serialize artifacts: {}", err)))
 }
 
 fn analyze_operations_pair_unification(
@@ -1635,8 +1855,12 @@ struct IncrementalUnificationResult {
 struct HoleDescriptor {
     spec_name: String,
     return_type: String,
+    role: String,
+    side_a: String,
     side_b: String,
+    anchor_a: Option<usize>,
     anchor_b: Option<usize>,
+    js_method: String,
 }
 
 #[derive(Debug, Clone)]
@@ -1706,7 +1930,7 @@ fn detect_root_index(
         .collect();
     var_ids.sort();
     let mut ordered_var_ids: Vec<&str> = Vec::new();
-    if var_ids.iter().any(|id| *id == "__Variable-this") {
+    if var_ids.contains(&"__Variable-this") {
         ordered_var_ids.push("__Variable-this");
     }
     for var_id in var_ids {
@@ -2139,7 +2363,7 @@ fn append_method_call_arguments(
         arg_kinds.push(resolve_call_argument_kind(value, declared, env)?);
     }
 
-    let needs_bfs = arg_kinds.iter().any(|k| *k == ArgKind::Ptr);
+    let needs_bfs = arg_kinds.contains(&ArgKind::Ptr);
     let idx_to_bfs: HashMap<usize, usize> = if needs_bfs {
         build_bfs_index_map(env, vis_graph, pointer_fields)?
     } else {
@@ -2931,35 +3155,23 @@ fn build_source_pointer_diff_pair(
     if pair.role != HoleRole::Unknown {
         return None;
     }
-    let from_a = pair.op_a.as_ref().and_then(diff_op_edge_source_id);
-    let from_b = pair.op_b.as_ref().and_then(diff_op_edge_source_id);
-    if from_a.is_none() && from_b.is_none() {
+    let is_rewire_edge = |op: &DiffOp| {
+        matches!(
+            op,
+            DiffOp::Json {
+                graph_op: crate::list_env::GraphOperation { edit_type, .. },
+                ..
+            } if edit_type == "editEdgeReference"
+        )
+    };
+    let has_rewire_edge = pair.op_a.as_ref().is_some_and(is_rewire_edge)
+        || pair.op_b.as_ref().is_some_and(is_rewire_edge);
+    if !has_rewire_edge {
         return None;
     }
-
     Some(DiffPair {
-        op_a: from_a.and_then(|id| {
-            if id == "null" {
-                None
-            } else {
-                Some(DiffOp::ExistNode {
-                    id,
-                    is_literal: false,
-                    label: None,
-                })
-            }
-        }),
-        op_b: from_b.and_then(|id| {
-            if id == "null" {
-                None
-            } else {
-                Some(DiffOp::ExistNode {
-                    id,
-                    is_literal: false,
-                    label: None,
-                })
-            }
-        }),
+        op_a: pair.op_a.clone(),
+        op_b: pair.op_b.clone(),
         role: HoleRole::EdgeSource,
     })
 }
@@ -3394,8 +3606,12 @@ fn parse_hole_descriptors_by_spec(
                 match key {
                     "spec" => desc.spec_name = value.to_string(),
                     "return" => desc.return_type = value.to_string(),
+                    "role" => desc.role = value.to_string(),
+                    "sideA" => desc.side_a = value.to_string(),
                     "sideB" => desc.side_b = value.to_string(),
+                    "anchorA" => desc.anchor_a = value.parse::<usize>().ok(),
                     "anchorB" => desc.anchor_b = value.parse::<usize>().ok(),
+                    "jsMethod" => desc.js_method = value.to_string(),
                     _ => {}
                 }
             }
@@ -3429,11 +3645,21 @@ fn normalize_side_descriptor(desc: &str) -> String {
 }
 
 fn hole_signature(desc: &HoleDescriptor) -> Option<String> {
-    if desc.side_b.is_empty() || desc.side_b == "<none>" {
+    let side = if !desc.side_b.is_empty() && desc.side_b != "<none>" {
+        &desc.side_b
+    } else if !desc.side_a.is_empty() && desc.side_a != "<none>" {
+        &desc.side_a
+    } else {
+        return None;
+    };
+    if desc.role.is_empty() {
         return None;
     }
-    let normalized_side = normalize_side_descriptor(&desc.side_b);
-    Some(format!("ret={}|{}", desc.return_type, normalized_side))
+    let normalized_side = normalize_side_descriptor(side);
+    Some(format!(
+        "ret={}|role={}|{}",
+        desc.return_type, desc.role, normalized_side
+    ))
 }
 
 fn example_to_input_output_key(example: &ExampleJson) -> Option<(String, String)> {
@@ -3540,17 +3766,49 @@ fn aggregate_multi_trace_specs(
     let mut renames: HashMap<String, String> = HashMap::new();
     let mut suffix_index = 0usize;
 
-    for members in grouped.values() {
+    for (signature, members) in &grouped {
         let representative = match members.first() {
             Some(rep) => *rep,
             None => continue,
         };
+
+        if trace_enabled() {
+            println!(
+                "TRACE: aggregate signature={} members={}",
+                signature,
+                members.len()
+            );
+            for candidate in members {
+                let output = candidate
+                    .spec
+                    .examples
+                    .first()
+                    .map(|ex| {
+                        serde_json::to_string(&ex.output)
+                            .unwrap_or_else(|_| "<serde error>".to_string())
+                    })
+                    .unwrap_or_else(|| "<missing>".to_string());
+                println!(
+                    "TRACE:   candidate trace={} spec={} return={} output={}",
+                    candidate.trace_index,
+                    candidate.original_spec_name,
+                    candidate.spec.return_type,
+                    output
+                );
+            }
+        }
 
         let mut by_trace: HashMap<usize, &MultiTraceSpecCandidate> = HashMap::new();
         for candidate in members {
             if candidate.spec.input_types != representative.spec.input_types
                 || candidate.spec.return_type != representative.spec.return_type
             {
+                if trace_enabled() {
+                    println!(
+                        "TRACE:   skip candidate {} due to signature type mismatch",
+                        candidate.original_spec_name
+                    );
+                }
                 continue;
             }
             match by_trace.get(&candidate.trace_index) {
@@ -3568,6 +3826,14 @@ fn aggregate_multi_trace_specs(
         }
 
         if by_trace.len() != trace_count {
+            if trace_enabled() {
+                println!(
+                    "TRACE:   reject signature {} due to incomplete coverage {}/{}",
+                    signature,
+                    by_trace.len(),
+                    trace_count
+                );
+            }
             continue;
         }
 
@@ -3577,6 +3843,12 @@ fn aggregate_multi_trace_specs(
             .iter()
             .any(|(_, candidate)| candidate_has_missing_output(candidate))
         {
+            if trace_enabled() {
+                println!(
+                    "TRACE:   reject signature {} due to missing output in selected candidates",
+                    signature
+                );
+            }
             continue;
         }
 
@@ -3585,9 +3857,23 @@ fn aggregate_multi_trace_specs(
             .filter_map(|(_, candidate)| candidate.spec.examples.first().cloned())
             .collect();
         if examples.len() != trace_count {
+            if trace_enabled() {
+                println!(
+                    "TRACE:   reject signature {} due to example count {}/{}",
+                    signature,
+                    examples.len(),
+                    trace_count
+                );
+            }
             continue;
         }
         if has_conflicting_examples(&examples) {
+            if trace_enabled() {
+                println!(
+                    "TRACE:   reject signature {} due to conflicting examples",
+                    signature
+                );
+            }
             continue;
         }
 
@@ -3616,11 +3902,31 @@ fn choose_best_common_plan_artifact(
     let mut best: Option<(usize, usize, CommonPlanArtifact)> = None;
     for artifact in artifacts {
         let descriptors = parse_hole_descriptors_by_spec(artifact);
-        let covered = descriptors
-            .keys()
-            .filter(|spec_name| spec_renames.contains_key(*spec_name))
+        let called_js_methods = artifact
+            .composed_method_code
+            .as_deref()
+            .map(extract_called_js_methods_from_code)
+            .unwrap_or_default();
+        let called_descriptors: Vec<&HoleDescriptor> = descriptors
+            .values()
+            .filter(|desc| {
+                !desc.js_method.is_empty() && called_js_methods.contains(&desc.js_method)
+            })
+            .collect();
+        let relevant_descriptors: Vec<&HoleDescriptor> =
+            if called_js_methods.is_empty() || called_descriptors.is_empty() {
+                descriptors.values().collect()
+            } else {
+                called_descriptors
+            };
+        let covered = relevant_descriptors
+            .iter()
+            .filter(|desc| {
+                spec_renames.contains_key(&desc.spec_name)
+                    || spec_renames.values().any(|name| name == &desc.spec_name)
+            })
             .count();
-        let total = descriptors.len();
+        let total = relevant_descriptors.len();
         // A hole-less common plan cannot represent parameterized behavior.
         // Selecting it leads to hard-coded composed methods.
         if total == 0 {
@@ -6267,6 +6573,9 @@ fn build_runtime_to_temp_map_from_id_mappings(
             if temp_id.is_empty() || runtime_id.is_empty() {
                 continue;
             }
+            if !is_runtime_scoped_id(runtime_id) {
+                continue;
+            }
             runtime_to_temp
                 .entry(runtime_id.clone())
                 .or_insert_with(|| temp_id.clone());
@@ -7196,6 +7505,38 @@ mod tests {
 
         let normalized = normalize_operations_with_runtime_map(&operations, &runtime_to_temp);
         assert!(detect_unresolved_runtime_scoped_ids(&[normalized]).is_none());
+    }
+
+    #[test]
+    fn build_runtime_to_temp_map_ignores_stable_ids_in_id_mapping() {
+        let method_calls = vec![MethodCallOperation {
+            call_label: "call1".to_string(),
+            context_sensitive_id: "main".to_string(),
+            receiver_object: "main-new1".to_string(),
+            method_name: "insert".to_string(),
+            arguments: vec![json!(0), json!(80)],
+            argument_types: Some(vec!["Int".to_string(), "Int".to_string()]),
+            argument_names: Some(vec!["arg0".to_string(), "arg1".to_string()]),
+            method_param_names: Some(vec!["i".to_string(), "arg".to_string()]),
+            operations: vec![],
+            precond_graph: None,
+            actual_graph: None,
+            id_mapping: Some(HashMap::from([
+                ("__temp1".to_string(), "main-new2".to_string()),
+                (
+                    "__temp2".to_string(),
+                    "main-call5-FunctionExpression4-new1".to_string(),
+                ),
+            ])),
+            field_tables: None,
+        }];
+
+        let runtime_to_temp = build_runtime_to_temp_map_from_id_mappings(&method_calls);
+        assert!(!runtime_to_temp.contains_key("main-new2"));
+        assert_eq!(
+            runtime_to_temp.get("main-call5-FunctionExpression4-new1"),
+            Some(&"__temp2".to_string())
+        );
     }
 
     #[test]
@@ -8602,19 +8943,29 @@ mod tests {
         assert_eq!(extracted.role, HoleRole::EdgeSource);
         match (extracted.op_a, extracted.op_b) {
             (
-                Some(DiffOp::ExistNode {
-                    id: left,
-                    is_literal: false,
+                Some(DiffOp::Json {
+                    graph_op:
+                        crate::list_env::GraphOperation {
+                            edit_type: left_edit,
+                            from: Some(left_from),
+                            ..
+                        },
                     ..
                 }),
-                Some(DiffOp::ExistNode {
-                    id: right,
-                    is_literal: false,
+                Some(DiffOp::Json {
+                    graph_op:
+                        crate::list_env::GraphOperation {
+                            edit_type: right_edit,
+                            from: Some(right_from),
+                            ..
+                        },
                     ..
                 }),
             ) => {
-                assert_eq!(left, "node-a");
-                assert_eq!(right, "node-b");
+                assert_eq!(left_edit, "editEdgeReference");
+                assert_eq!(right_edit, "editEdgeReference");
+                assert_eq!(left_from, "node-a");
+                assert_eq!(right_from, "node-b");
             }
             _ => panic!("unexpected extracted pair form"),
         }
@@ -8642,15 +8993,45 @@ mod tests {
         assert_eq!(extracted.role, HoleRole::EdgeSource);
         match (extracted.op_a, extracted.op_b) {
             (
-                Some(DiffOp::ExistNode {
-                    id,
-                    is_literal: false,
+                Some(DiffOp::Json {
+                    graph_op:
+                        crate::list_env::GraphOperation {
+                            edit_type,
+                            from: Some(id),
+                            ..
+                        },
                     ..
                 }),
                 None,
-            ) => assert_eq!(id, "node-a"),
+            ) => {
+                assert_eq!(edit_type, "editEdgeReference");
+                assert_eq!(id, "node-a");
+            }
             _ => panic!("unexpected extracted pair form"),
         }
+    }
+
+    #[test]
+    fn build_source_pointer_diff_pair_ignores_add_edge_updates() {
+        let pair = DiffPair {
+            op_a: Some(DiffOp::Json {
+                graph_op: crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    from: Some("node-a".to_string()),
+                    to: Some("node-new".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+                index: 0,
+            }),
+            op_b: None,
+            role: HoleRole::Unknown,
+        };
+
+        assert!(
+            build_source_pointer_diff_pair(&pair, &HashMap::new()).is_none(),
+            "plain addEdge diffs should not synthesize edge_source hole pairs"
+        );
     }
 
     #[test]
@@ -9339,17 +9720,23 @@ mod tests {
     }
 
     #[test]
-    fn choose_best_common_plan_artifact_skips_partially_covered_holes() {
+    fn choose_best_common_plan_artifact_allows_uncovered_unused_holes() {
         let partial = CommonPlanArtifact {
             pattern_text: "partial".to_string(),
             hole_information: HashMap::from([
                 (
                     "__hole_0".to_string(),
-                    vec!["spec=append-trace0-f".to_string()],
+                    vec![
+                        "spec=append-trace0-f".to_string(),
+                        "jsMethod=append_trace0_f".to_string(),
+                    ],
                 ),
                 (
                     "__hole_1".to_string(),
-                    vec!["spec=append-trace1-f".to_string()],
+                    vec![
+                        "spec=append-trace1-f".to_string(),
+                        "jsMethod=append_trace1_f".to_string(),
+                    ],
                 ),
             ]),
             composed_method_code: Some(
@@ -9367,8 +9754,94 @@ mod tests {
         let renames = HashMap::from([("append-trace0-f".to_string(), "append-f".to_string())]);
 
         let chosen = choose_best_common_plan_artifact(&[partial, fully.clone()], &renames)
+            .expect("partially covered but used-safe plan should be selected");
+        assert_eq!(chosen.pattern_text, "partial");
+    }
+
+    #[test]
+    fn choose_best_common_plan_artifact_skips_partially_covered_called_holes() {
+        let partial = CommonPlanArtifact {
+            pattern_text: "partial".to_string(),
+            hole_information: HashMap::from([
+                (
+                    "__hole_0".to_string(),
+                    vec![
+                        "spec=append-trace0-f".to_string(),
+                        "jsMethod=append_trace0_f".to_string(),
+                    ],
+                ),
+                (
+                    "__hole_1".to_string(),
+                    vec![
+                        "spec=append-trace1-f".to_string(),
+                        "jsMethod=append_trace1_f".to_string(),
+                    ],
+                ),
+            ]),
+            composed_method_code: Some(
+                "append(arg) { return this.append_trace0_f(arg) + this.append_trace1_f(arg); }"
+                    .to_string(),
+            ),
+        };
+        let fully = CommonPlanArtifact {
+            pattern_text: "fully".to_string(),
+            hole_information: HashMap::from([(
+                "__hole_0".to_string(),
+                vec![
+                    "spec=append-trace0-f".to_string(),
+                    "jsMethod=append_trace0_f".to_string(),
+                ],
+            )]),
+            composed_method_code: Some("append(arg) { return this.append_f(arg); }".to_string()),
+        };
+        let renames = HashMap::from([("append-trace0-f".to_string(), "append-f".to_string())]);
+
+        let chosen = choose_best_common_plan_artifact(&[partial, fully.clone()], &renames)
             .expect("fully covered plan should be selected");
         assert_eq!(chosen.pattern_text, "fully");
+    }
+
+    #[test]
+    fn hole_signature_separates_roles_for_same_edge_descriptor() {
+        let edge_source = HoleDescriptor {
+            return_type: "Ptr".to_string(),
+            role: "edge_source".to_string(),
+            side_b: "editEdgeReference id=- from=main-new1 to=__temp1 old_to=main-new2 label=next is_literal=false"
+                .to_string(),
+            ..HoleDescriptor::default()
+        };
+        let pointer_target = HoleDescriptor {
+            return_type: "Ptr".to_string(),
+            role: "pointer_target".to_string(),
+            side_b: "editEdgeReference id=- from=main-new1 to=__temp1 old_to=main-new2 label=next is_literal=false"
+                .to_string(),
+            ..HoleDescriptor::default()
+        };
+
+        assert_ne!(
+            hole_signature(&edge_source),
+            hole_signature(&pointer_target)
+        );
+    }
+
+    #[test]
+    fn hole_signature_falls_back_to_side_a_when_side_b_missing() {
+        let desc = HoleDescriptor {
+            return_type: "Ptr".to_string(),
+            role: "edge_source".to_string(),
+            side_a: "editEdgeReference id=- from=main-new1 to=__temp1 old_to=main-new2 label=next is_literal=false"
+                .to_string(),
+            side_b: "<none>".to_string(),
+            ..HoleDescriptor::default()
+        };
+
+        assert_eq!(
+            hole_signature(&desc),
+            Some(
+                "ret=Ptr|role=edge_source|op=editEdgeReference|label=next|is_literal=false"
+                    .to_string()
+            )
+        );
     }
 
     #[test]

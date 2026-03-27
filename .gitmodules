@@ -1,3 +1,6 @@
 [submodule "Kanon"]
 	path = Kanon
 	url = https://github.com/ta-yoshi02/Kanon
+[submodule "external/escher-ts"]
+	path = external/escher-ts
+	url = https://github.com/ta-yoshi02/escher-ts.git

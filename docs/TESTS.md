@@ -10,6 +10,10 @@ suite with `cargo test`.
   handling, single-trace synthesis, multi-trace analysis, and confirms that the
   response payload includes list-environment summaries and optional Escher spec
   output paths.
+- `tests/synthesis_core_tests.rs` exercises `synthesize_core` directly. It
+  keeps the browser-safe core honest by checking that single-trace responses
+  stay aligned with the HTTP adapter and that multi-trace requests emit task/spec
+  artifacts for browser or native postprocessing.
 - `tests/synthesis_api_tests.rs` covers lower level helpers used by the bridge:
   list-environment construction from VisGraph snapshots, graph operation
   application, and the synchronous variant of the synthesis handler.

@@ -2,6 +2,17 @@
 
 RefSynは、Kanonの操作ログから主問題と部分問題を抽出し、既存のPBE合成器を用いて最終プログラムを構築する。現在の実装では環境中の値を`Int`や`List[Int]`として扱い、操作列はグラフとして解析される。
 
+## Runtime Split (2026-03)
+
+- **Rust core (`synthesize_core`)**:
+  - `SynthesisRequest` を受け、`SynthesisResponse` の骨格と `escher-ts` 用 task JSON / Scala spec JSON を返す。
+  - HTTP、ファイル出力、Node subprocess、環境変数読み取りはここに入れない。
+- **Native server adapter (`handle_synthesis`)**:
+  - HTTP payload を decode し、`synthesize_core` の返した task/spec JSON をファイルへ保存し、必要なら `scripts/run_escher.js` を起動して `response.code` / `escher_results` を埋める。
+- **Browser worker runtime**:
+  - `synthesize_browser` wasm export で Rust core を呼び、返った task JSON を `escher-ts` の `runRefsynTasks` へ直接渡す。
+  - 合成は Web Worker 内で完結させ、main thread は UI 更新だけを担当する。
+
 ```mermaid
 %%{init: {'flowchart': { 'htmlLabels': false }}}%%
 flowchart TB
@@ -133,21 +144,23 @@ append(arg0) {
 
 ### 使用例（概要）
 ```
-use refsyn::escher_bridge::{EscherCase, build_escher_spec, specs_to_json, write_spec_to_file};
+use refsyn::escher_bridge::{
+    build_escher_spec, build_escher_task_spec, derive_spec_meta, tasks_to_json, write_spec_to_file,
+    EscherCase,
+};
 
-let spec = build_escher_spec(
-    "append-g",
-    "Int",
-    &[EscherCase {
-        env,
-        vis_graph,
-        arguments: vec![json!(0)],
-        arg_types: Some(vec!["Ptr".to_string()]),
-        receiver_arg_index: Some(0),
-        output: json!(2),
-    }]
-)?;
-let specs = vec![spec];
-let json_text = specs_to_json(&specs)?;
-write_spec_to_file("Escher-Scala/src/main/resources/escher/tests.json", &json_text)?;
+let cases = vec![EscherCase {
+    env,
+    vis_graph,
+    arguments: vec![json!(0)],
+    arg_names: vec!["this".to_string()],
+    arg_types: Some(vec!["Ptr".to_string()]),
+    receiver_arg_index: Some(0),
+    output: json!(2),
+}];
+let meta = derive_spec_meta(&cases)?;
+let spec = build_escher_spec("append-g", "Int", &cases, None)?;
+let task = build_escher_task_spec(&spec, &meta)?;
+let json_text = tasks_to_json(&[task])?;
+write_spec_to_file("target/escher/ts/tests.json", &json_text)?;
 ```
