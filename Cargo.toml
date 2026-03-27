@@ -3,16 +3,27 @@ name = "refsyn"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["server"]
+server = ["dep:warp", "dep:tokio", "dep:http", "dep:bytes"]
+
 [dependencies]
-warp = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 anyhow = "1"
-tokio = { version = "1.0", features = ["full"] }
-http = "0.2"
-uuid = { version = "1.8.0", features = ["v4", "macro-diagnostics"] }
 petgraph = "0.6"
-bytes = "1"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+warp = { version = "0.3", optional = true }
+tokio = { version = "1.0", features = ["full"], optional = true }
+http = { version = "0.2", optional = true }
+bytes = { version = "1", optional = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
 
 [dev-dependencies]
 tokio-test = "0.4"

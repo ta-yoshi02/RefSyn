@@ -28,3 +28,7 @@
 # その他の一時ファイル
 Escher-Scala/
 .serena/
+.pnpm-store/
+.metals/metals.lock.db
+web/dist/
+web/pkg/

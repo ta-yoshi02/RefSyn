@@ -2,6 +2,14 @@
 
 このドキュメントは、Kanon の操作トレース（オペレーション列）から Escher 用 JSON を生成する手順を説明します。既定の出力は `escher-ts` の native task JSON で、必要なら legacy の Escher-Scala spec も生成できます。
 
+## Runtime boundaries
+
+- Rust core の入口は `synthesize_core(SynthesisRequest, SynthesisCoreOptions)`。
+  - ここでは task/spec JSON の生成までを担当し、HTTP や subprocess は扱わない。
+- native server (`handle_synthesis`) は core の返した JSON を保存し、`scripts/run_escher.js` で postprocess する。
+- browser runtime は `synthesize_browser` wasm export を worker 内から呼び、返された task JSON を `escher-ts` の `runRefsynTasks` へ直接渡す。
+- GitHub Pages 向けの `web/` デモはこの browser runtime を前提にしている。
+
 1) 同型統合（unification）で共通部分と差分を特定
 2) 差分境界でのローカル List/Int 環境スナップショットを構築
 3) Escher 互換の JSON 例（examples）を出力

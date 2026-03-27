@@ -2,6 +2,17 @@
 
 RefSynは、Kanonの操作ログから主問題と部分問題を抽出し、既存のPBE合成器を用いて最終プログラムを構築する。現在の実装では環境中の値を`Int`や`List[Int]`として扱い、操作列はグラフとして解析される。
 
+## Runtime Split (2026-03)
+
+- **Rust core (`synthesize_core`)**:
+  - `SynthesisRequest` を受け、`SynthesisResponse` の骨格と `escher-ts` 用 task JSON / Scala spec JSON を返す。
+  - HTTP、ファイル出力、Node subprocess、環境変数読み取りはここに入れない。
+- **Native server adapter (`handle_synthesis`)**:
+  - HTTP payload を decode し、`synthesize_core` の返した task/spec JSON をファイルへ保存し、必要なら `scripts/run_escher.js` を起動して `response.code` / `escher_results` を埋める。
+- **Browser worker runtime**:
+  - `synthesize_browser` wasm export で Rust core を呼び、返った task JSON を `escher-ts` の `runRefsynTasks` へ直接渡す。
+  - 合成は Web Worker 内で完結させ、main thread は UI 更新だけを担当する。
+
 ```mermaid
 %%{init: {'flowchart': { 'htmlLabels': false }}}%%
 flowchart TB

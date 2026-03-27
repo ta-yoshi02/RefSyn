@@ -18,8 +18,11 @@ use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+#[cfg(not(target_arch = "wasm32"))]
 use std::io::Write;
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
+#[cfg(not(target_arch = "wasm32"))]
 use std::process::{Command, Stdio};
 
 /// One test case: environment + args + expected output
@@ -74,6 +77,7 @@ impl EscherBackend {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn resolve_escher_backend() -> Result<EscherBackend> {
     match std::env::var("ESCHER_BACKEND")
         .unwrap_or_else(|_| "ts".to_string())
@@ -643,6 +647,7 @@ pub fn tasks_to_json(tasks: &[EscherTaskSpec]) -> Result<String> {
 
 /// Convenience: write the produced JSON string to a file path
 /// (for example `target/escher/ts/tests.json`).
+#[cfg(not(target_arch = "wasm32"))]
 pub fn write_spec_to_file(path: &str, content: &str) -> Result<()> {
     if let Some(parent) = std::path::Path::new(path).parent() {
         if !parent.as_os_str().is_empty() {
@@ -671,6 +676,7 @@ pub struct EscherJsInternalOutcome {
     pub compiled_js: Option<String>,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn parse_escher_js_max_old_space_mb(raw: Option<&str>) -> Result<usize> {
     const DEFAULT_MB: usize = 8192;
     const MIN_MB: usize = 256;
@@ -700,11 +706,13 @@ fn parse_escher_js_max_old_space_mb(raw: Option<&str>) -> Result<usize> {
     Ok(parsed)
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn resolve_escher_js_max_old_space_mb() -> Result<usize> {
     parse_escher_js_max_old_space_mb(std::env::var("ESCHER_JS_MAX_OLD_SPACE_MB").ok().as_deref())
 }
 
 /// Invoke the configured Escher backend via Node and parse normalized results.
+#[cfg(not(target_arch = "wasm32"))]
 pub fn run_escher_js(spec_json: &str) -> Result<Vec<EscherJsInternalOutcome>> {
     let default_runner = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("scripts")
@@ -761,11 +769,13 @@ pub fn run_escher_js(spec_json: &str) -> Result<Vec<EscherJsInternalOutcome>> {
     Ok(outcomes)
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn run_escher_js_from_specs(specs: &[EscherSpec]) -> Result<Vec<EscherJsInternalOutcome>> {
     let json_text = specs_to_json(specs)?;
     run_escher_js(&json_text)
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn run_escher_js_from_tasks(tasks: &[EscherTaskSpec]) -> Result<Vec<EscherJsInternalOutcome>> {
     let json_text = tasks_to_json(tasks)?;
     run_escher_js(&json_text)
