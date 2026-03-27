@@ -1,6 +1,6 @@
 use refsyn::models::{Edge, Node, VisGraph};
 use refsyn::{handle_synthesis, MethodCallOperation, SynthesisRequest, SynthesisResponse};
-use serde_json::json;
+use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs;
 use warp::http::StatusCode;
@@ -202,6 +202,48 @@ fn extract_escher_spec_path(summary: &str) -> Option<String> {
     } else {
         Some(first.to_string())
     }
+}
+
+fn extract_saved_return_type(spec: &Value) -> Option<&str> {
+    spec.get("returnType").and_then(Value::as_str).or_else(|| {
+        spec.get("signature")
+            .and_then(|signature| signature.get("returnType"))
+            .and_then(Value::as_str)
+    })
+}
+
+fn is_pointer_return_type(spec: &Value) -> bool {
+    matches!(extract_saved_return_type(spec), Some("Ptr"))
+        || extract_saved_return_type(spec)
+            .map(|ty| ty.starts_with("Ref["))
+            .unwrap_or(false)
+}
+
+fn extract_saved_example_io(example: &Value) -> Option<(&Value, &Value)> {
+    match example {
+        Value::Object(fields) => Some((fields.get("input")?, fields.get("output")?)),
+        Value::Array(items) if items.len() == 2 => Some((&items[0], &items[1])),
+        _ => None,
+    }
+}
+
+fn extract_component_names(spec: &Value) -> Vec<&str> {
+    spec.get("components")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|component| component.get("name").and_then(Value::as_str))
+        .collect()
+}
+
+fn input_slot_is_ref_heap(input: &Value, slot: usize) -> bool {
+    input
+        .get(slot)
+        .and_then(Value::as_array)
+        .and_then(|entries| entries.first())
+        .and_then(Value::as_object)
+        .map(|entry| entry.contains_key("ref"))
+        .unwrap_or(false)
 }
 
 /// 統合されたsynthesizeエンドポイントのテスト - 単一の操作列
@@ -898,11 +940,8 @@ async fn test_integrated_synthesis_three_append_like_specs_group_holes() {
     let mut has_ptr = false;
     let mut has_int = false;
     for spec in spec_list {
-        let return_type = spec
-            .get("returnType")
-            .and_then(|v| v.as_str())
-            .expect("spec should contain returnType");
-        if return_type == "Ptr" {
+        let return_type = extract_saved_return_type(spec).expect("spec should contain returnType");
+        if is_pointer_return_type(spec) {
             has_ptr = true;
         }
         if return_type == "Int" {
@@ -928,11 +967,10 @@ async fn test_integrated_synthesis_three_append_like_specs_group_holes() {
 
         let mut seen_by_input: HashMap<String, String> = HashMap::new();
         for ex in examples {
-            let input = serde_json::to_string(ex.get("input").expect("example should have input"))
-                .expect("input should serialize");
-            let output =
-                serde_json::to_string(ex.get("output").expect("example should have output"))
-                    .expect("output should serialize");
+            let (input_value, output_value) =
+                extract_saved_example_io(ex).expect("example should have input/output");
+            let input = serde_json::to_string(input_value).expect("input should serialize");
+            let output = serde_json::to_string(output_value).expect("output should serialize");
             if let Some(existing) = seen_by_input.insert(input.clone(), output.clone()) {
                 assert_eq!(
                     existing, output,
@@ -1076,6 +1114,18 @@ async fn test_integrated_synthesis_insert_groups_value_and_edge_source_holes() {
 
     let (status, response) = run_synthesis_and_decode(request).await;
     assert_eq!(status, StatusCode::OK);
+    assert!(
+        response.common_pattern.is_some(),
+        "three-trace insert should keep a grouped common pattern"
+    );
+    assert!(
+        response.hole_information.is_some(),
+        "three-trace insert should keep grouped hole information"
+    );
+    assert!(
+        response.composed_method_code.is_some(),
+        "three-trace insert should keep composed method code"
+    );
 
     let list_info = response
         .list_environment_info
@@ -1093,11 +1143,8 @@ async fn test_integrated_synthesis_insert_groups_value_and_edge_source_holes() {
     let mut has_ptr = false;
     let mut has_int = false;
     for spec in spec_list {
-        let return_type = spec
-            .get("returnType")
-            .and_then(|v| v.as_str())
-            .expect("spec should contain returnType");
-        if return_type == "Ptr" {
+        let return_type = extract_saved_return_type(spec).expect("spec should contain returnType");
+        if is_pointer_return_type(spec) {
             has_ptr = true;
         }
         if return_type == "Int" {
@@ -1299,4 +1346,60 @@ async fn test_integrated_synthesis_insert_keeps_edge_source_with_runtime_scoped_
         has_value,
         "runtime-scoped precond ids should still keep value holes"
     );
+}
+
+#[tokio::test]
+async fn test_integrated_synthesis_insert_three_traces_keep_ts_ptr_components_and_ref_heaps() {
+    let request_text = fs::read_to_string("examples/current_user_insert_three_traces.json")
+        .expect("current insert fixture should be readable");
+    let request: SynthesisRequest = serde_json::from_str(&request_text)
+        .expect("three-trace insert request fixture should deserialize");
+
+    let (status, response) = run_synthesis_and_decode(request).await;
+    assert_eq!(status, StatusCode::OK);
+
+    let list_info = response
+        .list_environment_info
+        .expect("list environment info should be present");
+    let spec_path =
+        extract_escher_spec_path(&list_info).expect("escher json path should be reported");
+    let spec_json_text =
+        fs::read_to_string(&spec_path).expect("generated escher json should be readable");
+    let specs: Value =
+        serde_json::from_str(&spec_json_text).expect("generated escher json should parse");
+    let spec_list = specs
+        .as_array()
+        .expect("generated escher json should be an array of specs");
+
+    let ptr_spec = spec_list
+        .iter()
+        .find(|spec| is_pointer_return_type(spec))
+        .expect("three-trace insert should keep a pointer-returning grouped task");
+
+    let component_names = extract_component_names(ptr_spec);
+    assert!(
+        component_names.contains(&"nthNextRef"),
+        "Ptr grouped task should retain nthNextRef"
+    );
+    assert!(
+        component_names.contains(&"findByValueRef"),
+        "Ptr grouped task should retain findByValueRef"
+    );
+
+    let examples = ptr_spec
+        .get("examples")
+        .and_then(Value::as_array)
+        .expect("Ptr grouped task should contain examples");
+    assert_eq!(
+        examples.len(),
+        3,
+        "Ptr grouped task should keep three traces"
+    );
+    for example in examples {
+        let (input, _) = extract_saved_example_io(example).expect("task example should be valid");
+        assert!(
+            input_slot_is_ref_heap(input, 3),
+            "pointer heap slot should stay a ref-array after task conversion"
+        );
+    }
 }

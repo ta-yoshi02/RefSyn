@@ -1,12 +1,12 @@
-# Kanon → Escher-Scala JSON ブリッジ（Unification → Diff → List/Int JSON）
+# Kanon → Escher JSON ブリッジ（default: escher-ts, fallback: Scala）
 
-このドキュメントは、Kanon の操作トレース（オペレーション列）から Escher-Scala の `tests.json` を生成する手順を説明します。
+このドキュメントは、Kanon の操作トレース（オペレーション列）から Escher 用 JSON を生成する手順を説明します。既定の出力は `escher-ts` の native task JSON で、必要なら legacy の Escher-Scala spec も生成できます。
 
 1) 同型統合（unification）で共通部分と差分を特定
 2) 差分境界でのローカル List/Int 環境スナップショットを構築
 3) Escher 互換の JSON 例（examples）を出力
 
-最後に、生成したファイルを Escher-Scala に読み込ませて実行します。
+最後に、生成したファイルを `scripts/run_escher.js` 経由で合成器へ渡します。
 
 ## 実装済みの機能
 
@@ -16,8 +16,10 @@
     - フィールド（値フィールド/ポインタフィールド）を動的に検出
     - 変数ノードから BFS によるローカルインデックス化
     - nullPtr は JSON `null`、`Int` の欠損はセンチネル `-1`
-    - 複数の `examples` を持つ単一の Escher 仕様を生成
-  - `specs_to_json(&[EscherSpec]) -> String` で配列 JSON を生成
+    - 複数の `examples` を持つ単一の legacy Escher 仕様を生成
+  - `derive_spec_meta(&cases) -> EscherSpecMeta` で native task 生成に必要なメタ情報を導出
+  - `build_escher_task_spec(&spec, &meta) -> EscherTaskSpec` で escher-ts native task を生成
+  - `tasks_to_json(&[EscherTaskSpec]) -> String` で native task 配列 JSON を生成
   - `write_spec_to_file(path, content)` でファイル出力
 
 - 環境ビルダー: `src/list_env.rs`
@@ -56,12 +58,13 @@
    - `env`, `vis_graph`, `arguments`, `arg_names`, `arg_types`, `receiver_arg_index`, `output` を `EscherCase` に包む
    - Kanon 側の複数テストを複数ケースとして作り、`build_escher_spec` にまとめて渡せる
 
-4. `tests.json` を出力
+4. native task JSON を出力
 - `build_escher_spec("<func-name>", "<return-type>", &cases, None)` → `EscherSpec`
-- 必要な仕様を `Vec<EscherSpec>` にまとめ、`specs_to_json(&specs)` で文字列化
-- 任意のパスへ保存（例: `Escher-Scala/src/main/resources/escher/tests.json`）:
+- `derive_spec_meta(&cases)` と `build_escher_task_spec(&spec, &meta)` で escher-ts task へ変換
+- `tasks_to_json(&tasks)` で文字列化
+- 任意のパスへ保存（例: `target/escher/ts/tests.json`）:
   - `write_spec_to_file(path, &json_text)`
-   - その後、Escher-Scala 側でロードして実行
+- その後、`scripts/run_escher.js` が既定 backend (`ESCHER_BACKEND=ts`) で実行する
 
 ## サンプルコード（Rust）
 
@@ -75,7 +78,10 @@
 - `expected_output: serde_json::Value`（例: `json!(2)`）
 
 ```rust
-use refsyn::escher_bridge::{EscherCase, build_escher_spec, specs_to_json, write_spec_to_file};
+use refsyn::escher_bridge::{
+    build_escher_spec, build_escher_task_spec, derive_spec_meta, tasks_to_json, write_spec_to_file,
+    EscherCase,
+};
 use refsyn::list_env::{ListEnvironment, GraphOperation};
 use serde_json::json;
 
@@ -110,12 +116,13 @@ let case = EscherCase {
 };
 
 // 複数ケースを作成してまとめて渡すことも可能
+let meta = derive_spec_meta(std::slice::from_ref(&case))?;
 let spec = build_escher_spec("append-g", "Int", &[case], None)?;
-let specs = vec![spec];
-let json_text = specs_to_json(&specs)?;
+let task = build_escher_task_spec(&spec, &meta)?;
+let json_text = tasks_to_json(&[task])?;
 
-// 4) Escher 側が読むファイルとして書き出す
-write_spec_to_file("Escher-Scala/src/main/resources/escher/tests.json", &json_text)?;
+// 4) 既定 backend (escher-ts) が読むファイルとして書き出す
+write_spec_to_file("target/escher/ts/tests.json", &json_text)?;
 ```
 
 ## フィールド検出とインデックス化の詳細
@@ -163,4 +170,6 @@ write_spec_to_file("Escher-Scala/src/main/resources/escher/tests.json", &json_te
 - `src/escher_bridge.rs`: ブリッジ実装（spec JSON 生成）
 - `src/list_env.rs`: リストベース環境表現と操作適用
 - `src/lib.rs`: 公開 API（`analyze_operations_with_unification`）
-- `Escher-Scala/src/main/scala/escher/Test.scala`: Escher ランナー（`/escher/tests.json` をロード）
+- `scripts/run_escher.js`: backend 切り替え用ランナー（既定: `ts`）
+- `scripts/run_escher_scala.js`: legacy Scala fallback
+- `external/escher-ts`: native escher-ts 実装

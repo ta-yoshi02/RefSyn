@@ -1,7 +1,11 @@
-//! Escher-Scala bridge: build tests.json-like specs from Kanon environments
+//! Escher bridge: build legacy specs and native escher-ts tasks from Kanon environments
 //!
 //! This module converts ListEnvironment snapshots (built from Kanon VisGraph + operations)
-//! into Escher-Scala-compatible JSON examples. It supports:
+//! into either:
+//! - legacy Escher-Scala-compatible JSON specs
+//! - native escher-ts task JSON
+//!
+//! It supports:
 //! - Dynamic field detection (value vs pointer) without hardcoding names
 //! - Local indexing per test case via BFS from the detected root variable
 //! - nullPtr is encoded as JSON null; missing Int values remain -1
@@ -12,8 +16,8 @@ use crate::models::VisGraph;
 use crate::FieldTables;
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
-use std::collections::{HashMap, HashSet, VecDeque};
+use serde_json::{json, Map, Value};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -55,7 +59,126 @@ pub struct EscherSpecMeta {
     pub receiver_arg_index: Option<usize>,
 }
 
-/// Build Escher-Scala tests.json content from cases.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EscherBackend {
+    Ts,
+    Scala,
+}
+
+impl EscherBackend {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            EscherBackend::Ts => "ts",
+            EscherBackend::Scala => "scala",
+        }
+    }
+}
+
+pub fn resolve_escher_backend() -> Result<EscherBackend> {
+    match std::env::var("ESCHER_BACKEND")
+        .unwrap_or_else(|_| "ts".to_string())
+        .trim()
+        .to_ascii_lowercase()
+        .as_str()
+    {
+        "" | "ts" => Ok(EscherBackend::Ts),
+        "scala" => Ok(EscherBackend::Scala),
+        other => Err(anyhow!(
+            "Unsupported ESCHER_BACKEND='{}'. Expected 'ts' or 'scala'.",
+            other
+        )),
+    }
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct EscherTaskSpec {
+    pub name: String,
+    pub category: String,
+    pub classes: Vec<EscherTaskClassSpec>,
+    #[serde(rename = "exposeClassComponents")]
+    pub expose_class_components: bool,
+    #[serde(rename = "autoClassFieldComponents")]
+    pub auto_class_field_components: bool,
+    pub signature: EscherTaskSignature,
+    pub components: Vec<EscherTaskComponentSpec>,
+    pub examples: Vec<(Vec<Value>, Value)>,
+    #[serde(rename = "refsynMeta")]
+    pub refsyn_meta: EscherTaskMeta,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct EscherTaskClassSpec {
+    pub name: String,
+    pub fields: BTreeMap<String, String>,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct EscherTaskSignature {
+    #[serde(rename = "returnType")]
+    pub return_type: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub args: Vec<EscherTaskSignatureArg>,
+    #[serde(rename = "autoExpandClassSignature")]
+    pub auto_expand_class_signature: EscherTaskAutoExpandSignature,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct EscherTaskSignatureArg {
+    pub name: String,
+    #[serde(rename = "type")]
+    pub arg_type: String,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct EscherTaskAutoExpandSignature {
+    #[serde(rename = "className")]
+    pub class_name: String,
+    #[serde(rename = "thisRefName")]
+    pub this_ref_name: String,
+    #[serde(rename = "classHeapName")]
+    pub class_heap_name: String,
+    #[serde(rename = "fieldHeapNames")]
+    pub field_heap_names: BTreeMap<String, String>,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct EscherTaskComponentSpec {
+    pub name: String,
+    pub kind: String,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "ref")]
+    pub ref_name: Option<String>,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct EscherTaskMeta {
+    #[serde(rename = "jsMethodName")]
+    pub js_method_name: String,
+    #[serde(rename = "className")]
+    pub class_name: String,
+    #[serde(rename = "thisRefName")]
+    pub this_ref_name: String,
+    #[serde(rename = "classHeapName")]
+    pub class_heap_name: String,
+    #[serde(rename = "valueFields")]
+    pub value_fields: Vec<String>,
+    #[serde(rename = "pointerFields")]
+    pub pointer_fields: Vec<String>,
+    #[serde(rename = "fieldHeapNames")]
+    pub field_heap_names: BTreeMap<String, String>,
+    #[serde(rename = "explicitArgs")]
+    pub explicit_args: Vec<EscherTaskMetaArg>,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct EscherTaskMetaArg {
+    pub name: String,
+    #[serde(rename = "legacyType")]
+    pub legacy_type: String,
+    #[serde(rename = "taskType")]
+    pub task_type: String,
+}
+
+/// Build legacy Escher-Scala tests.json content from cases.
 /// - `name`: synthesized function name
 /// - `return_type`: Escher type string (e.g., "Int", "List[Int]")
 pub fn build_escher_spec(
@@ -442,7 +565,7 @@ fn detect_root(env: &ListEnvironment, vis_graph: &VisGraph) -> Result<(usize, St
     var_ids.sort();
 
     let mut ordered_var_ids: Vec<&str> = Vec::new();
-    if var_ids.iter().any(|id| *id == "__Variable-this") {
+    if var_ids.contains(&"__Variable-this") {
         ordered_var_ids.push("__Variable-this");
     }
     for var_id in var_ids {
@@ -514,9 +637,18 @@ pub fn specs_to_json(specs: &[EscherSpec]) -> Result<String> {
     Ok(serde_json::to_string_pretty(specs)?)
 }
 
-/// Convenience: write the produced spec JSON string to a file path (e.g.,
-/// `Escher-Scala/src/main/resources/escher/tests.json`).
+pub fn tasks_to_json(tasks: &[EscherTaskSpec]) -> Result<String> {
+    Ok(serde_json::to_string_pretty(tasks)?)
+}
+
+/// Convenience: write the produced JSON string to a file path
+/// (for example `target/escher/ts/tests.json`).
 pub fn write_spec_to_file(path: &str, content: &str) -> Result<()> {
+    if let Some(parent) = std::path::Path::new(path).parent() {
+        if !parent.as_os_str().is_empty() {
+            std::fs::create_dir_all(parent)?;
+        }
+    }
     std::fs::write(path, content)?;
     Ok(())
 }
@@ -527,6 +659,16 @@ pub struct EscherJsOutcome {
     pub success: bool,
     pub rendered: Option<String>,
     pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct EscherJsInternalOutcome {
+    pub name: String,
+    pub success: bool,
+    pub rendered: Option<String>,
+    pub error: Option<String>,
+    #[serde(default)]
+    pub compiled_js: Option<String>,
 }
 
 fn parse_escher_js_max_old_space_mb(raw: Option<&str>) -> Result<usize> {
@@ -562,8 +704,8 @@ fn resolve_escher_js_max_old_space_mb() -> Result<usize> {
     parse_escher_js_max_old_space_mb(std::env::var("ESCHER_JS_MAX_OLD_SPACE_MB").ok().as_deref())
 }
 
-/// Invoke Scala.js build via Node and parse normalized results.
-pub fn run_escher_js(spec_json: &str) -> Result<Vec<EscherJsOutcome>> {
+/// Invoke the configured Escher backend via Node and parse normalized results.
+pub fn run_escher_js(spec_json: &str) -> Result<Vec<EscherJsInternalOutcome>> {
     let default_runner = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("scripts")
         .join("run_escher.js");
@@ -615,13 +757,456 @@ pub fn run_escher_js(spec_json: &str) -> Result<Vec<EscherJsOutcome>> {
         return Err(anyhow!("Escher JS runner returned empty output"));
     }
 
-    let outcomes: Vec<EscherJsOutcome> = serde_json::from_str(trimmed)?;
+    let outcomes: Vec<EscherJsInternalOutcome> = serde_json::from_str(trimmed)?;
     Ok(outcomes)
 }
 
-pub fn run_escher_js_from_specs(specs: &[EscherSpec]) -> Result<Vec<EscherJsOutcome>> {
+pub fn run_escher_js_from_specs(specs: &[EscherSpec]) -> Result<Vec<EscherJsInternalOutcome>> {
     let json_text = specs_to_json(specs)?;
     run_escher_js(&json_text)
+}
+
+pub fn run_escher_js_from_tasks(tasks: &[EscherTaskSpec]) -> Result<Vec<EscherJsInternalOutcome>> {
+    let json_text = tasks_to_json(tasks)?;
+    run_escher_js(&json_text)
+}
+
+impl From<&EscherJsInternalOutcome> for EscherJsOutcome {
+    fn from(value: &EscherJsInternalOutcome) -> Self {
+        Self {
+            name: value.name.clone(),
+            success: value.success,
+            rendered: value.rendered.clone(),
+            error: value.error.clone(),
+        }
+    }
+}
+
+pub fn build_escher_task_spec(spec: &EscherSpec, meta: &EscherSpecMeta) -> Result<EscherTaskSpec> {
+    let class_name = "Node".to_string();
+    let this_ref_name = "thisRef".to_string();
+    let class_heap_name = "nodeHeap".to_string();
+
+    let mut field_heap_names = BTreeMap::new();
+    for field in meta.value_fields.iter().chain(meta.pointer_fields.iter()) {
+        field_heap_names.insert(field.clone(), field_to_heap_name(field));
+    }
+
+    let mut fields = BTreeMap::new();
+    for field in &meta.value_fields {
+        fields.insert(field.clone(), "Ref[Int]".to_string());
+    }
+    for field in &meta.pointer_fields {
+        fields.insert(field.clone(), format!("Ref[{}]", class_name));
+    }
+
+    let explicit_args = build_task_explicit_args(spec, meta, &class_name)?;
+    let signature = EscherTaskSignature {
+        return_type: legacy_type_to_task_type(&spec.return_type, &class_name)?,
+        args: explicit_args
+            .iter()
+            .map(|arg| EscherTaskSignatureArg {
+                name: arg.name.clone(),
+                arg_type: arg.task_type.clone(),
+            })
+            .collect(),
+        auto_expand_class_signature: EscherTaskAutoExpandSignature {
+            class_name: class_name.clone(),
+            this_ref_name: this_ref_name.clone(),
+            class_heap_name: class_heap_name.clone(),
+            field_heap_names: field_heap_names.clone(),
+        },
+    };
+
+    let examples = spec
+        .examples
+        .iter()
+        .map(|example| build_task_example(spec, meta, example, &class_name))
+        .collect::<Result<Vec<_>>>()?;
+
+    Ok(EscherTaskSpec {
+        name: spec.name.clone(),
+        category: "refsyn".to_string(),
+        classes: vec![EscherTaskClassSpec {
+            name: class_name.clone(),
+            fields,
+        }],
+        expose_class_components: false,
+        auto_class_field_components: true,
+        signature,
+        components: default_task_components(spec, meta),
+        examples,
+        refsyn_meta: EscherTaskMeta {
+            js_method_name: sanitize_js_identifier(&spec.name),
+            class_name,
+            this_ref_name,
+            class_heap_name,
+            value_fields: meta.value_fields.clone(),
+            pointer_fields: meta.pointer_fields.clone(),
+            field_heap_names,
+            explicit_args,
+        },
+    })
+}
+
+fn build_task_explicit_args(
+    spec: &EscherSpec,
+    meta: &EscherSpecMeta,
+    class_name: &str,
+) -> Result<Vec<EscherTaskMetaArg>> {
+    let mut explicit_args = Vec::new();
+    for idx in 0..meta.arg_count {
+        if meta.receiver_arg_index == Some(idx) {
+            continue;
+        }
+        let legacy_type = spec
+            .input_types
+            .get(idx)
+            .cloned()
+            .unwrap_or_else(|| "Int".to_string());
+        let task_type = legacy_type_to_task_type(&legacy_type, class_name)?;
+        let raw_name = meta
+            .arg_names
+            .get(idx)
+            .cloned()
+            .unwrap_or_else(|| format!("arg{}", idx));
+        explicit_args.push(EscherTaskMetaArg {
+            name: raw_name,
+            legacy_type,
+            task_type,
+        });
+    }
+    Ok(explicit_args)
+}
+
+fn build_task_example(
+    spec: &EscherSpec,
+    meta: &EscherSpecMeta,
+    example: &ExampleJson,
+    class_name: &str,
+) -> Result<(Vec<Value>, Value)> {
+    let mut next_pos = meta.arg_count;
+    let mut value_lists: Vec<(String, Vec<Value>)> = Vec::new();
+    for field in &meta.value_fields {
+        let list = example
+            .input
+            .get(next_pos)
+            .and_then(Value::as_array)
+            .cloned()
+            .ok_or_else(|| anyhow!("missing value list '{}' for {}", field, spec.name))?;
+        value_lists.push((field.clone(), list));
+        next_pos += 1;
+    }
+    let mut pointer_lists: Vec<(String, Vec<Value>)> = Vec::new();
+    for field in &meta.pointer_fields {
+        let list = example
+            .input
+            .get(next_pos)
+            .and_then(Value::as_array)
+            .cloned()
+            .ok_or_else(|| anyhow!("missing pointer list '{}' for {}", field, spec.name))?;
+        pointer_lists.push((field.clone(), list));
+        next_pos += 1;
+    }
+
+    let object_count = value_lists
+        .iter()
+        .map(|(_, list)| list.len())
+        .chain(pointer_lists.iter().map(|(_, list)| list.len()))
+        .max()
+        .unwrap_or(0);
+
+    let object_heap = build_object_heap(object_count, &value_lists, &pointer_lists, class_name)?;
+
+    let mut input = Vec::new();
+    let receiver_ref = match meta.receiver_arg_index {
+        Some(idx) => map_legacy_value_to_task_literal(
+            example
+                .input
+                .get(idx)
+                .ok_or_else(|| anyhow!("missing receiver arg {}", idx))?,
+            spec.input_types
+                .get(idx)
+                .map(String::as_str)
+                .unwrap_or("Ptr"),
+            class_name,
+        )?,
+        None => json!({ "ref": if object_count == 0 { -1 } else { 0 } }),
+    };
+    input.push(receiver_ref);
+    input.push(Value::Array(object_heap.clone()));
+
+    for (_, list) in &value_lists {
+        input.push(Value::Array(
+            list.iter()
+                .map(|value| json!(legacy_int_value(value)))
+                .collect(),
+        ));
+    }
+    for (_, list) in &pointer_lists {
+        let heap = list
+            .iter()
+            .map(|value| {
+                Ok(json!({
+                    "ref": legacy_ptr_value_to_index(value)?
+                        .map(|idx| idx as i32)
+                        .unwrap_or(-1)
+                }))
+            })
+            .collect::<Result<Vec<_>>>()?;
+        input.push(Value::Array(heap));
+    }
+
+    for idx in 0..meta.arg_count {
+        if meta.receiver_arg_index == Some(idx) {
+            continue;
+        }
+        let legacy_type = spec
+            .input_types
+            .get(idx)
+            .map(String::as_str)
+            .unwrap_or("Int");
+        let literal = map_legacy_value_to_task_literal(
+            example
+                .input
+                .get(idx)
+                .ok_or_else(|| anyhow!("missing arg {} for {}", idx, spec.name))?,
+            legacy_type,
+            class_name,
+        )?;
+        input.push(literal);
+    }
+
+    Ok((
+        input,
+        map_legacy_value_to_task_literal(&example.output, &spec.return_type, class_name)?,
+    ))
+}
+
+fn build_object_heap(
+    object_count: usize,
+    value_lists: &[(String, Vec<Value>)],
+    pointer_lists: &[(String, Vec<Value>)],
+    class_name: &str,
+) -> Result<Vec<Value>> {
+    let mut heap = Vec::with_capacity(object_count);
+    for idx in 0..object_count {
+        let mut fields = Map::new();
+        for (field, list) in value_lists {
+            let value = list.get(idx).map(legacy_int_value).unwrap_or(-1);
+            let ref_index = if value < 0 { -1 } else { idx as i32 };
+            fields.insert(field.clone(), json!({ "ref": ref_index }));
+        }
+        for (field, list) in pointer_lists {
+            let ref_index = match list.get(idx) {
+                Some(value) => legacy_ptr_value_to_index(value)?
+                    .map(|v| v as i32)
+                    .unwrap_or(-1),
+                None => -1,
+            };
+            fields.insert(field.clone(), json!({ "ref": ref_index }));
+        }
+        heap.push(json!({
+            "object": {
+                "className": class_name,
+                "fields": fields,
+            }
+        }));
+    }
+    Ok(heap)
+}
+
+fn map_legacy_value_to_task_literal(
+    value: &Value,
+    legacy_type: &str,
+    class_name: &str,
+) -> Result<Value> {
+    match legacy_type {
+        "Ptr" => Ok(json!({
+            "ref": legacy_ptr_value_to_index(value)?
+                .map(|idx| idx as i32)
+                .unwrap_or(-1)
+        })),
+        "Int" => Ok(json!(legacy_int_value(value))),
+        "Bool" => Ok(json!(value.as_bool().unwrap_or(false))),
+        "List[Int]" => Ok(Value::Array(
+            value
+                .as_array()
+                .cloned()
+                .unwrap_or_default()
+                .into_iter()
+                .map(|entry| json!(legacy_int_value(&entry)))
+                .collect(),
+        )),
+        "List[Ptr]" => Ok(Value::Array(
+            value
+                .as_array()
+                .cloned()
+                .unwrap_or_default()
+                .into_iter()
+                .map(|entry| {
+                    json!({
+                        "ref": legacy_ptr_value_to_index(&entry)
+                            .ok()
+                            .flatten()
+                            .map(|idx| idx as i32)
+                            .unwrap_or(-1)
+                    })
+                })
+                .collect(),
+        )),
+        other if other.starts_with("Ref[") && other.ends_with(']') => Ok(json!({
+            "ref": legacy_ptr_value_to_index(value)?
+                .map(|idx| idx as i32)
+                .unwrap_or(-1)
+        })),
+        other => Err(anyhow!(
+            "Unsupported legacy value type '{}' for task conversion (class={})",
+            other,
+            class_name
+        )),
+    }
+}
+
+fn legacy_type_to_task_type(legacy_type: &str, class_name: &str) -> Result<String> {
+    match legacy_type {
+        "Int" | "Bool" => Ok(legacy_type.to_string()),
+        "Ptr" => Ok(format!("Ref[{}]", class_name)),
+        "List[Int]" => Ok("List[Int]".to_string()),
+        "List[Ptr]" => Ok(format!("List[Ref[{}]]", class_name)),
+        other => Err(anyhow!(
+            "Unsupported legacy type '{}' for escher-ts phase1 task generation",
+            other
+        )),
+    }
+}
+
+fn default_task_components(
+    spec: &EscherSpec,
+    meta: &EscherSpecMeta,
+) -> Vec<EscherTaskComponentSpec> {
+    let mut components = Vec::new();
+    let mut seen = HashSet::new();
+    let mut push_library = |name: &str| {
+        if seen.insert(name.to_string()) {
+            components.push(EscherTaskComponentSpec {
+                name: name.to_string(),
+                kind: "libraryRef".to_string(),
+                ref_name: Some(name.to_string()),
+            });
+        }
+    };
+
+    push_library("isNull");
+    push_library("equal");
+    push_library("and");
+    push_library("or");
+    push_library("not");
+
+    let needs_int_components = spec.return_type == "Int"
+        || spec
+            .input_types
+            .iter()
+            .take(meta.arg_count)
+            .any(|ty| ty == "Int")
+        || !meta.value_fields.is_empty();
+    if needs_int_components {
+        push_library("isZero");
+        push_library("isNonNeg");
+        push_library("zero");
+        push_library("inc");
+        push_library("dec");
+    }
+
+    if spec.return_type == "Ptr" && meta.pointer_fields.len() == 1 {
+        push_library("nthNextRef");
+    }
+
+    if spec.return_type == "Ptr" && meta.pointer_fields.len() == 1 && meta.value_fields.len() == 1 {
+        push_library("findByValueRef");
+    }
+
+    components
+}
+
+fn field_to_heap_name(field: &str) -> String {
+    let mut out = String::with_capacity(field.len() + 4);
+    for (idx, ch) in field.chars().enumerate() {
+        let valid = if idx == 0 {
+            ch.is_ascii_alphabetic() || ch == '_' || ch == '$'
+        } else {
+            ch.is_ascii_alphanumeric() || ch == '_' || ch == '$'
+        };
+        if valid {
+            out.push(ch);
+        } else if idx == 0 && ch.is_ascii_digit() {
+            out.push('_');
+            out.push(ch);
+        } else {
+            out.push('_');
+        }
+    }
+    if out.is_empty() {
+        out.push('_');
+    }
+    out.push_str("Heap");
+    out
+}
+
+fn sanitize_js_identifier(raw: &str) -> String {
+    let mut out = String::with_capacity(raw.len());
+    for ch in raw.chars() {
+        let valid = ch.is_ascii_alphanumeric() || ch == '_' || ch == '$';
+        out.push(if valid { ch } else { '_' });
+    }
+    if out.is_empty() {
+        "_".to_string()
+    } else if out
+        .chars()
+        .next()
+        .map(|c| c.is_ascii_digit())
+        .unwrap_or(false)
+    {
+        format!("_{}", out)
+    } else {
+        out
+    }
+}
+
+fn legacy_int_value(value: &Value) -> i32 {
+    match value {
+        Value::Number(num) => num.as_i64().unwrap_or(-1) as i32,
+        Value::String(text) => text.parse::<i64>().unwrap_or(-1) as i32,
+        Value::Bool(flag) => {
+            if *flag {
+                1
+            } else {
+                0
+            }
+        }
+        _ => -1,
+    }
+}
+
+fn legacy_ptr_value_to_index(value: &Value) -> Result<Option<usize>> {
+    match value {
+        Value::Null => Ok(None),
+        Value::Number(num) => {
+            let raw = num
+                .as_i64()
+                .ok_or_else(|| anyhow!("invalid pointer numeric value: {}", value))?;
+            if raw < 0 {
+                Ok(None)
+            } else {
+                Ok(Some(raw as usize))
+            }
+        }
+        Value::Object(map) => match map.get("ref").and_then(Value::as_i64) {
+            Some(raw) if raw >= 0 => Ok(Some(raw as usize)),
+            Some(_) | None => Ok(None),
+        },
+        other => Err(anyhow!("invalid pointer literal: {}", other)),
+    }
 }
 
 #[cfg(test)]
@@ -757,5 +1342,55 @@ mod tests {
         );
         assert_eq!(spec.return_type, "Int".to_string());
         assert_eq!(spec.examples.len(), 1);
+    }
+
+    #[test]
+    fn test_build_task_spec_from_legacy_spec() {
+        let (vis_graph, env) = graph_for_linear_list();
+        let case = EscherCase {
+            env,
+            vis_graph,
+            arguments: vec![json!(0), json!(42)],
+            arg_names: vec!["this".to_string(), "delta".to_string()],
+            arg_types: Some(vec!["Ptr".to_string(), "Int".to_string()]),
+            receiver_arg_index: Some(0),
+            output: json!(1),
+        };
+
+        let meta = derive_spec_meta(std::slice::from_ref(&case)).expect("meta");
+        let spec = build_escher_spec("advance-next", "Ptr", &[case], None).expect("spec");
+        let task = build_escher_task_spec(&spec, &meta).expect("task");
+
+        assert_eq!(task.name, "advance-next");
+        assert!(task.auto_class_field_components);
+        assert_eq!(task.signature.return_type, "Ref[Node]");
+        assert!(task
+            .components
+            .iter()
+            .any(|component| component.name == "nthNextRef"));
+        assert!(task
+            .components
+            .iter()
+            .any(|component| component.name == "findByValueRef"));
+        assert_eq!(task.signature.args.len(), 1);
+        assert_eq!(task.signature.args[0].name, "delta");
+        assert_eq!(task.signature.args[0].arg_type, "Int");
+        assert_eq!(
+            task.classes[0].fields.get("next").map(String::as_str),
+            Some("Ref[Node]")
+        );
+        assert_eq!(
+            task.classes[0].fields.get("val").map(String::as_str),
+            Some("Ref[Int]")
+        );
+
+        assert_eq!(task.examples.len(), 1);
+        let (input, output) = &task.examples[0];
+        assert_eq!(input.len(), 5);
+        assert_eq!(input[0], json!({ "ref": 0 }));
+        assert_eq!(input[2], json!([10, 20, 30]));
+        assert_eq!(input[3], json!([{ "ref": 1 }, { "ref": 2 }, { "ref": -1 }]));
+        assert_eq!(input[4], json!(42));
+        assert_eq!(*output, json!({ "ref": 1 }));
     }
 }

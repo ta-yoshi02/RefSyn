@@ -136,11 +136,12 @@ POST http://127.0.0.1:3030/synthesize
    - 差異点の詳細
    - 各差異点でのList環境
 
-## Escher Scala.js 連携
+## Escher backend 連携
 
-- `Escher-Scala/target/scala-2.12/escher-scala-opt.js` を Node 経由で実行し、生成した Escher JSON（差分から作った例）をその場で合成する。
-- ラッパー `scripts/run_escher.js` が JSON を stdin/`--file` から受け取り、`escher_results` として `name/success/rendered/error` を返す。ログは stderr に逃がし、stdout は純粋な JSON のみ。
-- デフォルトのパスはリポジトリ内の `scripts/run_escher.js` と Scala.js ビルド成果物を指す。独自のパスを使う場合は環境変数 `ESCHER_JS_RUNNER` でラッパーの場所を上書きする。
+- 既定 backend は `escher-ts`（`ESCHER_BACKEND=ts`）。差分から作った native task JSON をその場で合成する。
+- ラッパー `scripts/run_escher.js` が JSON を stdin/`--file` から受け取り、`escher_results` として `name/success/rendered/error` を返す。内部では `compiled_js` も返し、Rust 側はそれを `individual_codes` / `composed_method_code` 生成に使う。
+- `ESCHER_BACKEND=scala` を指定すると `scripts/run_escher_scala.js` 経由で legacy Scala.js backend を使える。
+- 独自のランナーパスを使う場合は環境変数 `ESCHER_JS_RUNNER` で `scripts/run_escher.js` の場所を上書きする。
 
 ## 使用例
 

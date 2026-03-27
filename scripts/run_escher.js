@@ -1,62 +1,56 @@
 #!/usr/bin/env node
 "use strict";
 
-// Node wrapper around Escher-Scala's Scala.js bundle.
-// Reads JSON specs from stdin or a file and emits normalized results to stdout.
-
 const fs = require("fs");
 const path = require("path");
+const { spawnSync } = require("child_process");
+const { pathToFileURL } = require("url");
 
 function usage() {
   const script = path.relative(process.cwd(), __filename);
   console.error(
     [
-      `Usage: node ${script} [--file specs.json] [--module path/to/escher-scala-opt.js] [--quiet]`,
-      "  --file    Read specs JSON from file instead of stdin",
-      "  --module  Path to escher-scala-opt.js (defaults to Escher-Scala/target/scala-2.12/... )",
-      "  --quiet   Suppress Scala-side console.log noise (still sent to stderr if not quiet)",
+      `Usage: node ${script} [--file specs.json] [--quiet]`,
+      "  Uses ESCHER_BACKEND=ts|scala (default: ts)",
+      "  --file   Read JSON from file instead of stdin",
+      "  --quiet  Suppress backend-side noise where supported",
     ].join("\n")
   );
 }
 
 function parseArgs(argv) {
-  const defaults = {
-    modulePath: path.join(
-      __dirname,
-      "..",
-      "Escher-Scala",
-      "target",
-      "scala-2.12",
-      "escher-scala-opt.js"
-    ),
+  const opts = {
     filePath: null,
     quiet: false,
+    passthrough: [],
   };
 
-  const opts = { ...defaults };
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
-    if (arg === "--module") {
-      if (!argv[i + 1]) {
-        throw new Error("Missing value for --module");
-      }
-      opts.modulePath = argv[i + 1];
-      i += 1;
-    } else if (arg === "--file") {
+    if (arg === "--file") {
       if (!argv[i + 1]) {
         throw new Error("Missing value for --file");
       }
       opts.filePath = argv[i + 1];
+      opts.passthrough.push(arg, argv[i + 1]);
       i += 1;
     } else if (arg === "--quiet") {
       opts.quiet = true;
+      opts.passthrough.push(arg);
     } else if (arg === "--help" || arg === "-h") {
       usage();
       process.exit(0);
+    } else if (arg === "--module") {
+      if (!argv[i + 1]) {
+        throw new Error("Missing value for --module");
+      }
+      opts.passthrough.push(arg, argv[i + 1]);
+      i += 1;
     } else {
       throw new Error(`Unknown argument: ${arg}`);
     }
   }
+
   return opts;
 }
 
@@ -67,32 +61,31 @@ function readInput(filePath) {
   return fs.readFileSync(0, "utf8");
 }
 
-function normalizeText(val) {
-  if (val === null || val === undefined) {
-    return null;
-  }
-  if (Array.isArray(val)) {
-    if (val.length === 0) {
-      return null;
-    }
-    return val.map((v) => String(v)).join("\n");
-  }
-  if (typeof val === "string") {
-    return val;
-  }
-  return String(val);
+function runScalaBackend(opts) {
+  const scalaScript = path.join(__dirname, "run_escher_scala.js");
+  const child = spawnSync(process.execPath, [scalaScript, ...opts.passthrough], {
+    stdio: "inherit",
+    env: process.env,
+  });
+  process.exit(child.status === null ? 1 : child.status);
 }
 
-function normalizeOutcome(outcome) {
-  return {
-    name: outcome.name || "",
-    success: Boolean(outcome.success),
-    rendered: normalizeText(outcome.rendered),
-    error: normalizeText(outcome.error),
-  };
+async function runTsBackend(opts) {
+  const distModule = path.join(__dirname, "..", "external", "escher-ts", "dist", "refsyn.js");
+  if (!fs.existsSync(distModule)) {
+    console.error(
+      `escher-ts build output not found at ${distModule}. Run 'pnpm install && pnpm build' in external/escher-ts first.`
+    );
+    process.exit(1);
+  }
+
+  const { runRefsynTasksJson } = await import(pathToFileURL(distModule).href);
+  const inputJson = readInput(opts.filePath);
+  const outputJson = runRefsynTasksJson(inputJson, { quiet: opts.quiet });
+  process.stdout.write(outputJson);
 }
 
-function main() {
+async function main() {
   let opts;
   try {
     opts = parseArgs(process.argv);
@@ -102,57 +95,20 @@ function main() {
     process.exit(1);
   }
 
-  const inputJson = readInput(opts.filePath);
-
-  const resolvedModule = path.resolve(opts.modulePath);
-  let escher;
-  try {
-    escher = require(resolvedModule);
-  } catch (err) {
-    console.error(`Failed to require module at ${resolvedModule}: ${err.message}`);
+  const backend = (process.env.ESCHER_BACKEND || "ts").trim().toLowerCase();
+  if (backend === "scala") {
+    runScalaBackend(opts);
+    return;
+  }
+  if (backend !== "ts" && backend !== "") {
+    console.error(`Unsupported ESCHER_BACKEND='${backend}'. Expected 'ts' or 'scala'.`);
     process.exit(1);
   }
 
-  // Capture Scala println/console.log spam so stdout stays pure JSON.
-  const originalLog = console.log;
-  const originalWarn = console.warn;
-  const forward = (args) => {
-    const msg = args.join(" ");
-    if (!opts.quiet) {
-      process.stderr.write(`${msg}\n`);
-    }
-  };
-  console.log = (...args) => forward(args);
-  console.warn = (...args) => forward(args);
-
-  let raw;
-  try {
-    raw = escher.runSynthesisJson(inputJson);
-  } catch (err) {
-    console.log = originalLog;
-    console.warn = originalWarn;
-    console.error(`runSynthesisJson failed: ${err.message}`);
-    process.exit(1);
-  }
-
-  console.log = originalLog;
-  console.warn = originalWarn;
-
-  let parsed;
-  try {
-    parsed = JSON.parse(raw);
-  } catch (err) {
-    console.error(`Failed to parse Escher output as JSON: ${err.message}`);
-    process.exit(1);
-  }
-
-  if (!Array.isArray(parsed)) {
-    console.error("Escher output was not an array of results");
-    process.exit(1);
-  }
-
-  const normalized = parsed.map(normalizeOutcome);
-  process.stdout.write(JSON.stringify(normalized));
+  await runTsBackend(opts);
 }
 
-main();
+main().catch((err) => {
+  console.error(err && err.message ? err.message : String(err));
+  process.exit(1);
+});

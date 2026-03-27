@@ -1,7 +1,10 @@
-//! Generate Escher-Scala tests.json from a minimal demo
+//! Generate native escher-ts task JSON from a minimal demo
 //! Usage: cargo run --example generate_escher_json
 
-use refsyn::escher_bridge::{build_escher_spec, specs_to_json, write_spec_to_file, EscherCase};
+use refsyn::escher_bridge::{
+    build_escher_spec, build_escher_task_spec, derive_spec_meta, tasks_to_json, write_spec_to_file,
+    EscherCase,
+};
 use refsyn::list_env::{GraphOperation, ListEnvironment};
 use refsyn::models::{Edge, Node, VisGraph};
 use serde_json::json;
@@ -87,11 +90,12 @@ fn main() -> anyhow::Result<()> {
         output: json!(0), // example expected output
     };
 
-    // 6) Emit JSON and write to Escher-Scala resource path
+    // 6) Emit native escher-ts task JSON and write it under target/escher
+    let meta = derive_spec_meta(std::slice::from_ref(&case))?;
     let spec = build_escher_spec("append-g", "Int", &[case], None)?;
-    let spec_bundle = vec![spec];
-    let json_text = specs_to_json(&spec_bundle)?;
-    let out_path = "Escher-Scala/src/main/resources/escher/tests.json";
+    let task = build_escher_task_spec(&spec, &meta)?;
+    let json_text = tasks_to_json(&[task])?;
+    let out_path = "target/escher/ts/tests.json";
     write_spec_to_file(out_path, &json_text)?;
     println!("Wrote {} bytes to {}", json_text.len(), out_path);
 
