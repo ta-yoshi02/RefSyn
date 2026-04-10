@@ -984,10 +984,19 @@ async fn test_integrated_synthesis_three_append_like_specs_group_holes() {
         .iter()
         .find(|code| code.contains("append_h("))
         .expect("Ptr helper JS should be present");
+    let ptr_result = response
+        .escher_results
+        .as_ref()
+        .and_then(|results| results.iter().find(|result| result.name == "append-h"))
+        .expect("append-h escher result should be present");
     assert!(
-        ptr_helper.contains(".append_h()"),
-        "append_h should tail-recurse instead of hard-coding a fixed hop count: {}",
-        ptr_helper
+        ptr_result
+            .rendered
+            .as_deref()
+            .map(|rendered| rendered.contains("last_ptr("))
+            .unwrap_or(false),
+        "append-h should synthesize through last_ptr instead of a fixed-hop pattern: {:?}",
+        ptr_result.rendered
     );
     assert!(
         !ptr_helper.contains(".next).next"),
@@ -1415,7 +1424,7 @@ async fn test_integrated_synthesis_insert_three_traces_keep_ts_ptr_components_an
     for example in examples {
         let (input, _) = extract_saved_example_io(example).expect("task example should be valid");
         assert!(
-            input_slot_is_ref_heap(input, 3),
+            input_slot_is_ref_heap(input, 2),
             "pointer heap slot should stay a ref-array after task conversion"
         );
     }

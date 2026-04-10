@@ -893,6 +893,22 @@ fn build_task_example(
         .unwrap_or(0);
 
     let object_heap = build_object_heap(object_count, &value_lists, &pointer_lists, class_name)?;
+    let value_heap_by_field: HashMap<&str, &Vec<Value>> = value_lists
+        .iter()
+        .map(|(field, list)| (field.as_str(), list))
+        .collect();
+    let pointer_heap_by_field: HashMap<&str, &Vec<Value>> = pointer_lists
+        .iter()
+        .map(|(field, list)| (field.as_str(), list))
+        .collect();
+    let mut ordered_heap_fields: Vec<&str> = meta
+        .value_fields
+        .iter()
+        .chain(meta.pointer_fields.iter())
+        .map(String::as_str)
+        .collect();
+    ordered_heap_fields.sort_unstable();
+    ordered_heap_fields.dedup();
 
     let mut input = Vec::new();
     let receiver_ref = match meta.receiver_arg_index {
@@ -912,25 +928,28 @@ fn build_task_example(
     input.push(receiver_ref);
     input.push(Value::Array(object_heap.clone()));
 
-    for (_, list) in &value_lists {
-        input.push(Value::Array(
-            list.iter()
-                .map(|value| json!(legacy_int_value(value)))
-                .collect(),
-        ));
-    }
-    for (_, list) in &pointer_lists {
-        let heap = list
-            .iter()
-            .map(|value| {
-                Ok(json!({
-                    "ref": legacy_ptr_value_to_index(value)?
-                        .map(|idx| idx as i32)
-                        .unwrap_or(-1)
-                }))
-            })
-            .collect::<Result<Vec<_>>>()?;
-        input.push(Value::Array(heap));
+    for field in ordered_heap_fields {
+        if let Some(list) = value_heap_by_field.get(field) {
+            input.push(Value::Array(
+                list.iter()
+                    .map(|value| json!(legacy_int_value(value)))
+                    .collect(),
+            ));
+            continue;
+        }
+        if let Some(list) = pointer_heap_by_field.get(field) {
+            let heap = list
+                .iter()
+                .map(|value| {
+                    Ok(json!({
+                        "ref": legacy_ptr_value_to_index(value)?
+                            .map(|idx| idx as i32)
+                            .unwrap_or(-1)
+                    }))
+                })
+                .collect::<Result<Vec<_>>>()?;
+            input.push(Value::Array(heap));
+        }
     }
 
     for idx in 0..meta.arg_count {
@@ -1085,21 +1104,12 @@ fn default_task_components(
     }
 
     if spec.return_type == "Ptr" && meta.pointer_fields.len() == 1 {
-        let last_ptr = last_ptr_component_spec("Node");
-        if seen.insert(last_ptr.name.clone()) {
-            components.push(last_ptr);
-        }
-        let nth_next_ref = nth_next_ref_component_spec("Node");
-        if seen.insert(nth_next_ref.name.clone()) {
-            components.push(nth_next_ref);
-        }
+        push_library_component(&mut components, &mut seen, "last_ptr");
+        push_library_component(&mut components, &mut seen, "nthNextRef");
     }
 
     if spec.return_type == "Ptr" && meta.pointer_fields.len() == 1 && meta.value_fields.len() == 1 {
-        let find_by_value_ref = find_by_value_ref_component_spec("Node");
-        if seen.insert(find_by_value_ref.name.clone()) {
-            components.push(find_by_value_ref);
-        }
+        push_library_component(&mut components, &mut seen, "findByValueRef");
     }
 
     components
@@ -1120,129 +1130,6 @@ fn push_library_component(
             args: None,
             body_js: None,
         });
-    }
-}
-
-fn last_ptr_component_spec(class_name: &str) -> EscherTaskComponentSpec {
-    let object_type = format!("Object[{}]", class_name);
-    let ref_type = format!("Ref[{}]", object_type);
-    EscherTaskComponentSpec {
-        name: "last_ptr".to_string(),
-        kind: "js".to_string(),
-        ref_name: None,
-        input_types: Some(vec![ref_type.clone(), format!("List[{}]", object_type)]),
-        return_type: Some(ref_type),
-        args: Some(vec!["start".to_string(), "nextHeap".to_string()]),
-        body_js: Some(
-            [
-                "if (!start || typeof start !== 'object' || typeof start.ref !== 'number' || !Array.isArray(nextHeap)) return 'error';",
-                "let current = start.ref;",
-                "if (current === -1) return { ref: -1 };",
-                "const seen = new Set();",
-                "while (current !== -1) {",
-                "  if (!Number.isInteger(current) || current < 0 || current >= nextHeap.length) return 'error';",
-                "  if (seen.has(current)) return 'error';",
-                "  seen.add(current);",
-                "  const next = nextHeap[current];",
-                "  if (!next || typeof next !== 'object' || typeof next.ref !== 'number') return 'error';",
-                "  if (next.ref === -1) return { ref: current };",
-                "  current = next.ref;",
-                "}",
-                "return { ref: -1 };",
-            ]
-            .join(" "),
-        ),
-    }
-}
-
-fn nth_next_ref_component_spec(class_name: &str) -> EscherTaskComponentSpec {
-    let object_type = format!("Object[{}]", class_name);
-    let ref_type = format!("Ref[{}]", object_type);
-    EscherTaskComponentSpec {
-        name: "nthNextRef".to_string(),
-        kind: "js".to_string(),
-        ref_name: None,
-        input_types: Some(vec![
-            ref_type.clone(),
-            format!("List[{}]", object_type),
-            format!("List[{}]", ref_type),
-            "Int".to_string(),
-        ]),
-        return_type: Some(ref_type),
-        args: Some(vec![
-            "start".to_string(),
-            "nodeHeap".to_string(),
-            "nextHeap".to_string(),
-            "steps".to_string(),
-        ]),
-        body_js: Some(
-            [
-                "if (!start || typeof start !== 'object' || typeof start.ref !== 'number') return 'error';",
-                "if (!Array.isArray(nodeHeap) || !Array.isArray(nextHeap) || !Number.isInteger(steps) || steps < 0) return 'error';",
-                "if (start.ref === -1) return { ref: -1 };",
-                "if (start.ref < 0 || start.ref >= nodeHeap.length) return 'error';",
-                "let current = start.ref;",
-                "let remaining = steps;",
-                "while (remaining > 0) {",
-                "  if (current === -1) return { ref: -1 };",
-                "  if (!Number.isInteger(current) || current < 0 || current >= nextHeap.length) return 'error';",
-                "  const next = nextHeap[current];",
-                "  if (!next || typeof next !== 'object' || typeof next.ref !== 'number') return 'error';",
-                "  current = next.ref;",
-                "  remaining -= 1;",
-                "}",
-                "return { ref: current };",
-            ]
-            .join(" "),
-        ),
-    }
-}
-
-fn find_by_value_ref_component_spec(class_name: &str) -> EscherTaskComponentSpec {
-    let object_type = format!("Object[{}]", class_name);
-    let ref_type = format!("Ref[{}]", object_type);
-    EscherTaskComponentSpec {
-        name: "findByValueRef".to_string(),
-        kind: "js".to_string(),
-        ref_name: None,
-        input_types: Some(vec![
-            ref_type.clone(),
-            format!("List[{}]", object_type),
-            format!("List[{}]", ref_type),
-            "List[Int]".to_string(),
-            "Int".to_string(),
-        ]),
-        return_type: Some(ref_type),
-        args: Some(vec![
-            "start".to_string(),
-            "nodeHeap".to_string(),
-            "nextHeap".to_string(),
-            "valueHeap".to_string(),
-            "target".to_string(),
-        ]),
-        body_js: Some(
-            [
-                "if (!start || typeof start !== 'object' || typeof start.ref !== 'number') return 'error';",
-                "if (!Array.isArray(nodeHeap) || !Array.isArray(nextHeap) || !Array.isArray(valueHeap) || !Number.isInteger(target)) return 'error';",
-                "if (start.ref === -1) return { ref: -1 };",
-                "const seen = new Set();",
-                "let current = start.ref;",
-                "while (current !== -1) {",
-                "  if (!Number.isInteger(current) || current < 0) return 'error';",
-                "  if (seen.has(current)) return { ref: -1 };",
-                "  seen.add(current);",
-                "  if (current >= nodeHeap.length || current >= nextHeap.length || current >= valueHeap.length) return 'error';",
-                "  const currentValue = valueHeap[current];",
-                "  if (!Number.isInteger(currentValue)) return 'error';",
-                "  if (currentValue === target) return { ref: current };",
-                "  const next = nextHeap[current];",
-                "  if (!next || typeof next !== 'object' || typeof next.ref !== 'number') return 'error';",
-                "  current = next.ref;",
-                "}",
-                "return { ref: -1 };",
-            ]
-            .join(" "),
-        ),
     }
 }
 
@@ -1488,11 +1375,11 @@ mod tests {
         assert!(task
             .components
             .iter()
-            .any(|component| component.name == "nthNextRef" && component.kind == "js"));
+            .any(|component| component.name == "nthNextRef" && component.kind == "libraryRef"));
         assert!(task
             .components
             .iter()
-            .any(|component| component.name == "findByValueRef" && component.kind == "js"));
+            .any(|component| component.name == "findByValueRef" && component.kind == "libraryRef"));
         assert_eq!(task.signature.args.len(), 1);
         assert_eq!(task.signature.args[0].name, "delta");
         assert_eq!(task.signature.args[0].arg_type, "Int");
@@ -1509,8 +1396,8 @@ mod tests {
         let (input, output) = &task.examples[0];
         assert_eq!(input.len(), 5);
         assert_eq!(input[0], json!({ "ref": 0 }));
-        assert_eq!(input[2], json!([10, 20, 30]));
-        assert_eq!(input[3], json!([{ "ref": 1 }, { "ref": 2 }, { "ref": -1 }]));
+        assert_eq!(input[2], json!([{ "ref": 1 }, { "ref": 2 }, { "ref": -1 }]));
+        assert_eq!(input[3], json!([10, 20, 30]));
         assert_eq!(input[4], json!(42));
         assert_eq!(*output, json!({ "ref": 1 }));
     }

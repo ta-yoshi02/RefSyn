@@ -418,72 +418,6 @@ const renderOutcome = (taskName, inputNames, inputTypes, returnType, body) =>
     .map((name, index) => `@${name}: ${showType(inputTypes[index])}`)
     .join(", ")}): ${showType(returnType)} =\n  ${showTerm(body)}`;
 
-const computeTailRef = (pointerHeap, startRef) => {
-  let current = startRef;
-  const seen = new Set();
-  while (true) {
-    if (current === -1) {
-      return -1;
-    }
-    if (!Number.isInteger(current) || current < 0 || current >= pointerHeap.length || seen.has(current)) {
-      return null;
-    }
-    seen.add(current);
-    const next = pointerHeap[current]?.ref;
-    if (!Number.isInteger(next)) {
-      return null;
-    }
-    if (next === -1) {
-      return current;
-    }
-    current = next;
-  }
-};
-
-const taskMatchesLastPtr = (rawTask) => {
-  const meta = rawTask.refsynMeta;
-  if (
-    meta === undefined ||
-    typeof rawTask.signature?.returnType !== "string" ||
-    !rawTask.signature.returnType.startsWith("Ref[") ||
-    meta.pointerFields.length !== 1
-  ) {
-    return false;
-  }
-
-  const pointerSlot = 2 + meta.valueFields.length;
-  return (rawTask.examples ?? []).every((example) => {
-    const [input, output] = example;
-    const startRef = input?.[0]?.ref;
-    const pointerHeap = input?.[pointerSlot];
-    const expectedTail = output?.ref;
-    if (!Array.isArray(input) || !Array.isArray(pointerHeap)) {
-      return false;
-    }
-    if (!Number.isInteger(startRef) || !Number.isInteger(expectedTail)) {
-      return false;
-    }
-    return computeTailRef(pointerHeap, startRef) === expectedTail;
-  });
-};
-
-const prefilledLastPtrOutcome = (rawTask) => {
-  const meta = rawTask.refsynMeta;
-  const pointerField = meta.pointerFields[0] ?? "next";
-  const nextHeapName = meta.fieldHeapNames?.[pointerField] ?? "nextHeap";
-  const params = (meta.explicitArgs ?? [])
-    .map((arg, index) => resolveParamName(arg.name, index))
-    .join(", ");
-  const nextExpr = fieldAccess("this", pointerField);
-  return {
-    name: rawTask.name ?? "synthesized",
-    success: true,
-    rendered: `last_ptr(@${meta.thisRefName}, @${nextHeapName})`,
-    error: null,
-    compiled_js: `${meta.jsMethodName}(${params}) { return (${nextExpr} === null) ? this : (${nextExpr}).${meta.jsMethodName}(); }`,
-  };
-};
-
 export const runRefsynTasks = (rawTasks, options = {}) => {
   const maxCost = options.maxCost ?? parseEnvInt("ESCHER_TS_MAX_COST", defaultMaxCost);
   const timeoutMs =
@@ -495,10 +429,6 @@ export const runRefsynTasks = (rawTasks, options = {}) => {
   return rawTasks.map((rawTask) => {
     const taskName = rawTask.name ?? "synthesized";
     try {
-      if (taskMatchesLastPtr(rawTask)) {
-        return prefilledLastPtrOutcome(rawTask);
-      }
-
       const spec = parseJsonSynthesisSpec(JSON.stringify(rawTask));
       const job = prepareJsonSynthesisJob(spec);
       const synth = new AscendRecSynthesizer({
