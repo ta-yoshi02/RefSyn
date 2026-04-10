@@ -1,4 +1,8 @@
-import { runRefsynTasks, type RefsynRunOutcome, type RefsynTaskSpec } from "../../../external/escher-ts/src/refsyn.ts";
+import {
+  applyRefsynTaskOutcomes,
+  runRefsynTasks,
+  type RefsynTaskSpec,
+} from "../../../runtime/refsyn-escher-adapter.mjs";
 
 export interface BrowserSynthesisOptions {
   trace?: boolean;
@@ -34,7 +38,6 @@ export interface SynthesisResponse {
 export interface BrowserSynthesisArtifacts {
   response: SynthesisResponse;
   task_json?: string | null;
-  spec_json?: string | null;
   warnings?: string[];
 }
 
@@ -65,45 +68,6 @@ const appendWarnings = (response: SynthesisResponse, warnings: string[] = []): v
     : text;
 };
 
-const applyTaskOutcomes = (
-  response: SynthesisResponse,
-  outcomes: readonly RefsynRunOutcome[],
-): void => {
-  const existing = response.escher_results ?? [];
-  const merged: EscherResult[] = [...existing];
-
-  for (const outcome of outcomes) {
-    merged.push({
-      name: outcome.name,
-      success: outcome.success,
-      rendered: outcome.rendered,
-      error: outcome.error,
-    });
-
-    if (typeof outcome.compiled_js === "string" && outcome.compiled_js.length > 0) {
-      response.code.push(outcome.compiled_js);
-      response.individual_codes.push(`${outcome.name}: ${outcome.compiled_js}`);
-      continue;
-    }
-
-    if (typeof outcome.error === "string" && outcome.error.length > 0) {
-      response.individual_codes.push(`${outcome.name}: ERROR ${outcome.error}`);
-      continue;
-    }
-
-    if (typeof outcome.rendered === "string" && outcome.rendered.length > 0) {
-      response.individual_codes.push(
-        `${outcome.name}: ERROR compiled_js missing for rendered term ${outcome.rendered}`,
-      );
-      continue;
-    }
-
-    response.individual_codes.push(`${outcome.name}: no output`);
-  }
-
-  response.escher_results = merged;
-};
-
 export const completeBrowserSynthesis = async (
   artifacts: BrowserSynthesisArtifacts,
   options: BrowserSynthesisOptions = {},
@@ -122,7 +86,7 @@ export const completeBrowserSynthesis = async (
     timeoutMs: options.timeoutMs ?? defaultOptions.timeoutMs,
     searchSizeFactor: options.searchSizeFactor ?? defaultOptions.searchSizeFactor,
   });
-  applyTaskOutcomes(response, outcomes);
+  applyRefsynTaskOutcomes(response, outcomes);
   return response;
 };
 

@@ -1,6 +1,6 @@
 # RefSyn Test Suite (Current)
 
-This project now focuses on the Kanon → Escher-Scala bridge and the supporting
+This project now focuses on the Kanon → escher-ts task bridge and the supporting
 graph tooling. The remaining tests exercise only those components. Run the full
 suite with `cargo test`.
 

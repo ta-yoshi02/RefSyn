@@ -136,11 +136,10 @@ POST http://127.0.0.1:3030/synthesize
    - 差異点の詳細
    - 各差異点でのList環境
 
-## Escher backend 連携
+## escher-ts 連携
 
-- 既定 backend は `escher-ts`（`ESCHER_BACKEND=ts`）。差分から作った native task JSON をその場で合成する。
-- ラッパー `scripts/run_escher.js` が JSON を stdin/`--file` から受け取り、`escher_results` として `name/success/rendered/error` を返す。内部では `compiled_js` も返し、Rust 側はそれを `individual_codes` / `composed_method_code` 生成に使う。
-- `ESCHER_BACKEND=scala` を指定すると `scripts/run_escher_scala.js` 経由で legacy Scala.js backend を使える。
+- 差分から作った native task JSON を `escher-ts` に渡してその場で合成する。
+- ラッパー `scripts/run_escher.js` が JSON を stdin/`--file` から受け取り、`runtime/refsyn-escher-adapter.mjs` を通して `escher_results` として `name/success/rendered/error` を返す。`compiled_js` も同じ adapter が生成し、native / browser の両経路で同じ規則で採用する。
 - 独自のランナーパスを使う場合は環境変数 `ESCHER_JS_RUNNER` で `scripts/run_escher.js` の場所を上書きする。
 
 ## 使用例

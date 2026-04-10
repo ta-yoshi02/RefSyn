@@ -105,7 +105,10 @@ async fn synthesize_core_matches_handle_for_single_trace_response() {
     let http = run_handle(&request).await;
 
     assert_eq!(core.response.common_pattern, http.common_pattern);
-    assert_eq!(core.response.composed_method_code, http.composed_method_code);
+    assert_eq!(
+        core.response.composed_method_code,
+        http.composed_method_code
+    );
     let core_info = core
         .response
         .list_environment_info
@@ -120,7 +123,8 @@ async fn synthesize_core_matches_handle_for_single_trace_response() {
     assert!(core_info.contains("3 objects tracked"));
     assert!(http_info.contains("3 objects tracked"));
     assert_eq!(
-        serde_json::to_value(&core.response.operation_analysis).expect("core analysis should serialize"),
+        serde_json::to_value(&core.response.operation_analysis)
+            .expect("core analysis should serialize"),
         serde_json::to_value(&http.operation_analysis).expect("http analysis should serialize"),
     );
     assert!(core.task_json.is_none());
@@ -157,7 +161,7 @@ fn synthesize_core_produces_browser_artifacts_for_multi_trace_requests() {
     let artifacts = synthesize_core(request, SynthesisCoreOptions::default())
         .expect("multi-trace core synthesis should succeed");
 
-    assert!(artifacts.task_json.is_some() || artifacts.spec_json.is_some());
+    assert!(artifacts.task_json.is_some());
     assert!(artifacts.response.list_environment_info.is_some());
     assert!(artifacts.response.operation_analysis.is_some());
 }

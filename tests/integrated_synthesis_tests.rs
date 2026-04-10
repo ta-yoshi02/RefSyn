@@ -192,8 +192,8 @@ async fn run_synthesis_and_decode(request: SynthesisRequest) -> (StatusCode, Syn
     (status, parsed)
 }
 
-fn extract_escher_spec_path(summary: &str) -> Option<String> {
-    let marker = "Escher JSON saved:";
+fn extract_task_json_path(summary: &str) -> Option<String> {
+    let marker = "escher-ts task JSON saved:";
     let start = summary.find(marker)?;
     let after = summary[start + marker.len()..].trim();
     let first = after.split(',').next()?.trim();
@@ -923,15 +923,14 @@ async fn test_integrated_synthesis_three_append_like_specs_group_holes() {
     let list_info = response
         .list_environment_info
         .expect("list environment info should be present");
-    let spec_path =
-        extract_escher_spec_path(&list_info).expect("escher json path should be reported");
-    let spec_json_text =
-        fs::read_to_string(&spec_path).expect("generated escher json should be readable");
+    let spec_path = extract_task_json_path(&list_info).expect("task json path should be reported");
+    let task_json_text =
+        fs::read_to_string(&spec_path).expect("generated task json should be readable");
     let specs: serde_json::Value =
-        serde_json::from_str(&spec_json_text).expect("generated escher json should parse");
+        serde_json::from_str(&task_json_text).expect("generated task json should parse");
     let spec_list = specs
         .as_array()
-        .expect("generated escher json should be an array of specs");
+        .expect("generated task json should be an array of task specs");
     assert!(
         spec_list.len() >= 2,
         "append-like 3 traces should produce at least two grouped hole specs"
@@ -979,6 +978,22 @@ async fn test_integrated_synthesis_three_append_like_specs_group_holes() {
             }
         }
     }
+
+    let ptr_helper = response
+        .code
+        .iter()
+        .find(|code| code.contains("append_h("))
+        .expect("Ptr helper JS should be present");
+    assert!(
+        ptr_helper.contains(".append_h()"),
+        "append_h should tail-recurse instead of hard-coding a fixed hop count: {}",
+        ptr_helper
+    );
+    assert!(
+        !ptr_helper.contains(".next).next"),
+        "append_h should not underfit to a two-hop pattern: {}",
+        ptr_helper
+    );
 }
 
 #[tokio::test]
@@ -1130,15 +1145,14 @@ async fn test_integrated_synthesis_insert_groups_value_and_edge_source_holes() {
     let list_info = response
         .list_environment_info
         .expect("list environment info should be present");
-    let spec_path =
-        extract_escher_spec_path(&list_info).expect("escher json path should be reported");
-    let spec_json_text =
-        fs::read_to_string(&spec_path).expect("generated escher json should be readable");
+    let spec_path = extract_task_json_path(&list_info).expect("task json path should be reported");
+    let task_json_text =
+        fs::read_to_string(&spec_path).expect("generated task json should be readable");
     let specs: serde_json::Value =
-        serde_json::from_str(&spec_json_text).expect("generated escher json should parse");
+        serde_json::from_str(&task_json_text).expect("generated task json should parse");
     let spec_list = specs
         .as_array()
-        .expect("generated escher json should be an array of specs");
+        .expect("generated task json should be an array of task specs");
 
     let mut has_ptr = false;
     let mut has_int = false;
@@ -1361,15 +1375,14 @@ async fn test_integrated_synthesis_insert_three_traces_keep_ts_ptr_components_an
     let list_info = response
         .list_environment_info
         .expect("list environment info should be present");
-    let spec_path =
-        extract_escher_spec_path(&list_info).expect("escher json path should be reported");
-    let spec_json_text =
-        fs::read_to_string(&spec_path).expect("generated escher json should be readable");
+    let spec_path = extract_task_json_path(&list_info).expect("task json path should be reported");
+    let task_json_text =
+        fs::read_to_string(&spec_path).expect("generated task json should be readable");
     let specs: Value =
-        serde_json::from_str(&spec_json_text).expect("generated escher json should parse");
+        serde_json::from_str(&task_json_text).expect("generated task json should parse");
     let spec_list = specs
         .as_array()
-        .expect("generated escher json should be an array of specs");
+        .expect("generated task json should be an array of task specs");
 
     let ptr_spec = spec_list
         .iter()
@@ -1380,6 +1393,10 @@ async fn test_integrated_synthesis_insert_three_traces_keep_ts_ptr_components_an
     assert!(
         component_names.contains(&"nthNextRef"),
         "Ptr grouped task should retain nthNextRef"
+    );
+    assert!(
+        component_names.contains(&"last_ptr"),
+        "Ptr grouped task should retain last_ptr"
     );
     assert!(
         component_names.contains(&"findByValueRef"),

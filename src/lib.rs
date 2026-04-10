@@ -1,7 +1,6 @@
 pub mod env;
 pub mod error;
 pub mod escher_bridge;
-pub mod escher_js;
 pub mod isomorphism;
 pub mod list_env;
 pub mod models;
@@ -12,17 +11,11 @@ pub mod unify_ops;
 
 use crate::escher_bridge::{
     build_escher_spec, build_escher_task_spec, derive_spec_meta_with_fields, resolve_field_order,
-    specs_to_json, tasks_to_json, EscherCase, EscherJsInternalOutcome, EscherJsOutcome,
-    EscherSpec, EscherSpecMeta, ExampleJson,
+    tasks_to_json, EscherCase, EscherJsInternalOutcome, EscherJsOutcome, EscherSpec,
+    EscherSpecMeta, ExampleJson,
 };
 #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
-use crate::escher_bridge::EscherBackend;
-#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
-use crate::escher_js::{build_context_from_spec, translate_rendered_method};
-#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
-use crate::{
-    escher_bridge::{resolve_escher_backend, run_escher_js, write_spec_to_file},
-};
+use crate::escher_bridge::{run_escher_js, write_spec_to_file};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -100,14 +93,8 @@ pub struct SynthesisArtifacts {
     pub response: SynthesisResponse,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub task_json: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub spec_json: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub warnings: Vec<String>,
-    #[serde(skip_serializing)]
-    aggregated_specs: Vec<EscherSpec>,
-    #[serde(skip_serializing)]
-    spec_meta_by_name: HashMap<String, EscherSpecMeta>,
     #[serde(skip_serializing)]
     spec_base_name: Option<String>,
     #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
@@ -124,10 +111,7 @@ impl SynthesisArtifacts {
         Self {
             response,
             task_json: None,
-            spec_json: None,
             warnings: Vec::new(),
-            aggregated_specs: Vec::new(),
-            spec_meta_by_name: HashMap::new(),
             spec_base_name: None,
             #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
             http_status: _http_status,
@@ -214,10 +198,8 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         Ok(artifacts) => artifacts,
         Err(err) => {
             eprintln!("Synthesis failed: {}", err);
-            let response = blank_synthesis_response(Some(format!(
-                "internal synthesis error: {}",
-                err
-            )));
+            let response =
+                blank_synthesis_response(Some(format!("internal synthesis error: {}", err)));
             return Ok(warp::reply::with_status(
                 warp::reply::json(&response),
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -241,7 +223,9 @@ pub fn synthesize_core(
 
     if req.method_calls.is_empty() {
         println!("No method calls provided in the request.");
-        return Ok(SynthesisArtifacts::from_response(blank_synthesis_response(None)));
+        return Ok(SynthesisArtifacts::from_response(blank_synthesis_response(
+            None,
+        )));
     }
 
     let unique_method_names = collect_unique_method_names(&req.method_calls);
@@ -481,7 +465,6 @@ pub fn synthesize_core(
     let mut escher_outcomes: Option<Vec<EscherJsOutcome>> = None;
     let mut individual_codes: Vec<String> = Vec::new();
     let mut task_json: Option<String> = None;
-    let mut spec_json: Option<String> = None;
     let mut backend_preflight_failures: Vec<EscherJsInternalOutcome> = Vec::new();
     let mut warnings: Vec<String> = Vec::new();
 
@@ -859,15 +842,6 @@ pub fn synthesize_core(
     }
 
     if !aggregated_specs.is_empty() {
-        match specs_to_json(&aggregated_specs) {
-            Ok(json_text) => {
-                if trace_enabled() {
-                    println!("TRACE: Escher Scala JSON:\n{}", json_text);
-                }
-                spec_json = Some(json_text);
-            }
-            Err(err) => warnings.push(format!("Failed to serialize Scala specs: {}", err)),
-        }
         let mut tasks = Vec::new();
         for spec in &aggregated_specs {
             let Some(meta) = spec_meta_by_name.get(&spec.name) else {
@@ -942,10 +916,7 @@ pub fn synthesize_core(
 
     let mut artifacts = SynthesisArtifacts::from_response(response);
     artifacts.task_json = task_json;
-    artifacts.spec_json = spec_json;
     artifacts.warnings = warnings;
-    artifacts.aggregated_specs = aggregated_specs;
-    artifacts.spec_meta_by_name = spec_meta_by_name;
     artifacts.spec_base_name = Some(spec_base_name);
 
     Ok(artifacts)
@@ -1040,95 +1011,29 @@ fn log_synthesis_response(response: &SynthesisResponse) {
 }
 
 #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
-fn apply_escher_results(
-    artifacts: &mut SynthesisArtifacts,
-    backend: EscherBackend,
-    results: &[EscherJsInternalOutcome],
-) {
-    let spec_by_name: HashMap<String, EscherSpec> = artifacts
-        .aggregated_specs
-        .iter()
-        .map(|spec| (spec.name.clone(), spec.clone()))
-        .collect();
-
+fn apply_escher_results(artifacts: &mut SynthesisArtifacts, results: &[EscherJsInternalOutcome]) {
     for out in results {
-        match backend {
-            EscherBackend::Scala => {
-                if let Some(rendered) = &out.rendered {
-                    match (
-                        spec_by_name.get(&out.name),
-                        artifacts.spec_meta_by_name.get(&out.name),
-                    ) {
-                        (Some(spec), Some(meta)) => {
-                            match build_context_from_spec(&out.name, spec, meta) {
-                                Ok((ctx, params_js)) => {
-                                    match translate_rendered_method(rendered, &params_js, &ctx) {
-                                        Ok(js) => {
-                                            artifacts.response.code.push(js.clone());
-                                            artifacts
-                                                .response
-                                                .individual_codes
-                                                .push(format!("{}: {}", out.name, js));
-                                        }
-                                        Err(err) => {
-                                            artifacts
-                                                .response
-                                                .individual_codes
-                                                .push(format!("{}: ERROR {}", out.name, err));
-                                        }
-                                    }
-                                }
-                                Err(err) => {
-                                    artifacts
-                                        .response
-                                        .individual_codes
-                                        .push(format!("{}: ERROR {}", out.name, err));
-                                }
-                            }
-                        }
-                        _ => {
-                            artifacts
-                                .response
-                                .individual_codes
-                                .push(format!("{}: ERROR missing spec metadata", out.name));
-                        }
-                    }
-                } else if let Some(err) = &out.error {
-                    artifacts
-                        .response
-                        .individual_codes
-                        .push(format!("{}: ERROR {}", out.name, err));
-                } else {
-                    artifacts
-                        .response
-                        .individual_codes
-                        .push(format!("{}: no output", out.name));
-                }
-            }
-            EscherBackend::Ts => {
-                if let Some(js) = &out.compiled_js {
-                    artifacts.response.code.push(js.clone());
-                    artifacts
-                        .response
-                        .individual_codes
-                        .push(format!("{}: {}", out.name, js));
-                } else if let Some(err) = &out.error {
-                    artifacts
-                        .response
-                        .individual_codes
-                        .push(format!("{}: ERROR {}", out.name, err));
-                } else if let Some(rendered) = &out.rendered {
-                    artifacts.response.individual_codes.push(format!(
-                        "{}: ERROR compiled_js missing for rendered term {}",
-                        out.name, rendered
-                    ));
-                } else {
-                    artifacts
-                        .response
-                        .individual_codes
-                        .push(format!("{}: no output", out.name));
-                }
-            }
+        if let Some(js) = out.compiled_js.as_ref().filter(|js| !js.is_empty()) {
+            artifacts.response.code.push(js.clone());
+            artifacts
+                .response
+                .individual_codes
+                .push(format!("{}: {}", out.name, js));
+        } else if let Some(err) = &out.error {
+            artifacts
+                .response
+                .individual_codes
+                .push(format!("{}: ERROR {}", out.name, err));
+        } else if let Some(rendered) = &out.rendered {
+            artifacts.response.individual_codes.push(format!(
+                "{}: ERROR compiled_js missing for rendered term {}",
+                out.name, rendered
+            ));
+        } else {
+            artifacts
+                .response
+                .individual_codes
+                .push(format!("{}: no output", out.name));
         }
     }
 
@@ -1144,24 +1049,7 @@ fn finalize_native_synthesis(artifacts: &mut SynthesisArtifacts) {
         append_list_env_info(&mut artifacts.response.list_environment_info, warning);
     }
 
-    let backend = match resolve_escher_backend() {
-        Ok(backend) => backend,
-        Err(err) => {
-            eprintln!("{}", err);
-            append_list_env_info(
-                &mut artifacts.response.list_environment_info,
-                format!("Escher backend warning: {}", err),
-            );
-            EscherBackend::Ts
-        }
-    };
-
-    let selected_json = match backend {
-        EscherBackend::Scala => artifacts.spec_json.as_ref(),
-        EscherBackend::Ts => artifacts.task_json.as_ref(),
-    };
-
-    let Some(json_text) = selected_json else {
+    let Some(task_json) = artifacts.task_json.as_ref() else {
         return;
     };
 
@@ -1173,26 +1061,24 @@ fn finalize_native_synthesis(artifacts: &mut SynthesisArtifacts) {
         .spec_base_name
         .as_deref()
         .unwrap_or("refsyn-synthesis");
-    let out_path = format!("target/escher/{}/{}_{}.json", backend.as_str(), base_name, ts);
-    match write_spec_to_file(&out_path, json_text) {
+    let out_path = format!("target/escher/ts/{}_{}.json", base_name, ts);
+    match write_spec_to_file(&out_path, task_json) {
         Ok(()) => append_list_env_info(
             &mut artifacts.response.list_environment_info,
-            format!("Escher JSON saved: {}", out_path),
+            format!("escher-ts task JSON saved: {}", out_path),
         ),
-        Err(err) => eprintln!("Failed to write aggregated Escher spec: {}", err),
+        Err(err) => eprintln!("Failed to write escher-ts task JSON: {}", err),
     }
 
-    match run_escher_js(json_text) {
+    match run_escher_js(task_json) {
         Ok(results) => {
             let success_count = results.iter().filter(|result| result.success).count();
             let failure_count = results.len().saturating_sub(success_count);
             println!(
-                "Escher JS synthesis completed (backend={}, {} success / {} failure)",
-                backend.as_str(),
-                success_count,
-                failure_count
+                "escher-ts synthesis completed ({} success / {} failure)",
+                success_count, failure_count
             );
-            apply_escher_results(artifacts, backend, &results);
+            apply_escher_results(artifacts, &results);
         }
         Err(err) => eprintln!("Escher JS synthesis failed: {}", err),
     }
@@ -9926,5 +9812,55 @@ mod tests {
 
         assert!(artifact.composed_method_code.is_none());
         assert_eq!(specs.len(), 1);
+    }
+
+    #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+    #[test]
+    fn apply_escher_results_ts_uses_compiled_js_output() {
+        let mut artifacts = SynthesisArtifacts::from_response(blank_synthesis_response(None));
+        let outcomes = vec![EscherJsInternalOutcome {
+            name: "append-f".to_string(),
+            success: true,
+            rendered: Some(
+                "append-f(@thisRef: Ref[Object<Node>]): Ref[Object<Node>] = @thisRef".to_string(),
+            ),
+            error: None,
+            compiled_js: Some("append_f() { return this; }".to_string()),
+        }];
+
+        apply_escher_results(&mut artifacts, &outcomes);
+
+        assert_eq!(artifacts.response.code, vec!["append_f() { return this; }"]);
+        assert_eq!(
+            artifacts.response.individual_codes,
+            vec!["append-f: append_f() { return this; }"]
+        );
+        assert_eq!(
+            artifacts.response.escher_results.as_ref().map(Vec::len),
+            Some(1)
+        );
+    }
+
+    #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+    #[test]
+    fn apply_escher_results_ts_reports_missing_compiled_js() {
+        let mut artifacts = SynthesisArtifacts::from_response(blank_synthesis_response(None));
+        let outcomes = vec![EscherJsInternalOutcome {
+            name: "append-f".to_string(),
+            success: true,
+            rendered: Some(
+                "append-f(@thisRef: Ref[Object<Node>]): Ref[Object<Node>] = @thisRef".to_string(),
+            ),
+            error: None,
+            compiled_js: None,
+        }];
+
+        apply_escher_results(&mut artifacts, &outcomes);
+
+        assert!(artifacts.response.code.is_empty());
+        assert_eq!(
+            artifacts.response.individual_codes,
+            vec!["append-f: ERROR compiled_js missing for rendered term append-f(@thisRef: Ref[Object<Node>]): Ref[Object<Node>] = @thisRef"]
+        );
     }
 }

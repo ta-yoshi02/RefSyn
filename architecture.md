@@ -5,12 +5,13 @@ RefSynは、Kanonの操作ログから主問題と部分問題を抽出し、既
 ## Runtime Split (2026-03)
 
 - **Rust core (`synthesize_core`)**:
-  - `SynthesisRequest` を受け、`SynthesisResponse` の骨格と `escher-ts` 用 task JSON / Scala spec JSON を返す。
+  - `SynthesisRequest` を受け、`SynthesisResponse` の骨格と `escher-ts` 用 task JSON を返す。
   - HTTP、ファイル出力、Node subprocess、環境変数読み取りはここに入れない。
 - **Native server adapter (`handle_synthesis`)**:
-  - HTTP payload を decode し、`synthesize_core` の返した task/spec JSON をファイルへ保存し、必要なら `scripts/run_escher.js` を起動して `response.code` / `escher_results` を埋める。
+  - HTTP payload を decode し、`synthesize_core` の返した task JSON をファイルへ保存し、`scripts/run_escher.js` を起動して `response.code` / `escher_results` を埋める。
+  - postprocess は browser runtime と同じ `runtime/refsyn-escher-adapter.mjs` を使い、`compiled_js` をそのまま採用する。
 - **Browser worker runtime**:
-  - `synthesize_browser` wasm export で Rust core を呼び、返った task JSON を `escher-ts` の `runRefsynTasks` へ直接渡す。
+  - `synthesize_browser` wasm export で Rust core を呼び、返った task JSON を `runtime/refsyn-escher-adapter.mjs` へ渡す。
   - 合成は Web Worker 内で完結させ、main thread は UI 更新だけを担当する。
 
 ```mermaid
@@ -38,7 +39,7 @@ flowchart TB
     Diff -. 差分境界 .-> Shape
     Shape --> S_in["部分問題のPBE仕様（入力）×M"]
 
-    S_in --> Synth["既存PBE合成器（Escher-Scala）"]
+    S_in --> Synth["PBE合成器（escher-ts）"]
     D_out --> Synth
     Synth --> R["部分問題の解×M"]
     R --> Final["最終プログラム"]
@@ -51,7 +52,7 @@ flowchart TB
 2. **操作表現**: 操作列を操作グラフとして表現する。
 3. **差分解析**: 各仕様の操作グラフ(N個)のunificationにより共通部分と差異部分に分ける。(N個の仕様についてM種類の差異部分が出てくる)
 4. **入力整形**: 1で受け取ったKanonの初期環境に、差異部分までの操作(操作列には順序がついているので確定する)を加えた環境をInt/List[Int]/List[Ptr]/Ptrで表現し、`__Variable-<name>` の参照先を引数（`Int`/`Ptr`）として扱う。
-4. **部分問題合成**: 4で整形された環境を入力、3で得た差異部分のobjectのindexを出力として、入出力例による部分合成問題を既存の合成器(Escher-Scala)を使って解く。
+4. **部分問題合成**: 4で整形された環境を入力、3で得た差異部分のobjectのindexを出力として、入出力例による部分合成問題を `escher-ts` で解く。
 5. **最終出力**: 得られた部分問題の解が何であるかを解釈し、共通部分から得られるプログラムの雛形と合わせて主問題の解を構成する。
 
 このパイプラインにより、ユーザ操作から高水準なプログラムを合成できる。

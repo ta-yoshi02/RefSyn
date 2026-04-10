@@ -1,8 +1,8 @@
-//! Escher bridge: build legacy specs and native escher-ts tasks from Kanon environments
+//! Escher bridge: build intermediate specs and native escher-ts tasks from Kanon environments
 //!
 //! This module converts ListEnvironment snapshots (built from Kanon VisGraph + operations)
 //! into either:
-//! - legacy Escher-Scala-compatible JSON specs
+//! - intermediate grouped specs
 //! - native escher-ts task JSON
 //!
 //! It supports:
@@ -62,38 +62,6 @@ pub struct EscherSpecMeta {
     pub receiver_arg_index: Option<usize>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EscherBackend {
-    Ts,
-    Scala,
-}
-
-impl EscherBackend {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            EscherBackend::Ts => "ts",
-            EscherBackend::Scala => "scala",
-        }
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-pub fn resolve_escher_backend() -> Result<EscherBackend> {
-    match std::env::var("ESCHER_BACKEND")
-        .unwrap_or_else(|_| "ts".to_string())
-        .trim()
-        .to_ascii_lowercase()
-        .as_str()
-    {
-        "" | "ts" => Ok(EscherBackend::Ts),
-        "scala" => Ok(EscherBackend::Scala),
-        other => Err(anyhow!(
-            "Unsupported ESCHER_BACKEND='{}'. Expected 'ts' or 'scala'.",
-            other
-        )),
-    }
-}
-
 #[derive(Serialize, Debug, Clone)]
 pub struct EscherTaskSpec {
     pub name: String,
@@ -151,6 +119,14 @@ pub struct EscherTaskComponentSpec {
     pub kind: String,
     #[serde(skip_serializing_if = "Option::is_none", rename = "ref")]
     pub ref_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "inputTypes")]
+    pub input_types: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "returnType")]
+    pub return_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub args: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "bodyJs")]
+    pub body_js: Option<String>,
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -182,7 +158,7 @@ pub struct EscherTaskMetaArg {
     pub task_type: String,
 }
 
-/// Build legacy Escher-Scala tests.json content from cases.
+/// Build an intermediate grouped spec from cases.
 /// - `name`: synthesized function name
 /// - `return_type`: Escher type string (e.g., "Int", "List[Int]")
 pub fn build_escher_spec(
@@ -205,7 +181,7 @@ pub fn build_escher_spec(
         input_types.push("List[Int]".to_string());
     }
     for _ in &sorted_pointer_fields {
-        // Pointer fields are typed as List[Ptr] on Escher-Scala side
+        // Pointer fields are represented as List[Ptr] in the intermediate spec.
         input_types.push("List[Ptr]".to_string());
     }
 
@@ -637,10 +613,6 @@ fn build_pointer_index_list(env: &ListEnvironment, bfs: &BfsOrder, field: &str) 
     result
 }
 
-pub fn specs_to_json(specs: &[EscherSpec]) -> Result<String> {
-    Ok(serde_json::to_string_pretty(specs)?)
-}
-
 pub fn tasks_to_json(tasks: &[EscherTaskSpec]) -> Result<String> {
     Ok(serde_json::to_string_pretty(tasks)?)
 }
@@ -711,9 +683,9 @@ fn resolve_escher_js_max_old_space_mb() -> Result<usize> {
     parse_escher_js_max_old_space_mb(std::env::var("ESCHER_JS_MAX_OLD_SPACE_MB").ok().as_deref())
 }
 
-/// Invoke the configured Escher backend via Node and parse normalized results.
+/// Invoke the configured escher-ts runner via Node and parse normalized results.
 #[cfg(not(target_arch = "wasm32"))]
-pub fn run_escher_js(spec_json: &str) -> Result<Vec<EscherJsInternalOutcome>> {
+pub fn run_escher_js(task_json: &str) -> Result<Vec<EscherJsInternalOutcome>> {
     let default_runner = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("scripts")
         .join("run_escher.js");
@@ -747,7 +719,7 @@ pub fn run_escher_js(spec_json: &str) -> Result<Vec<EscherJsInternalOutcome>> {
             .stdin
             .as_mut()
             .ok_or_else(|| anyhow!("Failed to open stdin for Node runner"))?;
-        stdin.write_all(spec_json.as_bytes())?;
+        stdin.write_all(task_json.as_bytes())?;
     }
 
     let output = child.wait_with_output()?;
@@ -767,12 +739,6 @@ pub fn run_escher_js(spec_json: &str) -> Result<Vec<EscherJsInternalOutcome>> {
 
     let outcomes: Vec<EscherJsInternalOutcome> = serde_json::from_str(trimmed)?;
     Ok(outcomes)
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-pub fn run_escher_js_from_specs(specs: &[EscherSpec]) -> Result<Vec<EscherJsInternalOutcome>> {
-    let json_text = specs_to_json(specs)?;
-    run_escher_js(&json_text)
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -1097,21 +1063,11 @@ fn default_task_components(
 ) -> Vec<EscherTaskComponentSpec> {
     let mut components = Vec::new();
     let mut seen = HashSet::new();
-    let mut push_library = |name: &str| {
-        if seen.insert(name.to_string()) {
-            components.push(EscherTaskComponentSpec {
-                name: name.to_string(),
-                kind: "libraryRef".to_string(),
-                ref_name: Some(name.to_string()),
-            });
-        }
-    };
-
-    push_library("isNull");
-    push_library("equal");
-    push_library("and");
-    push_library("or");
-    push_library("not");
+    push_library_component(&mut components, &mut seen, "isNull");
+    push_library_component(&mut components, &mut seen, "equal");
+    push_library_component(&mut components, &mut seen, "and");
+    push_library_component(&mut components, &mut seen, "or");
+    push_library_component(&mut components, &mut seen, "not");
 
     let needs_int_components = spec.return_type == "Int"
         || spec
@@ -1121,22 +1077,173 @@ fn default_task_components(
             .any(|ty| ty == "Int")
         || !meta.value_fields.is_empty();
     if needs_int_components {
-        push_library("isZero");
-        push_library("isNonNeg");
-        push_library("zero");
-        push_library("inc");
-        push_library("dec");
+        push_library_component(&mut components, &mut seen, "isZero");
+        push_library_component(&mut components, &mut seen, "isNonNeg");
+        push_library_component(&mut components, &mut seen, "zero");
+        push_library_component(&mut components, &mut seen, "inc");
+        push_library_component(&mut components, &mut seen, "dec");
     }
 
     if spec.return_type == "Ptr" && meta.pointer_fields.len() == 1 {
-        push_library("nthNextRef");
+        let last_ptr = last_ptr_component_spec("Node");
+        if seen.insert(last_ptr.name.clone()) {
+            components.push(last_ptr);
+        }
+        let nth_next_ref = nth_next_ref_component_spec("Node");
+        if seen.insert(nth_next_ref.name.clone()) {
+            components.push(nth_next_ref);
+        }
     }
 
     if spec.return_type == "Ptr" && meta.pointer_fields.len() == 1 && meta.value_fields.len() == 1 {
-        push_library("findByValueRef");
+        let find_by_value_ref = find_by_value_ref_component_spec("Node");
+        if seen.insert(find_by_value_ref.name.clone()) {
+            components.push(find_by_value_ref);
+        }
     }
 
     components
+}
+
+fn push_library_component(
+    components: &mut Vec<EscherTaskComponentSpec>,
+    seen: &mut HashSet<String>,
+    name: &str,
+) {
+    if seen.insert(name.to_string()) {
+        components.push(EscherTaskComponentSpec {
+            name: name.to_string(),
+            kind: "libraryRef".to_string(),
+            ref_name: Some(name.to_string()),
+            input_types: None,
+            return_type: None,
+            args: None,
+            body_js: None,
+        });
+    }
+}
+
+fn last_ptr_component_spec(class_name: &str) -> EscherTaskComponentSpec {
+    let object_type = format!("Object[{}]", class_name);
+    let ref_type = format!("Ref[{}]", object_type);
+    EscherTaskComponentSpec {
+        name: "last_ptr".to_string(),
+        kind: "js".to_string(),
+        ref_name: None,
+        input_types: Some(vec![ref_type.clone(), format!("List[{}]", object_type)]),
+        return_type: Some(ref_type),
+        args: Some(vec!["start".to_string(), "nextHeap".to_string()]),
+        body_js: Some(
+            [
+                "if (!start || typeof start !== 'object' || typeof start.ref !== 'number' || !Array.isArray(nextHeap)) return 'error';",
+                "let current = start.ref;",
+                "if (current === -1) return { ref: -1 };",
+                "const seen = new Set();",
+                "while (current !== -1) {",
+                "  if (!Number.isInteger(current) || current < 0 || current >= nextHeap.length) return 'error';",
+                "  if (seen.has(current)) return 'error';",
+                "  seen.add(current);",
+                "  const next = nextHeap[current];",
+                "  if (!next || typeof next !== 'object' || typeof next.ref !== 'number') return 'error';",
+                "  if (next.ref === -1) return { ref: current };",
+                "  current = next.ref;",
+                "}",
+                "return { ref: -1 };",
+            ]
+            .join(" "),
+        ),
+    }
+}
+
+fn nth_next_ref_component_spec(class_name: &str) -> EscherTaskComponentSpec {
+    let object_type = format!("Object[{}]", class_name);
+    let ref_type = format!("Ref[{}]", object_type);
+    EscherTaskComponentSpec {
+        name: "nthNextRef".to_string(),
+        kind: "js".to_string(),
+        ref_name: None,
+        input_types: Some(vec![
+            ref_type.clone(),
+            format!("List[{}]", object_type),
+            format!("List[{}]", ref_type),
+            "Int".to_string(),
+        ]),
+        return_type: Some(ref_type),
+        args: Some(vec![
+            "start".to_string(),
+            "nodeHeap".to_string(),
+            "nextHeap".to_string(),
+            "steps".to_string(),
+        ]),
+        body_js: Some(
+            [
+                "if (!start || typeof start !== 'object' || typeof start.ref !== 'number') return 'error';",
+                "if (!Array.isArray(nodeHeap) || !Array.isArray(nextHeap) || !Number.isInteger(steps) || steps < 0) return 'error';",
+                "if (start.ref === -1) return { ref: -1 };",
+                "if (start.ref < 0 || start.ref >= nodeHeap.length) return 'error';",
+                "let current = start.ref;",
+                "let remaining = steps;",
+                "while (remaining > 0) {",
+                "  if (current === -1) return { ref: -1 };",
+                "  if (!Number.isInteger(current) || current < 0 || current >= nextHeap.length) return 'error';",
+                "  const next = nextHeap[current];",
+                "  if (!next || typeof next !== 'object' || typeof next.ref !== 'number') return 'error';",
+                "  current = next.ref;",
+                "  remaining -= 1;",
+                "}",
+                "return { ref: current };",
+            ]
+            .join(" "),
+        ),
+    }
+}
+
+fn find_by_value_ref_component_spec(class_name: &str) -> EscherTaskComponentSpec {
+    let object_type = format!("Object[{}]", class_name);
+    let ref_type = format!("Ref[{}]", object_type);
+    EscherTaskComponentSpec {
+        name: "findByValueRef".to_string(),
+        kind: "js".to_string(),
+        ref_name: None,
+        input_types: Some(vec![
+            ref_type.clone(),
+            format!("List[{}]", object_type),
+            format!("List[{}]", ref_type),
+            "List[Int]".to_string(),
+            "Int".to_string(),
+        ]),
+        return_type: Some(ref_type),
+        args: Some(vec![
+            "start".to_string(),
+            "nodeHeap".to_string(),
+            "nextHeap".to_string(),
+            "valueHeap".to_string(),
+            "target".to_string(),
+        ]),
+        body_js: Some(
+            [
+                "if (!start || typeof start !== 'object' || typeof start.ref !== 'number') return 'error';",
+                "if (!Array.isArray(nodeHeap) || !Array.isArray(nextHeap) || !Array.isArray(valueHeap) || !Number.isInteger(target)) return 'error';",
+                "if (start.ref === -1) return { ref: -1 };",
+                "const seen = new Set();",
+                "let current = start.ref;",
+                "while (current !== -1) {",
+                "  if (!Number.isInteger(current) || current < 0) return 'error';",
+                "  if (seen.has(current)) return { ref: -1 };",
+                "  seen.add(current);",
+                "  if (current >= nodeHeap.length || current >= nextHeap.length || current >= valueHeap.length) return 'error';",
+                "  const currentValue = valueHeap[current];",
+                "  if (!Number.isInteger(currentValue)) return 'error';",
+                "  if (currentValue === target) return { ref: current };",
+                "  const next = nextHeap[current];",
+                "  if (!next || typeof next !== 'object' || typeof next.ref !== 'number') return 'error';",
+                "  current = next.ref;",
+                "}",
+                "return { ref: -1 };",
+            ]
+            .join(" "),
+        ),
+    }
 }
 
 fn field_to_heap_name(field: &str) -> String {
@@ -1377,11 +1484,15 @@ mod tests {
         assert!(task
             .components
             .iter()
-            .any(|component| component.name == "nthNextRef"));
+            .any(|component| component.name == "last_ptr"));
         assert!(task
             .components
             .iter()
-            .any(|component| component.name == "findByValueRef"));
+            .any(|component| component.name == "nthNextRef" && component.kind == "js"));
+        assert!(task
+            .components
+            .iter()
+            .any(|component| component.name == "findByValueRef" && component.kind == "js"));
         assert_eq!(task.signature.args.len(), 1);
         assert_eq!(task.signature.args[0].name, "delta");
         assert_eq!(task.signature.args[0].arg_type, "Int");
