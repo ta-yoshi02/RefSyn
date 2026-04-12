@@ -155,6 +155,147 @@ fn trace_json<T: serde::Serialize>(label: &str, value: &T) {
     }
 }
 
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+fn emit_synthesis_diagnostic(message: impl AsRef<str>) {
+    println!("SYNTHESIS DIAGNOSTIC: {}", message.as_ref());
+}
+
+#[cfg(not(all(feature = "server", not(target_arch = "wasm32"))))]
+fn emit_synthesis_diagnostic(_message: impl AsRef<str>) {}
+
+fn metadata_value<'a>(values: &'a [String], key: &str) -> Option<&'a str> {
+    let prefix = format!("{}=", key);
+    values.iter().find_map(|value| value.strip_prefix(&prefix))
+}
+
+fn metadata_side_is_absent(side: &str) -> bool {
+    matches!(side.trim(), "" | "<none>" | "<missing>")
+}
+
+fn parse_task_json_spec_names(task_json: &str) -> Vec<String> {
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(task_json) else {
+        return Vec::new();
+    };
+    let Some(specs) = value.as_array() else {
+        return Vec::new();
+    };
+    specs
+        .iter()
+        .filter_map(|spec| {
+            spec.get("name")
+                .and_then(serde_json::Value::as_str)
+                .map(str::to_string)
+        })
+        .collect()
+}
+
+fn code_contains_field_assignment(code: &str) -> bool {
+    code.lines().any(|line| {
+        let trimmed = line.trim();
+        !trimmed.starts_with("const ")
+            && trimmed.contains('.')
+            && trimmed.contains(" = ")
+            && !trimmed.starts_with("return ")
+    })
+}
+
+fn collect_suspicious_synthesis_diagnostics(
+    task_json: Option<&str>,
+    response: &SynthesisResponse,
+) -> Vec<String> {
+    let mut diagnostics = Vec::new();
+
+    if let Some(hole_information) = response.hole_information.as_ref() {
+        for (hole_key, values) in hole_information {
+            let spec_name = metadata_value(values, "spec").unwrap_or("<unknown>");
+            let role = metadata_value(values, "role").unwrap_or("<unknown>");
+            let side_a = metadata_value(values, "sideA").unwrap_or("<missing>");
+            let side_b = metadata_value(values, "sideB").unwrap_or("<missing>");
+            if metadata_side_is_absent(side_a)
+                && metadata_side_is_absent(side_b)
+                && matches!(role, "value" | "edge_source" | "pointer_target")
+            {
+                diagnostics.push(format!(
+                    "hole {} ({}, role={}) has no provenance context: sideA={}, sideB={}",
+                    hole_key, spec_name, role, side_a, side_b
+                ));
+            }
+        }
+    }
+
+    if let (Some(common_pattern), Some(code)) = (
+        response.common_pattern.as_deref(),
+        response.composed_method_code.as_deref(),
+    ) {
+        let has_common_edge_ops = common_pattern
+            .lines()
+            .any(|line| line.contains("addEdge(") || line.contains("editEdgeReference("));
+        if !has_common_edge_ops && code_contains_field_assignment(code) {
+            diagnostics.push(
+                "COMMON_PLAN has no edge ops but composed method still contains field assignments; code was recovered from hole metadata"
+                    .to_string(),
+            );
+        }
+    }
+
+    let task_spec_names = task_json
+        .map(parse_task_json_spec_names)
+        .unwrap_or_default();
+    if !task_spec_names.is_empty() {
+        let task_spec_set: HashSet<String> = task_spec_names.iter().cloned().collect();
+        if let Some(hole_information) = response.hole_information.as_ref() {
+            let hole_specs: HashSet<String> = hole_information
+                .values()
+                .filter_map(|values| metadata_value(values, "spec").map(str::to_string))
+                .collect();
+            let mut missing_from_task: Vec<String> =
+                hole_specs.difference(&task_spec_set).cloned().collect();
+            missing_from_task.sort();
+            if !missing_from_task.is_empty() {
+                diagnostics.push(format!(
+                    "hole bindings reference specs missing from escher-ts task JSON: {}",
+                    missing_from_task.join(", ")
+                ));
+            }
+        }
+
+        if let Some(results) = response.escher_results.as_ref() {
+            let result_names: Vec<String> =
+                results.iter().map(|result| result.name.clone()).collect();
+            let result_name_set: HashSet<String> = result_names.iter().cloned().collect();
+            let mut missing_results: Vec<String> = task_spec_names
+                .iter()
+                .filter(|name| !result_name_set.contains(*name))
+                .cloned()
+                .collect();
+            missing_results.sort();
+            if !missing_results.is_empty() {
+                diagnostics.push(format!(
+                    "escher-ts task JSON specs missing from synthesis results: {}",
+                    missing_results.join(", ")
+                ));
+            }
+            if task_spec_names.len() != results.len() {
+                diagnostics.push(format!(
+                    "escher-ts task JSON produced {} specs but synthesis returned {} results",
+                    task_spec_names.len(),
+                    results.len()
+                ));
+            }
+            let success_count = results.iter().filter(|result| result.success).count();
+            if response.code.len() != success_count {
+                diagnostics.push(format!(
+                    "compiled JS count ({}) does not match successful synthesis results ({})",
+                    response.code.len(),
+                    success_count
+                ));
+            }
+        }
+    }
+
+    diagnostics
+}
+
 // Types needed by the server module will be imported from main directly
 
 fn blank_synthesis_response(list_env_info: Option<String>) -> SynthesisResponse {
@@ -334,6 +475,15 @@ pub fn synthesize_core(
             repair_notes.join("\n")
         );
     }
+    let call_trace_debug =
+        build_call_trace_debug_report(&req.method_calls, &operations_list, &resolved_call_graphs);
+    if !call_trace_debug.summary_lines.is_empty() {
+        list_env_info = format!(
+            "{}\n\n{}",
+            list_env_info,
+            call_trace_debug.summary_lines.join("\n")
+        );
+    }
 
     println!("List Environment Summary: {}", list_env_info);
 
@@ -467,6 +617,12 @@ pub fn synthesize_core(
     let mut task_json: Option<String> = None;
     let mut backend_preflight_failures: Vec<EscherJsInternalOutcome> = Vec::new();
     let mut warnings: Vec<String> = Vec::new();
+    warnings.extend(
+        call_trace_debug
+            .warnings
+            .into_iter()
+            .map(|warning| format!("Call trace warning: {}", warning)),
+    );
 
     if operations_list.len() == 1 {
         use crate::list_env::GraphOperation;
@@ -809,6 +965,19 @@ pub fn synthesize_core(
                     dedup_specs.len() + dedup_renames.len(),
                     dedup_specs.len()
                 );
+                if !dedup_renames.is_empty() {
+                    let mut alias_pairs: Vec<String> = dedup_renames
+                        .iter()
+                        .map(|(alias, canonical)| format!("{} -> {}", alias, canonical))
+                        .collect();
+                    alias_pairs.sort();
+                    emit_synthesis_diagnostic(format!(
+                        "multi-trace grouping collapsed {} alias specs into {} canonical specs: {}",
+                        dedup_renames.len(),
+                        dedup_specs.len(),
+                        alias_pairs.join(", ")
+                    ));
+                }
                 aggregated_specs.extend(dedup_specs);
                 spec_meta_by_name = dedup_meta;
                 if let Some(best_plan) =
@@ -1081,6 +1250,13 @@ fn finalize_native_synthesis(artifacts: &mut SynthesisArtifacts) {
             apply_escher_results(artifacts, &results);
         }
         Err(err) => eprintln!("Escher JS synthesis failed: {}", err),
+    }
+
+    for diagnostic in collect_suspicious_synthesis_diagnostics(
+        artifacts.task_json.as_deref(),
+        &artifacts.response,
+    ) {
+        emit_synthesis_diagnostic(diagnostic);
     }
 }
 
@@ -1887,6 +2063,33 @@ fn detect_runtime_receiver_object_id(
     None
 }
 
+fn find_variable_object_target(vis_graph: &models::VisGraph, name: &str) -> Option<String> {
+    let object_ids: HashSet<&str> = vis_graph
+        .nodes
+        .iter()
+        .filter(|n| !n.is_literal)
+        .map(|n| n.id.as_str())
+        .filter(|id| *id != "__RectForVariable__")
+        .filter(|id| !id.starts_with("__Variable-"))
+        .collect();
+    let var_id = format!("__Variable-{}", name);
+    vis_graph
+        .edges
+        .iter()
+        .find(|e| e.from == var_id && e.label == name && object_ids.contains(e.to.as_str()))
+        .map(|e| e.to.clone())
+}
+
+fn detect_list_head_object_id(
+    env: &crate::list_env::ListEnvironment,
+    vis_graph: &models::VisGraph,
+) -> Option<String> {
+    if let Some(target) = find_variable_object_target(vis_graph, "lst") {
+        return Some(target);
+    }
+    detect_runtime_receiver_object_id(env, vis_graph)
+}
+
 fn resolve_effective_receiver_object(
     declared_receiver: Option<&str>,
     env: &crate::list_env::ListEnvironment,
@@ -1901,6 +2104,179 @@ fn resolve_effective_receiver_object(
         return Some(runtime_receiver);
     }
     declared_receiver.map(|id| id.to_string())
+}
+
+#[derive(Debug, Default)]
+struct CallTraceDebugReport {
+    summary_lines: Vec<String>,
+    warnings: Vec<String>,
+}
+
+fn nth_next_object_id(
+    vis_graph: &models::VisGraph,
+    start_id: &str,
+    steps: usize,
+) -> Option<String> {
+    let mut current = start_id.to_string();
+    for _ in 0..steps {
+        let next = vis_graph
+            .edges
+            .iter()
+            .find(|edge| edge.from == current && edge.label == "next")
+            .map(|edge| edge.to.clone())?;
+        current = next;
+    }
+    Some(current)
+}
+
+fn format_call_argument_values(arguments: &[serde_json::Value]) -> String {
+    serde_json::to_string(arguments).unwrap_or_else(|_| "<unserializable>".to_string())
+}
+
+fn build_call_trace_debug_report(
+    method_calls: &[MethodCallOperation],
+    normalized_operations: &[Vec<serde_json::Value>],
+    resolved_call_graphs: &[VisGraph],
+) -> CallTraceDebugReport {
+    use crate::list_env::{GraphOperation, ListEnvironment};
+
+    let mut report = CallTraceDebugReport::default();
+    if method_calls.is_empty() {
+        return report;
+    }
+
+    report.summary_lines.push("Call Trace Summary:".to_string());
+
+    for (idx, call) in method_calls.iter().enumerate() {
+        let Some(call_graph) = call
+            .precond_graph
+            .as_ref()
+            .or_else(|| resolved_call_graphs.get(idx))
+        else {
+            report.summary_lines.push(format!(
+                "- [{}] receiver={} args={} graph=<missing>",
+                call.call_label,
+                call.receiver_object,
+                format_call_argument_values(&call.arguments)
+            ));
+            continue;
+        };
+
+        let env = ListEnvironment::from_vis_graph(call_graph);
+        let head_object = detect_list_head_object_id(&env, call_graph);
+        let receiver_matches_head = head_object
+            .as_deref()
+            .map(|head| head == call.receiver_object)
+            .unwrap_or(false);
+        let step_arg = call
+            .arguments
+            .first()
+            .and_then(value_to_i32)
+            .filter(|value| *value >= 0)
+            .map(|value| value as usize);
+
+        let decoded_ops: Vec<GraphOperation> = normalized_operations
+            .get(idx)
+            .into_iter()
+            .flatten()
+            .filter_map(|raw| serde_json::from_value::<GraphOperation>(raw.clone()).ok())
+            .collect();
+        let next_rewires: Vec<&GraphOperation> = decoded_ops
+            .iter()
+            .filter(|op| op.edit_type == "editEdgeReference")
+            .filter(|op| graph_operation_label(op).as_deref() == Some("next"))
+            .collect();
+        let next_rewire_sources: Vec<String> = dedupe_preserve_order(
+            &next_rewires
+                .iter()
+                .filter_map(|op| op.from.clone())
+                .collect::<Vec<_>>(),
+        );
+        let next_rewire_desc = if next_rewires.is_empty() {
+            "<none>".to_string()
+        } else {
+            next_rewires
+                .iter()
+                .map(|op| {
+                    let from = op.from.as_deref().unwrap_or("<missing>");
+                    let to = op
+                        .new_to
+                        .as_deref()
+                        .or(op.to.as_deref())
+                        .unwrap_or("<missing>");
+                    let old_to = op.old_to.as_deref().unwrap_or("<missing>");
+                    format!("{} -(next)-> {} [old={}]", from, to, old_to)
+                })
+                .collect::<Vec<_>>()
+                .join(", ")
+        };
+
+        let head_hypothesis = match (head_object.as_deref(), step_arg) {
+            (Some(head), Some(steps)) => nth_next_object_id(call_graph, head, steps),
+            _ => None,
+        };
+        let receiver_hypothesis =
+            step_arg.and_then(|steps| nth_next_object_id(call_graph, &call.receiver_object, steps));
+        let actual_next_source = if next_rewire_sources.len() == 1 {
+            next_rewire_sources.first().cloned()
+        } else {
+            None
+        };
+
+        let compare_hypothesis = |predicted: Option<&String>, actual: Option<&String>| -> String {
+            match (predicted, actual) {
+                (Some(predicted), Some(actual)) if predicted == actual => "match".to_string(),
+                (Some(_), Some(_)) => "mismatch".to_string(),
+                (Some(_), None) | (None, Some(_)) => "n/a".to_string(),
+                (None, None) => "n/a".to_string(),
+            }
+        };
+
+        let head_cmp = compare_hypothesis(head_hypothesis.as_ref(), actual_next_source.as_ref());
+        let receiver_cmp =
+            compare_hypothesis(receiver_hypothesis.as_ref(), actual_next_source.as_ref());
+
+        report.summary_lines.push(format!(
+            "- [{}] receiver={} head={} receiver_eq_head={} args={} i={} next_rewire={} head+i={} ({}) receiver+i={} ({})",
+            call.call_label,
+            call.receiver_object,
+            head_object.as_deref().unwrap_or("<unknown>"),
+            if receiver_matches_head { "yes" } else { "no" },
+            format_call_argument_values(&call.arguments),
+            step_arg
+                .map(|value| value.to_string())
+                .unwrap_or_else(|| "<unknown>".to_string()),
+            next_rewire_desc,
+            head_hypothesis
+                .as_deref()
+                .unwrap_or("<null-or-unresolved>"),
+            head_cmp,
+            receiver_hypothesis
+                .as_deref()
+                .unwrap_or("<null-or-unresolved>"),
+            receiver_cmp,
+        ));
+
+        if let Some(actual_source) = actual_next_source.as_deref() {
+            let head_matches = head_hypothesis.as_deref() == Some(actual_source);
+            let receiver_matches = receiver_hypothesis.as_deref() == Some(actual_source);
+            if !head_matches && !receiver_matches {
+                report.warnings.push(format!(
+                    "call {} next rewire source {} disagrees with both hypotheses: head+i={}, receiver+i={}",
+                    call.call_label,
+                    actual_source,
+                    head_hypothesis
+                        .as_deref()
+                        .unwrap_or("<null-or-unresolved>"),
+                    receiver_hypothesis
+                        .as_deref()
+                        .unwrap_or("<null-or-unresolved>"),
+                ));
+            }
+        }
+    }
+
+    report
 }
 
 fn js_field_access_expr(base: &str, field: &str) -> String {
@@ -4569,6 +4945,10 @@ fn build_composed_method_code(
         };
         let line = js_field_assignment(&from_expr, &field, hole_expr);
         if !body_lines.contains(&line) && recovered_assignments.insert(line.clone()) {
+            emit_synthesis_diagnostic(format!(
+                "recovered value assignment from hole metadata: hole={} spec={} assignment={}",
+                binding.hole_key, binding.spec_name, line
+            ));
             body_lines.push(line);
         }
     }
@@ -4614,6 +4994,10 @@ fn build_composed_method_code(
             let assignment = js_field_assignment(from_expr, &field, &to_expr);
             let line = format!("if ({} !== null) {{ {} }}", from_expr, assignment);
             if !body_lines.contains(&line) && recovered_assignments.insert(line.clone()) {
+                emit_synthesis_diagnostic(format!(
+                    "recovered edge assignment from hole metadata: hole={} spec={} assignment={}",
+                    binding.hole_key, binding.spec_name, line
+                ));
                 body_lines.push(line);
             }
         }
@@ -7051,6 +7435,320 @@ fn dedupe_preserve_order(values: &[String]) -> Vec<String> {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn parse_task_json_spec_names_extracts_names() {
+        let task_json = r#"
+        [
+          { "name": "append-f", "examples": [] },
+          { "name": "append-h", "examples": [] }
+        ]
+        "#;
+
+        let names = parse_task_json_spec_names(task_json);
+
+        assert_eq!(names, vec!["append-f", "append-h"]);
+    }
+
+    #[test]
+    fn collect_suspicious_synthesis_diagnostics_allows_one_sided_holes() {
+        let response = SynthesisResponse {
+            common_pattern: Some(
+                "COMMON_PLAN (operation-level, ordered)\n[op_0] addNode(id=__temp1, label=Node, isLiteral=false)"
+                    .to_string(),
+            ),
+            hole_information: Some(HashMap::from([
+                (
+                    "__hole_0".to_string(),
+                    vec![
+                        "spec=append-h".to_string(),
+                        "return=Ptr".to_string(),
+                        "role=edge_source".to_string(),
+                        "jsMethod=append_h".to_string(),
+                        "jsCall=this.append_h(arg)".to_string(),
+                        "sideA=addEdge id=- from=main-new1 to=__temp1 label=next is_literal=false"
+                            .to_string(),
+                        "sideB=<none>".to_string(),
+                    ],
+                ),
+                (
+                    "__hole_1".to_string(),
+                    vec![
+                        "spec=append-f".to_string(),
+                        "return=Int".to_string(),
+                        "role=value".to_string(),
+                        "jsMethod=append_f".to_string(),
+                        "jsCall=this.append_f(arg)".to_string(),
+                        "sideA=<none>".to_string(),
+                        "sideB=addEdge id=- from=__temp1 to=__temp2 label=val is_literal=false"
+                            .to_string(),
+                    ],
+                ),
+            ])),
+            code: Vec::new(),
+            composed_method_code: Some(
+                [
+                    "append(arg) {",
+                    "    const h_ptr_0 = this.append_h(arg);",
+                    "    const h_int_0 = this.append_f(arg);",
+                    "    const tmp0 = new Node();",
+                    "    tmp0.val = h_int_0;",
+                    "    if (h_ptr_0 !== null) { h_ptr_0.next = tmp0; }",
+                    "}",
+                ]
+                .join("\n"),
+            ),
+            individual_codes: Vec::new(),
+            list_environment_info: None,
+            operation_analysis: None,
+            escher_results: None,
+        };
+
+        let diagnostics = collect_suspicious_synthesis_diagnostics(None, &response);
+
+        assert!(
+            diagnostics
+                .iter()
+                .all(|line| !line.contains("no provenance context")),
+            "did not expect missing provenance diagnostic for one-sided holes, got {:?}",
+            diagnostics
+        );
+        assert!(
+            diagnostics
+                .iter()
+                .any(|line| line.contains("COMMON_PLAN has no edge ops")),
+            "expected recovered edge diagnostic, got {:?}",
+            diagnostics
+        );
+    }
+
+    #[test]
+    fn collect_suspicious_synthesis_diagnostics_flags_missing_both_hole_sides() {
+        let response = SynthesisResponse {
+            common_pattern: None,
+            hole_information: Some(HashMap::from([(
+                "__hole_0".to_string(),
+                vec![
+                    "spec=append-h".to_string(),
+                    "return=Ptr".to_string(),
+                    "role=edge_source".to_string(),
+                    "sideA=<none>".to_string(),
+                    "sideB=<missing>".to_string(),
+                ],
+            )])),
+            code: Vec::new(),
+            composed_method_code: None,
+            individual_codes: Vec::new(),
+            list_environment_info: None,
+            operation_analysis: None,
+            escher_results: None,
+        };
+
+        let diagnostics = collect_suspicious_synthesis_diagnostics(None, &response);
+
+        assert!(
+            diagnostics
+                .iter()
+                .any(|line| line.contains("no provenance context")),
+            "expected missing provenance diagnostic, got {:?}",
+            diagnostics
+        );
+    }
+
+    #[test]
+    fn collect_suspicious_synthesis_diagnostics_flags_task_result_mismatch() {
+        let response = SynthesisResponse {
+            common_pattern: None,
+            hole_information: Some(HashMap::from([(
+                "__hole_0".to_string(),
+                vec![
+                    "spec=append-f".to_string(),
+                    "return=Int".to_string(),
+                    "role=value".to_string(),
+                ],
+            )])),
+            code: vec!["append_f(arg0) { return arg0; }".to_string()],
+            composed_method_code: None,
+            individual_codes: Vec::new(),
+            list_environment_info: None,
+            operation_analysis: None,
+            escher_results: Some(vec![EscherJsOutcome {
+                name: "append-f".to_string(),
+                success: true,
+                rendered: Some("@arg0".to_string()),
+                error: None,
+            }]),
+        };
+
+        let diagnostics = collect_suspicious_synthesis_diagnostics(
+            Some(
+                r#"
+                [
+                  { "name": "append-f" },
+                  { "name": "append-h" }
+                ]
+                "#,
+            ),
+            &response,
+        );
+
+        assert!(
+            diagnostics
+                .iter()
+                .any(|line| line.contains("missing from synthesis results")),
+            "expected missing result diagnostic, got {:?}",
+            diagnostics
+        );
+        assert!(
+            diagnostics
+                .iter()
+                .any(|line| line.contains("produced 2 specs but synthesis returned 1 results")),
+            "expected task/result count diagnostic, got {:?}",
+            diagnostics
+        );
+    }
+
+    #[test]
+    fn build_call_trace_debug_report_flags_receiver_head_and_rewire_mismatch() {
+        let precond = VisGraph {
+            nodes: vec![
+                models::Node {
+                    id: "main-new1".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                models::Node {
+                    id: "main-new2".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                models::Node {
+                    id: "main-new3".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                models::Node {
+                    id: "main-new1-val".to_string(),
+                    is_literal: true,
+                    label: json!("39"),
+                },
+                models::Node {
+                    id: "main-new2-val".to_string(),
+                    is_literal: true,
+                    label: json!("57"),
+                },
+                models::Node {
+                    id: "main-new3-val".to_string(),
+                    is_literal: true,
+                    label: json!("41"),
+                },
+                models::Node {
+                    id: "__Variable-lst".to_string(),
+                    is_literal: false,
+                    label: json!("lst"),
+                },
+            ],
+            edges: vec![
+                models::Edge {
+                    from: "main-new1".to_string(),
+                    to: "main-new1-val".to_string(),
+                    label: "val".to_string(),
+                },
+                models::Edge {
+                    from: "main-new2".to_string(),
+                    to: "main-new2-val".to_string(),
+                    label: "val".to_string(),
+                },
+                models::Edge {
+                    from: "main-new3".to_string(),
+                    to: "main-new3-val".to_string(),
+                    label: "val".to_string(),
+                },
+                models::Edge {
+                    from: "main-new1".to_string(),
+                    to: "main-new2".to_string(),
+                    label: "next".to_string(),
+                },
+                models::Edge {
+                    from: "main-new2".to_string(),
+                    to: "main-new3".to_string(),
+                    label: "next".to_string(),
+                },
+                models::Edge {
+                    from: "__Variable-lst".to_string(),
+                    to: "main-new1".to_string(),
+                    label: "lst".to_string(),
+                },
+            ],
+        };
+
+        let method_calls = vec![
+            MethodCallOperation {
+                call_label: "call1".to_string(),
+                context_sensitive_id: "main".to_string(),
+                receiver_object: "main-new1".to_string(),
+                method_name: "insert".to_string(),
+                arguments: vec![json!(0), json!(29)],
+                argument_types: None,
+                argument_names: None,
+                method_param_names: None,
+                operations: vec![
+                    json!({"editType":"editEdgeReference","from":"main-new1","oldTo":"main-new2","newTo":"__temp1","label":"next"}),
+                ],
+                precond_graph: Some(precond.clone()),
+                actual_graph: None,
+                id_mapping: None,
+                field_tables: None,
+            },
+            MethodCallOperation {
+                call_label: "call2".to_string(),
+                context_sensitive_id: "main".to_string(),
+                receiver_object: "main-new2".to_string(),
+                method_name: "insert".to_string(),
+                arguments: vec![json!(2), json!(84)],
+                argument_types: None,
+                argument_names: None,
+                method_param_names: None,
+                operations: vec![
+                    json!({"editType":"editEdgeReference","from":"main-new2","oldTo":"main-new3","newTo":"__temp4","label":"next"}),
+                ],
+                precond_graph: Some(precond.clone()),
+                actual_graph: None,
+                id_mapping: None,
+                field_tables: None,
+            },
+        ];
+        let normalized_operations = method_calls
+            .iter()
+            .map(|call| call.operations.clone())
+            .collect::<Vec<_>>();
+        let resolved_graphs = vec![precond.clone(), precond];
+
+        let report =
+            build_call_trace_debug_report(&method_calls, &normalized_operations, &resolved_graphs);
+
+        assert!(
+            report
+                .summary_lines
+                .iter()
+                .any(|line| line.contains("[call2]") && line.contains("receiver_eq_head=no")),
+            "expected receiver/head mismatch summary, got {:?}",
+            report.summary_lines
+        );
+        assert!(
+            report.summary_lines.iter().any(|line| line
+                .contains("head+i=main-new3 (mismatch) receiver+i=<null-or-unresolved> (n/a)")),
+            "expected hypothesis mismatch summary, got {:?}",
+            report.summary_lines
+        );
+        assert!(
+            report.warnings.iter().any(|line| line.contains(
+                "call call2 next rewire source main-new2 disagrees with both hypotheses"
+            )),
+            "expected explicit mismatch warning, got {:?}",
+            report.warnings
+        );
+    }
 
     fn simple_vis_graph_with_root() -> VisGraph {
         VisGraph {
