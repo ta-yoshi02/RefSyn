@@ -477,13 +477,7 @@ pub fn synthesize_core(
     }
     let call_trace_debug =
         build_call_trace_debug_report(&req.method_calls, &operations_list, &resolved_call_graphs);
-    if !call_trace_debug.summary_lines.is_empty() {
-        list_env_info = format!(
-            "{}\n\n{}",
-            list_env_info,
-            call_trace_debug.summary_lines.join("\n")
-        );
-    }
+    log_call_trace_debug_report(&call_trace_debug);
 
     println!("List Environment Summary: {}", list_env_info);
 
@@ -617,12 +611,6 @@ pub fn synthesize_core(
     let mut task_json: Option<String> = None;
     let mut backend_preflight_failures: Vec<EscherJsInternalOutcome> = Vec::new();
     let mut warnings: Vec<String> = Vec::new();
-    warnings.extend(
-        call_trace_debug
-            .warnings
-            .into_iter()
-            .map(|warning| format!("Call trace warning: {}", warning)),
-    );
 
     if operations_list.len() == 1 {
         use crate::list_env::GraphOperation;
@@ -2110,6 +2098,19 @@ fn resolve_effective_receiver_object(
 struct CallTraceDebugReport {
     summary_lines: Vec<String>,
     warnings: Vec<String>,
+}
+
+fn log_call_trace_debug_report(report: &CallTraceDebugReport) {
+    if !trace_enabled() {
+        return;
+    }
+
+    for line in &report.summary_lines {
+        println!("TRACE: {}", line);
+    }
+    for warning in &report.warnings {
+        println!("TRACE: Call trace warning: {}", warning);
+    }
 }
 
 fn nth_next_object_id(

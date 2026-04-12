@@ -165,3 +165,31 @@ fn synthesize_core_produces_browser_artifacts_for_multi_trace_requests() {
     assert!(artifacts.response.list_environment_info.is_some());
     assert!(artifacts.response.operation_analysis.is_some());
 }
+
+#[test]
+fn synthesize_core_trace_debug_does_not_leak_into_response() {
+    let request = SynthesisRequest {
+        method_calls: vec![append_call(
+            "call1",
+            vec![
+                json!({"editType": "addNode", "id": "__temp1", "isLiteral": false, "label": "Node"}),
+                json!({"editType": "addNode", "id": "__temp2", "isLiteral": true, "label": "0", "type": "string"}),
+                json!({"editType": "addEdge", "from": "__temp1", "label": "val", "to": "__temp2"}),
+                json!({"editType": "addEdge", "from": "main-new2", "label": "next", "to": "__temp1"}),
+            ],
+            26,
+        )],
+        vis_graph: base_vis_graph(),
+    };
+
+    let artifacts = synthesize_core(request, SynthesisCoreOptions { trace: true })
+        .expect("core synthesis should succeed");
+    let info = artifacts
+        .response
+        .list_environment_info
+        .expect("response summary should exist");
+
+    assert!(info.contains("List Environment Summary"));
+    assert!(!info.contains("Call Trace Summary"));
+    assert!(!info.contains("Call trace warning"));
+}
