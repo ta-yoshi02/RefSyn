@@ -222,6 +222,8 @@ const compileComponent = (name, args, ctx) => {
   }
 
   switch (name) {
+    // Generated traversal helpers currently assume acyclic pointer structures.
+    // Cycle-safe execution is not implemented in the emitted JS yet.
     case "nthNextRef": {
       if (args.length !== 4) {
         throw new Error("nthNextRef expects 4 args");
