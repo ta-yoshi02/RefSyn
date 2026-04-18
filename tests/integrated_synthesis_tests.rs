@@ -3,6 +3,7 @@ use refsyn::{handle_synthesis, MethodCallOperation, SynthesisRequest, SynthesisR
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs;
+use std::path::PathBuf;
 use warp::http::StatusCode;
 use warp::Reply;
 
@@ -202,6 +203,23 @@ fn extract_task_json_path(summary: &str) -> Option<String> {
     } else {
         Some(first.to_string())
     }
+}
+
+fn escher_ts_dist_index_path() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("external")
+        .join("escher-ts")
+        .join("dist")
+        .join("index.js")
+}
+
+fn require_escher_ts_backend() {
+    let dist_index = escher_ts_dist_index_path();
+    assert!(
+        dist_index.exists(),
+        "backend execution test requires {}. Run `git submodule update --init --recursive` and then `cd external/escher-ts && pnpm install --frozen-lockfile && pnpm build`.",
+        dist_index.display()
+    );
 }
 
 fn extract_saved_return_type(spec: &Value) -> Option<&str> {
@@ -684,6 +702,8 @@ async fn test_set_with_existing_kanon_id_and_mismatched_receiver_still_composes(
 
 #[tokio::test]
 async fn test_integrated_synthesis_three_append_like_specs_group_holes() {
+    require_escher_ts_backend();
+
     let graph_call1 = VisGraph {
         nodes: vec![
             Node {
@@ -1372,7 +1392,8 @@ async fn test_integrated_synthesis_insert_keeps_edge_source_with_runtime_scoped_
 }
 
 #[tokio::test]
-async fn test_integrated_synthesis_insert_three_traces_keep_ts_ptr_components_and_ref_heaps() {
+async fn test_integrated_synthesis_insert_three_traces_task_json_keeps_ts_ptr_components_and_ref_heaps(
+) {
     let request_text = fs::read_to_string("examples/current_user_insert_three_traces.json")
         .expect("current insert fixture should be readable");
     let request: SynthesisRequest = serde_json::from_str(&request_text)
@@ -1426,6 +1447,85 @@ async fn test_integrated_synthesis_insert_three_traces_keep_ts_ptr_components_an
         assert!(
             input_slot_is_ref_heap(input, 2),
             "pointer heap slot should stay a ref-array after task conversion"
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_integrated_synthesis_insert_three_traces_executes_backend_tasks() {
+    require_escher_ts_backend();
+
+    let request_text = fs::read_to_string("examples/current_user_insert_three_traces.json")
+        .expect("current insert fixture should be readable");
+    let request: SynthesisRequest = serde_json::from_str(&request_text)
+        .expect("three-trace insert request fixture should deserialize");
+
+    let (status, response) = run_synthesis_and_decode(request).await;
+    assert_eq!(status, StatusCode::OK);
+
+    let list_info = response
+        .list_environment_info
+        .as_deref()
+        .expect("list environment info should be present");
+    let spec_path = extract_task_json_path(list_info).expect("task json path should be reported");
+    let task_json_text =
+        fs::read_to_string(&spec_path).expect("generated task json should be readable");
+    let specs: Value =
+        serde_json::from_str(&task_json_text).expect("generated task json should parse");
+    let task_names: Vec<String> = specs
+        .as_array()
+        .expect("generated task json should be an array of task specs")
+        .iter()
+        .filter_map(|spec| spec.get("name").and_then(Value::as_str).map(str::to_string))
+        .collect();
+
+    assert!(
+        !task_names.is_empty(),
+        "expected at least one emitted escher-ts task"
+    );
+
+    let results = response
+        .escher_results
+        .as_ref()
+        .expect("backend execution should populate escher results");
+    let success_count = results.iter().filter(|result| result.success).count();
+    assert_eq!(
+        response.code.len(),
+        success_count,
+        "each successful backend result should produce compiled JS"
+    );
+    assert!(
+        success_count > 0,
+        "expected at least one successful backend synthesis result, got {:?}",
+        results
+            .iter()
+            .map(|result| (
+                result.name.as_str(),
+                result.success,
+                result.error.as_deref()
+            ))
+            .collect::<Vec<_>>()
+    );
+
+    for task_name in &task_names {
+        let result = results
+            .iter()
+            .find(|result| &result.name == task_name)
+            .unwrap_or_else(|| panic!("missing backend result for task {}", task_name));
+        assert!(
+            result.success,
+            "backend result for {} failed: {:?}",
+            task_name, result.error
+        );
+        assert!(
+            response
+                .individual_codes
+                .iter()
+                .any(|entry| entry.starts_with(&format!("{}: ", task_name))
+                    && !entry.contains(": ERROR ")),
+            "expected compiled JS entry for task {}, got {:?}",
+            task_name,
+            response.individual_codes
         );
     }
 }

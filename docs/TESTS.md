@@ -7,9 +7,10 @@ suite with `cargo test`.
 ## Integration Layer
 - `tests/integrated_synthesis_tests.rs` validates the HTTP entry point
   (`handle_synthesis`) against representative payloads. It checks empty input
-  handling, single-trace synthesis, multi-trace analysis, and confirms that the
-  response payload includes list-environment summaries and optional Escher spec
-  output paths.
+  handling, single-trace synthesis, multi-trace analysis, task JSON structure,
+  and selected end-to-end backend executions. Tests that execute the Node /
+  `escher-ts` backend require an initialized `external/escher-ts` submodule and
+  a built `external/escher-ts/dist/index.js`.
 - `tests/synthesis_core_tests.rs` exercises `synthesize_core` directly. It
   keeps the browser-safe core honest by checking that single-trace responses
   stay aligned with the HTTP adapter and that multi-trace requests emit task/spec
