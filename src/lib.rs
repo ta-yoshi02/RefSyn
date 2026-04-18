@@ -18,7 +18,7 @@ use crate::escher_bridge::{
 use crate::escher_bridge::{run_escher_js, write_spec_to_file};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
 use warp::http::StatusCode;
 #[cfg(target_arch = "wasm32")]
@@ -136,6 +136,8 @@ struct CommonPlanArtifact {
 }
 
 static TRACE_ENABLED: AtomicBool = AtomicBool::new(false);
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+static TASK_JSON_ARTIFACT_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 fn set_trace_enabled(enabled: bool) {
     TRACE_ENABLED.store(enabled, Ordering::Relaxed);
@@ -162,6 +164,39 @@ fn emit_synthesis_diagnostic(message: impl AsRef<str>) {
 
 #[cfg(not(all(feature = "server", not(target_arch = "wasm32"))))]
 fn emit_synthesis_diagnostic(_message: impl AsRef<str>) {}
+
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+fn sanitize_artifact_stem(raw: &str) -> String {
+    let mut out = String::with_capacity(raw.len());
+    for ch in raw.chars() {
+        if ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_') {
+            out.push(ch);
+        } else {
+            out.push('_');
+        }
+    }
+    if out.is_empty() {
+        "refsyn-synthesis".to_string()
+    } else {
+        out
+    }
+}
+
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+fn next_task_json_output_path(base_name: &str) -> String {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default();
+    let seq = TASK_JSON_ARTIFACT_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    format!(
+        "target/escher/ts/{}_{}_{:09}_p{}_{}.json",
+        sanitize_artifact_stem(base_name),
+        now.as_secs(),
+        now.subsec_nanos(),
+        std::process::id(),
+        seq
+    )
+}
 
 fn metadata_value<'a>(values: &'a [String], key: &str) -> Option<&'a str> {
     let prefix = format!("{}=", key);
@@ -1210,15 +1245,11 @@ fn finalize_native_synthesis(artifacts: &mut SynthesisArtifacts) {
         return;
     };
 
-    let ts = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0);
     let base_name = artifacts
         .spec_base_name
         .as_deref()
         .unwrap_or("refsyn-synthesis");
-    let out_path = format!("target/escher/ts/{}_{}.json", base_name, ts);
+    let out_path = next_task_json_output_path(base_name);
     match write_spec_to_file(&out_path, task_json) {
         Ok(()) => append_list_env_info(
             &mut artifacts.response.list_environment_info,
@@ -7607,6 +7638,17 @@ mod tests {
             "expected task/result count diagnostic, got {:?}",
             diagnostics
         );
+    }
+
+    #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+    #[test]
+    fn next_task_json_output_path_is_unique_and_sanitized() {
+        let first = next_task_json_output_path("insert/value");
+        let second = next_task_json_output_path("insert/value");
+
+        assert_ne!(first, second);
+        assert!(first.starts_with("target/escher/ts/insert_value_"));
+        assert!(first.ends_with(".json"));
     }
 
     #[test]
