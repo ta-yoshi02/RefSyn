@@ -1,4 +1,6 @@
 /target
+.DS_Store
+node_modules/
 
 # LaTeX 中間ファイル（PDFは除く）
 *.aux
