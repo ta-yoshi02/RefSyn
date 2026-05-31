@@ -173,6 +173,7 @@ impl ListEnvironment {
             "addNode" => self.add_node(operation),
             "addEdge" => self.add_edge(operation),
             "editEdgeReference" => self.edit_edge_reference(operation),
+            "deleteEdge" => self.delete_edge(operation),
             "addVariable" => self.add_variable(operation),
             "editVariableReference" => self.edit_variable_reference(operation),
             "removeNode" => self.remove_node(operation),
@@ -235,6 +236,17 @@ impl ListEnvironment {
             self.validate_old_target(from, &label, old_to);
         }
         self.set_edge_reference(from, &label, new_to)
+    }
+
+    fn delete_edge(&mut self, operation: &GraphOperation) -> Result<(), String> {
+        let from = operation.from.as_ref().ok_or("deleteEdge requires from")?;
+        let label = Self::label_string(operation);
+        if let Some(to) = operation.to.as_deref() {
+            self.validate_old_target(from, &label, to);
+        }
+        // ListEnvironment represents one target per (from, label), so deleteEdge
+        // means clearing that single reference rather than removing one multiedge.
+        self.clear_edge_reference(from, &label)
     }
 
     fn add_variable(&mut self, operation: &GraphOperation) -> Result<(), String> {
@@ -366,6 +378,29 @@ impl ListEnvironment {
             field_vec.push(field_kind.default_value());
         }
         field_vec[from_index] = to_value;
+        Ok(())
+    }
+
+    fn clear_edge_reference(&mut self, from: &str, label: &str) -> Result<(), String> {
+        let from_index = match self.obj_id_to_index.get(from) {
+            Some(&index) => index,
+            None => return Ok(()),
+        };
+        self.field_kinds
+            .insert(label.to_string(), FieldKind::Pointer);
+        let field_vec = self
+            .field_lists
+            .entry(label.to_string())
+            .or_insert_with(|| vec![Value::Null; self.next_index]);
+        while field_vec.len() <= from_index {
+            field_vec.push(Value::Null);
+        }
+        for value in field_vec.iter_mut() {
+            if value.as_i64() == Some(-1) {
+                *value = Value::Null;
+            }
+        }
+        field_vec[from_index] = Value::Null;
         Ok(())
     }
 
@@ -712,6 +747,29 @@ mod tests {
         env.apply_operation(&mismatch_old_to_op).unwrap();
         let next_list = env.field_lists.get("next").unwrap();
         assert_eq!(next_list[0], Value::Null); // oldTo mismatchでも更新は継続
+    }
+
+    #[test]
+    fn test_delete_edge_clears_single_field_reference() {
+        let graph = create_test_graph();
+        let mut env = ListEnvironment::from_vis_graph(&graph);
+
+        let delete_op = GraphOperation {
+            edit_type: "deleteEdge".to_string(),
+            from: Some("obj1".to_string()),
+            to: Some("obj2".to_string()),
+            label: Some(json!("next")),
+            ..GraphOperation::default()
+        };
+        env.apply_operation(&delete_op).unwrap();
+
+        let next_list = env.field_lists.get("next").unwrap();
+        assert_eq!(next_list[0], Value::Null);
+        assert_eq!(
+            env.field_kinds.get("next"),
+            Some(&FieldKind::Pointer),
+            "deleteEdge is defined as clearing the single (from, label) reference"
+        );
     }
 
     #[test]

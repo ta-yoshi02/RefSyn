@@ -278,6 +278,24 @@ const compileComponent = (name, args, ctx) => {
         kind: "object",
       };
     }
+    case "penultimateRef": {
+      if (args.length !== 2) {
+        throw new Error("penultimateRef expects 2 args");
+      }
+      const fieldName = ctx.primaryPointerField;
+      if (fieldName === null) {
+        throw new Error("penultimateRef requires at least one pointer field");
+      }
+      const base = compileExpr(args[0], ctx);
+      const nextAccess = fieldAccess("__refsynCur", fieldName);
+      return {
+        code:
+          `(() => { let __refsynCur = ${base.code}; ` +
+          `while (__refsynCur !== null && ${nextAccess} !== null && ${fieldAccess(nextAccess, fieldName)} !== null) { __refsynCur = ${nextAccess}; } ` +
+          `return (__refsynCur === null || ${nextAccess} === null) ? null : __refsynCur; })()`,
+        kind: "object",
+      };
+    }
     case "loadInt": {
       if (args.length !== 2) {
         throw new Error("loadInt expects 2 args");

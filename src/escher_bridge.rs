@@ -471,7 +471,25 @@ struct BfsOrder {
     idx_to_bfs: HashMap<usize, usize>,
 }
 
-/// Build BFS order from the detected root variable across pointer fields only.
+fn collect_runtime_object_indices(env: &ListEnvironment, vis_graph: &VisGraph) -> Vec<usize> {
+    let mut indices: Vec<usize> = vis_graph
+        .nodes
+        .iter()
+        .filter(|node| !node.is_literal)
+        .filter(|node| node.id != "__RectForVariable__")
+        .filter(|node| !node.id.starts_with("__Variable-"))
+        .filter_map(|node| env.obj_id_to_index.get(&node.id).copied())
+        .collect();
+    indices.sort_unstable();
+    indices.dedup();
+    indices
+}
+
+/// Build a root-first order across runtime objects.
+///
+/// The reachable prefix is still discovered by BFS across pointer fields, but detached
+/// objects are appended afterwards so destructive rewires do not erase them from the
+/// serialized task input.
 fn build_bfs_order(
     env: &ListEnvironment,
     vis_graph: &VisGraph,
@@ -510,7 +528,14 @@ fn build_bfs_order(
             }
         }
     }
-    // map indices for visited nodes only
+
+    for idx in collect_runtime_object_indices(env, vis_graph) {
+        if visited.insert(idx) {
+            order.push(idx);
+        }
+    }
+
+    // map indices for the projected order
     let mut idx_to_bfs = HashMap::new();
     for (bi, &orig) in order.iter().enumerate() {
         idx_to_bfs.insert(orig, bi);
@@ -1103,12 +1128,13 @@ fn default_task_components(
         push_library_component(&mut components, &mut seen, "dec");
     }
 
-    if spec.return_type == "Ptr" && meta.pointer_fields.len() == 1 {
+    if meta.pointer_fields.len() == 1 {
         push_library_component(&mut components, &mut seen, "last_ptr");
+        push_library_component(&mut components, &mut seen, "penultimateRef");
         push_library_component(&mut components, &mut seen, "nthNextRef");
     }
 
-    if spec.return_type == "Ptr" && meta.pointer_fields.len() == 1 && meta.value_fields.len() == 1 {
+    if meta.pointer_fields.len() == 1 && meta.value_fields.len() == 1 {
         push_library_component(&mut components, &mut seen, "findByValueRef");
     }
 
@@ -1349,6 +1375,91 @@ mod tests {
     }
 
     #[test]
+    fn test_build_spec_preserves_detached_objects_after_reachable_prefix() {
+        let vis_graph = VisGraph {
+            nodes: vec![
+                Node {
+                    id: "n1".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                Node {
+                    id: "n2".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                Node {
+                    id: "n3".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                Node {
+                    id: "__Variable-lst".to_string(),
+                    is_literal: false,
+                    label: json!("Var"),
+                },
+                Node {
+                    id: "v10".to_string(),
+                    is_literal: true,
+                    label: json!(10),
+                },
+                Node {
+                    id: "v20".to_string(),
+                    is_literal: true,
+                    label: json!(20),
+                },
+                Node {
+                    id: "v30".to_string(),
+                    is_literal: true,
+                    label: json!(30),
+                },
+            ],
+            edges: vec![
+                Edge {
+                    from: "n1".to_string(),
+                    to: "n2".to_string(),
+                    label: "next".to_string(),
+                },
+                Edge {
+                    from: "n1".to_string(),
+                    to: "v10".to_string(),
+                    label: "val".to_string(),
+                },
+                Edge {
+                    from: "n2".to_string(),
+                    to: "v20".to_string(),
+                    label: "val".to_string(),
+                },
+                Edge {
+                    from: "n3".to_string(),
+                    to: "v30".to_string(),
+                    label: "val".to_string(),
+                },
+                Edge {
+                    from: "__Variable-lst".to_string(),
+                    to: "n1".to_string(),
+                    label: "lst".to_string(),
+                },
+            ],
+        };
+        let env = ListEnvironment::from_vis_graph(&vis_graph);
+        let case = EscherCase {
+            env,
+            vis_graph,
+            arguments: vec![json!(0)],
+            arg_names: vec!["this".to_string()],
+            arg_types: Some(vec!["Ptr".to_string()]),
+            receiver_arg_index: Some(0),
+            output: json!(2),
+        };
+
+        let spec = build_escher_spec("preserve-detached", "Int", &[case], None).expect("spec");
+        assert_eq!(spec.examples.len(), 1);
+        assert_eq!(spec.examples[0].input[1], json!([10, 20, 30]));
+        assert_eq!(spec.examples[0].input[2], json!([1, null, null]));
+    }
+
+    #[test]
     fn test_build_task_spec_from_legacy_spec() {
         let (vis_graph, env) = graph_for_linear_list();
         let case = EscherCase {
@@ -1372,6 +1483,10 @@ mod tests {
             .components
             .iter()
             .any(|component| component.name == "last_ptr"));
+        assert!(task
+            .components
+            .iter()
+            .any(|component| component.name == "penultimateRef" && component.kind == "libraryRef"));
         assert!(task
             .components
             .iter()
@@ -1400,5 +1515,32 @@ mod tests {
         assert_eq!(input[3], json!([10, 20, 30]));
         assert_eq!(input[4], json!(42));
         assert_eq!(*output, json!({ "ref": 1 }));
+    }
+
+    #[test]
+    fn test_build_task_spec_adds_pointer_libraries_for_int_specs() {
+        let (vis_graph, env) = graph_for_linear_list();
+        let case = EscherCase {
+            env,
+            vis_graph,
+            arguments: vec![json!(0), json!(2)],
+            arg_names: vec!["this".to_string(), "index".to_string()],
+            arg_types: Some(vec!["Ptr".to_string(), "Int".to_string()]),
+            receiver_arg_index: Some(0),
+            output: json!(30),
+        };
+
+        let meta = derive_spec_meta(std::slice::from_ref(&case)).expect("meta");
+        let spec = build_escher_spec("read-at", "Int", &[case], None).expect("spec");
+        let task = build_escher_task_spec(&spec, &meta).expect("task");
+
+        assert!(task
+            .components
+            .iter()
+            .any(|component| component.name == "nthNextRef" && component.kind == "libraryRef"));
+        assert!(task
+            .components
+            .iter()
+            .any(|component| component.name == "findByValueRef" && component.kind == "libraryRef"));
     }
 }
