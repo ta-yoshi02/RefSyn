@@ -262,9 +262,11 @@ fn collect_suspicious_synthesis_diagnostics(
         response.common_pattern.as_deref(),
         response.composed_method_code.as_deref(),
     ) {
-        let has_common_edge_ops = common_pattern
-            .lines()
-            .any(|line| line.contains("addEdge(") || line.contains("editEdgeReference("));
+        let has_common_edge_ops = common_pattern.lines().any(|line| {
+            line.contains("addEdge(")
+                || line.contains("editEdgeReference(")
+                || line.contains("deleteEdge(")
+        });
         if !has_common_edge_ops && code_contains_field_assignment(code) {
             diagnostics.push(
                 "COMMON_PLAN has no edge ops but composed method still contains field assignments; code was recovered from hole metadata"
@@ -450,12 +452,23 @@ pub fn synthesize_core(
         ));
     }
 
-    let resolved_call_graphs: Vec<VisGraph> = req
+    let resolved_call_graphs: Vec<VisGraph> = match req
         .method_calls
         .iter()
         .zip(call_runtime_to_temp_maps.iter())
         .map(|(call, map)| resolve_method_call_vis_graph(call, &req.vis_graph, map))
-        .collect();
+        .collect::<anyhow::Result<Vec<_>>>()
+    {
+        Ok(graphs) => graphs,
+        Err(err) => {
+            let message = err.to_string();
+            eprintln!("{}", message);
+            return Ok(SynthesisArtifacts::from_response_with_status(
+                blank_synthesis_response(Some(message)),
+                400,
+            ));
+        }
+    };
     let primary_vis_graph = resolved_call_graphs.first().unwrap_or(&req.vis_graph);
 
     // Repair malformed operation traces in a generic way:
@@ -471,10 +484,11 @@ pub fn synthesize_core(
                 *ops = repaired;
                 if stats.has_changes() {
                     repair_notes.push(format!(
-                        "call {} repaired: renamed_ids={}, fixed_old_to={}, normalized_set_refs={}, repaired_self_loops={}",
+                        "call {} repaired: renamed_ids={}, fixed_old_to={}, fixed_sources={}, normalized_set_refs={}, repaired_self_loops={}",
                         idx,
                         stats.renamed_node_ids,
                         stats.corrected_old_targets,
+                        stats.corrected_sources,
                         stats.normalized_set_references,
                         stats.repaired_self_loops
                     ));
@@ -2800,11 +2814,28 @@ fn encode_call_argument_ptr_from_id(
     Ok(serde_json::json!(mapped_idx as i32))
 }
 
-fn build_bfs_index_map(
+fn collect_runtime_object_indices(
+    env: &crate::list_env::ListEnvironment,
+    vis_graph: &models::VisGraph,
+) -> Vec<usize> {
+    let mut indices: Vec<usize> = vis_graph
+        .nodes
+        .iter()
+        .filter(|node| !node.is_literal)
+        .filter(|node| node.id != "__RectForVariable__")
+        .filter(|node| !node.id.starts_with("__Variable-"))
+        .filter_map(|node| env.obj_id_to_index.get(&node.id).copied())
+        .collect();
+    indices.sort_unstable();
+    indices.dedup();
+    indices
+}
+
+fn build_root_first_object_order(
     env: &crate::list_env::ListEnvironment,
     vis_graph: &models::VisGraph,
     pointer_fields: &[String],
-) -> anyhow::Result<HashMap<usize, usize>> {
+) -> anyhow::Result<Vec<usize>> {
     use crate::list_env::PtrValue;
     use std::collections::{HashMap, HashSet, VecDeque};
 
@@ -2820,6 +2851,7 @@ fn build_bfs_index_map(
             }
         }
     }
+
     let mut visited: HashSet<usize> = HashSet::new();
     let mut q: VecDeque<usize> = VecDeque::new();
     let mut order: Vec<usize> = Vec::new();
@@ -2837,6 +2869,24 @@ fn build_bfs_index_map(
             }
         }
     }
+
+    for idx in collect_runtime_object_indices(env, vis_graph) {
+        if visited.insert(idx) {
+            order.push(idx);
+        }
+    }
+
+    Ok(order)
+}
+
+fn build_bfs_index_map(
+    env: &crate::list_env::ListEnvironment,
+    vis_graph: &models::VisGraph,
+    pointer_fields: &[String],
+) -> anyhow::Result<HashMap<usize, usize>> {
+    use std::collections::HashMap;
+
+    let order = build_root_first_object_order(env, vis_graph, pointer_fields)?;
     let mut idx_to_bfs: HashMap<usize, usize> = HashMap::new();
     for (bi, &orig) in order.iter().enumerate() {
         idx_to_bfs.insert(orig, bi);
@@ -2849,41 +2899,9 @@ fn bfs_local_index_for_object(
     vis_graph: &models::VisGraph,
     object_id: &str,
 ) -> anyhow::Result<Option<i32>> {
-    use crate::list_env::PtrValue;
-    use std::collections::{HashMap, HashSet, VecDeque};
     let (_value_fields, mut pointer_fields) = analyze_fields_for_graph(vis_graph);
     pointer_fields.sort();
-    let root =
-        detect_root_index(env, vis_graph).ok_or_else(|| anyhow::anyhow!("root not found"))?;
-    // Build adjacency using pointer fields (original indices)
-    let mut adj: HashMap<usize, Vec<usize>> = HashMap::new();
-    for pf in &pointer_fields {
-        if let Some(vec) = env.field_lists.get(pf) {
-            for (from_idx, v) in vec.iter().enumerate() {
-                if let Some(PtrValue::Index(to)) = PtrValue::from_value(v) {
-                    adj.entry(from_idx).or_default().push(to);
-                }
-            }
-        }
-    }
-    // BFS order and map
-    let mut visited: HashSet<usize> = HashSet::new();
-    let mut q: VecDeque<usize> = VecDeque::new();
-    let mut order: Vec<usize> = Vec::new();
-    q.push_back(root);
-    while let Some(u) = q.pop_front() {
-        if !visited.insert(u) {
-            continue;
-        }
-        order.push(u);
-        if let Some(ns) = adj.get(&u) {
-            for &v in ns {
-                if !visited.contains(&v) {
-                    q.push_back(v);
-                }
-            }
-        }
-    }
+    let order = build_root_first_object_order(env, vis_graph, &pointer_fields)?;
     let mut idx_to_bfs: HashMap<usize, usize> = HashMap::new();
     for (bi, &orig) in order.iter().enumerate() {
         idx_to_bfs.insert(orig, bi);
@@ -2917,6 +2935,22 @@ fn build_environment_prefix(
     Ok(env)
 }
 
+fn diff_op_prefers_call_pre_state_input(
+    op: Option<&DiffOp>,
+    base_env: &crate::list_env::ListEnvironment,
+) -> bool {
+    match op {
+        Some(DiffOp::PointerOperand { target_id, .. }) => {
+            base_env.obj_id_to_index.contains_key(target_id)
+        }
+        Some(DiffOp::ExistNode { id, .. }) => {
+            base_env.obj_id_to_index.contains_key(id)
+                || base_env.literal_id_to_value.contains_key(id)
+        }
+        _ => false,
+    }
+}
+
 fn build_env_from_common_ops(
     base_env: &crate::list_env::ListEnvironment,
     graph_ops: &[crate::list_env::GraphOperation],
@@ -2943,6 +2977,12 @@ enum DiffOp {
     Json {
         graph_op: crate::list_env::GraphOperation,
         index: usize,
+    },
+    PointerOperand {
+        target_id: String,
+        source_id: String,
+        field: String,
+        operand: String,
     },
     ExistNode {
         id: String,
@@ -2984,6 +3024,13 @@ struct ExistCandidate {
     label: Option<String>,
 }
 
+#[derive(Clone, Debug, Hash, Eq, PartialEq)]
+struct HoleUseKey {
+    source_id: String,
+    operand: String,
+    field: String,
+}
+
 fn format_graph_op(graph_op: &crate::list_env::GraphOperation) -> String {
     let label = graph_op_label_string(graph_op).unwrap_or_else(|| "<none>".to_string());
     let id = graph_op.id.as_deref().unwrap_or("-");
@@ -3004,6 +3051,15 @@ fn format_graph_op(graph_op: &crate::list_env::GraphOperation) -> String {
 fn format_diff_op(op: &DiffOp) -> String {
     match op {
         DiffOp::Json { graph_op, .. } => format_graph_op(graph_op),
+        DiffOp::PointerOperand {
+            target_id,
+            source_id,
+            field,
+            operand,
+        } => format!(
+            "PointerOperand source={} target={} operand={} label={} is_literal=false",
+            source_id, target_id, operand, field
+        ),
         DiffOp::ExistNode {
             id,
             is_literal,
@@ -3081,6 +3137,7 @@ struct GeneratedSpecsResult {
 fn diff_op_index(op: &DiffOp) -> Option<usize> {
     match op {
         DiffOp::Json { index, .. } => Some(*index),
+        DiffOp::PointerOperand { .. } => None,
         DiffOp::ExistNode { .. } => None,
     }
 }
@@ -3151,6 +3208,7 @@ fn build_node_literal_map(vis_graph: &models::VisGraph) -> HashMap<&str, bool> {
 
 fn diff_op_target_hint(op: &DiffOp, node_literal_map: &HashMap<&str, bool>) -> &'static str {
     match op {
+        DiffOp::PointerOperand { .. } => "ptr",
         DiffOp::ExistNode { is_literal, .. } => {
             if *is_literal {
                 "int"
@@ -3167,6 +3225,7 @@ fn diff_op_target_hint(op: &DiffOp, node_literal_map: &HashMap<&str, bool>) -> &
                 }
             }
             "addEdge"
+            | "deleteEdge"
             | "removeEdge"
             | "addVariable"
             | "editEdgeReference"
@@ -3189,6 +3248,13 @@ fn diff_op_target_hint(op: &DiffOp, node_literal_map: &HashMap<&str, bool>) -> &
 
 fn relaxed_diff_key(op: &DiffOp, node_literal_map: &HashMap<&str, bool>) -> RelaxedDiffKey {
     match op {
+        DiffOp::PointerOperand { field, operand, .. } => RelaxedDiffKey {
+            op_family: "pointer_operand".to_string(),
+            edit_type: operand.clone(),
+            label: Some(field.clone()),
+            parallel_degree: 0,
+            target_hint: "ptr",
+        },
         DiffOp::ExistNode { is_literal, .. } => RelaxedDiffKey {
             op_family: "exist".to_string(),
             edit_type: "exist".to_string(),
@@ -3297,6 +3363,129 @@ fn build_relaxed_parallel_diff_pairs(
     pairs
 }
 
+const MAX_RELAXED_DIFF_PAIR_VARIANTS: usize = 64;
+const MAX_MULTI_TRACE_SPEC_GROUP_VARIANTS: usize = 64;
+
+fn index_permutations(n: usize) -> Vec<Vec<usize>> {
+    fn rec(prefix: &mut Vec<usize>, remaining: &mut Vec<usize>, out: &mut Vec<Vec<usize>>) {
+        if remaining.is_empty() {
+            out.push(prefix.clone());
+            return;
+        }
+        for idx in 0..remaining.len() {
+            let value = remaining.remove(idx);
+            prefix.push(value);
+            rec(prefix, remaining, out);
+            prefix.pop();
+            remaining.insert(idx, value);
+        }
+    }
+
+    let mut remaining: Vec<usize> = (0..n).collect();
+    let mut out = Vec::new();
+    rec(&mut Vec::new(), &mut remaining, &mut out);
+    out
+}
+
+fn build_relaxed_parallel_diff_pair_variants(
+    diff_a: &[crate::unify_ops::Op],
+    diff_b: &[crate::unify_ops::Op],
+    graph_ops_a: &[crate::list_env::GraphOperation],
+    graph_ops_b: &[crate::list_env::GraphOperation],
+    vis_graph_a: &models::VisGraph,
+    vis_graph_b: &models::VisGraph,
+) -> Vec<(String, Vec<DiffPair>)> {
+    let literal_map_a = build_node_literal_map(vis_graph_a);
+    let literal_map_b = build_node_literal_map(vis_graph_b);
+
+    let mut grouped_a: BTreeMap<RelaxedDiffKey, Vec<DiffOp>> = BTreeMap::new();
+    let mut grouped_b: BTreeMap<RelaxedDiffKey, Vec<DiffOp>> = BTreeMap::new();
+
+    for op in diff_a {
+        if let Some(diff_op) = diff_op_from_unify_diff(op, graph_ops_a) {
+            let key = relaxed_diff_key(&diff_op, &literal_map_a);
+            grouped_a.entry(key).or_default().push(diff_op);
+        }
+    }
+    for op in diff_b {
+        if let Some(diff_op) = diff_op_from_unify_diff(op, graph_ops_b) {
+            let key = relaxed_diff_key(&diff_op, &literal_map_b);
+            grouped_b.entry(key).or_default().push(diff_op);
+        }
+    }
+
+    let mut keys: BTreeSet<RelaxedDiffKey> = BTreeSet::new();
+    keys.extend(grouped_a.keys().cloned());
+    keys.extend(grouped_b.keys().cloned());
+
+    let mut variants: Vec<Vec<DiffPair>> = vec![Vec::new()];
+    let mut truncated = false;
+
+    for key in keys {
+        let mut left = grouped_a.remove(&key).unwrap_or_default();
+        let mut right = grouped_b.remove(&key).unwrap_or_default();
+        sort_diff_ops_for_pairing(&mut left);
+        sort_diff_ops_for_pairing(&mut right);
+
+        let pair_count = left.len().min(right.len());
+        let orders = if left.len() == right.len() && pair_count > 1 {
+            index_permutations(pair_count)
+        } else {
+            vec![(0..pair_count).collect()]
+        };
+
+        let mut next_variants = Vec::new();
+        for existing in &variants {
+            for order in &orders {
+                if next_variants.len() >= MAX_RELAXED_DIFF_PAIR_VARIANTS {
+                    truncated = true;
+                    break;
+                }
+                let mut pairs = existing.clone();
+                for (i, right_idx) in order.iter().enumerate() {
+                    pairs.push(DiffPair {
+                        op_a: left.get(i).cloned(),
+                        op_b: right.get(*right_idx).cloned(),
+                        role: HoleRole::Unknown,
+                    });
+                }
+                for op in left.iter().skip(pair_count) {
+                    pairs.push(DiffPair {
+                        op_a: Some(op.clone()),
+                        op_b: None,
+                        role: HoleRole::Unknown,
+                    });
+                }
+                for op in right.iter().skip(pair_count) {
+                    pairs.push(DiffPair {
+                        op_a: None,
+                        op_b: Some(op.clone()),
+                        role: HoleRole::Unknown,
+                    });
+                }
+                next_variants.push(pairs);
+            }
+            if truncated {
+                break;
+            }
+        }
+        variants = next_variants;
+    }
+
+    if truncated {
+        emit_synthesis_diagnostic(format!(
+            "relaxed diff-pair correspondence variants were capped at {}",
+            MAX_RELAXED_DIFF_PAIR_VARIANTS
+        ));
+    }
+
+    variants
+        .into_iter()
+        .enumerate()
+        .map(|(idx, pairs)| (format!("relaxed_parallel_perm{}", idx), pairs))
+        .collect()
+}
+
 fn score_diff_pair_candidate(
     diff_pairs: &[DiffPair],
     vis_graph_a: &models::VisGraph,
@@ -3374,34 +3563,6 @@ fn score_diff_pair_candidate(
     }
 }
 
-fn is_better_diff_pair_candidate(
-    lhs: &DiffPairCandidateScore,
-    rhs: &DiffPairCandidateScore,
-) -> bool {
-    if lhs.invalid_pairs != rhs.invalid_pairs {
-        return lhs.invalid_pairs < rhs.invalid_pairs;
-    }
-    if lhs.literal_exist_pairs_without_value != rhs.literal_exist_pairs_without_value {
-        return lhs.literal_exist_pairs_without_value < rhs.literal_exist_pairs_without_value;
-    }
-    if lhs.json_paired_pairs != rhs.json_paired_pairs {
-        return lhs.json_paired_pairs > rhs.json_paired_pairs;
-    }
-    if lhs.json_order_inversions != rhs.json_order_inversions {
-        return lhs.json_order_inversions < rhs.json_order_inversions;
-    }
-    if lhs.json_anchor_distance_sum != rhs.json_anchor_distance_sum {
-        return lhs.json_anchor_distance_sum < rhs.json_anchor_distance_sum;
-    }
-    if lhs.paired_pairs != rhs.paired_pairs {
-        return lhs.paired_pairs > rhs.paired_pairs;
-    }
-    if lhs.one_sided_pairs != rhs.one_sided_pairs {
-        return lhs.one_sided_pairs < rhs.one_sided_pairs;
-    }
-    lhs.complexity < rhs.complexity
-}
-
 fn diff_pairs_signature(diff_pairs: &[DiffPair]) -> String {
     diff_pairs
         .iter()
@@ -3425,10 +3586,19 @@ fn diff_pairs_signature(diff_pairs: &[DiffPair]) -> String {
 fn diff_op_edge_source_id(op: &DiffOp) -> Option<String> {
     match op {
         DiffOp::Json { graph_op, .. } => match graph_op.edit_type.as_str() {
-            "addEdge" | "editEdgeReference" | "removeEdge" => graph_op.from.clone(),
+            "addEdge" | "editEdgeReference" | "deleteEdge" | "removeEdge" => graph_op.from.clone(),
             _ => None,
         },
+        DiffOp::PointerOperand { .. } => None,
         DiffOp::ExistNode { .. } => None,
+    }
+}
+
+fn diff_op_existing_node_id(op: &DiffOp) -> Option<String> {
+    match op {
+        DiffOp::PointerOperand { target_id, .. } => Some(target_id.clone()),
+        DiffOp::ExistNode { id, .. } => Some(id.clone()),
+        _ => None,
     }
 }
 
@@ -3455,7 +3625,7 @@ fn build_source_pointer_diff_pair(
             DiffOp::Json {
                 graph_op: crate::list_env::GraphOperation { edit_type, .. },
                 ..
-            } if edit_type == "editEdgeReference"
+            } if edit_type == "editEdgeReference" || edit_type == "deleteEdge"
         )
     };
     let has_rewire_edge = pair.op_a.as_ref().is_some_and(is_rewire_edge)
@@ -3531,6 +3701,20 @@ fn collect_common_edge_labels_for_diff_endpoint(
                     from == diff_node_op_id && common_created_op_ids.contains(new_to)
                 } else {
                     new_to == diff_node_op_id && common_created_op_ids.contains(from)
+                };
+                if matches {
+                    labels.insert(label.clone());
+                }
+            }
+            crate::unify_ops::GraphOp::Edge(crate::unify_ops::EdgeExpr::DeleteEdge {
+                from,
+                to,
+                label,
+            }) => {
+                let matches = if match_source {
+                    from == diff_node_op_id
+                } else {
+                    to == diff_node_op_id
                 };
                 if matches {
                     labels.insert(label.clone());
@@ -3614,6 +3798,20 @@ fn common_edge_context_for_diff_node(
                     ),
                     HoleRole::PointerTarget,
                 ) => new_to == diff_node_op_id && common_created_ids.contains(from),
+                (
+                    crate::unify_ops::GraphOp::Edge(crate::unify_ops::EdgeExpr::DeleteEdge {
+                        from,
+                        ..
+                    }),
+                    HoleRole::EdgeSource,
+                ) => from == diff_node_op_id,
+                (
+                    crate::unify_ops::GraphOp::Edge(crate::unify_ops::EdgeExpr::DeleteEdge {
+                        to,
+                        ..
+                    }),
+                    HoleRole::PointerTarget,
+                ) => to == diff_node_op_id,
                 _ => false,
             };
         if !matches {
@@ -3643,7 +3841,8 @@ fn find_unify_exist_node_op_id(
 fn collect_edge_source_candidates(
     diff_ops: &[crate::unify_ops::Op],
     graph_ops: &[crate::list_env::GraphOperation],
-    common_created_ids: &HashSet<String>,
+    canonical_common_created_ids: &HashSet<String>,
+    side_common_created_ids: &HashSet<String>,
     canonicalize: impl Fn(&str) -> String,
 ) -> BTreeMap<EdgeSourceKey, Vec<DiffOp>> {
     let mut grouped: BTreeMap<EdgeSourceKey, Vec<DiffOp>> = BTreeMap::new();
@@ -3654,7 +3853,10 @@ fn collect_edge_source_candidates(
         let Some(graph_op) = graph_ops.get(idx) else {
             continue;
         };
-        if !matches!(graph_op.edit_type.as_str(), "addEdge" | "editEdgeReference") {
+        if !matches!(
+            graph_op.edit_type.as_str(),
+            "addEdge" | "editEdgeReference" | "deleteEdge"
+        ) {
             continue;
         }
         let Some(from_id) = graph_op.from.as_deref() else {
@@ -3664,10 +3866,10 @@ fn collect_edge_source_candidates(
             continue;
         };
         let canonical_target = canonicalize(&target_id);
-        if !common_created_ids.contains(&canonical_target) {
+        if !canonical_common_created_ids.contains(&canonical_target) {
             continue;
         }
-        if common_created_ids.contains(from_id) || from_id == "null" {
+        if side_common_created_ids.contains(from_id) || from_id == "null" {
             continue;
         }
         let field = graph_op_label_string(graph_op).unwrap_or_default();
@@ -3688,25 +3890,34 @@ fn collect_edge_source_candidates(
 
 fn build_role_aware_edge_source_pairs(
     ordered_common_ops: &[(usize, crate::list_env::GraphOperation)],
+    ordered_common_ops_b: &[(usize, crate::list_env::GraphOperation)],
     diff_a: &[crate::unify_ops::Op],
     diff_b: &[crate::unify_ops::Op],
     graph_ops_a: &[crate::list_env::GraphOperation],
     graph_ops_b: &[crate::list_env::GraphOperation],
     object_id_mapping_inv: &HashMap<String, String>,
 ) -> Vec<DiffPair> {
-    let common_created_ids = common_created_node_ids(ordered_common_ops);
-    if common_created_ids.is_empty() {
+    let canonical_common_created_ids = common_created_node_ids(ordered_common_ops);
+    if canonical_common_created_ids.is_empty() {
         return Vec::new();
     }
+    let side_common_created_ids_a = common_created_node_ids(ordered_common_ops);
+    let side_common_created_ids_b = common_created_node_ids(ordered_common_ops_b);
 
-    let mut grouped_a =
-        collect_edge_source_candidates(diff_a, graph_ops_a, &common_created_ids, |id| {
-            id.to_string()
-        });
-    let mut grouped_b =
-        collect_edge_source_candidates(diff_b, graph_ops_b, &common_created_ids, |id| {
-            canonicalize_object_id(id, object_id_mapping_inv)
-        });
+    let mut grouped_a = collect_edge_source_candidates(
+        diff_a,
+        graph_ops_a,
+        &canonical_common_created_ids,
+        &side_common_created_ids_a,
+        |id| id.to_string(),
+    );
+    let mut grouped_b = collect_edge_source_candidates(
+        diff_b,
+        graph_ops_b,
+        &canonical_common_created_ids,
+        &side_common_created_ids_b,
+        |id| canonicalize_object_id(id, object_id_mapping_inv),
+    );
 
     let mut keys: BTreeSet<EdgeSourceKey> = BTreeSet::new();
     keys.extend(grouped_a.keys().cloned());
@@ -3743,6 +3954,84 @@ fn build_role_aware_edge_source_pairs(
     pairs
 }
 
+fn pointer_target_from_edge_source_side(
+    op: Option<&DiffOp>,
+    ordered_common_ops: &[(usize, crate::list_env::GraphOperation)],
+) -> Option<DiffOp> {
+    let DiffOp::Json { graph_op, .. } = op? else {
+        return None;
+    };
+    if !matches!(graph_op.edit_type.as_str(), "addEdge" | "editEdgeReference") {
+        return None;
+    }
+    let source_created_id = graph_op_target_id(graph_op)?;
+    let field = graph_op_label_string(graph_op).unwrap_or_default();
+    let common_created_ids = common_created_node_ids(ordered_common_ops);
+    let common_created_literal_ids: HashSet<String> = ordered_common_ops
+        .iter()
+        .filter_map(|(_, op)| {
+            if op.edit_type == "addNode" && op.is_literal.unwrap_or(false) {
+                op.id.clone()
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    ordered_common_ops
+        .iter()
+        .map(|(_, op)| op)
+        .find_map(|common_op| {
+            if !matches!(
+                common_op.edit_type.as_str(),
+                "addEdge" | "editEdgeReference"
+            ) {
+                return None;
+            }
+            if common_op.from.as_deref() != Some(source_created_id.as_str()) {
+                return None;
+            }
+            if graph_op_label_string(common_op).as_deref() != Some(field.as_str()) {
+                return None;
+            }
+            let target_id = graph_op_target_id(common_op)?;
+            if target_id == "null" || common_created_ids.contains(target_id.as_str()) {
+                return None;
+            }
+            if common_created_literal_ids.contains(&target_id) {
+                return None;
+            }
+            Some(DiffOp::PointerOperand {
+                target_id,
+                source_id: source_created_id.clone(),
+                field: field.clone(),
+                operand: "edge_target".to_string(),
+            })
+        })
+}
+
+fn pointer_target_pair_for_edge_source_pair(
+    edge_source_pair: &DiffPair,
+    ordered_common_ops_a: &[(usize, crate::list_env::GraphOperation)],
+    ordered_common_ops_b: &[(usize, crate::list_env::GraphOperation)],
+) -> Option<DiffPair> {
+    if edge_source_pair.role != HoleRole::EdgeSource {
+        return None;
+    }
+    let op_a =
+        pointer_target_from_edge_source_side(edge_source_pair.op_a.as_ref(), ordered_common_ops_a);
+    let op_b =
+        pointer_target_from_edge_source_side(edge_source_pair.op_b.as_ref(), ordered_common_ops_b);
+    if op_a.is_none() && op_b.is_none() {
+        return None;
+    }
+    Some(DiffPair {
+        op_a,
+        op_b,
+        role: HoleRole::PointerTarget,
+    })
+}
+
 fn first_reference_index_for_object(
     object_id: &str,
     graph_ops: &[crate::list_env::GraphOperation],
@@ -3761,6 +4050,9 @@ fn diff_op_anchor_index(
 ) -> Option<usize> {
     match op {
         DiffOp::Json { index, .. } => Some(*index),
+        DiffOp::PointerOperand { target_id, .. } => {
+            first_reference_index_for_object(target_id, graph_ops)
+        }
         DiffOp::ExistNode { id, .. } => first_reference_index_for_object(id, graph_ops),
     }
 }
@@ -3935,6 +4227,13 @@ fn normalize_side_descriptor(desc: &str) -> String {
     if is_literal == "true" {
         label = "<literal>".to_string();
     }
+    if op == "PointerOperand" {
+        let operand = token_value(desc, "operand").unwrap_or_else(|| "<none>".to_string());
+        return format!(
+            "op={}|operand={}|label={}|is_literal={}",
+            op, operand, label, is_literal
+        );
+    }
     format!("op={}|label={}|is_literal={}", op, label, is_literal)
 }
 
@@ -3950,10 +4249,29 @@ fn hole_signature(desc: &HoleDescriptor) -> Option<String> {
         return None;
     }
     let normalized_side = normalize_side_descriptor(side);
+    if desc.role == HoleRole::PointerTarget.as_str()
+        && normalized_side == "op=ExistNode|label=<none>|is_literal=false"
+    {
+        return None;
+    }
     Some(format!(
         "ret={}|role={}|{}",
         desc.return_type, desc.role, normalized_side
     ))
+}
+
+fn is_unanchored_pointer_target_descriptor(desc: &HoleDescriptor) -> bool {
+    if desc.role != HoleRole::PointerTarget.as_str() {
+        return false;
+    }
+    let side = if !desc.side_b.is_empty() && desc.side_b != "<none>" {
+        &desc.side_b
+    } else if !desc.side_a.is_empty() && desc.side_a != "<none>" {
+        &desc.side_a
+    } else {
+        return false;
+    };
+    normalize_side_descriptor(side) == "op=ExistNode|label=<none>|is_literal=false"
 }
 
 fn example_to_input_output_key(example: &ExampleJson) -> Option<(String, String)> {
@@ -4038,6 +4356,34 @@ fn candidate_has_missing_output(candidate: &MultiTraceSpecCandidate) -> bool {
         .unwrap_or(true)
 }
 
+fn build_multi_trace_candidate_combinations<'a>(
+    per_trace: &[(usize, Vec<&'a MultiTraceSpecCandidate>)],
+) -> (Vec<Vec<(usize, &'a MultiTraceSpecCandidate)>>, bool) {
+    let mut combinations: Vec<Vec<(usize, &MultiTraceSpecCandidate)>> = vec![Vec::new()];
+    let mut truncated = false;
+
+    for (trace_index, candidates) in per_trace {
+        let mut next = Vec::new();
+        for existing in &combinations {
+            for candidate in candidates {
+                if next.len() >= MAX_MULTI_TRACE_SPEC_GROUP_VARIANTS {
+                    truncated = true;
+                    break;
+                }
+                let mut combo = existing.clone();
+                combo.push((*trace_index, *candidate));
+                next.push(combo);
+            }
+            if truncated {
+                break;
+            }
+        }
+        combinations = next;
+    }
+
+    (combinations, truncated)
+}
+
 fn aggregate_multi_trace_specs(
     candidates: &[MultiTraceSpecCandidate],
     trace_count: usize,
@@ -4092,7 +4438,7 @@ fn aggregate_multi_trace_specs(
             }
         }
 
-        let mut by_trace: HashMap<usize, &MultiTraceSpecCandidate> = HashMap::new();
+        let mut by_trace: HashMap<usize, Vec<&MultiTraceSpecCandidate>> = HashMap::new();
         for candidate in members {
             if candidate.spec.input_types != representative.spec.input_types
                 || candidate.spec.return_type != representative.spec.return_type
@@ -4105,18 +4451,10 @@ fn aggregate_multi_trace_specs(
                 }
                 continue;
             }
-            match by_trace.get(&candidate.trace_index) {
-                None => {
-                    by_trace.insert(candidate.trace_index, *candidate);
-                }
-                Some(existing) => {
-                    if candidate_has_missing_output(existing)
-                        && !candidate_has_missing_output(candidate)
-                    {
-                        by_trace.insert(candidate.trace_index, *candidate);
-                    }
-                }
-            }
+            by_trace
+                .entry(candidate.trace_index)
+                .or_default()
+                .push(*candidate);
         }
 
         if by_trace.len() != trace_count {
@@ -4131,12 +4469,23 @@ fn aggregate_multi_trace_specs(
             continue;
         }
 
-        let mut ordered: Vec<(usize, &MultiTraceSpecCandidate)> = by_trace.into_iter().collect();
+        for trace_candidates in by_trace.values_mut() {
+            if trace_candidates
+                .iter()
+                .any(|candidate| !candidate_has_missing_output(candidate))
+            {
+                trace_candidates.retain(|candidate| !candidate_has_missing_output(candidate));
+            }
+        }
+
+        let mut ordered: Vec<(usize, Vec<&MultiTraceSpecCandidate>)> =
+            by_trace.into_iter().collect();
         ordered.sort_by_key(|(idx, _)| *idx);
-        if ordered
-            .iter()
-            .any(|(_, candidate)| candidate_has_missing_output(candidate))
-        {
+        if ordered.iter().any(|(_, candidates)| {
+            candidates
+                .iter()
+                .any(|candidate| candidate_has_missing_output(candidate))
+        }) {
             if trace_enabled() {
                 println!(
                     "TRACE:   reject signature {} due to missing output in selected candidates",
@@ -4146,43 +4495,55 @@ fn aggregate_multi_trace_specs(
             continue;
         }
 
-        let examples: Vec<ExampleJson> = ordered
-            .iter()
-            .filter_map(|(_, candidate)| candidate.spec.examples.first().cloned())
-            .collect();
-        if examples.len() != trace_count {
-            if trace_enabled() {
-                println!(
-                    "TRACE:   reject signature {} due to example count {}/{}",
-                    signature,
-                    examples.len(),
-                    trace_count
-                );
-            }
-            continue;
-        }
-        if has_conflicting_examples(&examples) {
-            if trace_enabled() {
-                println!(
-                    "TRACE:   reject signature {} due to conflicting examples",
-                    signature
-                );
-            }
-            continue;
+        let (combinations, truncated) = build_multi_trace_candidate_combinations(&ordered);
+        if truncated {
+            emit_synthesis_diagnostic(format!(
+                "multi-trace spec combinations for signature '{}' were capped at {}",
+                signature, MAX_MULTI_TRACE_SPEC_GROUP_VARIANTS
+            ));
         }
 
-        let spec_name = build_spec_name(base_name, suffix_index);
-        suffix_index += 1;
+        for combination in combinations {
+            let examples: Vec<ExampleJson> = combination
+                .iter()
+                .filter_map(|(_, candidate)| candidate.spec.examples.first().cloned())
+                .collect();
+            if examples.len() != trace_count {
+                if trace_enabled() {
+                    println!(
+                        "TRACE:   reject signature {} due to example count {}/{}",
+                        signature,
+                        examples.len(),
+                        trace_count
+                    );
+                }
+                continue;
+            }
+            if has_conflicting_examples(&examples) {
+                if trace_enabled() {
+                    println!(
+                        "TRACE:   reject signature {} due to conflicting examples",
+                        signature
+                    );
+                }
+                continue;
+            }
 
-        specs.push(EscherSpec {
-            name: spec_name.clone(),
-            input_types: representative.spec.input_types.clone(),
-            return_type: representative.spec.return_type.clone(),
-            examples,
-        });
-        metas.insert(spec_name.clone(), representative.meta.clone());
-        for (_, candidate) in &ordered {
-            renames.insert(candidate.original_spec_name.clone(), spec_name.clone());
+            let spec_name = build_spec_name(base_name, suffix_index);
+            suffix_index += 1;
+
+            specs.push(EscherSpec {
+                name: spec_name.clone(),
+                input_types: representative.spec.input_types.clone(),
+                return_type: representative.spec.return_type.clone(),
+                examples,
+            });
+            metas.insert(spec_name.clone(), representative.meta.clone());
+            for (_, candidate) in &combination {
+                renames
+                    .entry(candidate.original_spec_name.clone())
+                    .or_insert_with(|| spec_name.clone());
+            }
         }
     }
 
@@ -4209,7 +4570,10 @@ fn choose_best_common_plan_artifact(
             .collect();
         let relevant_descriptors: Vec<&HoleDescriptor> =
             if called_js_methods.is_empty() || called_descriptors.is_empty() {
-                descriptors.values().collect()
+                descriptors
+                    .values()
+                    .filter(|desc| !is_unanchored_pointer_target_descriptor(desc))
+                    .collect()
             } else {
                 called_descriptors
             };
@@ -4449,7 +4813,7 @@ fn extract_node_object_id(op: &crate::unify_ops::Op) -> Option<String> {
 
 fn graph_op_parent_id(op: &crate::list_env::GraphOperation) -> Option<String> {
     match op.edit_type.as_str() {
-        "addEdge" | "editEdgeReference" | "removeEdge" => op.from.clone(),
+        "addEdge" | "editEdgeReference" | "deleteEdge" | "removeEdge" => op.from.clone(),
         "addVariable" | "editVariableReference" => {
             graph_op_label_string(op).map(|label| format!("__Variable-{}", label))
         }
@@ -4470,7 +4834,7 @@ fn graph_op_label_string(op: &crate::list_env::GraphOperation) -> Option<String>
 fn graph_op_target_id(op: &crate::list_env::GraphOperation) -> Option<String> {
     match op.edit_type.as_str() {
         "editEdgeReference" | "editVariableReference" => op.new_to.clone().or(op.to.clone()),
-        "addEdge" | "removeEdge" | "addVariable" => op.to.clone(),
+        "addEdge" | "deleteEdge" | "removeEdge" | "addVariable" => op.to.clone(),
         _ => op.to.clone(),
     }
 }
@@ -4632,7 +4996,9 @@ fn js_field_access(base: &str, field: &str) -> String {
 
 #[derive(Debug, Clone)]
 struct PendingEdgeAssignment {
+    from_id: String,
     from_expr: String,
+    to_id: String,
     to_expr: String,
     field: String,
     is_edit_reference: bool,
@@ -4646,6 +5012,7 @@ fn flush_pending_edge_assignments(
     body_lines: &mut Vec<String>,
     pending: &mut Vec<PendingEdgeAssignment>,
     snapshot_index: &mut usize,
+    snapshot_expr_by_object_id: &mut HashMap<String, String>,
 ) {
     if pending.is_empty() {
         return;
@@ -4689,6 +5056,12 @@ fn flush_pending_edge_assignments(
     for assignment in pending.drain(..) {
         let from_expr = resolve_snapshot_expr(&assignment.from_expr);
         let to_expr = resolve_snapshot_expr(&assignment.to_expr);
+        if from_expr != assignment.from_expr {
+            snapshot_expr_by_object_id.insert(assignment.from_id, from_expr.clone());
+        }
+        if to_expr != assignment.to_expr {
+            snapshot_expr_by_object_id.insert(assignment.to_id, to_expr.clone());
+        }
         writes.push(js_field_assignment(&from_expr, &assignment.field, &to_expr));
     }
 
@@ -4741,7 +5114,8 @@ fn build_composed_method_code(
     let mut body_lines: Vec<String> = Vec::new();
     let mut hole_declarations: Vec<(String, String)> = Vec::new();
     let mut hole_expr_by_key: HashMap<String, String> = HashMap::new();
-    let mut edge_source_hole_expr_by_field: HashMap<String, String> = HashMap::new();
+    let common_created_ids = common_created_node_ids(ordered_common_ops);
+    let hole_by_use_key = build_hole_by_use_key(hole_bindings, &common_created_ids);
     let mut object_expr_by_id: HashMap<String, String> = runtime_object_expr_by_id.clone();
     if let Some(receiver_id) = receiver_object_id {
         object_expr_by_id.insert(receiver_id.to_string(), "this".to_string());
@@ -4774,21 +5148,11 @@ fn build_composed_method_code(
             format!("const {} = {};", var_name, binding.js_call_template),
         ));
         hole_expr_by_key.insert(binding.hole_key.clone(), var_name);
-        if binding.role == HoleRole::EdgeSource && binding.return_type == "Ptr" {
-            if let Some(field) = [&binding.side_a, &binding.side_b]
-                .into_iter()
-                .find_map(|side| token_value(side, "label"))
-                .filter(|field| !field.is_empty() && field != "<none>" && field != "-")
-            {
-                edge_source_hole_expr_by_field
-                    .entry(field)
-                    .or_insert_with(|| hole_expr_by_key[&binding.hole_key].clone());
-            }
-        }
     }
 
     let mut tmp_index = 0usize;
     let mut snapshot_index = 0usize;
+    let mut snapshot_expr_by_object_id: HashMap<String, String> = HashMap::new();
     let mut pending_edge_assignments: Vec<PendingEdgeAssignment> = Vec::new();
     let mut local_created_object_ids: HashSet<String> = HashSet::new();
     let mut last_created_object_expr: Option<String> = None;
@@ -4800,6 +5164,7 @@ fn build_composed_method_code(
                     &mut body_lines,
                     &mut pending_edge_assignments,
                     &mut snapshot_index,
+                    &mut snapshot_expr_by_object_id,
                 );
                 let node_id = op
                     .id
@@ -4839,6 +5204,86 @@ fn build_composed_method_code(
                 let from_is_local = local_created_object_ids.contains(from_id);
                 let to_is_local = local_created_object_ids.contains(to_id);
 
+                let from_operand_hole = common_edge_hole_use_key(op, "from")
+                    .and_then(|key| hole_by_use_key.get(&key))
+                    .and_then(|hole_key| hole_expr_by_key.get(hole_key));
+                let to_operand_hole = common_edge_hole_use_key(op, "to")
+                    .and_then(|key| hole_by_use_key.get(&key))
+                    .and_then(|hole_key| hole_expr_by_key.get(hole_key));
+
+                let from_expr = if let Some(hole_expr) = from_operand_hole {
+                    hole_expr.clone()
+                } else {
+                    resolve_object_expression(
+                        from_id,
+                        receiver_object_id,
+                        &object_expr_by_id,
+                        hole_by_object_id,
+                        &hole_expr_by_key,
+                        &local_created_object_ids,
+                    )
+                    .ok_or_else(|| {
+                        anyhow::anyhow!("failed to resolve from expression for {}", from_id)
+                    })?
+                };
+                let to_expr = if let Some(hole_expr) = to_operand_hole {
+                    hole_expr.clone()
+                } else {
+                    resolve_object_expression(
+                        to_id,
+                        receiver_object_id,
+                        &object_expr_by_id,
+                        hole_by_object_id,
+                        &hole_expr_by_key,
+                        &local_created_object_ids,
+                    )
+                    .ok_or_else(|| {
+                        anyhow::anyhow!("failed to resolve to expression for {}", to_id)
+                    })?
+                };
+
+                if !from_is_local
+                    && to_is_local
+                    && edge_source_fields.contains(&field)
+                    && from_operand_hole.is_none()
+                {
+                    continue;
+                }
+
+                if to_is_local && edge_source_fields.contains(&field) && from_operand_hole.is_some()
+                {
+                    flush_pending_edge_assignments(
+                        &mut body_lines,
+                        &mut pending_edge_assignments,
+                        &mut snapshot_index,
+                        &mut snapshot_expr_by_object_id,
+                    );
+                    let assignment = js_field_assignment(&from_expr, &field, &to_expr);
+                    body_lines.push(format!("if ({} !== null) {{ {} }}", from_expr, assignment));
+                    continue;
+                }
+
+                pending_edge_assignments.push(PendingEdgeAssignment {
+                    from_id: from_id.to_string(),
+                    from_expr,
+                    to_id: to_id.to_string(),
+                    to_expr,
+                    field,
+                    is_edit_reference: op.edit_type == "editEdgeReference",
+                });
+            }
+            "deleteEdge" => {
+                flush_pending_edge_assignments(
+                    &mut body_lines,
+                    &mut pending_edge_assignments,
+                    &mut snapshot_index,
+                    &mut snapshot_expr_by_object_id,
+                );
+                let from_id = op
+                    .from
+                    .as_deref()
+                    .ok_or_else(|| anyhow::anyhow!("deleteEdge op missing from"))?;
+                let field = graph_op_label_string(op).unwrap_or_default();
                 let from_expr = resolve_object_expression(
                     from_id,
                     receiver_object_id,
@@ -4850,39 +5295,14 @@ fn build_composed_method_code(
                 .ok_or_else(|| {
                     anyhow::anyhow!("failed to resolve from expression for {}", from_id)
                 })?;
-                let mut to_expr = resolve_object_expression(
-                    to_id,
-                    receiver_object_id,
-                    &object_expr_by_id,
-                    hole_by_object_id,
-                    &hole_expr_by_key,
-                    &local_created_object_ids,
-                )
-                .ok_or_else(|| anyhow::anyhow!("failed to resolve to expression for {}", to_id))?;
-
-                if !from_is_local && to_is_local && edge_source_fields.contains(&field) {
-                    continue;
-                }
-
-                if from_is_local && !to_is_local {
-                    if let Some(hole_expr) = edge_source_hole_expr_by_field.get(&field) {
-                        let field_access = js_field_access(hole_expr, &field);
-                        to_expr = format!("({} === null ? null : {})", hole_expr, field_access);
-                    }
-                }
-
-                pending_edge_assignments.push(PendingEdgeAssignment {
-                    from_expr,
-                    to_expr,
-                    field,
-                    is_edit_reference: op.edit_type == "editEdgeReference",
-                });
+                body_lines.push(format!("{} = null;", js_field_access(&from_expr, &field)));
             }
             "addVariable" | "editVariableReference" => {
                 flush_pending_edge_assignments(
                     &mut body_lines,
                     &mut pending_edge_assignments,
                     &mut snapshot_index,
+                    &mut snapshot_expr_by_object_id,
                 );
                 let label = graph_op_label_string(op).unwrap_or_default();
                 let to_id = op
@@ -4901,7 +5321,12 @@ fn build_composed_method_code(
                 .ok_or_else(|| anyhow::anyhow!("failed to resolve to expression for {}", to_id))?;
 
                 if label == "return" {
-                    return_expr = Some(to_expr);
+                    return_expr = Some(
+                        snapshot_expr_by_object_id
+                            .get(to_id)
+                            .cloned()
+                            .unwrap_or(to_expr),
+                    );
                 } else {
                     body_lines.push(format!(
                         "// NOTE: variable '{}' update is omitted in composed code",
@@ -4914,6 +5339,7 @@ fn build_composed_method_code(
                     &mut body_lines,
                     &mut pending_edge_assignments,
                     &mut snapshot_index,
+                    &mut snapshot_expr_by_object_id,
                 );
                 return Err(anyhow::anyhow!(
                     "remove operations are not supported yet in composed method generation"
@@ -4924,6 +5350,7 @@ fn build_composed_method_code(
                     &mut body_lines,
                     &mut pending_edge_assignments,
                     &mut snapshot_index,
+                    &mut snapshot_expr_by_object_id,
                 );
                 return Err(anyhow::anyhow!(
                     "unsupported operation in common plan for composed generation: {}",
@@ -4936,10 +5363,12 @@ fn build_composed_method_code(
         &mut body_lines,
         &mut pending_edge_assignments,
         &mut snapshot_index,
+        &mut snapshot_expr_by_object_id,
     );
 
-    // If value-setting edges stayed in diff (not in common ops), recover a minimal assignment
-    // from hole metadata so composed code can still connect synthesized value holes.
+    // Legacy guard: if an older plan lacks materialized operand operations,
+    // retain the previous metadata fallback. Normal operation-operand plans
+    // should not enter either branch.
     let mut recovered_assignments: HashSet<String> = HashSet::new();
     for binding in hole_bindings {
         if binding.role != HoleRole::Value
@@ -5025,6 +5454,9 @@ fn build_composed_method_code(
             }
             let assignment = js_field_assignment(from_expr, &field, &to_expr);
             let line = format!("if ({} !== null) {{ {} }}", from_expr, assignment);
+            if field_assignment_to_expr_exists(&body_lines, &field, &to_expr) {
+                continue;
+            }
             if !body_lines.contains(&line) && recovered_assignments.insert(line.clone()) {
                 emit_synthesis_diagnostic(format!(
                     "recovered edge assignment from hole metadata: hole={} spec={} assignment={}",
@@ -5085,21 +5517,278 @@ fn diff_op_primary_object_id(op: &DiffOp) -> Option<String> {
             "addNode" | "removeNode" => graph_op.id.clone(),
             "addEdge"
             | "editEdgeReference"
+            | "deleteEdge"
             | "removeEdge"
             | "addVariable"
             | "editVariableReference" => graph_op_target_id(graph_op),
             _ => None,
         },
+        DiffOp::PointerOperand { target_id, .. } => Some(target_id.clone()),
         DiffOp::ExistNode { id, .. } => Some(id.clone()),
     }
+}
+
+fn common_edge_hole_use_key(
+    op: &crate::list_env::GraphOperation,
+    operand: &str,
+) -> Option<HoleUseKey> {
+    let field = graph_op_label_string(op).unwrap_or_default();
+    if field.is_empty() || field == "<none>" || field == "-" {
+        return None;
+    }
+    let source_id = match operand {
+        "from" => graph_op_target_id(op)?,
+        "to" => op.from.clone()?,
+        _ => return None,
+    };
+    Some(HoleUseKey {
+        source_id,
+        operand: operand.to_string(),
+        field,
+    })
+}
+
+fn canonicalize_created_operand_id(id: &str, common_created_ids: &HashSet<String>) -> String {
+    if common_created_ids.contains(id) {
+        return id.to_string();
+    }
+    if common_created_ids.len() == 1
+        && (id.starts_with("__temp") || id.contains("FunctionExpression"))
+    {
+        return common_created_ids
+            .iter()
+            .next()
+            .cloned()
+            .unwrap_or_else(|| id.to_string());
+    }
+    id.to_string()
+}
+
+fn build_hole_by_use_key(
+    hole_bindings: &[HoleBinding],
+    common_created_ids: &HashSet<String>,
+) -> HashMap<HoleUseKey, String> {
+    let mut holes = HashMap::new();
+    for binding in hole_bindings {
+        match binding.role {
+            HoleRole::PointerTarget => {
+                for side in [&binding.side_a, &binding.side_b] {
+                    if !side.starts_with("PointerOperand ") {
+                        continue;
+                    }
+                    let Some(source_id) = token_value(side, "source") else {
+                        continue;
+                    };
+                    let source_id = canonicalize_created_operand_id(&source_id, common_created_ids);
+                    let Some(field) = token_value(side, "label") else {
+                        continue;
+                    };
+                    if field.is_empty() || field == "<none>" || field == "-" {
+                        continue;
+                    }
+                    holes
+                        .entry(HoleUseKey {
+                            source_id,
+                            operand: "to".to_string(),
+                            field,
+                        })
+                        .or_insert_with(|| binding.hole_key.clone());
+                }
+            }
+            HoleRole::Value => {
+                for side in [&binding.side_a, &binding.side_b] {
+                    if !side.starts_with("addEdge ") {
+                        continue;
+                    }
+                    let Some(source_id) = token_value(side, "from") else {
+                        continue;
+                    };
+                    let source_id = canonicalize_created_operand_id(&source_id, common_created_ids);
+                    let Some(field) = token_value(side, "label") else {
+                        continue;
+                    };
+                    if source_id == "-" || field.is_empty() || field == "<none>" || field == "-" {
+                        continue;
+                    }
+                    holes
+                        .entry(HoleUseKey {
+                            source_id,
+                            operand: "to".to_string(),
+                            field,
+                        })
+                        .or_insert_with(|| binding.hole_key.clone());
+                }
+            }
+            HoleRole::EdgeSource => {
+                for side in [&binding.side_a, &binding.side_b] {
+                    if !(side.starts_with("addEdge ") || side.starts_with("editEdgeReference ")) {
+                        continue;
+                    }
+                    let Some(target_id) = token_value(side, "to") else {
+                        continue;
+                    };
+                    let target_id = canonicalize_created_operand_id(&target_id, common_created_ids);
+                    let Some(field) = token_value(side, "label") else {
+                        continue;
+                    };
+                    if target_id == "-" || field.is_empty() || field == "<none>" || field == "-" {
+                        continue;
+                    }
+                    holes
+                        .entry(HoleUseKey {
+                            source_id: target_id,
+                            operand: "from".to_string(),
+                            field,
+                        })
+                        .or_insert_with(|| binding.hole_key.clone());
+                }
+            }
+            HoleRole::Unknown => {}
+        }
+    }
+    holes
+}
+
+fn edge_op_exists(
+    ordered_ops: &[(usize, crate::list_env::GraphOperation)],
+    from: &str,
+    target: &str,
+    field: &str,
+) -> bool {
+    ordered_ops.iter().any(|(_, op)| {
+        matches!(op.edit_type.as_str(), "addEdge" | "editEdgeReference")
+            && op.from.as_deref() == Some(from)
+            && graph_op_target_id(op).as_deref() == Some(target)
+            && graph_op_label_string(op).as_deref() == Some(field)
+    })
+}
+
+fn field_assignment_to_expr_exists(lines: &[String], field: &str, rhs: &str) -> bool {
+    let assignment_suffix = if is_valid_js_identifier(field) {
+        format!(".{} = {};", field, rhs)
+    } else {
+        let quoted = serde_json::to_string(field).unwrap_or_else(|_| "\"\"".to_string());
+        format!("[{}] = {};", quoted, rhs)
+    };
+    lines.iter().any(|line| line.contains(&assignment_suffix))
+}
+
+fn materialize_operand_common_ops(
+    ordered_common_ops: &[(usize, crate::list_env::GraphOperation)],
+    hole_bindings: &[HoleBinding],
+) -> Vec<(usize, crate::list_env::GraphOperation)> {
+    let mut ops = ordered_common_ops.to_vec();
+    let common_created_ids = common_created_node_ids(ordered_common_ops);
+    let mut next_index = ops
+        .iter()
+        .map(|(index, _)| *index)
+        .max()
+        .map(|index| index + 1)
+        .unwrap_or(0);
+
+    for binding in hole_bindings {
+        match binding.role {
+            HoleRole::Value => {
+                for side in [&binding.side_a, &binding.side_b] {
+                    if !side.starts_with("addEdge ") {
+                        continue;
+                    }
+                    let Some(raw_from) = token_value(side, "from") else {
+                        continue;
+                    };
+                    let from = canonicalize_created_operand_id(&raw_from, &common_created_ids);
+                    if from == "-" {
+                        continue;
+                    }
+                    let Some(target) = token_value(side, "to") else {
+                        continue;
+                    };
+                    let Some(field) = token_value(side, "label") else {
+                        continue;
+                    };
+                    if target == "-"
+                        || field.is_empty()
+                        || field == "<none>"
+                        || field == "-"
+                        || edge_op_exists(&ops, &from, &target, &field)
+                    {
+                        continue;
+                    }
+                    ops.push((
+                        next_index,
+                        crate::list_env::GraphOperation {
+                            edit_type: "addEdge".to_string(),
+                            from: Some(from),
+                            to: Some(target),
+                            label: Some(serde_json::Value::String(field)),
+                            ..crate::list_env::GraphOperation::default()
+                        },
+                    ));
+                    next_index += 1;
+                    break;
+                }
+            }
+            HoleRole::EdgeSource => {
+                for side in [&binding.side_a, &binding.side_b] {
+                    if !(side.starts_with("editEdgeReference ") || side.starts_with("addEdge ")) {
+                        continue;
+                    }
+                    let Some(raw_target) = token_value(side, "to") else {
+                        continue;
+                    };
+                    let target = canonicalize_created_operand_id(&raw_target, &common_created_ids);
+                    if target == "-" || !common_created_ids.contains(&target) {
+                        continue;
+                    }
+                    let Some(from) = token_value(side, "from") else {
+                        continue;
+                    };
+                    let Some(field) = token_value(side, "label") else {
+                        continue;
+                    };
+                    if from == "-"
+                        || common_created_ids.contains(&from)
+                        || field.is_empty()
+                        || field == "<none>"
+                        || field == "-"
+                        || edge_op_exists(&ops, &from, &target, &field)
+                    {
+                        continue;
+                    }
+                    ops.push((
+                        next_index,
+                        crate::list_env::GraphOperation {
+                            edit_type: "editEdgeReference".to_string(),
+                            from: Some(from),
+                            old_to: token_value(side, "old_to"),
+                            new_to: Some(target),
+                            label: Some(serde_json::Value::String(field)),
+                            ..crate::list_env::GraphOperation::default()
+                        },
+                    ));
+                    next_index += 1;
+                    break;
+                }
+            }
+            HoleRole::PointerTarget | HoleRole::Unknown => {}
+        }
+    }
+
+    ops.sort_by_key(|(index, _)| *index);
+    ops
 }
 
 fn render_common_graph_op(
     index: usize,
     op: &crate::list_env::GraphOperation,
     hole_by_object_id: &HashMap<String, String>,
+    hole_by_use_key: &HashMap<HoleUseKey, String>,
+    common_created_ids: &HashSet<String>,
 ) -> String {
     let resolve_id = |id: &str| {
+        if common_created_ids.contains(id) {
+            return id.to_string();
+        }
         hole_by_object_id
             .get(id)
             .cloned()
@@ -5111,7 +5800,7 @@ fn render_common_graph_op(
             let id = op
                 .id
                 .as_deref()
-                .map(resolve_id)
+                .map(|id| id.to_string())
                 .unwrap_or_else(|| "-".to_string());
             let label = graph_op_label_string(op).unwrap_or_else(|| "<none>".to_string());
             let is_literal = op.is_literal.unwrap_or(false);
@@ -5120,19 +5809,27 @@ fn render_common_graph_op(
                 index, op.edit_type, id, label, is_literal
             )
         }
-        "addEdge" | "editEdgeReference" | "removeEdge" => {
+        "addEdge" | "editEdgeReference" | "deleteEdge" | "removeEdge" => {
+            let label = graph_op_label_string(op).unwrap_or_else(|| "<none>".to_string());
             let from = op
                 .from
                 .as_deref()
-                .map(resolve_id)
+                .map(|id| {
+                    common_edge_hole_use_key(op, "from")
+                        .and_then(|key| hole_by_use_key.get(&key).cloned())
+                        .unwrap_or_else(|| resolve_id(id))
+                })
                 .unwrap_or_else(|| "-".to_string());
             let to = op
                 .new_to
                 .as_deref()
                 .or(op.to.as_deref())
-                .map(resolve_id)
+                .map(|id| {
+                    common_edge_hole_use_key(op, "to")
+                        .and_then(|key| hole_by_use_key.get(&key).cloned())
+                        .unwrap_or_else(|| resolve_id(id))
+                })
                 .unwrap_or_else(|| "-".to_string());
-            let label = graph_op_label_string(op).unwrap_or_else(|| "<none>".to_string());
             format!(
                 "[op_{}] {}(from={}, to={}, label={})",
                 index, op.edit_type, from, to, label
@@ -5168,33 +5865,15 @@ fn build_common_plan_artifact(
     let mut lines: Vec<String> = Vec::new();
     lines.push("COMMON_PLAN (operation-level, ordered)".to_string());
     let common_created_ids = common_created_node_ids(ordered_common_ops);
-    let edge_source_fields: HashSet<String> = hole_bindings
-        .iter()
-        .filter(|binding| binding.role == HoleRole::EdgeSource)
-        .filter_map(|binding| {
-            [&binding.side_a, &binding.side_b]
-                .into_iter()
-                .find_map(|side| token_value(side, "label"))
-        })
-        .filter(|field| !field.is_empty() && field != "<none>" && field != "-")
-        .collect();
+    let hole_by_use_key = build_hole_by_use_key(hole_bindings, &common_created_ids);
     for (index, op) in ordered_common_ops {
-        if matches!(op.edit_type.as_str(), "addEdge" | "editEdgeReference") {
-            let from_id = op.from.as_deref().unwrap_or_default();
-            let to_id = op
-                .new_to
-                .as_deref()
-                .or(op.to.as_deref())
-                .unwrap_or_default();
-            let field = graph_op_label_string(op).unwrap_or_default();
-            let skip_edge_source = !common_created_ids.contains(from_id)
-                && common_created_ids.contains(to_id)
-                && edge_source_fields.contains(&field);
-            if skip_edge_source {
-                continue;
-            }
-        }
-        lines.push(render_common_graph_op(*index, op, hole_by_object_id));
+        lines.push(render_common_graph_op(
+            *index,
+            op,
+            hole_by_object_id,
+            &hole_by_use_key,
+            &common_created_ids,
+        ));
     }
     if !hole_bindings.is_empty() {
         lines.push(String::new());
@@ -5290,6 +5969,8 @@ fn generate_specs_from_unification(
     }
     let ordered_common_ops =
         common_ops_in_source_order(&analysis.unification_result.common_a, &graph_ops_a);
+    let ordered_common_ops_b =
+        common_ops_in_source_order(&analysis.unification_result.common_b, &graph_ops_b);
     let method_param_names = resolve_method_param_names(
         method_param_names_a,
         method_param_names_b,
@@ -5849,65 +6530,41 @@ fn generate_specs_from_unification(
     let strict_diff_pairs = diff_pairs;
     let mut candidate_plans: Vec<(String, Vec<DiffPair>)> =
         vec![("strict".to_string(), strict_diff_pairs)];
-    let relaxed = build_relaxed_parallel_diff_pairs(
+    let relaxed_variants = build_relaxed_parallel_diff_pair_variants(
         &analysis.unification_result.diff_a,
         &analysis.unification_result.diff_b,
         &graph_ops_a,
         &graph_ops_b,
         vis_graph_a,
         vis_graph_b,
-        false,
-    );
-    let relaxed_reverse = build_relaxed_parallel_diff_pairs(
-        &analysis.unification_result.diff_a,
-        &analysis.unification_result.diff_b,
-        &graph_ops_a,
-        &graph_ops_b,
-        vis_graph_a,
-        vis_graph_b,
-        true,
     );
     let mut seen_signatures: HashSet<String> = HashSet::new();
     for (_, pairs) in &candidate_plans {
         seen_signatures.insert(diff_pairs_signature(pairs));
     }
-    for (name, pairs) in [
-        ("relaxed_parallel".to_string(), relaxed),
-        ("relaxed_parallel_reverse".to_string(), relaxed_reverse),
-    ] {
+    for (name, pairs) in relaxed_variants {
         let signature = diff_pairs_signature(&pairs);
         if seen_signatures.insert(signature) {
             candidate_plans.push((name, pairs));
         }
     }
 
-    let mut scored_candidates: Vec<(String, Vec<DiffPair>, DiffPairCandidateScore)> =
-        candidate_plans
-            .into_iter()
-            .map(|(name, pairs)| {
-                let score = score_diff_pair_candidate(&pairs, vis_graph_a, vis_graph_b);
-                (name, pairs, score)
-            })
-            .collect();
+    let scored_candidates: Vec<(String, Vec<DiffPair>, DiffPairCandidateScore)> = candidate_plans
+        .into_iter()
+        .map(|(name, pairs)| {
+            let score = score_diff_pair_candidate(&pairs, vis_graph_a, vis_graph_b);
+            (name, pairs, score)
+        })
+        .collect();
     if scored_candidates.is_empty() {
         return Err(anyhow::anyhow!("no diff-pair candidates generated"));
     }
 
-    let mut best_index = 0usize;
-    for idx in 1..scored_candidates.len() {
-        if is_better_diff_pair_candidate(
-            &scored_candidates[idx].2,
-            &scored_candidates[best_index].2,
-        ) {
-            best_index = idx;
-        }
-    }
-    let (selected_candidate_name, selected_diff_pairs, selected_score) =
-        scored_candidates.swap_remove(best_index);
     let mut diff_pairs: Vec<DiffPair> = Vec::new();
     let mut pair_signatures: HashSet<String> = HashSet::new();
     for pair in build_role_aware_edge_source_pairs(
         &ordered_common_ops,
+        &ordered_common_ops_b,
         &analysis.unification_result.diff_a,
         &analysis.unification_result.diff_b,
         &graph_ops_a,
@@ -5916,19 +6573,33 @@ fn generate_specs_from_unification(
     ) {
         let sig = diff_pairs_signature(std::slice::from_ref(&pair));
         if pair_signatures.insert(sig) {
+            let target_pair = pointer_target_pair_for_edge_source_pair(
+                &pair,
+                &ordered_common_ops,
+                &ordered_common_ops_b,
+            );
             diff_pairs.push(pair);
-        }
-    }
-    for pair in selected_diff_pairs {
-        if let Some(source_pair) = build_source_pointer_diff_pair(&pair, &object_id_mapping_inv) {
-            let sig = diff_pairs_signature(std::slice::from_ref(&source_pair));
-            if pair_signatures.insert(sig) {
-                diff_pairs.push(source_pair);
+            if let Some(target_pair) = target_pair {
+                let target_sig = diff_pairs_signature(std::slice::from_ref(&target_pair));
+                if pair_signatures.insert(target_sig) {
+                    diff_pairs.push(target_pair);
+                }
             }
         }
-        let sig = diff_pairs_signature(std::slice::from_ref(&pair));
-        if pair_signatures.insert(sig) {
-            diff_pairs.push(pair);
+    }
+    for (_candidate_name, candidate_pairs, _score) in &scored_candidates {
+        for pair in candidate_pairs {
+            if let Some(source_pair) = build_source_pointer_diff_pair(pair, &object_id_mapping_inv)
+            {
+                let sig = diff_pairs_signature(std::slice::from_ref(&source_pair));
+                if pair_signatures.insert(sig) {
+                    diff_pairs.push(source_pair);
+                }
+            }
+            let sig = diff_pairs_signature(std::slice::from_ref(pair));
+            if pair_signatures.insert(sig) {
+                diff_pairs.push(pair.clone());
+            }
         }
     }
     if trace_enabled() {
@@ -5949,19 +6620,11 @@ fn generate_specs_from_unification(
             );
         }
         println!(
-            "  [selected] {} => invalid={}, unlabeled_literal={}, json_paired={}, inversions={}, anchor_dist={}, paired={}, one_sided={}, complexity={}, pairs={}",
-            selected_candidate_name,
-            selected_score.invalid_pairs,
-            selected_score.literal_exist_pairs_without_value,
-            selected_score.json_paired_pairs,
-            selected_score.json_order_inversions,
-            selected_score.json_anchor_distance_sum,
-            selected_score.paired_pairs,
-            selected_score.one_sided_pairs,
-            selected_score.complexity,
+            "  [enumerated] candidates={}, unique_pairs={}",
+            scored_candidates.len(),
             diff_pairs.len()
         );
-        println!("TRACE: selected diff_pairs ({}):", diff_pairs.len());
+        println!("TRACE: enumerated diff_pairs ({}):", diff_pairs.len());
         for (i, pair) in diff_pairs.iter().enumerate() {
             let a_desc = pair
                 .op_a
@@ -5998,13 +6661,21 @@ fn generate_specs_from_unification(
 
         // Input environment should be the state immediately before the target diff op.
         // For ExistNode (no direct op index), we fall back to the paired side index.
-        let env_input_a = match anchor_a {
-            Some(index) => build_environment_prefix(base_env_a, operations_a, index, false)?,
-            None => env_boundary_a.clone(),
+        let env_input_a = if diff_op_prefers_call_pre_state_input(pair.op_a.as_ref(), base_env_a) {
+            base_env_a.clone()
+        } else {
+            match anchor_a {
+                Some(index) => build_environment_prefix(base_env_a, operations_a, index, false)?,
+                None => env_boundary_a.clone(),
+            }
         };
-        let env_input_b = match anchor_b {
-            Some(index) => build_environment_prefix(base_env_b, operations_b, index, false)?,
-            None => env_boundary_b.clone(),
+        let env_input_b = if diff_op_prefers_call_pre_state_input(pair.op_b.as_ref(), base_env_b) {
+            base_env_b.clone()
+        } else {
+            match anchor_b {
+                Some(index) => build_environment_prefix(base_env_b, operations_b, index, false)?,
+                None => env_boundary_b.clone(),
+            }
         };
 
         // Output extraction for Json ops must observe the post-state of that op.
@@ -6200,18 +6871,51 @@ fn generate_specs_from_unification(
         let js_call_template = build_hole_call_template(&js_method_name, &method_param_names);
 
         let hole_role = infer_hole_role(&pair, return_type);
-        if hole_role == HoleRole::Value {
-            if let Some(id_a) = pair.op_a.as_ref().and_then(diff_op_primary_object_id) {
-                hole_by_object_id
-                    .entry(id_a)
-                    .or_insert_with(|| hole_key.clone());
+        match hole_role {
+            HoleRole::Value => {
+                if let Some(id_a) = pair.op_a.as_ref().and_then(diff_op_primary_object_id) {
+                    hole_by_object_id
+                        .entry(id_a)
+                        .or_insert_with(|| hole_key.clone());
+                }
+                if let Some(id_b) = pair.op_b.as_ref().and_then(diff_op_primary_object_id) {
+                    let canonical_b = canonicalize_object_id(&id_b, &object_id_mapping_inv);
+                    hole_by_object_id
+                        .entry(canonical_b)
+                        .or_insert_with(|| hole_key.clone());
+                }
             }
-            if let Some(id_b) = pair.op_b.as_ref().and_then(diff_op_primary_object_id) {
-                let canonical_b = canonicalize_object_id(&id_b, &object_id_mapping_inv);
-                hole_by_object_id
-                    .entry(canonical_b)
-                    .or_insert_with(|| hole_key.clone());
+            HoleRole::EdgeSource => {
+                if let Some(id_a) = pair.op_a.as_ref().and_then(|op| {
+                    diff_op_edge_source_id(op).or_else(|| diff_op_existing_node_id(op))
+                }) {
+                    hole_by_object_id
+                        .entry(id_a)
+                        .or_insert_with(|| hole_key.clone());
+                }
+                if let Some(id_b) = pair.op_b.as_ref().and_then(|op| {
+                    diff_op_edge_source_id(op).or_else(|| diff_op_existing_node_id(op))
+                }) {
+                    let canonical_b = canonicalize_object_id(&id_b, &object_id_mapping_inv);
+                    hole_by_object_id
+                        .entry(canonical_b)
+                        .or_insert_with(|| hole_key.clone());
+                }
             }
+            HoleRole::PointerTarget => {
+                if let Some(id_a) = pair.op_a.as_ref().and_then(diff_op_primary_object_id) {
+                    hole_by_object_id
+                        .entry(id_a)
+                        .or_insert_with(|| hole_key.clone());
+                }
+                if let Some(id_b) = pair.op_b.as_ref().and_then(diff_op_primary_object_id) {
+                    let canonical_b = canonicalize_object_id(&id_b, &object_id_mapping_inv);
+                    hole_by_object_id
+                        .entry(canonical_b)
+                        .or_insert_with(|| hole_key.clone());
+                }
+            }
+            HoleRole::Unknown => {}
         }
 
         let mut side_a = pair
@@ -6282,12 +6986,13 @@ fn generate_specs_from_unification(
         specs.push(spec);
     }
 
+    let effective_common_ops = materialize_operand_common_ops(&ordered_common_ops, &hole_bindings);
     let runtime_object_expr_by_id =
         build_runtime_object_expression_map(vis_graph_a, receiver_object_a);
     let composed_method_code = match build_composed_method_code(
         method_name,
         &method_param_names,
-        &ordered_common_ops,
+        &effective_common_ops,
         &hole_bindings,
         &hole_by_object_id,
         receiver_object_a,
@@ -6301,7 +7006,7 @@ fn generate_specs_from_unification(
     };
 
     let common_plan = build_common_plan_artifact(
-        &ordered_common_ops,
+        &effective_common_ops,
         &hole_bindings,
         &hole_by_object_id,
         composed_method_code,
@@ -6354,6 +7059,7 @@ fn determine_output_value(
     };
 
     match operation.edit_type.as_str() {
+        "deleteEdge" => (serde_json::Value::Null, OutputType::Ptr),
         "addEdge" | "removeEdge" | "addVariable" => resolve_target_output(operation.to.as_deref()),
         "editEdgeReference" | "editVariableReference" => {
             resolve_target_output(operation.new_to.as_deref().or(operation.to.as_deref()))
@@ -6389,6 +7095,9 @@ fn output_for_diff_op(
 ) -> (serde_json::Value, OutputType) {
     match op {
         DiffOp::Json { graph_op, .. } => determine_output_value(graph_op, env, vis_graph),
+        DiffOp::PointerOperand { target_id, .. } => {
+            determine_output_value_for_exist_node(target_id, false, None, env, vis_graph)
+        }
         DiffOp::ExistNode {
             id,
             is_literal,
@@ -6415,6 +7124,9 @@ fn output_for_diff_pair_role(
                     })
                     .unwrap_or(serde_json::Value::Null);
                 (value, OutputType::Ptr)
+            }
+            DiffOp::PointerOperand { target_id, .. } => {
+                determine_output_value_for_exist_node(target_id, false, None, env, vis_graph)
             }
             DiffOp::ExistNode {
                 id,
@@ -6521,7 +7233,7 @@ fn detect_unsupported_remove_operation(
             };
             if matches!(
                 edit_type,
-                "removeNode" | "removeEdge" | "deleteNode" | "deleteEdge" | "deleteVariable"
+                "removeNode" | "removeEdge" | "deleteNode" | "deleteVariable"
             ) {
                 return Some(format!(
                     "Unsupported remove operation detected at call {} op {}: {}",
@@ -6548,6 +7260,7 @@ fn merge_runtime_maps(
 struct OperationRepairStats {
     renamed_node_ids: usize,
     corrected_old_targets: usize,
+    corrected_sources: usize,
     normalized_set_references: usize,
     repaired_self_loops: usize,
 }
@@ -6556,6 +7269,7 @@ impl OperationRepairStats {
     fn has_changes(self) -> bool {
         self.renamed_node_ids > 0
             || self.corrected_old_targets > 0
+            || self.corrected_sources > 0
             || self.normalized_set_references > 0
             || self.repaired_self_loops > 0
     }
@@ -6592,6 +7306,24 @@ fn graph_operation_label(op: &crate::list_env::GraphOperation) -> Option<String>
         Some(serde_json::Value::Bool(b)) => Some(b.to_string()),
         _ => None,
     }
+}
+
+fn unique_edge_source_for_target(
+    edge_state: &HashMap<(String, String), String>,
+    label: &str,
+    target: &str,
+) -> Option<String> {
+    let mut found: Option<String> = None;
+    for ((from, edge_label), to) in edge_state {
+        if edge_label != label || to != target {
+            continue;
+        }
+        if found.as_ref().is_some_and(|existing| existing != from) {
+            return None;
+        }
+        found = Some(from.clone());
+    }
+    found
 }
 
 fn remap_graph_operation_ids(
@@ -6680,7 +7412,7 @@ fn repair_set_reference_operations(
 
         match op.edit_type.as_str() {
             "editEdgeReference" => {
-                let Some(from) = op.from.clone() else {
+                let Some(mut from) = op.from.clone() else {
                     continue;
                 };
                 let Some(new_target) = op.new_to.clone().or(op.to.clone()) else {
@@ -6688,6 +7420,19 @@ fn repair_set_reference_operations(
                 };
                 if op.new_to.is_none() {
                     op.new_to = Some(new_target.clone());
+                }
+
+                let key = (from.clone(), label.clone());
+                if !edge_state.contains_key(&key) {
+                    if let Some(old_target) = op.old_to.clone() {
+                        if let Some(repaired_from) =
+                            unique_edge_source_for_target(&edge_state, &label, &old_target)
+                        {
+                            from = repaired_from;
+                            op.from = Some(from.clone());
+                            stats.corrected_sources += 1;
+                        }
+                    }
                 }
 
                 let key = (from.clone(), label.clone());
@@ -6730,6 +7475,18 @@ fn repair_set_reference_operations(
                                 op.new_to = Some(target.clone());
                             }
                             stats.repaired_self_loops += 1;
+                        }
+                    }
+                }
+                if newly_added_object_ids.contains(&from) && !seen_assignments.contains(&key) {
+                    if let Some(old_target) = pending_rewire_old_target.get(&key).cloned() {
+                        if target != old_target {
+                            target = old_target;
+                            op.to = Some(target.clone());
+                            if op.new_to.is_some() {
+                                op.new_to = Some(target.clone());
+                            }
+                            stats.corrected_old_targets += 1;
                         }
                     }
                 }
@@ -6868,24 +7625,24 @@ fn build_runtime_to_temp_map_from_id_mappings(
     let mut canonical_to_temp: HashMap<String, String> = HashMap::new();
     let mut conflicting_canonical: HashSet<String> = HashSet::new();
     for call in method_calls {
-        let Some(id_mapping) = call.id_mapping.as_ref() else {
+        let Some(id_mapping) = filter_id_mapping_for_current_call_add_nodes(call) else {
             continue;
         };
         for (temp_id, runtime_id) in id_mapping {
             if temp_id.is_empty() || runtime_id.is_empty() {
                 continue;
             }
-            if !is_runtime_scoped_id(runtime_id) {
+            if !is_runtime_scoped_id(&runtime_id) {
                 continue;
             }
             runtime_to_temp
                 .entry(runtime_id.clone())
                 .or_insert_with(|| temp_id.clone());
-            if is_runtime_scoped_id(runtime_id) {
-                let canonical_runtime = canonicalize_runtime_scoped_id(runtime_id);
-                if canonical_runtime != *runtime_id {
+            if is_runtime_scoped_id(&runtime_id) {
+                let canonical_runtime = canonicalize_runtime_scoped_id(&runtime_id);
+                if canonical_runtime != runtime_id {
                     match canonical_to_temp.get(&canonical_runtime) {
-                        Some(existing) if existing != temp_id => {
+                        Some(existing) if existing != &temp_id => {
                             conflicting_canonical.insert(canonical_runtime.clone());
                         }
                         Some(_) => {}
@@ -7184,9 +7941,9 @@ fn sanitize_base_name(name: &str) -> String {
 fn normalize_actual_graph_with_id_mapping(
     actual_graph: &VisGraph,
     id_mapping: &HashMap<String, String>,
-) -> Option<VisGraph> {
+) -> anyhow::Result<VisGraph> {
     if id_mapping.is_empty() {
-        return Some(actual_graph.clone());
+        return Ok(actual_graph.clone());
     }
 
     let mut actual_to_temp: HashMap<&str, &str> = HashMap::new();
@@ -7196,17 +7953,18 @@ fn normalize_actual_graph_with_id_mapping(
         }
         if let Some(existing) = actual_to_temp.insert(actual_id.as_str(), temp_id.as_str()) {
             if existing != temp_id.as_str() {
-                eprintln!(
+                anyhow::bail!(
                     "Conflicting id mapping for runtime id '{}': '{}' vs '{}'",
-                    actual_id, existing, temp_id
+                    actual_id,
+                    existing,
+                    temp_id
                 );
-                return None;
             }
         }
     }
 
     if actual_to_temp.is_empty() {
-        return None;
+        return Ok(actual_graph.clone());
     }
 
     let remap_id = |id: &str| {
@@ -7229,11 +7987,10 @@ fn normalize_actual_graph_with_id_mapping(
     let mut seen_node_ids: HashSet<&str> = HashSet::new();
     for node in &nodes {
         if !seen_node_ids.insert(node.id.as_str()) {
-            eprintln!(
+            anyhow::bail!(
                 "Failed to normalize actualGraph: duplicate node id '{}' after remapping",
                 node.id
             );
-            return None;
         }
     }
 
@@ -7247,7 +8004,7 @@ fn normalize_actual_graph_with_id_mapping(
         })
         .collect();
 
-    Some(VisGraph { nodes, edges })
+    Ok(VisGraph { nodes, edges })
 }
 
 fn added_node_ids_in_operations(operations: &[serde_json::Value]) -> HashSet<String> {
@@ -7266,32 +8023,38 @@ fn added_node_ids_in_operations(operations: &[serde_json::Value]) -> HashSet<Str
         .collect()
 }
 
-fn filter_id_mapping_for_precond_graph(
+fn filter_id_mapping_for_current_call_add_nodes(
     call: &MethodCallOperation,
 ) -> Option<HashMap<String, String>> {
     let id_mapping = call.id_mapping.as_ref()?;
     let added_ids = added_node_ids_in_operations(&call.operations);
     if added_ids.is_empty() {
-        return Some(id_mapping.clone());
+        return None;
     }
     let filtered: HashMap<String, String> = id_mapping
         .iter()
-        .filter(|(temp_id, _)| !added_ids.contains(*temp_id))
+        .filter(|(temp_id, runtime_id)| {
+            added_ids.contains(*temp_id) && is_runtime_scoped_id(runtime_id)
+        })
         .map(|(temp_id, runtime_id)| (temp_id.clone(), runtime_id.clone()))
         .collect();
-    Some(filtered)
+    if filtered.is_empty() {
+        None
+    } else {
+        Some(filtered)
+    }
 }
 
 fn normalize_vis_graph_with_runtime_map(
     vis_graph: &VisGraph,
     runtime_to_temp: &HashMap<String, String>,
-) -> VisGraph {
+) -> anyhow::Result<VisGraph> {
     if runtime_to_temp.is_empty() {
-        return vis_graph.clone();
+        return Ok(vis_graph.clone());
     }
 
     let remap_id = |id: &str| remap_id_with_runtime_map(id, runtime_to_temp);
-    let nodes = vis_graph
+    let nodes: Vec<crate::models::Node> = vis_graph
         .nodes
         .iter()
         .map(|node| crate::models::Node {
@@ -7300,6 +8063,15 @@ fn normalize_vis_graph_with_runtime_map(
             label: node.label.clone(),
         })
         .collect();
+    let mut seen_node_ids: HashSet<&str> = HashSet::new();
+    for node in &nodes {
+        if !seen_node_ids.insert(node.id.as_str()) {
+            anyhow::bail!(
+                "Failed to normalize visGraph: duplicate node id '{}' after remapping",
+                node.id
+            );
+        }
+    }
     let edges = vis_graph
         .edges
         .iter()
@@ -7309,49 +8081,40 @@ fn normalize_vis_graph_with_runtime_map(
             label: edge.label.clone(),
         })
         .collect();
-    VisGraph { nodes, edges }
+    Ok(VisGraph { nodes, edges })
 }
 
 fn resolve_method_call_vis_graph(
     call: &MethodCallOperation,
     fallback: &VisGraph,
     runtime_to_temp: &HashMap<String, String>,
-) -> VisGraph {
+) -> anyhow::Result<VisGraph> {
     let base_graph = if let Some(precond_graph) = call.precond_graph.as_ref() {
-        if let Some(id_mapping) = filter_id_mapping_for_precond_graph(call).as_ref() {
-            if let Some(remapped) =
-                normalize_actual_graph_with_id_mapping(precond_graph, id_mapping)
-            {
-                remapped
-            } else {
-                eprintln!(
-                    "Failed to normalize precondGraph for {} ({}) - using raw precondGraph",
-                    call.call_label, call.context_sensitive_id
-                );
-                precond_graph.clone()
-            }
-        } else {
-            precond_graph.clone()
-        }
+        precond_graph.clone()
     } else if let Some(actual_graph) = call.actual_graph.as_ref() {
-        if let Some(id_mapping) = call.id_mapping.as_ref() {
-            if let Some(remapped) = normalize_actual_graph_with_id_mapping(actual_graph, id_mapping)
-            {
-                remapped
-            } else {
-                eprintln!(
-                    "Failed to normalize actualGraph for {} ({}) - using raw actualGraph",
-                    call.call_label, call.context_sensitive_id
-                );
-                actual_graph.clone()
-            }
+        if let Some(id_mapping) = filter_id_mapping_for_current_call_add_nodes(call).as_ref() {
+            normalize_actual_graph_with_id_mapping(actual_graph, id_mapping).map_err(|err| {
+                anyhow::anyhow!(
+                    "Failed to normalize actualGraph for {} ({}): {}",
+                    call.call_label,
+                    call.context_sensitive_id,
+                    err
+                )
+            })?
         } else {
             actual_graph.clone()
         }
     } else {
         fallback.clone()
     };
-    normalize_vis_graph_with_runtime_map(&base_graph, runtime_to_temp)
+    normalize_vis_graph_with_runtime_map(&base_graph, runtime_to_temp).map_err(|err| {
+        anyhow::anyhow!(
+            "Failed to normalize call graph for {} ({}): {}",
+            call.call_label,
+            call.context_sensitive_id,
+            err
+        )
+    })
 }
 
 fn infer_field_tables_for_method_calls(
@@ -7384,7 +8147,11 @@ fn infer_field_tables_for_method_calls(
             }
         }
 
-        let vis_graph = resolve_method_call_vis_graph(call, fallback_vis_graph, runtime_to_temp);
+        let Ok(vis_graph) =
+            resolve_method_call_vis_graph(call, fallback_vis_graph, runtime_to_temp)
+        else {
+            continue;
+        };
         let (values, pointers) = analyze_fields_for_graph(&vis_graph);
         for field in values {
             if seen_pointers.contains(&field) {
@@ -7958,10 +8725,61 @@ mod tests {
             nodes: vec![],
             edges: vec![],
         };
-        let resolved = resolve_method_call_vis_graph(&call, &fallback, &runtime_to_temp);
+        let resolved =
+            resolve_method_call_vis_graph(&call, &fallback, &runtime_to_temp).expect("graph");
         let node_ids: HashSet<String> = resolved.nodes.into_iter().map(|n| n.id).collect();
         assert!(node_ids.contains("__temp1"));
         assert!(!node_ids.contains("__temp3"));
+    }
+
+    #[test]
+    fn resolve_method_call_vis_graph_rejects_runtime_remap_collisions() {
+        let call = MethodCallOperation {
+            call_label: "call5".to_string(),
+            context_sensitive_id: "main".to_string(),
+            receiver_object: "main-new2".to_string(),
+            method_name: "insert".to_string(),
+            arguments: vec![],
+            argument_types: None,
+            argument_names: None,
+            method_param_names: None,
+            operations: vec![],
+            precond_graph: Some(VisGraph {
+                nodes: vec![
+                    crate::models::Node {
+                        id: "__temp1".to_string(),
+                        is_literal: false,
+                        label: json!("Node"),
+                    },
+                    crate::models::Node {
+                        id: "main-call3-FunctionExpression3-call1-FunctionExpression3-new1"
+                            .to_string(),
+                        is_literal: false,
+                        label: json!("Node"),
+                    },
+                ],
+                edges: vec![],
+            }),
+            actual_graph: None,
+            id_mapping: Some(HashMap::from([(
+                "__temp1".to_string(),
+                "main-call3-FunctionExpression3-call1-FunctionExpression3-new1".to_string(),
+            )])),
+            field_tables: None,
+        };
+
+        let runtime_to_temp = HashMap::from([(
+            "main-call3-FunctionExpression3-call1-FunctionExpression3-new1".to_string(),
+            "__temp1".to_string(),
+        )]);
+        let fallback = VisGraph {
+            nodes: vec![],
+            edges: vec![],
+        };
+
+        let err = resolve_method_call_vis_graph(&call, &fallback, &runtime_to_temp)
+            .expect_err("duplicate remap should fail");
+        assert!(err.to_string().contains("duplicate node id '__temp1'"));
     }
 
     #[test]
@@ -8145,7 +8963,9 @@ mod tests {
             argument_types: Some(vec!["Int".to_string(), "Int".to_string()]),
             argument_names: Some(vec!["arg0".to_string(), "arg1".to_string()]),
             method_param_names: Some(vec!["i".to_string(), "arg".to_string()]),
-            operations: vec![],
+            operations: vec![
+                json!({"editType":"addNode","id":"__temp2","label":"Node","isLiteral":false}),
+            ],
             precond_graph: None,
             actual_graph: None,
             id_mapping: Some(HashMap::from([
@@ -8164,6 +8984,53 @@ mod tests {
             runtime_to_temp.get("main-call5-FunctionExpression4-new1"),
             Some(&"__temp2".to_string())
         );
+    }
+
+    #[test]
+    fn build_runtime_to_temp_map_ignores_legacy_prior_temp_mappings() {
+        let method_calls = vec![MethodCallOperation {
+            call_label: "call2".to_string(),
+            context_sensitive_id: "main".to_string(),
+            receiver_object: "main-new1".to_string(),
+            method_name: "insert".to_string(),
+            arguments: vec![json!(1), json!(57)],
+            argument_types: Some(vec!["Int".to_string(), "Int".to_string()]),
+            argument_names: Some(vec!["arg0".to_string(), "arg1".to_string()]),
+            method_param_names: Some(vec!["i".to_string(), "arg".to_string()]),
+            operations: vec![
+                json!({"editType":"addNode","id":"__temp3","label":"Node","isLiteral":false}),
+                json!({"editType":"addNode","id":"__temp4","label":"57","isLiteral":true,"type":"string"}),
+                json!({"editType":"addEdge","from":"__temp3","to":"__temp4","label":"val"}),
+            ],
+            precond_graph: None,
+            actual_graph: None,
+            id_mapping: Some(HashMap::from([
+                (
+                    "__temp3".to_string(),
+                    "main-call4-FunctionExpression3-new1".to_string(),
+                ),
+                (
+                    "__temp4".to_string(),
+                    "main-call4-FunctionExpression3-new1-val".to_string(),
+                ),
+                (
+                    "__temp1".to_string(),
+                    "main-call1-FunctionExpression3-new1".to_string(),
+                ),
+            ])),
+            field_tables: None,
+        }];
+
+        let runtime_to_temp = build_runtime_to_temp_map_from_id_mappings(&method_calls);
+        assert_eq!(
+            runtime_to_temp.get("main-call4-FunctionExpression3-new1"),
+            Some(&"__temp3".to_string())
+        );
+        assert_eq!(
+            runtime_to_temp.get("main-call4-FunctionExpression3-new1-val"),
+            Some(&"__temp4".to_string())
+        );
+        assert!(!runtime_to_temp.contains_key("main-call1-FunctionExpression3-new1"));
     }
 
     #[test]
@@ -8345,6 +9212,133 @@ mod tests {
     }
 
     #[test]
+    fn repair_operations_recovers_rewire_source_from_unique_old_target_edge() {
+        let vis_graph = VisGraph {
+            nodes: vec![
+                crate::models::Node {
+                    id: "head".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "pred".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "tail".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+            ],
+            edges: vec![
+                crate::models::Edge {
+                    from: "head".to_string(),
+                    to: "pred".to_string(),
+                    label: "next".to_string(),
+                },
+                crate::models::Edge {
+                    from: "pred".to_string(),
+                    to: "tail".to_string(),
+                    label: "next".to_string(),
+                },
+            ],
+        };
+        let operations = vec![
+            json!({
+                "editType": "addNode",
+                "id": "__temp1",
+                "label": "Node",
+                "isLiteral": false
+            }),
+            json!({
+                "editType": "editEdgeReference",
+                "from": "runtime-new-node",
+                "oldTo": "tail",
+                "newTo": "__temp1",
+                "label": "next"
+            }),
+            json!({
+                "editType": "addEdge",
+                "from": "__temp1",
+                "to": "tail",
+                "label": "next"
+            }),
+        ];
+
+        let (repaired, stats) =
+            normalize_and_repair_operations_for_call(&operations, &vis_graph).unwrap();
+        assert_eq!(stats.corrected_sources, 1);
+
+        let repaired_ops: Vec<crate::list_env::GraphOperation> = repaired
+            .into_iter()
+            .map(|v| serde_json::from_value(v).unwrap())
+            .collect();
+        assert_eq!(repaired_ops[1].from.as_deref(), Some("pred"));
+        assert_eq!(repaired_ops[1].old_to.as_deref(), Some("tail"));
+    }
+
+    #[test]
+    fn repair_operations_aligns_new_node_successor_with_repaired_old_target() {
+        let vis_graph = VisGraph {
+            nodes: vec![
+                crate::models::Node {
+                    id: "pred".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "actual-tail".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "stale-tail".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+            ],
+            edges: vec![crate::models::Edge {
+                from: "pred".to_string(),
+                to: "actual-tail".to_string(),
+                label: "next".to_string(),
+            }],
+        };
+        let operations = vec![
+            json!({
+                "editType": "addNode",
+                "id": "__temp1",
+                "label": "Node",
+                "isLiteral": false
+            }),
+            json!({
+                "editType": "editEdgeReference",
+                "from": "pred",
+                "oldTo": "stale-tail",
+                "newTo": "__temp1",
+                "label": "next"
+            }),
+            json!({
+                "editType": "addEdge",
+                "from": "__temp1",
+                "to": "stale-tail",
+                "label": "next"
+            }),
+        ];
+
+        let (repaired, stats) =
+            normalize_and_repair_operations_for_call(&operations, &vis_graph).unwrap();
+        assert!(stats.corrected_old_targets >= 2);
+
+        let repaired_ops: Vec<crate::list_env::GraphOperation> = repaired
+            .into_iter()
+            .map(|v| serde_json::from_value(v).unwrap())
+            .collect();
+        assert_eq!(repaired_ops[1].old_to.as_deref(), Some("actual-tail"));
+        assert_eq!(repaired_ops[2].to.as_deref(), Some("actual-tail"));
+    }
+
+    #[test]
     fn repair_operations_keeps_add_edge_shape_for_backward_compatibility() {
         let vis_graph = VisGraph {
             nodes: vec![
@@ -8475,6 +9469,45 @@ mod tests {
     }
 
     #[test]
+    fn diff_op_prefers_call_pre_state_input_for_preexisting_literal_exist_node() {
+        let vis_graph = simple_vis_graph_with_root();
+        let env = list_env::ListEnvironment::from_vis_graph(&vis_graph);
+        let op = DiffOp::ExistNode {
+            id: "lit1".to_string(),
+            is_literal: true,
+            label: Some("3".to_string()),
+        };
+
+        assert!(diff_op_prefers_call_pre_state_input(Some(&op), &env));
+    }
+
+    #[test]
+    fn diff_op_prefers_call_pre_state_input_for_preexisting_object_exist_node() {
+        let vis_graph = simple_vis_graph_with_root();
+        let env = list_env::ListEnvironment::from_vis_graph(&vis_graph);
+        let op = DiffOp::ExistNode {
+            id: "obj1".to_string(),
+            is_literal: false,
+            label: Some("Node".to_string()),
+        };
+
+        assert!(diff_op_prefers_call_pre_state_input(Some(&op), &env));
+    }
+
+    #[test]
+    fn diff_op_prefers_call_pre_state_input_rejects_missing_exist_node() {
+        let vis_graph = simple_vis_graph_with_root();
+        let env = list_env::ListEnvironment::from_vis_graph(&vis_graph);
+        let op = DiffOp::ExistNode {
+            id: "missing".to_string(),
+            is_literal: false,
+            label: Some("Node".to_string()),
+        };
+
+        assert!(!diff_op_prefers_call_pre_state_input(Some(&op), &env));
+    }
+
+    #[test]
     fn missing_output_sentinels() {
         assert_eq!(
             missing_output_for_type(OutputType::Ptr),
@@ -8561,6 +9594,67 @@ mod tests {
 
         assert_eq!(bundle.types, vec!["Ptr".to_string(), "Ptr".to_string()]);
         assert_eq!(bundle.values[1], json!(1));
+    }
+
+    #[test]
+    fn append_method_call_arguments_maps_detached_ptr_object_id_after_reachable_prefix() {
+        let vis_graph = VisGraph {
+            nodes: vec![
+                crate::models::Node {
+                    id: "__Variable-lst".to_string(),
+                    is_literal: false,
+                    label: json!("lst"),
+                },
+                crate::models::Node {
+                    id: "obj1".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "obj2".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "obj3".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+            ],
+            edges: vec![
+                crate::models::Edge {
+                    from: "__Variable-lst".to_string(),
+                    to: "obj1".to_string(),
+                    label: "lst".to_string(),
+                },
+                crate::models::Edge {
+                    from: "obj1".to_string(),
+                    to: "obj2".to_string(),
+                    label: "next".to_string(),
+                },
+            ],
+        };
+        let env = list_env::ListEnvironment::from_vis_graph(&vis_graph);
+        let pointer_fields = vec!["next".to_string()];
+        let mut bundle =
+            build_case_arguments_from_variables(&env, &vis_graph, &pointer_fields, Some("obj1"))
+                .unwrap();
+        let call_arguments = vec![json!("obj3")];
+        let call_argument_types = vec!["Ptr".to_string()];
+
+        append_method_call_arguments(
+            &mut bundle,
+            &call_arguments,
+            Some(&call_argument_types),
+            None,
+            &env,
+            &vis_graph,
+            &pointer_fields,
+        )
+        .unwrap();
+
+        assert_eq!(bundle.types, vec!["Ptr".to_string(), "Ptr".to_string()]);
+        assert_eq!(bundle.values[1], json!(2));
     }
 
     #[test]
@@ -8760,7 +9854,7 @@ mod tests {
         let mut holes = HashMap::new();
         holes.insert("__temp2".to_string(), "__hole_0".to_string());
 
-        let line = render_common_graph_op(3, &op, &holes);
+        let line = render_common_graph_op(3, &op, &holes, &HashMap::new(), &HashSet::new());
         assert_eq!(line, "[op_3] addEdge(from=__temp1, to=__hole_0, label=val)");
     }
 
@@ -8811,6 +9905,17 @@ mod tests {
             detect_unsupported_remove_operation(&operations),
             Some("Unsupported remove operation detected at call 0 op 0: removeEdge".to_string())
         );
+    }
+
+    #[test]
+    fn detect_unsupported_remove_operation_allows_delete_edge() {
+        let operations = vec![vec![json!({
+            "editType": "deleteEdge",
+            "from": "n1",
+            "to": "n2",
+            "label": "next"
+        })]];
+        assert_eq!(detect_unsupported_remove_operation(&operations), None);
     }
 
     #[test]
@@ -9076,10 +10181,83 @@ mod tests {
 
         assert!(code.contains("const tmp0 = new Node();"));
         assert!(code.contains("tmp0.val = h_int_0;"));
-        assert!(code.contains("tmp0.next = (h_ptr_0 === null ? null : h_ptr_0.next);"));
         assert!(code.contains("if (h_ptr_0 !== null) { h_ptr_0.next = tmp0; }"));
+        assert!(!code.contains("tmp0.next = (h_ptr_0 === null ? null : h_ptr_0.next);"));
         assert!(!code.contains("h_ptr_0.val = h_int_0;"));
-        assert!(!code.contains("insert_h"));
+    }
+
+    #[test]
+    fn build_composed_method_code_prefers_explicit_pointer_target_hole() {
+        let ordered_common_ops = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp1".to_string()),
+                    label: Some(json!("Node")),
+                    is_literal: Some(false),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+            (
+                1usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    from: Some("__temp1".to_string()),
+                    to: Some("main-new2".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+        ];
+        let hole_bindings = vec![
+            HoleBinding {
+                hole_key: "__hole_0".to_string(),
+                spec_name: "insert-g".to_string(),
+                return_type: "Ptr".to_string(),
+                role: HoleRole::EdgeSource,
+                js_method_name: "insert_g".to_string(),
+                js_call_template: "this.insert_g(i, arg)".to_string(),
+                side_a:
+                    "editEdgeReference id=- from=main-new1 to=__temp1 old_to=main-new2 label=next is_literal=false"
+                        .to_string(),
+                side_b: "<none>".to_string(),
+                anchor_a: Some(3),
+                anchor_b: Some(3),
+            },
+            HoleBinding {
+                hole_key: "__hole_1".to_string(),
+                spec_name: "insert-h".to_string(),
+                return_type: "Ptr".to_string(),
+                role: HoleRole::PointerTarget,
+                js_method_name: "insert_h".to_string(),
+                js_call_template: "this.insert_h(i, arg)".to_string(),
+                side_a: "PointerOperand source=__temp1 target=main-new2 operand=edge_target label=next is_literal=false"
+                    .to_string(),
+                side_b: "<none>".to_string(),
+                anchor_a: Some(4),
+                anchor_b: Some(4),
+            },
+        ];
+        let hole_by_object_id = HashMap::from([
+            ("main-new1".to_string(), "__hole_0".to_string()),
+            ("main-new2".to_string(), "__hole_1".to_string()),
+        ]);
+
+        let code = build_composed_method_code(
+            "insert",
+            &vec!["i".to_string(), "arg".to_string()],
+            &ordered_common_ops,
+            &hole_bindings,
+            &hole_by_object_id,
+            Some("main-new1"),
+            &HashMap::new(),
+        )
+        .unwrap();
+
+        assert!(code.contains("const h_ptr_1 = this.insert_h(i, arg);"));
+        assert!(code.contains("tmp0.next = h_ptr_1;"));
+        assert!(!code.contains("tmp0.next = (h_ptr_0 === null ? null : h_ptr_0.next);"));
     }
 
     #[test]
@@ -9148,6 +10326,189 @@ mod tests {
         assert!(code.contains("const tmp0 = new Node();"));
         assert!(code.contains("if (h_ptr_0 !== null) { h_ptr_0.next = tmp0; }"));
         assert!(!code.contains("this.next = tmp0;"));
+    }
+
+    #[test]
+    fn build_composed_method_code_keeps_explicit_old_successor_without_duplicate_rewire() {
+        let ordered_common_ops = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp1".to_string()),
+                    label: Some(json!("Node")),
+                    is_literal: Some(false),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+            (
+                2usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    from: Some("__temp1".to_string()),
+                    to: Some("__hole_2".to_string()),
+                    label: Some(json!("val")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+            (
+                4usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    from: Some("__temp1".to_string()),
+                    to: Some("main-new3".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+            (
+                5usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "editEdgeReference".to_string(),
+                    from: Some("main-new2".to_string()),
+                    old_to: Some("main-new3".to_string()),
+                    new_to: Some("__temp1".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+        ];
+        let hole_bindings = vec![
+            HoleBinding {
+                hole_key: "__hole_0".to_string(),
+                spec_name: "insert-f".to_string(),
+                return_type: "Ptr".to_string(),
+                role: HoleRole::EdgeSource,
+                js_method_name: "insert_f".to_string(),
+                js_call_template: "this.insert_f(i, arg)".to_string(),
+                side_a: "editEdgeReference id=- from=main-new2 to=__temp1 old_to=main-new3 label=next is_literal=false"
+                    .to_string(),
+                side_b: "<none>".to_string(),
+                anchor_a: Some(3),
+                anchor_b: Some(3),
+            },
+            HoleBinding {
+                hole_key: "__hole_1".to_string(),
+                spec_name: "insert-g".to_string(),
+                return_type: "Ptr".to_string(),
+                role: HoleRole::PointerTarget,
+                js_method_name: "insert_g".to_string(),
+                js_call_template: "this.insert_g(i, arg)".to_string(),
+                side_a: "PointerOperand source=__temp1 target=main-new3 operand=edge_target label=next is_literal=false"
+                    .to_string(),
+                side_b: "<none>".to_string(),
+                anchor_a: Some(4),
+                anchor_b: Some(4),
+            },
+            HoleBinding {
+                hole_key: "__hole_2".to_string(),
+                spec_name: "insert-h".to_string(),
+                return_type: "Int".to_string(),
+                role: HoleRole::Value,
+                js_method_name: "insert_h".to_string(),
+                js_call_template: "this.insert_h(i, arg)".to_string(),
+                side_a: "addNode id=__temp2 from=- to=- old_to=- label=39 is_literal=true"
+                    .to_string(),
+                side_b: "addNode id=__temp3 from=- to=- old_to=- label=21 is_literal=true"
+                    .to_string(),
+                anchor_a: Some(1),
+                anchor_b: Some(0),
+            },
+            HoleBinding {
+                hole_key: "__hole_4".to_string(),
+                spec_name: "insert-i".to_string(),
+                return_type: "Ptr".to_string(),
+                role: HoleRole::EdgeSource,
+                js_method_name: "insert_i".to_string(),
+                js_call_template: "this.insert_i(i, arg)".to_string(),
+                side_a: "editEdgeReference id=- from=main-new2 to=__temp1 old_to=main-new3 label=next is_literal=false"
+                    .to_string(),
+                side_b: "editEdgeReference id=- from=__temp1 to=__temp4 old_to=main-new3 label=next is_literal=false"
+                    .to_string(),
+                anchor_a: Some(3),
+                anchor_b: Some(3),
+            },
+        ];
+        let hole_by_object_id = HashMap::from([
+            ("main-new2".to_string(), "__hole_0".to_string()),
+            ("main-new3".to_string(), "__hole_1".to_string()),
+            ("__hole_2".to_string(), "__hole_2".to_string()),
+        ]);
+
+        let code = build_composed_method_code(
+            "insert",
+            &vec!["i".to_string(), "arg".to_string()],
+            &ordered_common_ops,
+            &hole_bindings,
+            &hole_by_object_id,
+            Some("main-new2"),
+            &HashMap::new(),
+        )
+        .unwrap();
+
+        assert!(code.contains("tmp0.val = h_int_0;"));
+        assert!(code.contains("tmp0.next = h_ptr_1;"));
+        assert!(code.contains("if (h_ptr_0 !== null) { h_ptr_0.next = tmp0; }"));
+        assert!(
+            !code.contains("h_ptr_0.next = h_ptr_1;"),
+            "oldSucc must remain the new node target, not a second predecessor rewire:\n{}",
+            code
+        );
+        assert!(
+            !code.contains("insert_i"),
+            "duplicate edge-source recovery should not introduce a second predecessor helper:\n{}",
+            code
+        );
+    }
+
+    #[test]
+    fn build_composed_method_code_uses_edge_source_hole_for_delete_edge() {
+        let ordered_common_ops = vec![(
+            0usize,
+            crate::list_env::GraphOperation {
+                edit_type: "deleteEdge".to_string(),
+                id: None,
+                label: Some(json!("next")),
+                is_literal: None,
+                node_type: None,
+                from: Some("main-new3".to_string()),
+                to: Some("main-new4".to_string()),
+                old_to: None,
+                new_to: None,
+                old_label: None,
+                new_label: None,
+            },
+        )];
+        let hole_bindings = vec![HoleBinding {
+            hole_key: "__hole_0".to_string(),
+            spec_name: "popBack-f".to_string(),
+            return_type: "Ptr".to_string(),
+            role: HoleRole::EdgeSource,
+            js_method_name: "popBack_f".to_string(),
+            js_call_template: "this.popBack_f()".to_string(),
+            side_a: "deleteEdge id=- from=main-new3 to=main-new4 label=next is_literal=false"
+                .to_string(),
+            side_b: "deleteEdge id=- from=main-new2 to=main-new3 label=next is_literal=false"
+                .to_string(),
+            anchor_a: Some(0),
+            anchor_b: Some(0),
+        }];
+        let hole_by_object_id = HashMap::from([("main-new3".to_string(), "__hole_0".to_string())]);
+
+        let code = build_composed_method_code(
+            "popBack",
+            &[],
+            &ordered_common_ops,
+            &hole_bindings,
+            &hole_by_object_id,
+            Some("main-new1"),
+            &HashMap::new(),
+        )
+        .unwrap();
+
+        assert!(code.contains("const h_ptr_0 = this.popBack_f();"));
+        assert!(code.contains("h_ptr_0.next = null;"));
+        assert!(!code.contains("this.next.next.next = null;"));
     }
 
     #[test]
@@ -9475,6 +10836,138 @@ mod tests {
     }
 
     #[test]
+    fn build_relaxed_parallel_diff_pair_variants_enumerates_ambiguous_groups() {
+        let vis_graph_a = VisGraph {
+            nodes: vec![
+                crate::models::Node {
+                    id: "obj-a1".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "obj-a2".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "lit-a1".to_string(),
+                    is_literal: true,
+                    label: json!("1"),
+                },
+                crate::models::Node {
+                    id: "lit-a2".to_string(),
+                    is_literal: true,
+                    label: json!("2"),
+                },
+            ],
+            edges: vec![],
+        };
+        let vis_graph_b = VisGraph {
+            nodes: vec![
+                crate::models::Node {
+                    id: "obj-b1".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "obj-b2".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                crate::models::Node {
+                    id: "lit-b1".to_string(),
+                    is_literal: true,
+                    label: json!("11"),
+                },
+                crate::models::Node {
+                    id: "lit-b2".to_string(),
+                    is_literal: true,
+                    label: json!("22"),
+                },
+            ],
+            edges: vec![],
+        };
+        let context_a = OpConversionContext::from_vis_graph(&vis_graph_a);
+        let context_b = OpConversionContext::from_vis_graph(&vis_graph_b);
+
+        let operations_a = vec![
+            json!({
+                "editType": "editEdgeReference",
+                "from": "obj-a1",
+                "oldTo": "lit-a1",
+                "newTo": "lit-a1",
+                "label": "f"
+            }),
+            json!({
+                "editType": "editEdgeReference",
+                "from": "obj-a2",
+                "oldTo": "lit-a2",
+                "newTo": "lit-a2",
+                "label": "f"
+            }),
+        ];
+        let operations_b = vec![
+            json!({
+                "editType": "editEdgeReference",
+                "from": "obj-b1",
+                "oldTo": "lit-b1",
+                "newTo": "lit-b1",
+                "label": "f"
+            }),
+            json!({
+                "editType": "editEdgeReference",
+                "from": "obj-b2",
+                "oldTo": "lit-b2",
+                "newTo": "lit-b2",
+                "label": "f"
+            }),
+        ];
+        let diff_a: Vec<crate::unify_ops::Op> =
+            convert_json_to_unify_ops(&operations_a, Some(&context_a))
+                .expect("A conversion should succeed")
+                .into_iter()
+                .filter(|op| parse_op_index(&op.id).is_some())
+                .collect();
+        let diff_b: Vec<crate::unify_ops::Op> =
+            convert_json_to_unify_ops(&operations_b, Some(&context_b))
+                .expect("B conversion should succeed")
+                .into_iter()
+                .filter(|op| parse_op_index(&op.id).is_some())
+                .collect();
+        let graph_ops_a: Vec<crate::list_env::GraphOperation> = operations_a
+            .iter()
+            .map(|op| serde_json::from_value(op.clone()).expect("A graph op parse should work"))
+            .collect();
+        let graph_ops_b: Vec<crate::list_env::GraphOperation> = operations_b
+            .iter()
+            .map(|op| serde_json::from_value(op.clone()).expect("B graph op parse should work"))
+            .collect();
+
+        let variants = build_relaxed_parallel_diff_pair_variants(
+            &diff_a,
+            &diff_b,
+            &graph_ops_a,
+            &graph_ops_b,
+            &vis_graph_a,
+            &vis_graph_b,
+        );
+
+        assert_eq!(variants.len(), 2);
+        let mut first_b_indices: Vec<usize> = variants
+            .iter()
+            .map(|(_, pairs)| {
+                pairs[0]
+                    .op_b
+                    .as_ref()
+                    .and_then(diff_op_index)
+                    .expect("variant pair must have B index")
+            })
+            .collect();
+        first_b_indices.sort_unstable();
+        assert_eq!(first_b_indices, vec![0, 1]);
+    }
+
+    #[test]
     fn score_diff_pair_candidate_detects_type_conflicts() {
         let vis_graph_a = VisGraph {
             nodes: vec![
@@ -9662,6 +11155,37 @@ mod tests {
     }
 
     #[test]
+    fn build_source_pointer_diff_pair_treats_delete_edge_as_null_rewire() {
+        let pair = DiffPair {
+            op_a: Some(DiffOp::Json {
+                graph_op: crate::list_env::GraphOperation {
+                    edit_type: "deleteEdge".to_string(),
+                    from: Some("node-a".to_string()),
+                    to: Some("tail-a".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+                index: 0,
+            }),
+            op_b: Some(DiffOp::Json {
+                graph_op: crate::list_env::GraphOperation {
+                    edit_type: "deleteEdge".to_string(),
+                    from: Some("node-b".to_string()),
+                    to: Some("tail-b".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+                index: 0,
+            }),
+            role: HoleRole::Unknown,
+        };
+
+        let extracted = build_source_pointer_diff_pair(&pair, &HashMap::new())
+            .expect("deleteEdge should expose its cleared reference source");
+        assert_eq!(extracted.role, HoleRole::EdgeSource);
+    }
+
+    #[test]
     fn infer_mapped_existing_node_role_from_common_edges_returns_edge_source() {
         use crate::unify_ops::{EdgeExpr, GraphOp, NodeExpr, Op};
 
@@ -9714,6 +11238,76 @@ mod tests {
     }
 
     #[test]
+    fn infer_mapped_existing_node_role_from_common_delete_edge_returns_edge_source() {
+        use crate::unify_ops::{EdgeExpr, GraphOp, NodeExpr, Op};
+
+        let common_a = vec![
+            Op {
+                id: "op_from_a".to_string(),
+                kind: GraphOp::Node(NodeExpr::ExistNode {
+                    is_literal: false,
+                    label: String::new(),
+                    id: "main-new3".to_string(),
+                }),
+            },
+            Op {
+                id: "op_to_a".to_string(),
+                kind: GraphOp::Node(NodeExpr::ExistNode {
+                    is_literal: false,
+                    label: String::new(),
+                    id: "main-new4".to_string(),
+                }),
+            },
+            Op {
+                id: "op_edge".to_string(),
+                kind: GraphOp::Edge(EdgeExpr::DeleteEdge {
+                    from: "op_from_a".to_string(),
+                    to: "op_to_a".to_string(),
+                    label: "next".to_string(),
+                }),
+            },
+        ];
+        let common_b = vec![
+            Op {
+                id: "op_from_b".to_string(),
+                kind: GraphOp::Node(NodeExpr::ExistNode {
+                    is_literal: false,
+                    label: String::new(),
+                    id: "main-new2".to_string(),
+                }),
+            },
+            Op {
+                id: "op_to_b".to_string(),
+                kind: GraphOp::Node(NodeExpr::ExistNode {
+                    is_literal: false,
+                    label: String::new(),
+                    id: "main-new3".to_string(),
+                }),
+            },
+            Op {
+                id: "op_edge".to_string(),
+                kind: GraphOp::Edge(EdgeExpr::DeleteEdge {
+                    from: "op_from_b".to_string(),
+                    to: "op_to_b".to_string(),
+                    label: "next".to_string(),
+                }),
+            },
+        ];
+
+        let source_role = infer_mapped_existing_node_role_from_common_edges(
+            "op_from_a",
+            "op_from_b",
+            &common_a,
+            &common_b,
+        );
+        assert_eq!(source_role, HoleRole::EdgeSource);
+        let target_role = infer_mapped_existing_node_role_from_common_edges(
+            "op_to_a", "op_to_b", &common_a, &common_b,
+        );
+        assert_eq!(target_role, HoleRole::PointerTarget);
+    }
+
+    #[test]
     fn output_for_diff_pair_role_edge_source_uses_exist_node_pointer() {
         let vis_graph = VisGraph {
             nodes: vec![
@@ -9748,6 +11342,342 @@ mod tests {
         );
         assert_eq!(ty, OutputType::Ptr);
         assert_eq!(value, json!(0));
+    }
+
+    #[test]
+    fn pointer_target_pair_for_edge_source_pair_exposes_common_rewire_target() {
+        let ordered_common_ops_a = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp1".to_string()),
+                    label: Some(json!("Node")),
+                    is_literal: Some(false),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+            (
+                1usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    from: Some("__temp1".to_string()),
+                    to: Some("tail-a".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+        ];
+        let ordered_common_ops_b = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp3".to_string()),
+                    label: Some(json!("Node")),
+                    is_literal: Some(false),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+            (
+                1usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    from: Some("__temp3".to_string()),
+                    to: Some("tail-b".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+        ];
+        let edge_source_pair = DiffPair {
+            op_a: Some(DiffOp::Json {
+                graph_op: crate::list_env::GraphOperation {
+                    edit_type: "editEdgeReference".to_string(),
+                    from: Some("pred-a".to_string()),
+                    old_to: Some("tail-a".to_string()),
+                    new_to: Some("__temp1".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+                index: 2,
+            }),
+            op_b: Some(DiffOp::Json {
+                graph_op: crate::list_env::GraphOperation {
+                    edit_type: "editEdgeReference".to_string(),
+                    from: Some("pred-b".to_string()),
+                    old_to: Some("tail-b".to_string()),
+                    new_to: Some("__temp3".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+                index: 2,
+            }),
+            role: HoleRole::EdgeSource,
+        };
+
+        let pair = pointer_target_pair_for_edge_source_pair(
+            &edge_source_pair,
+            &ordered_common_ops_a,
+            &ordered_common_ops_b,
+        )
+        .expect("edge-source rewire should expose the saved target");
+
+        assert_eq!(pair.role, HoleRole::PointerTarget);
+        assert!(matches!(
+            pair.op_a,
+            Some(DiffOp::PointerOperand { ref target_id, ref field, ref operand, .. })
+                if target_id == "tail-a" && field == "next" && operand == "edge_target"
+        ));
+        assert!(matches!(
+            pair.op_b,
+            Some(DiffOp::PointerOperand { ref target_id, ref field, ref operand, .. })
+                if target_id == "tail-b" && field == "next" && operand == "edge_target"
+        ));
+    }
+
+    #[test]
+    fn render_common_graph_op_does_not_derive_target_from_edge_source_hole() {
+        let op = crate::list_env::GraphOperation {
+            edit_type: "addEdge".to_string(),
+            from: Some("__temp1".to_string()),
+            to: Some("tail".to_string()),
+            label: Some(json!("next")),
+            ..crate::list_env::GraphOperation::default()
+        };
+        let common_created_ids = HashSet::from(["__temp1".to_string()]);
+        let hole_by_use_key = HashMap::from([(
+            HoleUseKey {
+                source_id: "__temp1".to_string(),
+                operand: "from".to_string(),
+                field: "next".to_string(),
+            },
+            "__hole_0".to_string(),
+        )]);
+
+        let rendered = render_common_graph_op(
+            1,
+            &op,
+            &HashMap::new(),
+            &hole_by_use_key,
+            &common_created_ids,
+        );
+
+        assert_eq!(
+            rendered,
+            "[op_1] addEdge(from=__temp1, to=tail, label=next)"
+        );
+        assert!(!rendered.contains("__hole_0.next"));
+    }
+
+    #[test]
+    fn role_aware_edge_source_pairs_use_side_specific_common_created_ids() {
+        let ordered_common_ops_a = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp1".to_string()),
+                    label: Some(json!("Node")),
+                    is_literal: Some(false),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+            (
+                1usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    from: Some("__temp1".to_string()),
+                    to: Some("main-new2".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+        ];
+        let ordered_common_ops_b = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp4".to_string()),
+                    label: Some(json!("Node")),
+                    is_literal: Some(false),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+            (
+                1usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    from: Some("__temp4".to_string()),
+                    to: Some("main-new2".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+        ];
+        let operations_a = vec![json!({
+            "editType": "editEdgeReference",
+            "from": "main-new1",
+            "oldTo": "main-new2",
+            "newTo": "__temp1",
+            "label": "next"
+        })];
+        let operations_b = vec![json!({
+            "editType": "editEdgeReference",
+            "from": "__temp1",
+            "oldTo": "main-new2",
+            "newTo": "__temp4",
+            "label": "next"
+        })];
+        let graph_ops_a: Vec<crate::list_env::GraphOperation> = operations_a
+            .iter()
+            .map(|op| serde_json::from_value(op.clone()).expect("A graph op parse should work"))
+            .collect();
+        let graph_ops_b: Vec<crate::list_env::GraphOperation> = operations_b
+            .iter()
+            .map(|op| serde_json::from_value(op.clone()).expect("B graph op parse should work"))
+            .collect();
+        let diff_a: Vec<crate::unify_ops::Op> = convert_json_to_unify_ops(&operations_a, None)
+            .expect("A conversion should succeed")
+            .into_iter()
+            .filter(|op| parse_op_index(&op.id).is_some())
+            .collect();
+        let diff_b: Vec<crate::unify_ops::Op> = convert_json_to_unify_ops(&operations_b, None)
+            .expect("B conversion should succeed")
+            .into_iter()
+            .filter(|op| parse_op_index(&op.id).is_some())
+            .collect();
+        let mapping_inv = HashMap::from([("__temp4".to_string(), "__temp1".to_string())]);
+
+        let pairs = build_role_aware_edge_source_pairs(
+            &ordered_common_ops_a,
+            &ordered_common_ops_b,
+            &diff_a,
+            &diff_b,
+            &graph_ops_a,
+            &graph_ops_b,
+            &mapping_inv,
+        );
+
+        assert_eq!(pairs.len(), 1);
+        assert_eq!(pairs[0].role, HoleRole::EdgeSource);
+        assert!(matches!(
+            pairs[0].op_b,
+            Some(DiffOp::Json {
+                graph_op: crate::list_env::GraphOperation { ref from, .. },
+                ..
+            }) if from.as_deref() == Some("__temp1")
+        ));
+
+        let target_pair = pointer_target_pair_for_edge_source_pair(
+            &pairs[0],
+            &ordered_common_ops_a,
+            &ordered_common_ops_b,
+        )
+        .expect("paired edge source should expose old successor on both sides");
+        assert!(matches!(
+            target_pair.op_b,
+            Some(DiffOp::PointerOperand { ref target_id, .. }) if target_id == "main-new2"
+        ));
+    }
+
+    #[test]
+    fn pointer_target_pair_for_edge_source_pair_ignores_unrelated_common_edge() {
+        let ordered_common_ops = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp1".to_string()),
+                    label: Some(json!("Node")),
+                    is_literal: Some(false),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+            (
+                1usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    from: Some("__other_temp".to_string()),
+                    to: Some("tail-a".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+        ];
+        let edge_source_pair = DiffPair {
+            op_a: Some(DiffOp::Json {
+                graph_op: crate::list_env::GraphOperation {
+                    edit_type: "editEdgeReference".to_string(),
+                    from: Some("pred-a".to_string()),
+                    old_to: Some("tail-a".to_string()),
+                    new_to: Some("__temp1".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+                index: 2,
+            }),
+            op_b: None,
+            role: HoleRole::EdgeSource,
+        };
+
+        let pair =
+            pointer_target_pair_for_edge_source_pair(&edge_source_pair, &ordered_common_ops, &[]);
+
+        assert!(pair.is_none());
+    }
+
+    #[test]
+    fn pointer_target_pair_for_edge_source_pair_allows_independent_target_operand() {
+        let ordered_common_ops = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addNode".to_string(),
+                    id: Some("__temp1".to_string()),
+                    label: Some(json!("Node")),
+                    is_literal: Some(false),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+            (
+                1usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addEdge".to_string(),
+                    from: Some("__temp1".to_string()),
+                    to: Some("not-old-target".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+            ),
+        ];
+        let edge_source_pair = DiffPair {
+            op_a: Some(DiffOp::Json {
+                graph_op: crate::list_env::GraphOperation {
+                    edit_type: "editEdgeReference".to_string(),
+                    from: Some("pred-a".to_string()),
+                    old_to: Some("old-target".to_string()),
+                    new_to: Some("__temp1".to_string()),
+                    label: Some(json!("next")),
+                    ..crate::list_env::GraphOperation::default()
+                },
+                index: 2,
+            }),
+            op_b: None,
+            role: HoleRole::EdgeSource,
+        };
+
+        let pair =
+            pointer_target_pair_for_edge_source_pair(&edge_source_pair, &ordered_common_ops, &[]);
+
+        assert!(matches!(
+            pair,
+            Some(DiffPair {
+                op_a: Some(DiffOp::PointerOperand { ref target_id, .. }),
+                ..
+            }) if target_id == "not-old-target"
+        ));
     }
 
     #[test]
@@ -9918,6 +11848,87 @@ mod tests {
             "    this.next = snap0;",
             "    snap0.next = snap1;",
             "    snap1.next = snap2;",
+            "}",
+        ]
+        .join("\n");
+        assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn build_composed_method_code_returns_snapshot_for_rewired_object() {
+        let ordered_common_ops = vec![
+            (
+                0usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "editEdgeReference".to_string(),
+                    id: None,
+                    label: Some(json!("right")),
+                    is_literal: None,
+                    node_type: None,
+                    from: Some("main-new1".to_string()),
+                    to: None,
+                    old_to: Some("main-new2".to_string()),
+                    new_to: Some("main-new3".to_string()),
+                    old_label: None,
+                    new_label: None,
+                },
+            ),
+            (
+                1usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "editEdgeReference".to_string(),
+                    id: None,
+                    label: Some(json!("left")),
+                    is_literal: None,
+                    node_type: None,
+                    from: Some("main-new2".to_string()),
+                    to: None,
+                    old_to: Some("main-new3".to_string()),
+                    new_to: Some("main-new1".to_string()),
+                    old_label: None,
+                    new_label: None,
+                },
+            ),
+            (
+                2usize,
+                crate::list_env::GraphOperation {
+                    edit_type: "addVariable".to_string(),
+                    id: None,
+                    label: Some(json!("return")),
+                    is_literal: None,
+                    node_type: None,
+                    from: None,
+                    to: Some("main-new2".to_string()),
+                    old_to: None,
+                    new_to: None,
+                    old_label: None,
+                    new_label: None,
+                },
+            ),
+        ];
+        let runtime_map = HashMap::from([
+            ("main-new2".to_string(), "this.right".to_string()),
+            ("main-new3".to_string(), "this.right.left".to_string()),
+        ]);
+
+        let code = build_composed_method_code(
+            "rotateLeft",
+            &vec![],
+            &ordered_common_ops,
+            &[],
+            &HashMap::new(),
+            Some("main-new1"),
+            &runtime_map,
+        )
+        .unwrap();
+
+        let expected = [
+            "rotateLeft() {",
+            "    const snap0 = this.right.left;",
+            "    const snap1 = this.right;",
+            "    this.right = snap0;",
+            "    snap1.left = this;",
+            "    return snap1;",
             "}",
         ]
         .join("\n");
@@ -10295,6 +12306,68 @@ mod tests {
     }
 
     #[test]
+    fn aggregate_multi_trace_specs_enumerates_same_signature_choices() {
+        let meta = dummy_meta();
+        let candidates = vec![
+            MultiTraceSpecCandidate {
+                signature: "ret=Int|role=value|op=editEdgeReference|label=val|is_literal=false"
+                    .to_string(),
+                trace_index: 0,
+                original_spec_name: "swapValue-trace0-f".to_string(),
+                meta: meta.clone(),
+                spec: EscherSpec {
+                    name: "swapValue-trace0-f".to_string(),
+                    input_types: vec!["Ptr".to_string(), "Int".to_string(), "Int".to_string()],
+                    return_type: "Int".to_string(),
+                    examples: vec![example_json(json!([0, 1, 2]), json!(47))],
+                },
+            },
+            MultiTraceSpecCandidate {
+                signature: "ret=Int|role=value|op=editEdgeReference|label=val|is_literal=false"
+                    .to_string(),
+                trace_index: 0,
+                original_spec_name: "swapValue-trace0-g".to_string(),
+                meta: meta.clone(),
+                spec: EscherSpec {
+                    name: "swapValue-trace0-g".to_string(),
+                    input_types: vec!["Ptr".to_string(), "Int".to_string(), "Int".to_string()],
+                    return_type: "Int".to_string(),
+                    examples: vec![example_json(json!([0, 1, 2]), json!(91))],
+                },
+            },
+            MultiTraceSpecCandidate {
+                signature: "ret=Int|role=value|op=editEdgeReference|label=val|is_literal=false"
+                    .to_string(),
+                trace_index: 1,
+                original_spec_name: "swapValue-trace1-f".to_string(),
+                meta: meta.clone(),
+                spec: EscherSpec {
+                    name: "swapValue-trace1-f".to_string(),
+                    input_types: vec!["Ptr".to_string(), "Int".to_string(), "Int".to_string()],
+                    return_type: "Int".to_string(),
+                    examples: vec![example_json(json!([0, 2, 3]), json!(47))],
+                },
+            },
+            MultiTraceSpecCandidate {
+                signature: "ret=Int|role=value|op=editEdgeReference|label=val|is_literal=false"
+                    .to_string(),
+                trace_index: 1,
+                original_spec_name: "swapValue-trace1-g".to_string(),
+                meta,
+                spec: EscherSpec {
+                    name: "swapValue-trace1-g".to_string(),
+                    input_types: vec!["Ptr".to_string(), "Int".to_string(), "Int".to_string()],
+                    return_type: "Int".to_string(),
+                    examples: vec![example_json(json!([0, 2, 3]), json!(56))],
+                },
+            },
+        ];
+
+        let (specs, _, _) = aggregate_multi_trace_specs(&candidates, 2, "swapValue");
+        assert_eq!(specs.len(), 4);
+    }
+
+    #[test]
     fn aggregate_multi_trace_specs_skips_missing_output_trace() {
         let meta = dummy_meta();
         let candidates = vec![
@@ -10429,6 +12502,39 @@ mod tests {
     }
 
     #[test]
+    fn choose_best_common_plan_artifact_ignores_unanchored_uncallable_pointer_targets() {
+        let artifact = CommonPlanArtifact {
+            pattern_text: "with-noisy-pointer-target".to_string(),
+            hole_information: HashMap::from([
+                (
+                    "__hole_0".to_string(),
+                    vec![
+                        "spec=insert-trace0-f".to_string(),
+                        "return=Ptr".to_string(),
+                        "role=edge_source".to_string(),
+                        "sideB=editEdgeReference id=- from=main-new1 to=__temp1 old_to=main-new2 label=next is_literal=false".to_string(),
+                    ],
+                ),
+                (
+                    "__hole_1".to_string(),
+                    vec![
+                        "spec=insert-trace0-g".to_string(),
+                        "return=Ptr".to_string(),
+                        "role=pointer_target".to_string(),
+                        "sideB=ExistNode id=main-new1 label=<none> is_literal=false".to_string(),
+                    ],
+                ),
+            ]),
+            composed_method_code: None,
+        };
+        let renames = HashMap::from([("insert-trace0-f".to_string(), "insert-f".to_string())]);
+
+        let chosen = choose_best_common_plan_artifact(&[artifact.clone()], &renames)
+            .expect("uncallable unanchored pointer target should not reject the whole plan");
+        assert_eq!(chosen.pattern_text, artifact.pattern_text);
+    }
+
+    #[test]
     fn hole_signature_separates_roles_for_same_edge_descriptor() {
         let edge_source = HoleDescriptor {
             return_type: "Ptr".to_string(),
@@ -10466,6 +12572,38 @@ mod tests {
             hole_signature(&desc),
             Some(
                 "ret=Ptr|role=edge_source|op=editEdgeReference|label=next|is_literal=false"
+                    .to_string()
+            )
+        );
+    }
+
+    #[test]
+    fn hole_signature_rejects_unanchored_pointer_target_exist_node() {
+        let desc = HoleDescriptor {
+            return_type: "Ptr".to_string(),
+            role: "pointer_target".to_string(),
+            side_b: "ExistNode id=main-new1 label=<none> is_literal=false".to_string(),
+            ..HoleDescriptor::default()
+        };
+
+        assert_eq!(hole_signature(&desc), None);
+    }
+
+    #[test]
+    fn hole_signature_keeps_edge_anchored_pointer_target() {
+        let desc = HoleDescriptor {
+            return_type: "Ptr".to_string(),
+            role: "pointer_target".to_string(),
+            side_b:
+                "PointerOperand target=main-new2 operand=edge_target label=next is_literal=false"
+                    .to_string(),
+            ..HoleDescriptor::default()
+        };
+
+        assert_eq!(
+            hole_signature(&desc),
+            Some(
+                "ret=Ptr|role=pointer_target|op=PointerOperand|operand=edge_target|label=next|is_literal=false"
                     .to_string()
             )
         );

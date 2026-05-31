@@ -497,7 +497,7 @@ async fn test_integrated_synthesis_rejects_remove_operations() {
 }
 
 #[tokio::test]
-async fn test_operations_json_removeval_rejects_delete_edge() {
+async fn test_operations_json_removeval_accepts_delete_edge() {
     let method_calls = load_fixture_method_calls("removeVal");
     assert_eq!(method_calls.len(), 2, "removeVal should have two traces");
     let request = SynthesisRequest {
@@ -506,12 +506,97 @@ async fn test_operations_json_removeval_rejects_delete_edge() {
     };
     let (status, response) = run_synthesis_and_decode(request).await;
 
-    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(status, StatusCode::OK);
     let info = response
         .list_environment_info
-        .expect("error message should be present");
-    assert!(info.contains("Unsupported remove operation"));
-    assert!(info.contains("deleteEdge"));
+        .expect("environment summary should be present");
+    assert!(info.contains("List[obj_next]"));
+    assert!(info.contains("Null"));
+}
+
+#[tokio::test]
+async fn test_popback_delete_edge_uses_edge_source_hole() {
+    let graph_a = fixture_vis_graph_for_operations_json();
+    let mut graph_a = graph_a;
+    graph_a.nodes.push(Node {
+        id: "__Variable-lst".to_string(),
+        is_literal: false,
+        label: json!("lst"),
+    });
+    graph_a.edges.push(Edge {
+        from: "__Variable-lst".to_string(),
+        to: "main-new1".to_string(),
+        label: "lst".to_string(),
+    });
+    let mut graph_b = graph_a.clone();
+    graph_b.edges.retain(|edge| {
+        !(edge.from == "main-new3" && edge.to == "main-new4" && edge.label == "next")
+    });
+
+    let call_a = MethodCallOperation {
+        call_label: "call1".to_string(),
+        context_sensitive_id: "main".to_string(),
+        receiver_object: "main-new1".to_string(),
+        method_name: "popBack".to_string(),
+        arguments: vec![],
+        argument_types: None,
+        argument_names: None,
+        method_param_names: None,
+        operations: vec![json!({
+            "editType": "deleteEdge",
+            "from": "main-new3",
+            "to": "main-new4",
+            "label": "next"
+        })],
+        precond_graph: Some(graph_a.clone()),
+        actual_graph: None,
+        id_mapping: None,
+        field_tables: None,
+    };
+    let call_b = MethodCallOperation {
+        call_label: "call2".to_string(),
+        context_sensitive_id: "main".to_string(),
+        receiver_object: "main-new1".to_string(),
+        method_name: "popBack".to_string(),
+        arguments: vec![],
+        argument_types: None,
+        argument_names: None,
+        method_param_names: None,
+        operations: vec![json!({
+            "editType": "deleteEdge",
+            "from": "main-new2",
+            "to": "main-new3",
+            "label": "next"
+        })],
+        precond_graph: Some(graph_b),
+        actual_graph: None,
+        id_mapping: None,
+        field_tables: None,
+    };
+    let request = SynthesisRequest {
+        method_calls: vec![call_a, call_b],
+        vis_graph: graph_a,
+    };
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::OK);
+    let code = response
+        .composed_method_code
+        .expect("popBack should compose from deleteEdge common plan");
+    assert!(
+        code.contains("this.popBack_"),
+        "popBack should call synthesized predecessor helper, got:\n{}",
+        code
+    );
+    assert!(
+        code.contains(".next = null;"),
+        "deleteEdge should clear the synthesized edge source, got:\n{}",
+        code
+    );
+    assert!(
+        !code.contains("this.next.next.next = null;"),
+        "popBack must not replay the first fixed-depth trace"
+    );
 }
 
 #[tokio::test]
@@ -943,6 +1028,30 @@ async fn test_integrated_synthesis_three_append_like_specs_group_holes() {
     let list_info = response
         .list_environment_info
         .expect("list environment info should be present");
+    assert!(
+        !list_info.contains("recovered value assignment")
+            && !list_info.contains("recovered edge assignment"),
+        "insert three-trace composition should be driven by materialized operation operands, not metadata recovery:\n{}",
+        list_info
+    );
+    let common_pattern = response
+        .common_pattern
+        .as_deref()
+        .expect("common pattern should be present");
+    assert!(
+        common_pattern.contains("addEdge(from=__temp1, to=__hole_")
+            && common_pattern.contains("label=val"),
+        "value assignment must appear as an operation-operand hole, got:\n{}",
+        common_pattern
+    );
+    assert!(
+        (common_pattern.contains("editEdgeReference(from=__hole_")
+            || common_pattern.contains("addEdge(from=__hole_"))
+            && common_pattern.contains("to=__temp1")
+            && common_pattern.contains("label=next"),
+        "rewire source must appear as an operation-operand hole, got:\n{}",
+        common_pattern
+    );
     let spec_path = extract_task_json_path(&list_info).expect("task json path should be reported");
     let task_json_text =
         fs::read_to_string(&spec_path).expect("generated task json should be readable");
@@ -1449,6 +1558,75 @@ async fn test_integrated_synthesis_insert_three_traces_task_json_keeps_ts_ptr_co
             "pointer heap slot should stay a ref-array after task conversion"
         );
     }
+
+    let value_output_sets: Vec<Vec<i64>> = spec_list
+        .iter()
+        .filter(|spec| extract_saved_return_type(spec) == Some("Int"))
+        .filter_map(|spec| {
+            spec.get("examples")
+                .and_then(Value::as_array)
+                .map(|examples| {
+                    examples
+                        .iter()
+                        .filter_map(|example| {
+                            let (_, output) = extract_saved_example_io(example)?;
+                            output.as_i64()
+                        })
+                        .collect::<Vec<_>>()
+                })
+        })
+        .collect();
+    assert!(
+        value_output_sets
+            .iter()
+            .any(|outputs| outputs == &[24, 50, 73]),
+        "insert value hole should learn arg values for all traces, got {:?}",
+        value_output_sets
+    );
+
+    let pointer_output_sets: Vec<Vec<i64>> = spec_list
+        .iter()
+        .filter(|spec| is_pointer_return_type(spec))
+        .filter_map(|spec| {
+            spec.get("examples")
+                .and_then(Value::as_array)
+                .map(|examples| {
+                    examples
+                        .iter()
+                        .filter_map(|example| {
+                            let (_, output) = extract_saved_example_io(example)?;
+                            output
+                                .get("ref")
+                                .and_then(Value::as_i64)
+                                .or_else(|| output.as_i64())
+                        })
+                        .collect::<Vec<_>>()
+                })
+        })
+        .collect();
+    assert!(
+        pointer_output_sets
+            .iter()
+            .any(|outputs| outputs == &[0, 1, 2]),
+        "insert predecessor hole should learn nthNextRef(this, i), got {:?}",
+        pointer_output_sets
+    );
+
+    let composed = response
+        .composed_method_code
+        .as_deref()
+        .expect("composed method should be present");
+    let has_explicit_old_successor = pointer_output_sets
+        .iter()
+        .any(|outputs| outputs == &[1, 2, 3]);
+    let derives_old_successor_from_pred =
+        composed.contains("tmp0.next = (h_ptr_0 === null ? null : h_ptr_0.next);");
+    assert!(
+        has_explicit_old_successor || derives_old_successor_from_pred,
+        "insert must either synthesize oldSucc=[1,2,3] or derive tmp.next from pred.next; pointer outputs={:?}, code:\n{}",
+        pointer_output_sets,
+        composed
+    );
 }
 
 #[tokio::test]
@@ -1482,6 +1660,31 @@ async fn test_integrated_synthesis_insert_three_traces_executes_backend_tasks() 
     assert!(
         !task_names.is_empty(),
         "expected at least one emitted escher-ts task"
+    );
+    assert!(
+        task_names.iter().any(
+            |name| response
+                .escher_results
+                .as_ref()
+                .into_iter()
+                .flatten()
+                .any(|result| result.name == *name
+                    && result
+                        .rendered
+                        .as_deref()
+                        .is_some_and(|rendered| rendered.contains("@arg1")))
+        ),
+        "insert backend tasks should include the value helper, got {:?}",
+        task_names
+    );
+    let composed = response
+        .composed_method_code
+        .as_deref()
+        .expect("composed method should be present");
+    assert!(
+        composed.contains("tmp0.val = h_int_0;"),
+        "pruning unused specs must not drop the value assignment from the composed method: {}",
+        composed
     );
 
     let results = response
