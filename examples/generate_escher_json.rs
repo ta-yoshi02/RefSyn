@@ -83,6 +83,7 @@ fn main() -> anyhow::Result<()> {
     let case = EscherCase {
         env,
         vis_graph: vis_graph.clone(),
+        class_name: Some("Node".to_string()),
         arguments: vec![json!(0)], // receiver pointer
         arg_names: vec!["this".to_string()],
         arg_types: Some(vec!["Ptr".to_string()]),

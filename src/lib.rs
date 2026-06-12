@@ -32,6 +32,8 @@ pub struct MethodCallOperation {
     pub context_sensitive_id: String,
     #[serde(rename = "receiverObject")]
     pub receiver_object: String,
+    #[serde(rename = "receiverClassName")]
+    pub receiver_class_name: Option<String>,
     #[serde(rename = "methodName")]
     pub method_name: String,
     #[serde(default)]
@@ -756,6 +758,20 @@ pub fn synthesize_core(
                 resolve_effective_receiver_object(declared_receiver_a, &base_env_a, vis_graph_a);
             let receiver_object_b =
                 resolve_effective_receiver_object(declared_receiver_b, &base_env_b, vis_graph_b);
+            let receiver_class_name_a = resolve_receiver_class_name(
+                req.method_calls
+                    .get(0)
+                    .and_then(|m| m.receiver_class_name.as_deref()),
+                receiver_object_a.as_deref(),
+                vis_graph_a,
+            );
+            let receiver_class_name_b = resolve_receiver_class_name(
+                req.method_calls
+                    .get(1)
+                    .and_then(|m| m.receiver_class_name.as_deref()),
+                receiver_object_b.as_deref(),
+                vis_graph_b,
+            );
 
             if let Some(uni) = &unification_analysis {
                 let merged_field_tables = merge_field_tables(
@@ -773,6 +789,8 @@ pub fn synthesize_core(
                     &base_env_b,
                     receiver_object_a.as_deref(),
                     receiver_object_b.as_deref(),
+                    &receiver_class_name_a,
+                    &receiver_class_name_b,
                     req.method_calls
                         .get(0)
                         .map(|m| m.arguments.as_slice())
@@ -850,6 +868,11 @@ pub fn synthesize_core(
                 &base_env_consensus,
                 vis_graph_consensus,
             );
+            let receiver_class_name_consensus = resolve_receiver_class_name(
+                reference_call.receiver_class_name.as_deref(),
+                receiver_object_consensus.as_deref(),
+                vis_graph_consensus,
+            );
             let mut multi_candidates: Vec<MultiTraceSpecCandidate> = Vec::new();
             let mut multi_common_plans: Vec<CommonPlanArtifact> = Vec::new();
 
@@ -861,6 +884,11 @@ pub fn synthesize_core(
                 let receiver_object_b = resolve_effective_receiver_object(
                     Some(call.receiver_object.as_str()),
                     &base_env_b,
+                    vis_graph_b,
+                );
+                let receiver_class_name_b = resolve_receiver_class_name(
+                    call.receiver_class_name.as_deref(),
+                    receiver_object_b.as_deref(),
                     vis_graph_b,
                 );
 
@@ -889,6 +917,8 @@ pub fn synthesize_core(
                     &base_env_b,
                     receiver_object_consensus.as_deref(),
                     receiver_object_b.as_deref(),
+                    &receiver_class_name_consensus,
+                    &receiver_class_name_b,
                     reference_call.arguments.as_slice(),
                     call.arguments.as_slice(),
                     reference_call.argument_types.as_deref(),
@@ -2139,6 +2169,51 @@ fn resolve_effective_receiver_object(
     declared_receiver.map(|id| id.to_string())
 }
 
+fn resolve_receiver_class_name(
+    declared_class: Option<&str>,
+    receiver_object: Option<&str>,
+    vis_graph: &models::VisGraph,
+) -> String {
+    if let Some(class_name) = declared_class {
+        let trimmed = class_name.trim();
+        if !trimmed.is_empty() {
+            return trimmed.to_string();
+        }
+    }
+
+    if let Some(receiver_id) = receiver_object {
+        if let Some(label) = vis_graph
+            .nodes
+            .iter()
+            .find(|node| node.id == receiver_id && !node.is_literal)
+            .and_then(node_label_as_string)
+        {
+            return label;
+        }
+    }
+
+    vis_graph
+        .nodes
+        .iter()
+        .find(|node| {
+            !node.is_literal
+                && node.id != "__RectForVariable__"
+                && !node.id.starts_with("__Variable-")
+        })
+        .and_then(node_label_as_string)
+        .unwrap_or_else(|| "Object".to_string())
+}
+
+fn node_label_as_string(node: &models::Node) -> Option<String> {
+    match &node.label {
+        serde_json::Value::String(value) if !value.trim().is_empty() => {
+            Some(value.trim().to_string())
+        }
+        serde_json::Value::Number(value) => Some(value.to_string()),
+        _ => None,
+    }
+}
+
 #[derive(Debug, Default)]
 struct CallTraceDebugReport {
     summary_lines: Vec<String>,
@@ -2472,8 +2547,11 @@ fn build_case_arguments_from_variables(
         let this_name = var_names.remove(pos);
         var_names.insert(0, this_name);
     }
+    if receiver_object.is_some() {
+        var_names.clear();
+    }
 
-    if var_names.is_empty() {
+    if var_names.is_empty() && receiver_object.is_none() {
         return Ok(ArgBundle {
             names: Vec::new(),
             values: Vec::new(),
@@ -2529,7 +2607,8 @@ fn build_case_arguments_from_variables(
         kind_by_name.entry(name.clone()).or_insert(ArgKind::Ptr);
     }
 
-    let needs_bfs = !pointer_fields.is_empty()
+    let needs_bfs = receiver_object.is_some()
+        || !pointer_fields.is_empty()
         || var_names
             .iter()
             .any(|name| kind_by_name.get(name) == Some(&ArgKind::Ptr));
@@ -2539,11 +2618,10 @@ fn build_case_arguments_from_variables(
         HashMap::new()
     };
 
-    let mut values: Vec<Value> = Vec::with_capacity(var_names.len());
-    let mut types: Vec<String> = Vec::with_capacity(var_names.len());
-    let mut receiver_matches: Vec<usize> = Vec::new();
+    let mut values: Vec<Value> = Vec::with_capacity(var_names.len() + 1);
+    let mut types: Vec<String> = Vec::with_capacity(var_names.len() + 1);
 
-    for (idx, name) in var_names.iter().enumerate() {
+    for name in &var_names {
         let var_id = var_id_by_name.get(name);
         let var_idx = var_id.and_then(|id| env.obj_id_to_index.get(id)).copied();
         let arg_kind = kind_by_name.get(name).copied().unwrap_or(ArgKind::Ptr);
@@ -2559,13 +2637,6 @@ fn build_case_arguments_from_variables(
                             {
                                 if let Some(mapped) = idx_to_bfs.get(&to_idx) {
                                     value = serde_json::json!(*mapped as i32);
-                                }
-                                if let Some(receiver_object) = receiver_object {
-                                    if let Some(obj_id) = env.index_to_obj_id.get(&to_idx) {
-                                        if obj_id == receiver_object {
-                                            receiver_matches.push(idx);
-                                        }
-                                    }
                                 }
                             }
                         }
@@ -2591,23 +2662,29 @@ fn build_case_arguments_from_variables(
     }
 
     let mut receiver_arg_index = None;
-    if let Some(pos) = var_names.iter().position(|n| n == "this") {
+    if let Some(receiver_object) = receiver_object {
+        let receiver_value = env
+            .obj_id_to_index
+            .get(receiver_object)
+            .and_then(|orig_idx| idx_to_bfs.get(orig_idx))
+            .map(|idx| serde_json::json!(*idx as i32))
+            .ok_or_else(|| {
+                anyhow::anyhow!(
+                    "receiver object '{}' is not present in the encoded object graph",
+                    receiver_object
+                )
+            })?;
+        var_names.insert(0, "this".to_string());
+        values.insert(0, receiver_value);
+        types.insert(0, "Ptr".to_string());
+        receiver_arg_index = Some(0);
+    } else if let Some(pos) = var_names.iter().position(|n| n == "this") {
         if types.get(pos).map(|t| t.as_str()) != Some("Ptr") {
             return Err(anyhow::anyhow!(
                 "variable 'this' must be Ptr to serve as receiver"
             ));
         }
         receiver_arg_index = Some(pos);
-    } else if receiver_object.is_some() {
-        if receiver_matches.len() > 1 {
-            return Err(anyhow::anyhow!(
-                "receiver object is referenced by multiple variables: {:?}",
-                receiver_matches
-            ));
-        }
-        if receiver_matches.len() == 1 {
-            receiver_arg_index = Some(receiver_matches[0]);
-        }
     }
 
     if receiver_arg_index.is_none() {
@@ -4442,6 +4519,7 @@ fn aggregate_multi_trace_specs(
         for candidate in members {
             if candidate.spec.input_types != representative.spec.input_types
                 || candidate.spec.return_type != representative.spec.return_type
+                || candidate.meta.class_name != representative.meta.class_name
             {
                 if trace_enabled() {
                     println!(
@@ -5920,6 +5998,8 @@ fn generate_specs_from_unification(
     base_env_b: &crate::list_env::ListEnvironment,
     receiver_object_a: Option<&str>,
     receiver_object_b: Option<&str>,
+    receiver_class_name_a: &str,
+    receiver_class_name_b: &str,
     call_arguments_a: &[serde_json::Value],
     call_arguments_b: &[serde_json::Value],
     call_argument_types_a: Option<&[String]>,
@@ -6757,6 +6837,7 @@ fn generate_specs_from_unification(
             EscherCase {
                 env: env_input_a.clone(),
                 vis_graph: vis_graph_a.clone(),
+                class_name: Some(receiver_class_name_a.to_string()),
                 arguments: Vec::new(),
                 arg_names: Vec::new(),
                 arg_types: None,
@@ -6766,6 +6847,7 @@ fn generate_specs_from_unification(
             EscherCase {
                 env: env_input_b.clone(),
                 vis_graph: vis_graph_b.clone(),
+                class_name: Some(receiver_class_name_b.to_string()),
                 arguments: Vec::new(),
                 arg_names: Vec::new(),
                 arg_types: None,
@@ -6847,6 +6929,7 @@ fn generate_specs_from_unification(
             EscherCase {
                 env: env_input_a,
                 vis_graph: vis_graph_a.clone(),
+                class_name: Some(receiver_class_name_a.to_string()),
                 arguments: arg_bundle_a.values,
                 arg_names: arg_names_a,
                 arg_types: Some(arg_bundle_a.types.clone()),
@@ -6856,6 +6939,7 @@ fn generate_specs_from_unification(
             EscherCase {
                 env: env_input_b,
                 vis_graph: vis_graph_b.clone(),
+                class_name: Some(receiver_class_name_b.to_string()),
                 arguments: arg_bundle_b.values,
                 arg_names: arg_names_b,
                 arg_types: Some(arg_bundle_b.types),
@@ -8497,6 +8581,7 @@ mod tests {
                 call_label: "call1".to_string(),
                 context_sensitive_id: "main".to_string(),
                 receiver_object: "main-new1".to_string(),
+                receiver_class_name: None,
                 method_name: "insert".to_string(),
                 arguments: vec![json!(0), json!(29)],
                 argument_types: None,
@@ -8514,6 +8599,7 @@ mod tests {
                 call_label: "call2".to_string(),
                 context_sensitive_id: "main".to_string(),
                 receiver_object: "main-new2".to_string(),
+                receiver_class_name: None,
                 method_name: "insert".to_string(),
                 arguments: vec![json!(2), json!(84)],
                 argument_types: None,
@@ -8643,6 +8729,7 @@ mod tests {
             call_label: "call1".to_string(),
             context_sensitive_id: "main".to_string(),
             receiver_object: "obj1".to_string(),
+            receiver_class_name: None,
             method_name: "append".to_string(),
             arguments: vec![],
             argument_types: None,
@@ -8673,6 +8760,7 @@ mod tests {
             call_label: "call2".to_string(),
             context_sensitive_id: "main".to_string(),
             receiver_object: "main-new1".to_string(),
+            receiver_class_name: None,
             method_name: "insert".to_string(),
             arguments: vec![],
             argument_types: None,
@@ -8738,6 +8826,7 @@ mod tests {
             call_label: "call5".to_string(),
             context_sensitive_id: "main".to_string(),
             receiver_object: "main-new2".to_string(),
+            receiver_class_name: None,
             method_name: "insert".to_string(),
             arguments: vec![],
             argument_types: None,
@@ -8922,6 +9011,7 @@ mod tests {
             call_label: "call8".to_string(),
             context_sensitive_id: "main".to_string(),
             receiver_object: "main-new2".to_string(),
+            receiver_class_name: None,
             method_name: "swap".to_string(),
             arguments: vec![json!(0), json!(2)],
             argument_types: Some(vec!["Int".to_string(), "Int".to_string()]),
@@ -8958,6 +9048,7 @@ mod tests {
             call_label: "call1".to_string(),
             context_sensitive_id: "main".to_string(),
             receiver_object: "main-new1".to_string(),
+            receiver_class_name: None,
             method_name: "insert".to_string(),
             arguments: vec![json!(0), json!(80)],
             argument_types: Some(vec!["Int".to_string(), "Int".to_string()]),
@@ -8992,6 +9083,7 @@ mod tests {
             call_label: "call2".to_string(),
             context_sensitive_id: "main".to_string(),
             receiver_object: "main-new1".to_string(),
+            receiver_class_name: None,
             method_name: "insert".to_string(),
             arguments: vec![json!(1), json!(57)],
             argument_types: Some(vec!["Int".to_string(), "Int".to_string()]),
@@ -9413,6 +9505,7 @@ mod tests {
             call_label: "call1".to_string(),
             context_sensitive_id: "main".to_string(),
             receiver_object: "__temp1".to_string(),
+            receiver_class_name: None,
             method_name: "append".to_string(),
             arguments: vec![],
             argument_types: None,
@@ -11962,6 +12055,69 @@ mod tests {
     }
 
     #[test]
+    fn case_arguments_use_declared_receiver_instead_of_root_variable() {
+        let vis_graph = VisGraph {
+            nodes: vec![
+                crate::models::Node {
+                    id: "main-new1".to_string(),
+                    is_literal: false,
+                    label: json!("Tree"),
+                },
+                crate::models::Node {
+                    id: "main-new2".to_string(),
+                    is_literal: false,
+                    label: json!("Tree"),
+                },
+                crate::models::Node {
+                    id: "__Variable-t".to_string(),
+                    is_literal: false,
+                    label: json!("t"),
+                },
+            ],
+            edges: vec![
+                crate::models::Edge {
+                    from: "main-new1".to_string(),
+                    to: "main-new2".to_string(),
+                    label: "left".to_string(),
+                },
+                crate::models::Edge {
+                    from: "__Variable-t".to_string(),
+                    to: "main-new1".to_string(),
+                    label: "t".to_string(),
+                },
+            ],
+        };
+        let env = list_env::ListEnvironment::from_vis_graph(&vis_graph);
+        let bundle = build_case_arguments_from_variables(
+            &env,
+            &vis_graph,
+            &["left".to_string()],
+            Some("main-new2"),
+        )
+        .expect("receiver should be encoded from receiverObject");
+
+        assert_eq!(bundle.names, vec!["this".to_string()]);
+        assert_eq!(bundle.types, vec!["Ptr".to_string()]);
+        assert_eq!(bundle.receiver_arg_index, Some(0));
+        assert_eq!(bundle.values[0], json!(1));
+    }
+
+    #[test]
+    fn receiver_class_name_prefers_kanon_payload_field() {
+        let vis_graph = VisGraph {
+            nodes: vec![crate::models::Node {
+                id: "main-new1".to_string(),
+                is_literal: false,
+                label: json!("WrongLabel"),
+            }],
+            edges: vec![],
+        };
+
+        let class_name = resolve_receiver_class_name(Some("Tree"), Some("main-new1"), &vis_graph);
+        assert_eq!(class_name, "Tree");
+    }
+
+    #[test]
     fn build_composed_method_code_resolves_existing_kanon_ids_via_runtime_graph() {
         let target_id = "main-call2-FunctionExpression2-new1";
         let target_val_id = "main-call2-FunctionExpression2-new1-val";
@@ -12072,6 +12228,7 @@ mod tests {
             call_label: "call1".to_string(),
             context_sensitive_id: "main".to_string(),
             receiver_object: "main-new1".to_string(),
+            receiver_class_name: None,
             method_name: name.to_string(),
             arguments: vec![],
             argument_types: None,
@@ -12117,6 +12274,7 @@ mod tests {
 
     fn dummy_meta() -> EscherSpecMeta {
         EscherSpecMeta {
+            class_name: "Node".to_string(),
             arg_count: 2,
             arg_names: vec!["this".to_string(), "arg".to_string()],
             value_fields: vec!["val".to_string()],

@@ -59,6 +59,7 @@ fn append_call(
         call_label: "append".to_string(),
         context_sensitive_id: context_sensitive_id.to_string(),
         receiver_object: "main-new1".to_string(),
+        receiver_class_name: None,
         method_name: "append".to_string(),
         arguments: vec![json!(argument)],
         argument_types: Some(vec!["Int".to_string()]),

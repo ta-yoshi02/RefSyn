@@ -79,4 +79,5 @@
 
 ## 参考ドキュメント
 - `docs/REFSYN_TO_ESCHER.md`: 仕様詳細とコード断片
+- `docs/KANON_CODEX_VERIFICATION.md`: Codex で Kanon UI を操作して `set test` から合成まで検証する時の手順
 - `architecture.md`: フローの背景と全体像

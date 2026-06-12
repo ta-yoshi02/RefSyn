@@ -30,6 +30,7 @@ use std::process::{Command, Stdio};
 pub struct EscherCase {
     pub env: ListEnvironment,
     pub vis_graph: VisGraph,
+    pub class_name: Option<String>,
     pub arguments: Vec<Value>,
     pub arg_names: Vec<String>,
     pub arg_types: Option<Vec<String>>,
@@ -55,6 +56,7 @@ pub struct EscherSpec {
 
 #[derive(Debug, Clone)]
 pub struct EscherSpecMeta {
+    pub class_name: String,
     pub arg_count: usize,
     pub arg_names: Vec<String>,
     pub value_fields: Vec<String>,
@@ -234,9 +236,11 @@ pub fn derive_spec_meta_with_fields(
     let arg_count = cases[0].arguments.len();
     resolve_arg_types(cases, arg_count)?;
     let arg_names = resolve_arg_names(cases, arg_count)?;
+    let class_name = resolve_class_name(cases)?;
     let (value_fields, pointer_fields) = resolve_field_order(cases, field_tables)?;
     let receiver_arg_index = resolve_receiver_arg_index(cases, arg_count)?;
     Ok(EscherSpecMeta {
+        class_name,
         arg_count,
         arg_names,
         value_fields,
@@ -266,6 +270,30 @@ fn dedupe_preserve_order(values: &[String]) -> Vec<String> {
         }
     }
     out
+}
+
+fn resolve_class_name(cases: &[EscherCase]) -> Result<String> {
+    let mut resolved: Option<String> = None;
+    for case in cases {
+        let Some(class_name) = case.class_name.as_ref() else {
+            continue;
+        };
+        if class_name.trim().is_empty() {
+            continue;
+        }
+        if let Some(existing) = &resolved {
+            if existing != class_name {
+                return Err(anyhow!(
+                    "inconsistent receiver class names across cases: {:?} vs {:?}",
+                    existing,
+                    class_name
+                ));
+            }
+        } else {
+            resolved = Some(class_name.clone());
+        }
+    }
+    Ok(resolved.unwrap_or_else(|| "Object".to_string()))
 }
 
 fn resolve_arg_types(cases: &[EscherCase], arg_count: usize) -> Result<Vec<String>> {
@@ -784,7 +812,7 @@ impl From<&EscherJsInternalOutcome> for EscherJsOutcome {
 }
 
 pub fn build_escher_task_spec(spec: &EscherSpec, meta: &EscherSpecMeta) -> Result<EscherTaskSpec> {
-    let class_name = "Node".to_string();
+    let class_name = meta.class_name.clone();
     let this_ref_name = "thisRef".to_string();
     let class_heap_name = "nodeHeap".to_string();
 
@@ -798,7 +826,7 @@ pub fn build_escher_task_spec(spec: &EscherSpec, meta: &EscherSpecMeta) -> Resul
         fields.insert(field.clone(), "Ref[Int]".to_string());
     }
     for field in &meta.pointer_fields {
-        fields.insert(field.clone(), format!("Ref[{}]", class_name));
+        fields.insert(field.clone(), format!("Ref[Object[{}]]", class_name));
     }
 
     let explicit_args = build_task_explicit_args(spec, meta, &class_name)?;
@@ -1091,9 +1119,9 @@ fn map_legacy_value_to_task_literal(
 fn legacy_type_to_task_type(legacy_type: &str, class_name: &str) -> Result<String> {
     match legacy_type {
         "Int" | "Bool" => Ok(legacy_type.to_string()),
-        "Ptr" => Ok(format!("Ref[{}]", class_name)),
+        "Ptr" => Ok(format!("Ref[Object[{}]]", class_name)),
         "List[Int]" => Ok("List[Int]".to_string()),
-        "List[Ptr]" => Ok(format!("List[Ref[{}]]", class_name)),
+        "List[Ptr]" => Ok(format!("List[Ref[Object[{}]]]", class_name)),
         other => Err(anyhow!(
             "Unsupported legacy type '{}' for escher-ts phase1 task generation",
             other
@@ -1354,6 +1382,7 @@ mod tests {
         let case = EscherCase {
             env,
             vis_graph,
+            class_name: Some("Node".to_string()),
             arguments: vec![json!(99)],
             arg_names: vec!["this".to_string()],
             arg_types: Some(vec!["Ptr".to_string()]),
@@ -1446,6 +1475,7 @@ mod tests {
         let case = EscherCase {
             env,
             vis_graph,
+            class_name: Some("Node".to_string()),
             arguments: vec![json!(0)],
             arg_names: vec!["this".to_string()],
             arg_types: Some(vec!["Ptr".to_string()]),
@@ -1465,6 +1495,7 @@ mod tests {
         let case = EscherCase {
             env,
             vis_graph,
+            class_name: Some("Node".to_string()),
             arguments: vec![json!(0), json!(42)],
             arg_names: vec!["this".to_string(), "delta".to_string()],
             arg_types: Some(vec!["Ptr".to_string(), "Int".to_string()]),
@@ -1478,7 +1509,7 @@ mod tests {
 
         assert_eq!(task.name, "advance-next");
         assert!(task.auto_class_field_components);
-        assert_eq!(task.signature.return_type, "Ref[Node]");
+        assert_eq!(task.signature.return_type, "Ref[Object[Node]]");
         assert!(task
             .components
             .iter()
@@ -1500,7 +1531,7 @@ mod tests {
         assert_eq!(task.signature.args[0].arg_type, "Int");
         assert_eq!(
             task.classes[0].fields.get("next").map(String::as_str),
-            Some("Ref[Node]")
+            Some("Ref[Object[Node]]")
         );
         assert_eq!(
             task.classes[0].fields.get("val").map(String::as_str),
@@ -1523,6 +1554,7 @@ mod tests {
         let case = EscherCase {
             env,
             vis_graph,
+            class_name: Some("Node".to_string()),
             arguments: vec![json!(0), json!(2)],
             arg_names: vec!["this".to_string(), "index".to_string()],
             arg_types: Some(vec!["Ptr".to_string(), "Int".to_string()]),
@@ -1542,5 +1574,31 @@ mod tests {
             .components
             .iter()
             .any(|component| component.name == "findByValueRef" && component.kind == "libraryRef"));
+    }
+
+    #[test]
+    fn test_build_task_spec_uses_case_class_name() {
+        let (vis_graph, env) = graph_for_linear_list();
+        let case = EscherCase {
+            env,
+            vis_graph,
+            class_name: Some("Tree".to_string()),
+            arguments: vec![json!(0)],
+            arg_names: vec!["this".to_string()],
+            arg_types: Some(vec!["Ptr".to_string()]),
+            receiver_arg_index: Some(0),
+            output: json!(0),
+        };
+
+        let meta = derive_spec_meta(std::slice::from_ref(&case)).expect("meta");
+        let spec = build_escher_spec("tree-id", "Ptr", &[case], None).expect("spec");
+        let task = build_escher_task_spec(&spec, &meta).expect("task");
+
+        assert_eq!(task.classes[0].name, "Tree");
+        assert_eq!(task.signature.return_type, "Ref[Object[Tree]]");
+        let object_class = task.examples[0].0[1][0]["object"]["className"]
+            .as_str()
+            .expect("object className should be a string");
+        assert_eq!(object_class, "Tree");
     }
 }
