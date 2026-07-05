@@ -1616,7 +1616,7 @@ async fn test_integrated_synthesis_insert_three_traces_task_json_keeps_ts_ptr_co
     assert!(
         pointer_output_sets
             .iter()
-            .any(|outputs| outputs == &[0, 1, 2]),
+            .any(|outputs| outputs == &[0, 2, 3]),
         "insert predecessor hole should learn nthNextRef(this, i), got {:?}",
         pointer_output_sets
     );
@@ -1627,7 +1627,7 @@ async fn test_integrated_synthesis_insert_three_traces_task_json_keeps_ts_ptr_co
         .expect("composed method should be present");
     let has_explicit_old_successor = pointer_output_sets
         .iter()
-        .any(|outputs| outputs == &[1, 2, 3]);
+        .any(|outputs| outputs == &[1, 1, 1]);
     let derives_old_successor_from_pred =
         composed.contains("tmp0.next = (h_ptr_0 === null ? null : h_ptr_0.next);");
     assert!(

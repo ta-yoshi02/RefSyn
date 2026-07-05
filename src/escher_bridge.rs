@@ -7,7 +7,7 @@
 //!
 //! It supports:
 //! - Dynamic field detection (value vs pointer) without hardcoding names
-//! - Local indexing per test case via BFS from the detected root variable
+//! - Stable object indexing per test case using ListEnvironment object IDs
 //! - nullPtr is encoded as JSON null; missing Int values remain -1
 //! - Deterministic ordering of inputs (args, then value lists, then pointer lists)
 
@@ -17,7 +17,7 @@ use crate::FieldTables;
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, HashMap, HashSet};
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Write;
 #[cfg(not(target_arch = "wasm32"))]
@@ -190,21 +190,21 @@ pub fn build_escher_spec(
     // Examples
     let mut examples: Vec<ExampleJson> = Vec::new();
     for case in cases {
-        // Build BFS-local index mapping using the union of pointer fields
-        let bfs = build_bfs_order(&case.env, &case.vis_graph, &sorted_pointer_fields)?;
+        // Build fixed-ID object ordering using the union of pointer fields.
+        let object_order = build_object_order(&case.env, &case.vis_graph, &sorted_pointer_fields)?;
 
         // Compose input: args + value lists + pointer index lists
         let mut input: Vec<Value> = case.arguments.clone();
 
         // Value lists
         for vf in &sorted_value_fields {
-            let list = build_value_list(&case.env, &bfs, vf);
+            let list = build_value_list(&case.env, &object_order, vf);
             input.push(json!(list));
         }
 
         // Pointer lists
         for pf in &sorted_pointer_fields {
-            let list = build_pointer_index_list(&case.env, &bfs, pf);
+            let list = build_pointer_index_list(&case.env, &object_order, pf);
             input.push(json!(list));
         }
 
@@ -492,11 +492,11 @@ fn classify_fields_from_graph(vis_graph: &VisGraph) -> (HashSet<String>, HashSet
 // ---------- internals ----------
 
 #[derive(Debug, Clone)]
-struct BfsOrder {
-    // BFS order of object indices (original env indices)
+struct ObjectOrder {
+    // Fixed-ID order of object indices (original env indices)
     order_indices: Vec<usize>,
-    // Map from original env index -> bfs index
-    idx_to_bfs: HashMap<usize, usize>,
+    // Map from original env index -> fixed ID
+    idx_to_fixed_id: HashMap<usize, usize>,
 }
 
 fn collect_runtime_object_indices(env: &ListEnvironment, vis_graph: &VisGraph) -> Vec<usize> {
@@ -513,120 +513,33 @@ fn collect_runtime_object_indices(env: &ListEnvironment, vis_graph: &VisGraph) -
     indices
 }
 
-/// Build a root-first order across runtime objects.
+/// Build a stable object-ID order across runtime objects.
 ///
-/// The reachable prefix is still discovered by BFS across pointer fields, but detached
-/// objects are appended afterwards so destructive rewires do not erase them from the
-/// serialized task input.
-fn build_bfs_order(
+/// The order follows `ListEnvironment` object indices instead of traversal order so
+/// heap lists can be inverted back to object identities.
+fn build_object_order(
     env: &ListEnvironment,
     vis_graph: &VisGraph,
     pointer_fields: &[String],
-) -> Result<BfsOrder> {
-    // 1) detect root from variable nodes
-    let (root_env_idx, _) = detect_root(env, vis_graph)?;
+) -> Result<ObjectOrder> {
+    let _ = pointer_fields;
+    let order = collect_runtime_object_indices(env, vis_graph);
 
-    // 2) build adjacency across pointer fields using env.field_lists
-    let mut adj: HashMap<usize, Vec<usize>> = HashMap::new();
-    for pf in pointer_fields {
-        if let Some(vec) = env.field_lists.get(pf) {
-            for (from_idx, v) in vec.iter().enumerate() {
-                if let Some(PtrValue::Index(to)) = PtrValue::from_value(v) {
-                    adj.entry(from_idx).or_default().push(to);
-                }
-            }
-        }
+    let mut idx_to_fixed_id = HashMap::new();
+    for (fixed_id, &orig) in order.iter().enumerate() {
+        idx_to_fixed_id.insert(orig, fixed_id);
     }
-
-    // 3) BFS
-    let mut visited: HashSet<usize> = HashSet::new();
-    let mut q: VecDeque<usize> = VecDeque::new();
-    let mut order: Vec<usize> = Vec::new();
-    q.push_back(root_env_idx);
-    while let Some(u) = q.pop_front() {
-        if !visited.insert(u) {
-            continue;
-        }
-        order.push(u);
-        if let Some(neis) = adj.get(&u) {
-            for &v in neis {
-                if !visited.contains(&v) {
-                    q.push_back(v);
-                }
-            }
-        }
-    }
-
-    for idx in collect_runtime_object_indices(env, vis_graph) {
-        if visited.insert(idx) {
-            order.push(idx);
-        }
-    }
-
-    // map indices for the projected order
-    let mut idx_to_bfs = HashMap::new();
-    for (bi, &orig) in order.iter().enumerate() {
-        idx_to_bfs.insert(orig, bi);
-    }
-    Ok(BfsOrder {
+    Ok(ObjectOrder {
         order_indices: order,
-        idx_to_bfs,
+        idx_to_fixed_id,
     })
 }
 
-/// Detect root object index from variable bindings in env/graph.
-/// Heuristic:
-/// - prefer "__Variable-this" if present
-/// - otherwise find nodes with id prefix "__Variable-<name>"
-/// - for the same label <name> as a field, if field_lists[<name>][var_idx] points to an object index >= 0, use it as root
-fn detect_root(env: &ListEnvironment, vis_graph: &VisGraph) -> Result<(usize, String)> {
-    let var_prefix = "__Variable-";
-    // reverse map from env index to obj id
-    let mut idx_to_id: HashMap<usize, &str> = HashMap::new();
-    for (id, idx) in &env.obj_id_to_index {
-        idx_to_id.insert(*idx, id.as_str());
-    }
-
-    // collect variable nodes present in env
-    let mut var_ids: Vec<&str> = vis_graph
-        .nodes
-        .iter()
-        .filter(|n| !n.is_literal)
-        .map(|n| n.id.as_str())
-        .filter(|id| id.starts_with(var_prefix))
-        .collect();
-    var_ids.sort();
-
-    let mut ordered_var_ids: Vec<&str> = Vec::new();
-    if var_ids.contains(&"__Variable-this") {
-        ordered_var_ids.push("__Variable-this");
-    }
-    for var_id in var_ids {
-        if var_id != "__Variable-this" {
-            ordered_var_ids.push(var_id);
-        }
-    }
-
-    for var_id in ordered_var_ids {
-        if let Some(&var_idx) = env.obj_id_to_index.get(var_id) {
-            let var_name = var_id.trim_start_matches(var_prefix).to_string();
-            if let Some(vec) = env.field_lists.get(&var_name) {
-                if var_idx < vec.len() {
-                    if let Some(PtrValue::Index(root_idx)) = PtrValue::from_value(&vec[var_idx]) {
-                        return Ok((root_idx, var_name));
-                    }
-                }
-            }
-        }
-    }
-    Err(anyhow!("failed to detect root from variable nodes"))
-}
-
-fn build_value_list(env: &ListEnvironment, bfs: &BfsOrder, field: &str) -> Vec<i32> {
+fn build_value_list(env: &ListEnvironment, object_order: &ObjectOrder, field: &str) -> Vec<i32> {
     let mut result = Vec::new();
     let default = json!(-1);
     let vec_ref = env.field_lists.get(field);
-    for &orig_idx in &bfs.order_indices {
+    for &orig_idx in &object_order.order_indices {
         let v = match vec_ref {
             Some(vs) if orig_idx < vs.len() => &vs[orig_idx],
             _ => &default,
@@ -641,11 +554,15 @@ fn build_value_list(env: &ListEnvironment, bfs: &BfsOrder, field: &str) -> Vec<i
     result
 }
 
-fn build_pointer_index_list(env: &ListEnvironment, bfs: &BfsOrder, field: &str) -> Vec<Value> {
+fn build_pointer_index_list(
+    env: &ListEnvironment,
+    object_order: &ObjectOrder,
+    field: &str,
+) -> Vec<Value> {
     let mut result = Vec::new();
     let default = Value::Null;
     let vec_ref = env.field_lists.get(field);
-    for &orig_idx in &bfs.order_indices {
+    for &orig_idx in &object_order.order_indices {
         let v = match vec_ref {
             Some(vs) if orig_idx < vs.len() => &vs[orig_idx],
             _ => &default,
@@ -655,7 +572,7 @@ fn build_pointer_index_list(env: &ListEnvironment, bfs: &BfsOrder, field: &str) 
         match ptr {
             PtrValue::Null => result.push(Value::Null),
             PtrValue::Index(to_orig) => {
-                let mapped = bfs.idx_to_bfs.get(&to_orig).copied();
+                let mapped = object_order.idx_to_fixed_id.get(&to_orig).copied();
                 match mapped {
                     Some(i) => result.push(json!(i as i32)),
                     None => result.push(Value::Null),
@@ -1387,7 +1304,7 @@ mod tests {
             arg_names: vec!["this".to_string()],
             arg_types: Some(vec!["Ptr".to_string()]),
             receiver_arg_index: Some(0),
-            output: json!(2), // e.g., last node index in BFS order
+            output: json!(2), // e.g., last node fixed ID
         };
         let spec = build_escher_spec("append-g", "Int", &[case], None).expect("spec");
         assert_eq!(spec.name, "append-g");

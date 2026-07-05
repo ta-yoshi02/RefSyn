@@ -2117,7 +2117,7 @@ fn detect_runtime_receiver_object_id(
             return Some(edge.to.clone());
         }
     }
-    // Last fallback: root used by BFS encoding.
+    // Last fallback: root used by legacy receiver detection.
     if let Some(root_idx) = detect_root_index(env, vis_graph) {
         if let Some(id) = env.index_to_obj_id.get(&root_idx) {
             return Some(id.clone());
@@ -2521,7 +2521,7 @@ struct ArgBundle {
 fn build_case_arguments_from_variables(
     env: &crate::list_env::ListEnvironment,
     vis_graph: &models::VisGraph,
-    pointer_fields: &[String],
+    _pointer_fields: &[String],
     receiver_object: Option<&str>,
 ) -> anyhow::Result<ArgBundle> {
     use crate::list_env::{FieldKind, PtrValue};
@@ -2607,13 +2607,12 @@ fn build_case_arguments_from_variables(
         kind_by_name.entry(name.clone()).or_insert(ArgKind::Ptr);
     }
 
-    let needs_bfs = receiver_object.is_some()
-        || !pointer_fields.is_empty()
+    let needs_fixed_id = receiver_object.is_some()
         || var_names
             .iter()
             .any(|name| kind_by_name.get(name) == Some(&ArgKind::Ptr));
-    let idx_to_bfs = if needs_bfs {
-        build_bfs_index_map(env, vis_graph, pointer_fields)?
+    let idx_to_fixed_id = if needs_fixed_id {
+        build_fixed_id_index_map(env, vis_graph)?
     } else {
         HashMap::new()
     };
@@ -2635,7 +2634,7 @@ fn build_case_arguments_from_variables(
                             if let Some(PtrValue::Index(to_idx)) =
                                 PtrValue::from_value(&list[var_idx])
                             {
-                                if let Some(mapped) = idx_to_bfs.get(&to_idx) {
+                                if let Some(mapped) = idx_to_fixed_id.get(&to_idx) {
                                     value = serde_json::json!(*mapped as i32);
                                 }
                             }
@@ -2666,7 +2665,7 @@ fn build_case_arguments_from_variables(
         let receiver_value = env
             .obj_id_to_index
             .get(receiver_object)
-            .and_then(|orig_idx| idx_to_bfs.get(orig_idx))
+            .and_then(|orig_idx| idx_to_fixed_id.get(orig_idx))
             .map(|idx| serde_json::json!(*idx as i32))
             .ok_or_else(|| {
                 anyhow::anyhow!(
@@ -2713,7 +2712,7 @@ fn append_method_call_arguments(
     call_argument_names: Option<&[String]>,
     env: &crate::list_env::ListEnvironment,
     vis_graph: &models::VisGraph,
-    pointer_fields: &[String],
+    _pointer_fields: &[String],
 ) -> anyhow::Result<()> {
     use std::collections::HashMap;
 
@@ -2748,9 +2747,9 @@ fn append_method_call_arguments(
         arg_kinds.push(resolve_call_argument_kind(value, declared, env)?);
     }
 
-    let needs_bfs = arg_kinds.contains(&ArgKind::Ptr);
-    let idx_to_bfs: HashMap<usize, usize> = if needs_bfs {
-        build_bfs_index_map(env, vis_graph, pointer_fields)?
+    let needs_fixed_id = arg_kinds.contains(&ArgKind::Ptr);
+    let idx_to_fixed_id: HashMap<usize, usize> = if needs_fixed_id {
+        build_fixed_id_index_map(env, vis_graph)?
     } else {
         HashMap::new()
     };
@@ -2778,7 +2777,7 @@ fn append_method_call_arguments(
                 bundle.values.push(serde_json::json!(int_value));
             }
             ArgKind::Ptr => {
-                let ptr_value = encode_call_argument_ptr(value, env, &idx_to_bfs, idx)?;
+                let ptr_value = encode_call_argument_ptr(value, env, &idx_to_fixed_id, idx)?;
                 bundle.types.push("Ptr".to_string());
                 bundle.values.push(ptr_value);
             }
@@ -2829,7 +2828,7 @@ fn resolve_call_argument_kind(
 fn encode_call_argument_ptr(
     value: &serde_json::Value,
     env: &crate::list_env::ListEnvironment,
-    idx_to_bfs: &HashMap<usize, usize>,
+    idx_to_fixed_id: &HashMap<usize, usize>,
     arg_index: usize,
 ) -> anyhow::Result<serde_json::Value> {
     if value.is_null() {
@@ -2850,10 +2849,10 @@ fn encode_call_argument_ptr(
     }
 
     if let Some(id) = value.as_str() {
-        return encode_call_argument_ptr_from_id(id, env, idx_to_bfs, arg_index);
+        return encode_call_argument_ptr_from_id(id, env, idx_to_fixed_id, arg_index);
     }
     if let Some(id) = value.get("id").and_then(|v| v.as_str()) {
-        return encode_call_argument_ptr_from_id(id, env, idx_to_bfs, arg_index);
+        return encode_call_argument_ptr_from_id(id, env, idx_to_fixed_id, arg_index);
     }
 
     Err(anyhow::anyhow!(
@@ -2866,7 +2865,7 @@ fn encode_call_argument_ptr(
 fn encode_call_argument_ptr_from_id(
     raw: &str,
     env: &crate::list_env::ListEnvironment,
-    idx_to_bfs: &HashMap<usize, usize>,
+    idx_to_fixed_id: &HashMap<usize, usize>,
     arg_index: usize,
 ) -> anyhow::Result<serde_json::Value> {
     if let Ok(num) = raw.parse::<i64>() {
@@ -2881,9 +2880,9 @@ fn encode_call_argument_ptr_from_id(
         env.obj_id_to_index.get(raw).copied().ok_or_else(|| {
             anyhow::anyhow!("unknown Ptr argument {} object id '{}'", arg_index, raw)
         })?;
-    let mapped_idx = idx_to_bfs.get(&orig_idx).copied().ok_or_else(|| {
+    let mapped_idx = idx_to_fixed_id.get(&orig_idx).copied().ok_or_else(|| {
         anyhow::anyhow!(
-            "Ptr argument {} object '{}' is not reachable from receiver root",
+            "Ptr argument {} object '{}' is not present in the encoded object graph",
             arg_index,
             raw
         )
@@ -2908,84 +2907,40 @@ fn collect_runtime_object_indices(
     indices
 }
 
-fn build_root_first_object_order(
+fn build_fixed_object_order(
     env: &crate::list_env::ListEnvironment,
     vis_graph: &models::VisGraph,
-    pointer_fields: &[String],
 ) -> anyhow::Result<Vec<usize>> {
-    use crate::list_env::PtrValue;
-    use std::collections::{HashMap, HashSet, VecDeque};
-
-    let root =
-        detect_root_index(env, vis_graph).ok_or_else(|| anyhow::anyhow!("root not found"))?;
-    let mut adj: HashMap<usize, Vec<usize>> = HashMap::new();
-    for pf in pointer_fields {
-        if let Some(vec) = env.field_lists.get(pf) {
-            for (from_idx, v) in vec.iter().enumerate() {
-                if let Some(PtrValue::Index(to)) = PtrValue::from_value(v) {
-                    adj.entry(from_idx).or_default().push(to);
-                }
-            }
-        }
-    }
-
-    let mut visited: HashSet<usize> = HashSet::new();
-    let mut q: VecDeque<usize> = VecDeque::new();
-    let mut order: Vec<usize> = Vec::new();
-    q.push_back(root);
-    while let Some(u) = q.pop_front() {
-        if !visited.insert(u) {
-            continue;
-        }
-        order.push(u);
-        if let Some(ns) = adj.get(&u) {
-            for &v in ns {
-                if !visited.contains(&v) {
-                    q.push_back(v);
-                }
-            }
-        }
-    }
-
-    for idx in collect_runtime_object_indices(env, vis_graph) {
-        if visited.insert(idx) {
-            order.push(idx);
-        }
-    }
-
-    Ok(order)
+    Ok(collect_runtime_object_indices(env, vis_graph))
 }
 
-fn build_bfs_index_map(
+fn build_fixed_id_index_map(
     env: &crate::list_env::ListEnvironment,
     vis_graph: &models::VisGraph,
-    pointer_fields: &[String],
 ) -> anyhow::Result<HashMap<usize, usize>> {
     use std::collections::HashMap;
 
-    let order = build_root_first_object_order(env, vis_graph, pointer_fields)?;
-    let mut idx_to_bfs: HashMap<usize, usize> = HashMap::new();
-    for (bi, &orig) in order.iter().enumerate() {
-        idx_to_bfs.insert(orig, bi);
+    let order = build_fixed_object_order(env, vis_graph)?;
+    let mut idx_to_fixed_id: HashMap<usize, usize> = HashMap::new();
+    for (fixed_id, &orig) in order.iter().enumerate() {
+        idx_to_fixed_id.insert(orig, fixed_id);
     }
-    Ok(idx_to_bfs)
+    Ok(idx_to_fixed_id)
 }
 
-fn bfs_local_index_for_object(
+fn fixed_id_index_for_object(
     env: &crate::list_env::ListEnvironment,
     vis_graph: &models::VisGraph,
     object_id: &str,
 ) -> anyhow::Result<Option<i32>> {
-    let (_value_fields, mut pointer_fields) = analyze_fields_for_graph(vis_graph);
-    pointer_fields.sort();
-    let order = build_root_first_object_order(env, vis_graph, &pointer_fields)?;
-    let mut idx_to_bfs: HashMap<usize, usize> = HashMap::new();
-    for (bi, &orig) in order.iter().enumerate() {
-        idx_to_bfs.insert(orig, bi);
+    let order = build_fixed_object_order(env, vis_graph)?;
+    let mut idx_to_fixed_id: HashMap<usize, usize> = HashMap::new();
+    for (fixed_id, &orig) in order.iter().enumerate() {
+        idx_to_fixed_id.insert(orig, fixed_id);
     }
-    // map object id to original index then to bfs index
+    // Map object id to original index, then to fixed ID.
     if let Some(&orig_idx) = env.obj_id_to_index.get(object_id) {
-        Ok(idx_to_bfs.get(&orig_idx).copied().map(|x| x as i32))
+        Ok(idx_to_fixed_id.get(&orig_idx).copied().map(|x| x as i32))
     } else {
         Ok(None)
     }
@@ -7122,7 +7077,7 @@ fn determine_output_value(
     let resolve_target_output = |target_id: Option<&str>| -> (serde_json::Value, OutputType) {
         if let Some(to_id) = target_id {
             if env.obj_id_to_index.contains_key(to_id) {
-                let value = match bfs_local_index_for_object(env, vis_graph, to_id) {
+                let value = match fixed_id_index_for_object(env, vis_graph, to_id) {
                     Ok(Some(idx)) => serde_json::json!(idx),
                     Ok(None) | Err(_) => serde_json::Value::Null,
                 };
@@ -7159,7 +7114,7 @@ fn determine_output_value(
                     (serde_json::json!(-1), OutputType::Int)
                 }
             } else if let Some(id) = operation.id.as_deref() {
-                let value = match bfs_local_index_for_object(env, vis_graph, id) {
+                let value = match fixed_id_index_for_object(env, vis_graph, id) {
                     Ok(Some(idx)) => serde_json::json!(idx),
                     Ok(None) | Err(_) => serde_json::Value::Null,
                 };
@@ -7202,7 +7157,7 @@ fn output_for_diff_pair_role(
         return match op {
             DiffOp::Json { .. } => {
                 let value = diff_op_edge_source_id(op)
-                    .and_then(|id| match bfs_local_index_for_object(env, vis_graph, &id) {
+                    .and_then(|id| match fixed_id_index_for_object(env, vis_graph, &id) {
                         Ok(Some(idx)) => Some(serde_json::json!(idx)),
                         Ok(None) | Err(_) => None,
                     })
@@ -7245,7 +7200,7 @@ fn determine_output_value_for_exist_node(
             .unwrap_or_else(|| serde_json::json!(-1));
         (value, OutputType::Int)
     } else {
-        let value = match bfs_local_index_for_object(env, vis_graph, id) {
+        let value = match fixed_id_index_for_object(env, vis_graph, id) {
             Ok(Some(idx)) => serde_json::json!(idx),
             Ok(None) | Err(_) => serde_json::Value::Null,
         };
@@ -9532,7 +9487,7 @@ mod tests {
     }
 
     #[test]
-    fn exist_node_ptr_output_uses_bfs_index() {
+    fn exist_node_ptr_output_uses_fixed_id_index() {
         let vis_graph = simple_vis_graph_with_root();
         let env = list_env::ListEnvironment::from_vis_graph(&vis_graph);
         let (value, ty) =

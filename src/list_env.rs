@@ -45,6 +45,45 @@ impl PtrValue {
     }
 }
 
+fn split_trailing_number(id: &str) -> (&str, Option<u64>) {
+    let split_at = id
+        .char_indices()
+        .rev()
+        .find_map(|(idx, ch)| {
+            if ch.is_ascii_digit() {
+                None
+            } else {
+                Some(idx + ch.len_utf8())
+            }
+        })
+        .unwrap_or(0);
+    if split_at >= id.len() {
+        return (id, None);
+    }
+    let (prefix, digits) = id.split_at(split_at);
+    (prefix, digits.parse::<u64>().ok())
+}
+
+fn object_id_order_key(id: &str) -> (u8, &str, Option<u64>) {
+    let category = if id.starts_with("__Variable-") {
+        2
+    } else if id.starts_with("__temp") {
+        1
+    } else {
+        0
+    };
+    let (prefix, number) = split_trailing_number(id);
+    (category, prefix, number)
+}
+
+fn sort_object_ids_for_environment(object_ids: &mut [String]) {
+    object_ids.sort_by(|a, b| {
+        object_id_order_key(a)
+            .cmp(&object_id_order_key(b))
+            .then_with(|| a.cmp(b))
+    });
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListEnvironment {
     /// フィールド名をキーとし、各オブジェクトのフィールド値の配列を値とするマップ
@@ -86,13 +125,14 @@ pub struct GraphOperation {
 impl ListEnvironment {
     /// 初期のVisGraphからListEnvironmentを作成
     pub fn from_vis_graph(vis_graph: &VisGraph) -> Self {
-        let object_ids: Vec<String> = vis_graph
+        let mut object_ids: Vec<String> = vis_graph
             .nodes
             .iter()
             .filter(|n| !n.is_literal)
             .filter(|n| n.id != "__RectForVariable__") // 不要なオブジェクトを除外
             .map(|n| n.id.clone())
             .collect();
+        sort_object_ids_for_environment(&mut object_ids);
 
         let obj_id_to_index: HashMap<String, usize> = object_ids
             .iter()
@@ -617,6 +657,91 @@ mod tests {
         assert_eq!(value_list[1], json!(0)); // obj2.value = 0
         assert_eq!(value_list[2], json!(9)); // obj3.value = 9
         assert_eq!(value_list[3], json!(5)); // obj4.value = 5
+    }
+
+    #[test]
+    fn test_initial_environment_uses_stable_object_id_order() {
+        let graph = VisGraph {
+            nodes: vec![
+                Node {
+                    id: "__temp2".to_string(),
+                    label: json!("Node"),
+                    is_literal: false,
+                },
+                Node {
+                    id: "main-new2".to_string(),
+                    label: json!("Node"),
+                    is_literal: false,
+                },
+                Node {
+                    id: "__Variable-l".to_string(),
+                    label: json!("l"),
+                    is_literal: false,
+                },
+                Node {
+                    id: "main-new1".to_string(),
+                    label: json!("Node"),
+                    is_literal: false,
+                },
+                Node {
+                    id: "main-new1-f".to_string(),
+                    label: json!("39"),
+                    is_literal: true,
+                },
+                Node {
+                    id: "__temp2-f".to_string(),
+                    label: json!("89"),
+                    is_literal: true,
+                },
+                Node {
+                    id: "main-new2-f".to_string(),
+                    label: json!("27"),
+                    is_literal: true,
+                },
+            ],
+            edges: vec![
+                Edge {
+                    from: "main-new1".to_string(),
+                    to: "main-new1-f".to_string(),
+                    label: "f".to_string(),
+                },
+                Edge {
+                    from: "__temp2".to_string(),
+                    to: "__temp2-f".to_string(),
+                    label: "f".to_string(),
+                },
+                Edge {
+                    from: "main-new2".to_string(),
+                    to: "main-new2-f".to_string(),
+                    label: "f".to_string(),
+                },
+                Edge {
+                    from: "main-new1".to_string(),
+                    to: "__temp2".to_string(),
+                    label: "g".to_string(),
+                },
+                Edge {
+                    from: "__temp2".to_string(),
+                    to: "main-new2".to_string(),
+                    label: "g".to_string(),
+                },
+            ],
+        };
+
+        let env = ListEnvironment::from_vis_graph(&graph);
+
+        assert_eq!(env.obj_id_to_index.get("main-new1"), Some(&0));
+        assert_eq!(env.obj_id_to_index.get("main-new2"), Some(&1));
+        assert_eq!(env.obj_id_to_index.get("__temp2"), Some(&2));
+        assert_eq!(env.obj_id_to_index.get("__Variable-l"), Some(&3));
+        assert_eq!(
+            env.field_lists.get("f").unwrap(),
+            &vec![json!("39"), json!("27"), json!("89"), json!(-1)]
+        );
+        assert_eq!(
+            env.field_lists.get("g").unwrap(),
+            &vec![json!(2), Value::Null, json!(1), Value::Null]
+        );
     }
 
     #[test]
