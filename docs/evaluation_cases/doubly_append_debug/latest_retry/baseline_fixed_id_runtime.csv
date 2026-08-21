@@ -1,0 +1,5 @@
+task,iteration,success,elapsed_ms,max_cost,timeout_ms,error
+doubly-append-fixed-fHeap,1,true,10.689,14,15000,
+doubly-append-fixed-gHeap,1,false,14999.85,14,15000,escher-ts could not synthesize 'doubly-append-fixed-gHeap' within the configured budget
+doubly-append-fixed-hHeap,1,true,157.926,14,15000,
+doubly-append-fixed-env,1,false,15000.057,14,15000,escher-ts could not synthesize 'doubly-append-fixed-env' within the configured budget

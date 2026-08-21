@@ -1,0 +1,71 @@
+{
+  "encoding": "fixed object-ID field heaps",
+  "output": {
+    "fHeap": "List[Int]",
+    "gHeap": "List[Ref[Object[Obj]]]",
+    "hHeap": "List[Ref[Object[Obj]]]",
+    "env": "Pair[List[Int],Pair[List[Ref[Object[Obj]]],List[Ref[Object[Obj]]]]]"
+  },
+  "measurement": {
+    "maxCost": 14,
+    "timeoutMs": 15000,
+    "repetitions": 1,
+    "taskFile": "baseline_fixed_id_task.json"
+  },
+  "baseComponents": [
+    "isNull",
+    "equal",
+    "and",
+    "or",
+    "not",
+    "isZero",
+    "isNonNeg",
+    "zero",
+    "inc",
+    "dec",
+    "head",
+    "tail",
+    "cons",
+    "nil",
+    "concat",
+    "insert",
+    "length",
+    "nthNextRef",
+    "last_ptr",
+    "penultimateRef"
+  ],
+  "customComponents": [
+    {
+      "name": "pairPtrHeaps",
+      "kind": "js",
+      "inputTypes": [
+        "List[Ref[Object[Obj]]]",
+        "List[Ref[Object[Obj]]]"
+      ],
+      "returnType": "Pair[List[Ref[Object[Obj]]],List[Ref[Object[Obj]]]]",
+      "args": [
+        "g",
+        "h"
+      ],
+      "bodyJs": "return { pair: [g, h] };"
+    },
+    {
+      "name": "pairDoublyEnv",
+      "kind": "js",
+      "inputTypes": [
+        "List[Int]",
+        "Pair[List[Ref[Object[Obj]]],List[Ref[Object[Obj]]]]"
+      ],
+      "returnType": "Pair[List[Int],Pair[List[Ref[Object[Obj]]],List[Ref[Object[Obj]]]]]",
+      "args": [
+        "f",
+        "p"
+      ],
+      "bodyJs": "return { pair: [f, p] };"
+    }
+  ],
+  "notes": [
+    "Baseline receives pre-state fixed-ID heaps and method argument, but not operation records.",
+    "Post-state output is split into field heaps plus a nested whole-environment pair."
+  ]
+}

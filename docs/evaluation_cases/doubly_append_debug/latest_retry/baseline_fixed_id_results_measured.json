@@ -1,0 +1,110 @@
+[
+  {
+    "task": "doubly-append-fixed-fHeap",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 1
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 10.689,
+      "median_ms": 10.689,
+      "max_ms": 10.689,
+      "mean_ms": 10.689
+    },
+    "last_rendered": "doubly-append-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @hHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Int] =\n  insert(@fHeap, @arg0, @arg0)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 10.689,
+        "success": true,
+        "rendered": "doubly-append-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @hHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Int] =\n  insert(@fHeap, @arg0, @arg0)",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "doubly-append-fixed-gHeap",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 1
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 14999.85,
+      "median_ms": 14999.85,
+      "max_ms": 14999.85,
+      "mean_ms": 14999.85
+    },
+    "last_rendered": null,
+    "last_error": "escher-ts could not synthesize 'doubly-append-fixed-gHeap' within the configured budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 14999.85,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'doubly-append-fixed-gHeap' within the configured budget",
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "doubly-append-fixed-hHeap",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 1
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 157.926,
+      "median_ms": 157.926,
+      "max_ms": 157.926,
+      "mean_ms": 157.926
+    },
+    "last_rendered": "doubly-append-fixed-hHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @hHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Ref[Object<Obj>]] =\n  if isNull(head(tail(tail(@gHeap)))) then insert(@hHeap, @arg0, head(tail(@gHeap))) else doubly-append-fixed-hHeap(@thisRef, @nodeHeap, @fHeap, tail(@gHeap), @hHeap, @arg0)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 157.926,
+        "success": true,
+        "rendered": "doubly-append-fixed-hHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @hHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Ref[Object<Obj>]] =\n  if isNull(head(tail(tail(@gHeap)))) then insert(@hHeap, @arg0, head(tail(@gHeap))) else doubly-append-fixed-hHeap(@thisRef, @nodeHeap, @fHeap, tail(@gHeap), @hHeap, @arg0)",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "doubly-append-fixed-env",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 1
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 15000.057,
+      "median_ms": 15000.057,
+      "max_ms": 15000.057,
+      "mean_ms": 15000.057
+    },
+    "last_rendered": null,
+    "last_error": "escher-ts could not synthesize 'doubly-append-fixed-env' within the configured budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 15000.057,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'doubly-append-fixed-env' within the configured budget",
+        "compiled_js": null
+      }
+    ]
+  }
+]
