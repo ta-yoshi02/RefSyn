@@ -1,0 +1,110 @@
+[
+  {
+    "task": "swap-f-intended",
+    "config": {
+      "maxCost": 20,
+      "timeoutMs": 5000,
+      "repetitions": 1
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 145.955,
+      "median_ms": 145.955,
+      "max_ms": 145.955,
+      "mean_ms": 145.955
+    },
+    "last_rendered": "swap-f-intended(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Int =\n  if isZero(@arg0) then loadInt(@fHeap, fOf(@thisRef, @nodeHeap, @fHeap)) else loadInt(@fHeap, fOf(gOf(@thisRef, @nodeHeap, @nodeHeap), @nodeHeap, @fHeap))",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 145.955,
+        "success": true,
+        "rendered": "swap-f-intended(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Int =\n  if isZero(@arg0) then loadInt(@fHeap, fOf(@thisRef, @nodeHeap, @fHeap)) else loadInt(@fHeap, fOf(gOf(@thisRef, @nodeHeap, @nodeHeap), @nodeHeap, @fHeap))",
+        "error": null,
+        "compiled_js": "swap_f(arg0, arg1) { return (arg0 === 0) ? ((this).f) : (((this).g).f); }"
+      }
+    ]
+  },
+  {
+    "task": "swap-j-intended",
+    "config": {
+      "maxCost": 20,
+      "timeoutMs": 5000,
+      "repetitions": 1
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 29.013,
+      "median_ms": 29.013,
+      "max_ms": 29.013,
+      "mean_ms": 29.013
+    },
+    "last_rendered": "swap-j-intended(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Int =\n  if isZero(dec(dec(@arg1))) then loadInt(@fHeap, fOf(penultimateRef(@thisRef, @gHeap), @nodeHeap, @fHeap)) else loadInt(@fHeap, fOf(last_ptr(@thisRef, @gHeap), @nodeHeap, @fHeap))",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 29.013,
+        "success": true,
+        "rendered": "swap-j-intended(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Int =\n  if isZero(dec(dec(@arg1))) then loadInt(@fHeap, fOf(penultimateRef(@thisRef, @gHeap), @nodeHeap, @fHeap)) else loadInt(@fHeap, fOf(last_ptr(@thisRef, @gHeap), @nodeHeap, @fHeap))",
+        "error": null,
+        "compiled_js": "swap_j(arg0, arg1) { return (arg1 - 1 - 1 === 0) ? (((() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).g !== null && ((__refsynCur).g).g !== null) { __refsynCur = (__refsynCur).g; } return (__refsynCur === null || (__refsynCur).g === null) ? null : __refsynCur; })()).f) : (((() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).g !== null) { __refsynCur = (__refsynCur).g; } return __refsynCur; })()).f); }"
+      }
+    ]
+  },
+  {
+    "task": "swap-n-intended",
+    "config": {
+      "maxCost": 20,
+      "timeoutMs": 5000,
+      "repetitions": 1
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 1.436,
+      "median_ms": 1.436,
+      "max_ms": 1.436,
+      "mean_ms": 1.436
+    },
+    "last_rendered": "swap-n-intended(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Ref[Object<Obj>] =\n  if isZero(@arg0) then @thisRef else gOf(@thisRef, @nodeHeap, @nodeHeap)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 1.436,
+        "success": true,
+        "rendered": "swap-n-intended(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Ref[Object<Obj>] =\n  if isZero(@arg0) then @thisRef else gOf(@thisRef, @nodeHeap, @nodeHeap)",
+        "error": null,
+        "compiled_js": "swap_n(arg0, arg1) { return (arg0 === 0) ? (this) : ((this).g); }"
+      }
+    ]
+  },
+  {
+    "task": "swap-r-intended",
+    "config": {
+      "maxCost": 20,
+      "timeoutMs": 5000,
+      "repetitions": 1
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 1.215,
+      "median_ms": 1.215,
+      "max_ms": 1.215,
+      "mean_ms": 1.215
+    },
+    "last_rendered": "swap-r-intended(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Ref[Object<Obj>] =\n  if isZero(dec(dec(@arg1))) then penultimateRef(@thisRef, @gHeap) else last_ptr(@thisRef, @gHeap)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 1.215,
+        "success": true,
+        "rendered": "swap-r-intended(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Ref[Object<Obj>] =\n  if isZero(dec(dec(@arg1))) then penultimateRef(@thisRef, @gHeap) else last_ptr(@thisRef, @gHeap)",
+        "error": null,
+        "compiled_js": "swap_r(arg0, arg1) { return (arg1 - 1 - 1 === 0) ? ((() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).g !== null && ((__refsynCur).g).g !== null) { __refsynCur = (__refsynCur).g; } return (__refsynCur === null || (__refsynCur).g === null) ? null : __refsynCur; })()) : ((() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).g !== null) { __refsynCur = (__refsynCur).g; } return __refsynCur; })()); }"
+      }
+    ]
+  }
+]
