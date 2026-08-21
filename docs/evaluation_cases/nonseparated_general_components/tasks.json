@@ -1,0 +1,5757 @@
+[
+  {
+    "name": "setAt-fixed-fHeap",
+    "category": "classes",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Int",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap",
+        "arg0",
+        "arg1"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]",
+        "Int",
+        "Int"
+      ],
+      "returnType": "List[Int]"
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          0,
+          46
+        ],
+        [
+          46,
+          27,
+          53,
+          89
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            46,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          2,
+          60
+        ],
+        [
+          46,
+          27,
+          60,
+          89
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            46,
+            27,
+            60,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          3,
+          18
+        ],
+        [
+          46,
+          27,
+          60,
+          18
+        ]
+      ]
+    ],
+    "evaluationMethod": "setAt"
+  },
+  {
+    "name": "setAt-fixed-gHeap",
+    "category": "classes",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Int",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap",
+        "arg0",
+        "arg1"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]",
+        "Int",
+        "Int"
+      ],
+      "returnType": "List[Ref[Object[Obj]]]"
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          0,
+          46
+        ],
+        [
+          {
+            "ref": 1
+          },
+          {
+            "ref": 2
+          },
+          {
+            "ref": 3
+          },
+          {
+            "ref": -1
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            46,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          2,
+          60
+        ],
+        [
+          {
+            "ref": 1
+          },
+          {
+            "ref": 2
+          },
+          {
+            "ref": 3
+          },
+          {
+            "ref": -1
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            46,
+            27,
+            60,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          3,
+          18
+        ],
+        [
+          {
+            "ref": 1
+          },
+          {
+            "ref": 2
+          },
+          {
+            "ref": 3
+          },
+          {
+            "ref": -1
+          }
+        ]
+      ]
+    ],
+    "evaluationMethod": "setAt"
+  },
+  {
+    "name": "setAt-fixed-env-pair",
+    "category": "classes",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Int",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap",
+        "arg0",
+        "arg1"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]",
+        "Int",
+        "Int"
+      ],
+      "returnType": "Pair[List[Int],List[Ref[Object[Obj]]]]"
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "pairHeap",
+        "kind": "js",
+        "inputTypes": [
+          "List[Int]",
+          "List[Ref[Object[Obj]]]"
+        ],
+        "returnType": "Pair[List[Int],List[Ref[Object[Obj]]]]",
+        "args": [
+          "vals",
+          "ptrs"
+        ],
+        "bodyJs": "return { pair: [vals, ptrs] };"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          0,
+          46
+        ],
+        {
+          "pair": [
+            [
+              46,
+              27,
+              53,
+              89
+            ],
+            [
+              {
+                "ref": 1
+              },
+              {
+                "ref": 2
+              },
+              {
+                "ref": 3
+              },
+              {
+                "ref": -1
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            46,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          2,
+          60
+        ],
+        {
+          "pair": [
+            [
+              46,
+              27,
+              60,
+              89
+            ],
+            [
+              {
+                "ref": 1
+              },
+              {
+                "ref": 2
+              },
+              {
+                "ref": 3
+              },
+              {
+                "ref": -1
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            46,
+            27,
+            60,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          3,
+          18
+        ],
+        {
+          "pair": [
+            [
+              46,
+              27,
+              60,
+              18
+            ],
+            [
+              {
+                "ref": 1
+              },
+              {
+                "ref": 2
+              },
+              {
+                "ref": 3
+              },
+              {
+                "ref": -1
+              }
+            ]
+          ]
+        }
+      ]
+    ],
+    "evaluationMethod": "setAt"
+  },
+  {
+    "name": "append-fixed-fHeap",
+    "category": "classes",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Int",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap",
+        "arg0"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]",
+        "Int"
+      ],
+      "returnType": "List[Int]"
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          53
+        ],
+        [
+          39,
+          27,
+          53
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          89
+        ],
+        [
+          39,
+          27,
+          53,
+          89
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          46
+        ],
+        [
+          39,
+          27,
+          53,
+          89,
+          46
+        ]
+      ]
+    ],
+    "evaluationMethod": "append"
+  },
+  {
+    "name": "append-fixed-gHeap",
+    "category": "classes",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Int",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap",
+        "arg0"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]",
+        "Int"
+      ],
+      "returnType": "List[Ref[Object[Obj]]]"
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          53
+        ],
+        [
+          {
+            "ref": 1
+          },
+          {
+            "ref": 2
+          },
+          {
+            "ref": -1
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          89
+        ],
+        [
+          {
+            "ref": 1
+          },
+          {
+            "ref": 2
+          },
+          {
+            "ref": 3
+          },
+          {
+            "ref": -1
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          46
+        ],
+        [
+          {
+            "ref": 1
+          },
+          {
+            "ref": 2
+          },
+          {
+            "ref": 3
+          },
+          {
+            "ref": 4
+          },
+          {
+            "ref": -1
+          }
+        ]
+      ]
+    ],
+    "evaluationMethod": "append"
+  },
+  {
+    "name": "append-fixed-env-pair",
+    "category": "classes",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Int",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap",
+        "arg0"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]",
+        "Int"
+      ],
+      "returnType": "Pair[List[Int],List[Ref[Object[Obj]]]]"
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "pairHeap",
+        "kind": "js",
+        "inputTypes": [
+          "List[Int]",
+          "List[Ref[Object[Obj]]]"
+        ],
+        "returnType": "Pair[List[Int],List[Ref[Object[Obj]]]]",
+        "args": [
+          "vals",
+          "ptrs"
+        ],
+        "bodyJs": "return { pair: [vals, ptrs] };"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          53
+        ],
+        {
+          "pair": [
+            [
+              39,
+              27,
+              53
+            ],
+            [
+              {
+                "ref": 1
+              },
+              {
+                "ref": 2
+              },
+              {
+                "ref": -1
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          89
+        ],
+        {
+          "pair": [
+            [
+              39,
+              27,
+              53,
+              89
+            ],
+            [
+              {
+                "ref": 1
+              },
+              {
+                "ref": 2
+              },
+              {
+                "ref": 3
+              },
+              {
+                "ref": -1
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          46
+        ],
+        {
+          "pair": [
+            [
+              39,
+              27,
+              53,
+              89,
+              46
+            ],
+            [
+              {
+                "ref": 1
+              },
+              {
+                "ref": 2
+              },
+              {
+                "ref": 3
+              },
+              {
+                "ref": 4
+              },
+              {
+                "ref": -1
+              }
+            ]
+          ]
+        }
+      ]
+    ],
+    "evaluationMethod": "append"
+  },
+  {
+    "name": "prepend-fixed-fHeap",
+    "category": "classes",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Int",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap",
+        "arg0"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]",
+        "Int"
+      ],
+      "returnType": "List[Int]"
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          53
+        ],
+        [
+          39,
+          27,
+          53
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 2
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 0
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            }
+          ],
+          89
+        ],
+        [
+          39,
+          27,
+          53,
+          89
+        ]
+      ]
+    ],
+    "evaluationMethod": "prepend"
+  },
+  {
+    "name": "prepend-fixed-gHeap",
+    "category": "classes",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Int",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap",
+        "arg0"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]",
+        "Int"
+      ],
+      "returnType": "List[Ref[Object[Obj]]]"
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          53
+        ],
+        [
+          {
+            "ref": 1
+          },
+          {
+            "ref": -1
+          },
+          {
+            "ref": 0
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 2
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 0
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            }
+          ],
+          89
+        ],
+        [
+          {
+            "ref": 1
+          },
+          {
+            "ref": -1
+          },
+          {
+            "ref": 0
+          },
+          {
+            "ref": 2
+          }
+        ]
+      ]
+    ],
+    "evaluationMethod": "prepend"
+  },
+  {
+    "name": "prepend-fixed-returnRef",
+    "category": "classes",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Int",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap",
+        "arg0"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]",
+        "Int"
+      ],
+      "returnType": "Ref[Object[Obj]]"
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          53
+        ],
+        {
+          "ref": 2
+        }
+      ],
+      [
+        [
+          {
+            "ref": 2
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 0
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            }
+          ],
+          89
+        ],
+        {
+          "ref": 3
+        }
+      ]
+    ],
+    "evaluationMethod": "prepend"
+  },
+  {
+    "name": "prepend-fixed-env-pair",
+    "category": "classes",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Int",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap",
+        "arg0"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]",
+        "Int"
+      ],
+      "returnType": "Pair[List[Int],List[Ref[Object[Obj]]]]"
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "pairHeap",
+        "kind": "js",
+        "inputTypes": [
+          "List[Int]",
+          "List[Ref[Object[Obj]]]"
+        ],
+        "returnType": "Pair[List[Int],List[Ref[Object[Obj]]]]",
+        "args": [
+          "vals",
+          "ptrs"
+        ],
+        "bodyJs": "return { pair: [vals, ptrs] };"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          53
+        ],
+        {
+          "pair": [
+            [
+              39,
+              27,
+              53
+            ],
+            [
+              {
+                "ref": 1
+              },
+              {
+                "ref": -1
+              },
+              {
+                "ref": 0
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        [
+          {
+            "ref": 2
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 0
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            }
+          ],
+          89
+        ],
+        {
+          "pair": [
+            [
+              39,
+              27,
+              53,
+              89
+            ],
+            [
+              {
+                "ref": 1
+              },
+              {
+                "ref": -1
+              },
+              {
+                "ref": 0
+              },
+              {
+                "ref": 2
+              }
+            ]
+          ]
+        }
+      ]
+    ],
+    "evaluationMethod": "prepend"
+  },
+  {
+    "name": "insert-fixed-fHeap",
+    "category": "refsyn-baseline-fixed-id-list-env",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Ref[Int]",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "returnType": "List[Int]",
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap",
+        "arg0",
+        "arg1"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]",
+        "Int",
+        "Int"
+      ]
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          0,
+          89
+        ],
+        [
+          39,
+          27,
+          53,
+          89
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            }
+          ],
+          2,
+          46
+        ],
+        [
+          39,
+          27,
+          53,
+          89,
+          46
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89,
+            46
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            }
+          ],
+          1,
+          71
+        ],
+        [
+          39,
+          27,
+          53,
+          89,
+          46,
+          71
+        ]
+      ]
+    ],
+    "evaluationMethod": "insert"
+  },
+  {
+    "name": "insert-fixed-gHeap",
+    "category": "refsyn-baseline-fixed-id-list-env",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Ref[Int]",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "returnType": "List[Ref[Object[Obj]]]",
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap",
+        "arg0",
+        "arg1"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]",
+        "Int",
+        "Int"
+      ]
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          0,
+          89
+        ],
+        [
+          {
+            "ref": 3
+          },
+          {
+            "ref": 2
+          },
+          {
+            "ref": -1
+          },
+          {
+            "ref": 1
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            }
+          ],
+          2,
+          46
+        ],
+        [
+          {
+            "ref": 3
+          },
+          {
+            "ref": 4
+          },
+          {
+            "ref": -1
+          },
+          {
+            "ref": 1
+          },
+          {
+            "ref": 2
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89,
+            46
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            }
+          ],
+          1,
+          71
+        ],
+        [
+          {
+            "ref": 3
+          },
+          {
+            "ref": 4
+          },
+          {
+            "ref": -1
+          },
+          {
+            "ref": 5
+          },
+          {
+            "ref": 2
+          },
+          {
+            "ref": 1
+          }
+        ]
+      ]
+    ],
+    "evaluationMethod": "insert"
+  },
+  {
+    "name": "insert-fixed-env-pair",
+    "category": "refsyn-baseline-fixed-id-list-env",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Ref[Int]",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "returnType": "Pair[List[Int],List[Ref[Object[Obj]]]]",
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap",
+        "arg0",
+        "arg1"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]",
+        "Int",
+        "Int"
+      ]
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "pairHeap",
+        "kind": "js",
+        "inputTypes": [
+          "List[Int]",
+          "List[Ref[Object[Obj]]]"
+        ],
+        "returnType": "Pair[List[Int],List[Ref[Object[Obj]]]]",
+        "args": [
+          "vals",
+          "ptrs"
+        ],
+        "bodyJs": "return { pair: [vals, ptrs] };"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          0,
+          89
+        ],
+        {
+          "pair": [
+            [
+              39,
+              27,
+              53,
+              89
+            ],
+            [
+              {
+                "ref": 3
+              },
+              {
+                "ref": 2
+              },
+              {
+                "ref": -1
+              },
+              {
+                "ref": 1
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            }
+          ],
+          2,
+          46
+        ],
+        {
+          "pair": [
+            [
+              39,
+              27,
+              53,
+              89,
+              46
+            ],
+            [
+              {
+                "ref": 3
+              },
+              {
+                "ref": 4
+              },
+              {
+                "ref": -1
+              },
+              {
+                "ref": 1
+              },
+              {
+                "ref": 2
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89,
+            46
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            }
+          ],
+          1,
+          71
+        ],
+        {
+          "pair": [
+            [
+              39,
+              27,
+              53,
+              89,
+              46,
+              71
+            ],
+            [
+              {
+                "ref": 3
+              },
+              {
+                "ref": 4
+              },
+              {
+                "ref": -1
+              },
+              {
+                "ref": 5
+              },
+              {
+                "ref": 2
+              },
+              {
+                "ref": 1
+              }
+            ]
+          ]
+        }
+      ]
+    ],
+    "evaluationMethod": "insert"
+  },
+  {
+    "name": "popBack-fixed-fHeap",
+    "category": "classes",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Int",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]"
+      ],
+      "returnType": "List[Int]"
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ]
+        ],
+        [
+          39,
+          27,
+          53,
+          89
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ]
+        ],
+        [
+          39,
+          27,
+          53,
+          89
+        ]
+      ]
+    ],
+    "evaluationMethod": "popBack"
+  },
+  {
+    "name": "popBack-fixed-gHeap",
+    "category": "classes",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Int",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]"
+      ],
+      "returnType": "List[Ref[Object[Obj]]]"
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ]
+        ],
+        [
+          {
+            "ref": 1
+          },
+          {
+            "ref": 2
+          },
+          {
+            "ref": -1
+          },
+          {
+            "ref": -1
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ]
+        ],
+        [
+          {
+            "ref": 1
+          },
+          {
+            "ref": -1
+          },
+          {
+            "ref": -1
+          },
+          {
+            "ref": -1
+          }
+        ]
+      ]
+    ],
+    "evaluationMethod": "popBack"
+  },
+  {
+    "name": "popBack-fixed-env-pair",
+    "category": "classes",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Int",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "signature": {
+      "inputNames": [
+        "thisRef",
+        "nodeHeap",
+        "fHeap",
+        "gHeap"
+      ],
+      "inputTypes": [
+        "Ref[Object[Obj]]",
+        "List[Object[Obj]]",
+        "List[Int]",
+        "List[Ref[Object[Obj]]]"
+      ],
+      "returnType": "Pair[List[Int],List[Ref[Object[Obj]]]]"
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "head",
+        "kind": "libraryRef",
+        "ref": "head"
+      },
+      {
+        "name": "tail",
+        "kind": "libraryRef",
+        "ref": "tail"
+      },
+      {
+        "name": "cons",
+        "kind": "libraryRef",
+        "ref": "cons"
+      },
+      {
+        "name": "nil",
+        "kind": "libraryRef",
+        "ref": "nil"
+      },
+      {
+        "name": "concat",
+        "kind": "libraryRef",
+        "ref": "concat"
+      },
+      {
+        "name": "insert",
+        "kind": "libraryRef",
+        "ref": "insert"
+      },
+      {
+        "name": "length",
+        "kind": "libraryRef",
+        "ref": "length"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "pairHeap",
+        "kind": "js",
+        "inputTypes": [
+          "List[Int]",
+          "List[Ref[Object[Obj]]]"
+        ],
+        "returnType": "Pair[List[Int],List[Ref[Object[Obj]]]]",
+        "args": [
+          "vals",
+          "ptrs"
+        ],
+        "bodyJs": "return { pair: [vals, ptrs] };"
+      },
+      {
+        "name": "storeAtRef",
+        "kind": "libraryRef",
+        "ref": "storeAtRef"
+      },
+      {
+        "name": "freshRefFromHeap",
+        "kind": "libraryRef",
+        "ref": "freshRefFromHeap"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ]
+        ],
+        {
+          "pair": [
+            [
+              39,
+              27,
+              53,
+              89
+            ],
+            [
+              {
+                "ref": 1
+              },
+              {
+                "ref": 2
+              },
+              {
+                "ref": -1
+              },
+              {
+                "ref": -1
+              }
+            ]
+          ]
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ]
+        ],
+        {
+          "pair": [
+            [
+              39,
+              27,
+              53,
+              89
+            ],
+            [
+              {
+                "ref": 1
+              },
+              {
+                "ref": -1
+              },
+              {
+                "ref": -1
+              },
+              {
+                "ref": -1
+              }
+            ]
+          ]
+        }
+      ]
+    ],
+    "evaluationMethod": "popBack"
+  }
+]

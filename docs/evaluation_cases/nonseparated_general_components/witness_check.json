@@ -1,0 +1,335 @@
+{
+  "generated_at": "2026-08-01T09:24:25.025Z",
+  "added_components": [
+    "storeAtRef",
+    "freshRefFromHeap"
+  ],
+  "all_witnesses_match": true,
+  "maximum_witness_cost": 32,
+  "tasks": [
+    {
+      "task": "setAt-fixed-fHeap",
+      "method": "setAt",
+      "witness": "storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1)",
+      "witness_cost": 8,
+      "examples": 3,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        },
+        {
+          "index": 2,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "setAt-fixed-gHeap",
+      "method": "setAt",
+      "witness": "@gHeap",
+      "witness_cost": 1,
+      "examples": 3,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        },
+        {
+          "index": 2,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "setAt-fixed-env-pair",
+      "method": "setAt",
+      "witness": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)",
+      "witness_cost": 10,
+      "examples": 3,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        },
+        {
+          "index": 2,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "append-fixed-fHeap",
+      "method": "append",
+      "witness": "insert(@fHeap, length(@fHeap), @arg0)",
+      "witness_cost": 5,
+      "examples": 3,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        },
+        {
+          "index": 2,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "append-fixed-gHeap",
+      "method": "append",
+      "witness": "insert(storeAtRef(@gHeap, last_ptr(@thisRef, @gHeap), freshRefFromHeap(@nodeHeap)), length(storeAtRef(@gHeap, last_ptr(@thisRef, @gHeap), freshRefFromHeap(@nodeHeap))), nthNextRef(@thisRef, @nodeHeap, @gHeap, length(@nodeHeap)))",
+      "witness_cost": 22,
+      "examples": 3,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        },
+        {
+          "index": 2,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "append-fixed-env-pair",
+      "method": "append",
+      "witness": "pairHeap(insert(@fHeap, length(@fHeap), @arg0), insert(storeAtRef(@gHeap, last_ptr(@thisRef, @gHeap), freshRefFromHeap(@nodeHeap)), length(storeAtRef(@gHeap, last_ptr(@thisRef, @gHeap), freshRefFromHeap(@nodeHeap))), nthNextRef(@thisRef, @nodeHeap, @gHeap, length(@nodeHeap))))",
+      "witness_cost": 28,
+      "examples": 3,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        },
+        {
+          "index": 2,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "prepend-fixed-fHeap",
+      "method": "prepend",
+      "witness": "insert(@fHeap, length(@fHeap), @arg0)",
+      "witness_cost": 5,
+      "examples": 2,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "prepend-fixed-gHeap",
+      "method": "prepend",
+      "witness": "insert(@gHeap, length(@gHeap), @thisRef)",
+      "witness_cost": 5,
+      "examples": 2,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "prepend-fixed-returnRef",
+      "method": "prepend",
+      "witness": "freshRefFromHeap(@nodeHeap)",
+      "witness_cost": 2,
+      "examples": 2,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "prepend-fixed-env-pair",
+      "method": "prepend",
+      "witness": "pairHeap(insert(@fHeap, length(@fHeap), @arg0), insert(@gHeap, length(@gHeap), @thisRef))",
+      "witness_cost": 11,
+      "examples": 2,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "insert-fixed-fHeap",
+      "method": "insert",
+      "witness": "insert(@fHeap, length(@fHeap), @arg1)",
+      "witness_cost": 5,
+      "examples": 3,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        },
+        {
+          "index": 2,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "insert-fixed-gHeap",
+      "method": "insert",
+      "witness": "insert(storeAtRef(@gHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), freshRefFromHeap(@nodeHeap)), length(storeAtRef(@gHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), freshRefFromHeap(@nodeHeap))), nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(@arg0)))",
+      "witness_cost": 26,
+      "examples": 3,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        },
+        {
+          "index": 2,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "insert-fixed-env-pair",
+      "method": "insert",
+      "witness": "pairHeap(insert(@fHeap, length(@fHeap), @arg1), insert(storeAtRef(@gHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), freshRefFromHeap(@nodeHeap)), length(storeAtRef(@gHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), freshRefFromHeap(@nodeHeap))), nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(@arg0))))",
+      "witness_cost": 32,
+      "examples": 3,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        },
+        {
+          "index": 2,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "popBack-fixed-fHeap",
+      "method": "popBack",
+      "witness": "@fHeap",
+      "witness_cost": 1,
+      "examples": 2,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "popBack-fixed-gHeap",
+      "method": "popBack",
+      "witness": "storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), nthNextRef(@thisRef, @nodeHeap, @gHeap, length(@nodeHeap)))",
+      "witness_cost": 11,
+      "examples": 2,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        }
+      ]
+    },
+    {
+      "task": "popBack-fixed-env-pair",
+      "method": "popBack",
+      "witness": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), nthNextRef(@thisRef, @nodeHeap, @gHeap, length(@nodeHeap))))",
+      "witness_cost": 13,
+      "examples": 2,
+      "all_examples_match": true,
+      "example_results": [
+        {
+          "index": 0,
+          "matches": true
+        },
+        {
+          "index": 1,
+          "matches": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+task,iteration,success,elapsed_ms,max_cost,timeout_ms,error
+setAt-fixed-env-pair,1,true,2871.697,14,15000,
+setAt-fixed-env-pair,2,true,2775.078,14,15000,
+setAt-fixed-env-pair,3,true,2763.832,14,15000,
+append-fixed-env-pair,1,false,15000.293,14,15000,escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget
+append-fixed-env-pair,2,false,15002.378,14,15000,escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget
+append-fixed-env-pair,3,false,15000.529,14,15000,escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget
+prepend-fixed-returnRef,1,true,0.536,14,15000,
+prepend-fixed-returnRef,2,true,0.287,14,15000,
+prepend-fixed-returnRef,3,true,0.461,14,15000,
+prepend-fixed-env-pair,1,true,268.29,14,15000,
+prepend-fixed-env-pair,2,true,224.154,14,15000,
+prepend-fixed-env-pair,3,true,263.34,14,15000,
+insert-fixed-env-pair,1,false,14999.385,14,15000,escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget
+insert-fixed-env-pair,2,false,14999.863,14,15000,escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget
+insert-fixed-env-pair,3,false,14999.817,14,15000,escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget
+popBack-fixed-env-pair,1,true,4037.35,14,15000,
+popBack-fixed-env-pair,2,true,3925.778,14,15000,
+popBack-fixed-env-pair,3,true,3910.138,14,15000,
