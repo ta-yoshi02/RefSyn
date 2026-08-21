@@ -1,0 +1,131 @@
+[
+  {
+    "task": "insert-fixed-fHeap",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 15.518,
+      "median_ms": 20.312,
+      "max_ms": 20.712,
+      "mean_ms": 18.847333333333335
+    },
+    "last_rendered": "insert-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Int] =\n  insert(@fHeap, @arg1, @arg1)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 20.712,
+        "success": true,
+        "rendered": "insert-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Int] =\n  insert(@fHeap, @arg1, @arg1)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 20.312,
+        "success": true,
+        "rendered": "insert-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Int] =\n  insert(@fHeap, @arg1, @arg1)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 15.518,
+        "success": true,
+        "rendered": "insert-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Int] =\n  insert(@fHeap, @arg1, @arg1)",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "insert-fixed-gHeap",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 15000.205,
+      "median_ms": 15000.294,
+      "max_ms": 15000.466,
+      "mean_ms": 15000.321666666665
+    },
+    "last_rendered": null,
+    "last_error": "escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 15000.205,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 15000.294,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 15000.466,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget",
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "insert-fixed-env-pair",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 14999.957,
+      "median_ms": 15000.36,
+      "max_ms": 15000.772,
+      "mean_ms": 15000.363
+    },
+    "last_rendered": null,
+    "last_error": "escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 15000.772,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 14999.957,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 15000.36,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      }
+    ]
+  }
+]

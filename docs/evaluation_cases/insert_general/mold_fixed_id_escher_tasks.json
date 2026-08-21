@@ -1,0 +1,851 @@
+[
+  {
+    "name": "insert-fixed-mold-f",
+    "category": "refsyn-mold-fixed-id-probe",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Ref[Int]",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "signature": {
+      "returnType": "Int",
+      "args": [
+        {
+          "name": "arg0",
+          "type": "Int"
+        },
+        {
+          "name": "arg1",
+          "type": "Int"
+        }
+      ],
+      "autoExpandClassSignature": {
+        "className": "Obj",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "f": "fHeap",
+          "g": "gHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          0,
+          89
+        ],
+        89
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            }
+          ],
+          2,
+          46
+        ],
+        46
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89,
+            46
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            }
+          ],
+          1,
+          71
+        ],
+        71
+      ]
+    ]
+  },
+  {
+    "name": "insert-fixed-mold-h",
+    "category": "refsyn-mold-fixed-id-probe",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Ref[Int]",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "signature": {
+      "returnType": "Ref[Object[Obj]]",
+      "args": [
+        {
+          "name": "arg0",
+          "type": "Int"
+        },
+        {
+          "name": "arg1",
+          "type": "Int"
+        }
+      ],
+      "autoExpandClassSignature": {
+        "className": "Obj",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "f": "fHeap",
+          "g": "gHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          0,
+          89
+        ],
+        {
+          "ref": 0
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            }
+          ],
+          2,
+          46
+        ],
+        {
+          "ref": 1
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89,
+            46
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            }
+          ],
+          1,
+          71
+        ],
+        {
+          "ref": 3
+        }
+      ]
+    ]
+  },
+  {
+    "name": "insert-fixed-mold-i",
+    "category": "refsyn-mold-fixed-id-probe",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Ref[Int]",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "signature": {
+      "returnType": "Ref[Object[Obj]]",
+      "args": [
+        {
+          "name": "arg0",
+          "type": "Int"
+        },
+        {
+          "name": "arg1",
+          "type": "Int"
+        }
+      ],
+      "autoExpandClassSignature": {
+        "className": "Obj",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "f": "fHeap",
+          "g": "gHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          0,
+          89
+        ],
+        {
+          "ref": 1
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            }
+          ],
+          2,
+          46
+        ],
+        {
+          "ref": 2
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {}
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89,
+            46
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            }
+          ],
+          1,
+          71
+        ],
+        {
+          "ref": 1
+        }
+      ]
+    ]
+  }
+]

@@ -1,0 +1,155 @@
+[
+  {
+    "callLabel": "call1",
+    "methodName": "insert",
+    "receiverClassName": "Obj",
+    "arguments": [
+      0,
+      89
+    ],
+    "argumentTypes": [
+      "Int",
+      "Int"
+    ],
+    "methodParamNames": [
+      "i",
+      "b"
+    ],
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "__temp2",
+        "label": "Obj",
+        "isLiteral": false
+      },
+      {
+        "editType": "addNode",
+        "id": "__temp3",
+        "label": "89",
+        "isLiteral": true,
+        "type": "string"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp2",
+        "to": "__temp3",
+        "label": "f"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "main-new1",
+        "oldTo": "main-new2",
+        "newTo": "__temp2",
+        "label": "g"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp2",
+        "to": "main-new2",
+        "label": "g"
+      }
+    ]
+  },
+  {
+    "callLabel": "call2",
+    "methodName": "insert",
+    "receiverClassName": "Obj",
+    "arguments": [
+      2,
+      46
+    ],
+    "argumentTypes": [
+      "Int",
+      "Int"
+    ],
+    "methodParamNames": [
+      "i",
+      "b"
+    ],
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "__temp6",
+        "label": "46",
+        "isLiteral": true,
+        "type": "string"
+      },
+      {
+        "editType": "addNode",
+        "id": "__temp7",
+        "label": "Obj",
+        "isLiteral": false
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp7",
+        "to": "__temp6",
+        "label": "f"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "main-new2",
+        "oldTo": "main-new3",
+        "newTo": "__temp7",
+        "label": "g"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp7",
+        "to": "main-new3",
+        "label": "g"
+      }
+    ]
+  },
+  {
+    "callLabel": "call3",
+    "methodName": "insert",
+    "receiverClassName": "Obj",
+    "arguments": [
+      1,
+      71
+    ],
+    "argumentTypes": [
+      "Int",
+      "Int"
+    ],
+    "methodParamNames": [
+      "i",
+      "b"
+    ],
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "__temp8",
+        "label": "Obj",
+        "isLiteral": false
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp8",
+        "to": "main-new2",
+        "label": "g"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "__temp2",
+        "oldTo": "main-new2",
+        "newTo": "__temp8",
+        "label": "g"
+      },
+      {
+        "editType": "addNode",
+        "id": "__temp9",
+        "label": "71",
+        "isLiteral": true,
+        "type": "string"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp8",
+        "to": "__temp9",
+        "label": "f"
+      }
+    ]
+  }
+]

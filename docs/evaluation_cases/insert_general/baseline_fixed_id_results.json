@@ -1,0 +1,44 @@
+[
+  {
+    "task": "insert-fixed-fHeap",
+    "options": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "quiet": true
+    },
+    "elapsedMs": 14.313750000000013,
+    "name": "insert-fixed-fHeap",
+    "success": true,
+    "rendered": "insert-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Int] =\n  insert(@fHeap, @arg1, @arg1)",
+    "error": null,
+    "compiled_js": null
+  },
+  {
+    "task": "insert-fixed-gHeap",
+    "options": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "quiet": true
+    },
+    "elapsedMs": 15009.240916,
+    "name": "insert-fixed-gHeap",
+    "success": false,
+    "rendered": null,
+    "error": "escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget",
+    "compiled_js": null
+  },
+  {
+    "task": "insert-fixed-env-pair",
+    "options": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "quiet": true
+    },
+    "elapsedMs": 15009.900666,
+    "name": "insert-fixed-env-pair",
+    "success": false,
+    "rendered": null,
+    "error": "escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget",
+    "compiled_js": null
+  }
+]

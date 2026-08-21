@@ -1,0 +1,7 @@
+task,success,elapsed_ms,max_cost,timeout_ms,error
+insert-list-fHeap,true,21.894,10,5000,""
+insert-list-gHeap-no-ref-constructor,false,15000.162,14,15000,"escher-ts could not synthesize 'insert-list-gHeap-no-ref-constructor' within the configured budget"
+insert-list-env-pair-no-ref-constructor,false,14999.830,14,15000,"escher-ts could not synthesize 'insert-list-env-pair-no-ref-constructor' within the configured budget"
+insert-list-gHeap-with-fresh-ref,true,77.223,12,5000,""
+insert-list-env-pair-with-fresh-ref,false,9999.564,14,10000,"escher-ts could not synthesize 'insert-list-env-pair-with-fresh-ref' within the configured budget"
+insert-list-env-pair-with-fresh-ref-focused,true,436.649,18,20000,""

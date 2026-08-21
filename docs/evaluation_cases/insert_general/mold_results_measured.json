@@ -1,0 +1,131 @@
+[
+  {
+    "task": "insert-f",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.523,
+      "median_ms": 0.583,
+      "max_ms": 4.171,
+      "mean_ms": 1.7590000000000001
+    },
+    "last_rendered": "insert-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Int =\n  @arg1",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 4.171,
+        "success": true,
+        "rendered": "insert-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Int =\n  @arg1",
+        "error": null,
+        "compiled_js": "insert_f(arg0, arg1) { return arg1; }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.583,
+        "success": true,
+        "rendered": "insert-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Int =\n  @arg1",
+        "error": null,
+        "compiled_js": "insert_f(arg0, arg1) { return arg1; }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.523,
+        "success": true,
+        "rendered": "insert-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Int =\n  @arg1",
+        "error": null,
+        "compiled_js": "insert_f(arg0, arg1) { return arg1; }"
+      }
+    ]
+  },
+  {
+    "task": "insert-h",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 9.075,
+      "median_ms": 9.374,
+      "max_ms": 12.884,
+      "mean_ms": 10.444333333333333
+    },
+    "last_rendered": "insert-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Ref[Object<Obj>] =\n  nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 9.075,
+        "success": true,
+        "rendered": "insert-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Ref[Object<Obj>] =\n  nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0)",
+        "error": null,
+        "compiled_js": "insert_h(arg0, arg1) { return (() => { let __refsynCur = this; let __refsynSteps = arg0; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })(); }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 12.884,
+        "success": true,
+        "rendered": "insert-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Ref[Object<Obj>] =\n  nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0)",
+        "error": null,
+        "compiled_js": "insert_h(arg0, arg1) { return (() => { let __refsynCur = this; let __refsynSteps = arg0; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })(); }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 9.374,
+        "success": true,
+        "rendered": "insert-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Ref[Object<Obj>] =\n  nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0)",
+        "error": null,
+        "compiled_js": "insert_h(arg0, arg1) { return (() => { let __refsynCur = this; let __refsynSteps = arg0; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })(); }"
+      }
+    ]
+  },
+  {
+    "task": "insert-i",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 14.065,
+      "median_ms": 17.142,
+      "max_ms": 28.111,
+      "mean_ms": 19.772666666666666
+    },
+    "last_rendered": "insert-i(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Ref[Object<Obj>] =\n  nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(@arg0))",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 17.142,
+        "success": true,
+        "rendered": "insert-i(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Ref[Object<Obj>] =\n  nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(@arg0))",
+        "error": null,
+        "compiled_js": "insert_i(arg0, arg1) { return (() => { let __refsynCur = this; let __refsynSteps = arg0 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })(); }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 14.065,
+        "success": true,
+        "rendered": "insert-i(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Ref[Object<Obj>] =\n  nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(@arg0))",
+        "error": null,
+        "compiled_js": "insert_i(arg0, arg1) { return (() => { let __refsynCur = this; let __refsynSteps = arg0 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })(); }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 28.111,
+        "success": true,
+        "rendered": "insert-i(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Ref[Object<Obj>] =\n  nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(@arg0))",
+        "error": null,
+        "compiled_js": "insert_i(arg0, arg1) { return (() => { let __refsynCur = this; let __refsynSteps = arg0 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })(); }"
+      }
+    ]
+  }
+]

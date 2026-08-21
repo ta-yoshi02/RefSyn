@@ -1,0 +1,10 @@
+task,iteration,success,elapsed_ms,max_cost,timeout_ms,error
+insert-fixed-fHeap,1,true,20.712,14,15000,
+insert-fixed-fHeap,2,true,20.312,14,15000,
+insert-fixed-fHeap,3,true,15.518,14,15000,
+insert-fixed-gHeap,1,false,15000.205,14,15000,escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget
+insert-fixed-gHeap,2,false,15000.294,14,15000,escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget
+insert-fixed-gHeap,3,false,15000.466,14,15000,escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget
+insert-fixed-env-pair,1,false,15000.772,14,15000,escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget
+insert-fixed-env-pair,2,false,14999.957,14,15000,escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget
+insert-fixed-env-pair,3,false,15000.36,14,15000,escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget

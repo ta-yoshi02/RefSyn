@@ -1,0 +1,58 @@
+[
+  {
+    "task": "insert-fixed-gHeap-with-fresh-ref",
+    "options": {
+      "maxCost": 16,
+      "timeoutMs": 15000,
+      "quiet": true
+    },
+    "elapsedMs": 15000.924708,
+    "name": "insert-fixed-gHeap-with-fresh-ref",
+    "success": false,
+    "rendered": null,
+    "error": "escher-ts could not synthesize 'insert-fixed-gHeap-with-fresh-ref' within the configured budget",
+    "compiled_js": null
+  },
+  {
+    "task": "insert-fixed-env-pair-with-fresh-ref",
+    "options": {
+      "maxCost": 16,
+      "timeoutMs": 15000,
+      "quiet": true
+    },
+    "elapsedMs": 14999.456834,
+    "name": "insert-fixed-env-pair-with-fresh-ref",
+    "success": false,
+    "rendered": null,
+    "error": "escher-ts could not synthesize 'insert-fixed-env-pair-with-fresh-ref' within the configured budget",
+    "compiled_js": null
+  },
+  {
+    "task": "insert-fixed-gHeap-with-fresh-ref-focused",
+    "options": {
+      "maxCost": 16,
+      "timeoutMs": 15000,
+      "quiet": true
+    },
+    "elapsedMs": 15000.463124999998,
+    "name": "insert-fixed-gHeap-with-fresh-ref-focused",
+    "success": false,
+    "rendered": null,
+    "error": "escher-ts could not synthesize 'insert-fixed-gHeap-with-fresh-ref-focused' within the configured budget",
+    "compiled_js": null
+  },
+  {
+    "task": "insert-fixed-env-pair-with-fresh-ref-focused",
+    "options": {
+      "maxCost": 16,
+      "timeoutMs": 15000,
+      "quiet": true
+    },
+    "elapsedMs": 15000.290792,
+    "name": "insert-fixed-env-pair-with-fresh-ref-focused",
+    "success": false,
+    "rendered": null,
+    "error": "escher-ts could not synthesize 'insert-fixed-env-pair-with-fresh-ref-focused' within the configured budget",
+    "compiled_js": null
+  }
+]

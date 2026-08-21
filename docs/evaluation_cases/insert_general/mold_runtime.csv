@@ -1,0 +1,10 @@
+task,iteration,success,elapsed_ms,max_cost,timeout_ms,error
+insert-f,1,true,4.171,14,15000,
+insert-f,2,true,0.583,14,15000,
+insert-f,3,true,0.523,14,15000,
+insert-h,1,true,9.075,14,15000,
+insert-h,2,true,12.884,14,15000,
+insert-h,3,true,9.374,14,15000,
+insert-i,1,true,17.142,14,15000,
+insert-i,2,true,14.065,14,15000,
+insert-i,3,true,28.111,14,15000,

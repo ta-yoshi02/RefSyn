@@ -1,0 +1,377 @@
+[
+  {
+    "callLabel": "call1",
+    "args": [
+      0,
+      89
+    ],
+    "objectOrderBefore": [
+      "main-new1",
+      "main-new2",
+      "main-new3"
+    ],
+    "objectOrderAfter": [
+      "main-new1",
+      "main-new2",
+      "main-new3",
+      "__temp2"
+    ],
+    "input": [
+      {
+        "ref": 0
+      },
+      [
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {}
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {}
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {}
+          }
+        }
+      ],
+      [
+        39,
+        27,
+        53
+      ],
+      [
+        {
+          "ref": 1
+        },
+        {
+          "ref": 2
+        },
+        {
+          "ref": -1
+        }
+      ],
+      0,
+      89
+    ],
+    "outF": [
+      39,
+      27,
+      53,
+      89
+    ],
+    "outG": [
+      {
+        "ref": 3
+      },
+      {
+        "ref": 2
+      },
+      {
+        "ref": -1
+      },
+      {
+        "ref": 1
+      }
+    ],
+    "outPair": {
+      "pair": [
+        [
+          39,
+          27,
+          53,
+          89
+        ],
+        [
+          {
+            "ref": 3
+          },
+          {
+            "ref": 2
+          },
+          {
+            "ref": -1
+          },
+          {
+            "ref": 1
+          }
+        ]
+      ]
+    }
+  },
+  {
+    "callLabel": "call2",
+    "args": [
+      2,
+      46
+    ],
+    "objectOrderBefore": [
+      "main-new1",
+      "main-new2",
+      "main-new3",
+      "__temp2"
+    ],
+    "objectOrderAfter": [
+      "main-new1",
+      "main-new2",
+      "main-new3",
+      "__temp2",
+      "__temp7"
+    ],
+    "input": [
+      {
+        "ref": 0
+      },
+      [
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {}
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {}
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {}
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {}
+          }
+        }
+      ],
+      [
+        39,
+        27,
+        53,
+        89
+      ],
+      [
+        {
+          "ref": 3
+        },
+        {
+          "ref": 2
+        },
+        {
+          "ref": -1
+        },
+        {
+          "ref": 1
+        }
+      ],
+      2,
+      46
+    ],
+    "outF": [
+      39,
+      27,
+      53,
+      89,
+      46
+    ],
+    "outG": [
+      {
+        "ref": 3
+      },
+      {
+        "ref": 4
+      },
+      {
+        "ref": -1
+      },
+      {
+        "ref": 1
+      },
+      {
+        "ref": 2
+      }
+    ],
+    "outPair": {
+      "pair": [
+        [
+          39,
+          27,
+          53,
+          89,
+          46
+        ],
+        [
+          {
+            "ref": 3
+          },
+          {
+            "ref": 4
+          },
+          {
+            "ref": -1
+          },
+          {
+            "ref": 1
+          },
+          {
+            "ref": 2
+          }
+        ]
+      ]
+    }
+  },
+  {
+    "callLabel": "call3",
+    "args": [
+      1,
+      71
+    ],
+    "objectOrderBefore": [
+      "main-new1",
+      "main-new2",
+      "main-new3",
+      "__temp2",
+      "__temp7"
+    ],
+    "objectOrderAfter": [
+      "main-new1",
+      "main-new2",
+      "main-new3",
+      "__temp2",
+      "__temp7",
+      "__temp8"
+    ],
+    "input": [
+      {
+        "ref": 0
+      },
+      [
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {}
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {}
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {}
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {}
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {}
+          }
+        }
+      ],
+      [
+        39,
+        27,
+        53,
+        89,
+        46
+      ],
+      [
+        {
+          "ref": 3
+        },
+        {
+          "ref": 4
+        },
+        {
+          "ref": -1
+        },
+        {
+          "ref": 1
+        },
+        {
+          "ref": 2
+        }
+      ],
+      1,
+      71
+    ],
+    "outF": [
+      39,
+      27,
+      53,
+      89,
+      46,
+      71
+    ],
+    "outG": [
+      {
+        "ref": 3
+      },
+      {
+        "ref": 4
+      },
+      {
+        "ref": -1
+      },
+      {
+        "ref": 5
+      },
+      {
+        "ref": 2
+      },
+      {
+        "ref": 1
+      }
+    ],
+    "outPair": {
+      "pair": [
+        [
+          39,
+          27,
+          53,
+          89,
+          46,
+          71
+        ],
+        [
+          {
+            "ref": 3
+          },
+          {
+            "ref": 4
+          },
+          {
+            "ref": -1
+          },
+          {
+            "ref": 5
+          },
+          {
+            "ref": 2
+          },
+          {
+            "ref": 1
+          }
+        ]
+      ]
+    }
+  }
+]

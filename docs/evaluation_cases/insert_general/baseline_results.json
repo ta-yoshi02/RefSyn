@@ -1,0 +1,87 @@
+[
+  {
+    "task": "insert-list-fHeap",
+    "options": {
+      "maxCost": 10,
+      "timeoutMs": 5000,
+      "quiet": true
+    },
+    "elapsedMs": 21.893667,
+    "name": "insert-list-fHeap",
+    "success": true,
+    "rendered": "insert-list-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Int] =\n  insert(@fHeap, inc(@arg0), @arg1)",
+    "error": null,
+    "compiled_js": null
+  },
+  {
+    "task": "insert-list-gHeap-no-ref-constructor",
+    "options": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "quiet": true
+    },
+    "elapsedMs": 15000.1615,
+    "name": "insert-list-gHeap-no-ref-constructor",
+    "success": false,
+    "rendered": null,
+    "error": "escher-ts could not synthesize 'insert-list-gHeap-no-ref-constructor' within the configured budget",
+    "compiled_js": null
+  },
+  {
+    "task": "insert-list-env-pair-no-ref-constructor",
+    "options": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "quiet": true
+    },
+    "elapsedMs": 14999.829500000002,
+    "name": "insert-list-env-pair-no-ref-constructor",
+    "success": false,
+    "rendered": null,
+    "error": "escher-ts could not synthesize 'insert-list-env-pair-no-ref-constructor' within the configured budget",
+    "compiled_js": null
+  },
+  {
+    "task": "insert-list-gHeap-with-fresh-ref",
+    "options": {
+      "maxCost": 12,
+      "timeoutMs": 5000,
+      "quiet": true
+    },
+    "elapsedMs": 77.22258299999885,
+    "name": "insert-list-gHeap-with-fresh-ref",
+    "success": true,
+    "rendered": "insert-list-gHeap-with-fresh-ref(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Ref[Object<Obj>]] =\n  insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@gHeap))",
+    "error": null,
+    "compiled_js": null
+  },
+  {
+    "task": "insert-list-env-pair-with-fresh-ref",
+    "options": {
+      "maxCost": 14,
+      "timeoutMs": 10000,
+      "quiet": true
+    },
+    "elapsedMs": 9999.563583000003,
+    "name": "insert-list-env-pair-with-fresh-ref",
+    "success": false,
+    "rendered": null,
+    "error": "escher-ts could not synthesize 'insert-list-env-pair-with-fresh-ref' within the configured budget",
+    "compiled_js": null
+  },
+  {
+    "task": "insert-list-env-pair-with-fresh-ref-focused",
+    "options": {
+      "maxCost": 18,
+      "timeoutMs": 20000,
+      "quiet": true,
+      "searchSizeFactor": 5
+    },
+    "elapsedMs": 436.648542,
+    "name": "insert-list-env-pair-with-fresh-ref-focused",
+    "success": true,
+    "rendered": "insert-list-env-pair-with-fresh-ref-focused(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): Pair[List[Int],List[Ref[Object<Obj>]]] =\n  pairHeap(insert(@fHeap, inc(@arg0), @arg1), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@gHeap)))",
+    "error": null,
+    "compiled_js": null
+  }
+]
