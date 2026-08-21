@@ -1,0 +1,131 @@
+[
+  {
+    "task": "popBack-fixed-fHeap",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.528,
+      "median_ms": 0.649,
+      "max_ms": 5.907,
+      "mean_ms": 2.361333333333333
+    },
+    "last_rendered": "popBack-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): List[Int] =\n  @fHeap",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 5.907,
+        "success": true,
+        "rendered": "popBack-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): List[Int] =\n  @fHeap",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.649,
+        "success": true,
+        "rendered": "popBack-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): List[Int] =\n  @fHeap",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.528,
+        "success": true,
+        "rendered": "popBack-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): List[Int] =\n  @fHeap",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "popBack-fixed-gHeap",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 14999.861,
+      "median_ms": 15000.037,
+      "max_ms": 15000.051,
+      "mean_ms": 14999.983
+    },
+    "last_rendered": null,
+    "last_error": "escher-ts could not synthesize 'popBack-fixed-gHeap' within the configured budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 14999.861,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'popBack-fixed-gHeap' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 15000.051,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'popBack-fixed-gHeap' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 15000.037,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'popBack-fixed-gHeap' within the configured budget",
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "popBack-fixed-env-pair",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 14999.974,
+      "median_ms": 15000.176,
+      "max_ms": 15000.423,
+      "mean_ms": 15000.191
+    },
+    "last_rendered": null,
+    "last_error": "escher-ts could not synthesize 'popBack-fixed-env-pair' within the configured budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 14999.974,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'popBack-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 15000.423,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'popBack-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 15000.176,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'popBack-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      }
+    ]
+  }
+]
