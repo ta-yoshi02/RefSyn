@@ -1,0 +1,332 @@
+[
+  {
+    "callLabel": "call1",
+    "inputs": [
+      {
+        "ref": 0
+      },
+      [
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 0
+              },
+              "g": {
+                "ref": 1
+              }
+            }
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 1
+              },
+              "g": {
+                "ref": 2
+              }
+            }
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 2
+              },
+              "g": {
+                "ref": 3
+              }
+            }
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 3
+              },
+              "g": {
+                "ref": -1
+              }
+            }
+          }
+        }
+      ],
+      [
+        39,
+        27,
+        53,
+        89
+      ],
+      [
+        {
+          "ref": 1
+        },
+        {
+          "ref": 2
+        },
+        {
+          "ref": 3
+        },
+        {
+          "ref": -1
+        }
+      ],
+      0,
+      46
+    ],
+    "args": [
+      0,
+      46
+    ],
+    "out": {
+      "fHeap": [
+        46,
+        27,
+        53,
+        89
+      ],
+      "gHeap": [
+        {
+          "ref": 1
+        },
+        {
+          "ref": 2
+        },
+        {
+          "ref": 3
+        },
+        {
+          "ref": -1
+        }
+      ]
+    }
+  },
+  {
+    "callLabel": "call2",
+    "inputs": [
+      {
+        "ref": 0
+      },
+      [
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 0
+              },
+              "g": {
+                "ref": 1
+              }
+            }
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 1
+              },
+              "g": {
+                "ref": 2
+              }
+            }
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 2
+              },
+              "g": {
+                "ref": 3
+              }
+            }
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 3
+              },
+              "g": {
+                "ref": -1
+              }
+            }
+          }
+        }
+      ],
+      [
+        46,
+        27,
+        53,
+        89
+      ],
+      [
+        {
+          "ref": 1
+        },
+        {
+          "ref": 2
+        },
+        {
+          "ref": 3
+        },
+        {
+          "ref": -1
+        }
+      ],
+      2,
+      60
+    ],
+    "args": [
+      2,
+      60
+    ],
+    "out": {
+      "fHeap": [
+        46,
+        27,
+        60,
+        89
+      ],
+      "gHeap": [
+        {
+          "ref": 1
+        },
+        {
+          "ref": 2
+        },
+        {
+          "ref": 3
+        },
+        {
+          "ref": -1
+        }
+      ]
+    }
+  },
+  {
+    "callLabel": "call3",
+    "inputs": [
+      {
+        "ref": 0
+      },
+      [
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 0
+              },
+              "g": {
+                "ref": 1
+              }
+            }
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 1
+              },
+              "g": {
+                "ref": 2
+              }
+            }
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 2
+              },
+              "g": {
+                "ref": 3
+              }
+            }
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 3
+              },
+              "g": {
+                "ref": -1
+              }
+            }
+          }
+        }
+      ],
+      [
+        46,
+        27,
+        60,
+        89
+      ],
+      [
+        {
+          "ref": 1
+        },
+        {
+          "ref": 2
+        },
+        {
+          "ref": 3
+        },
+        {
+          "ref": -1
+        }
+      ],
+      3,
+      18
+    ],
+    "args": [
+      3,
+      18
+    ],
+    "out": {
+      "fHeap": [
+        46,
+        27,
+        60,
+        18
+      ],
+      "gHeap": [
+        {
+          "ref": 1
+        },
+        {
+          "ref": 2
+        },
+        {
+          "ref": 3
+        },
+        {
+          "ref": -1
+        }
+      ]
+    }
+  }
+]

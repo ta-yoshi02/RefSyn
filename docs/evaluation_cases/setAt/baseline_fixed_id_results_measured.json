@@ -1,0 +1,131 @@
+[
+  {
+    "task": "setAt-fixed-fHeap",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 14999.813,
+      "median_ms": 15000.045,
+      "max_ms": 15001.502,
+      "mean_ms": 15000.453333333333
+    },
+    "last_rendered": null,
+    "last_error": "escher-ts could not synthesize 'setAt-fixed-fHeap' within the configured budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 15001.502,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'setAt-fixed-fHeap' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 14999.813,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'setAt-fixed-fHeap' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 15000.045,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'setAt-fixed-fHeap' within the configured budget",
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "setAt-fixed-gHeap",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.2,
+      "median_ms": 0.233,
+      "max_ms": 0.577,
+      "mean_ms": 0.33666666666666667
+    },
+    "last_rendered": "setAt-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Ref[Object<Obj>]] =\n  @gHeap",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 0.577,
+        "success": true,
+        "rendered": "setAt-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Ref[Object<Obj>]] =\n  @gHeap",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.2,
+        "success": true,
+        "rendered": "setAt-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Ref[Object<Obj>]] =\n  @gHeap",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.233,
+        "success": true,
+        "rendered": "setAt-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Ref[Object<Obj>]] =\n  @gHeap",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "setAt-fixed-env-pair",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 14999.751,
+      "median_ms": 14999.886,
+      "max_ms": 15000.015,
+      "mean_ms": 14999.884
+    },
+    "last_rendered": null,
+    "last_error": "escher-ts could not synthesize 'setAt-fixed-env-pair' within the configured budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 14999.751,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'setAt-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 15000.015,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'setAt-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 14999.886,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'setAt-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      }
+    ]
+  }
+]
