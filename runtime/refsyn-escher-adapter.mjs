@@ -119,6 +119,14 @@ const createCompileContext = (rawTask, job) => {
   });
 
   const heapNames = new Set([meta.classHeapName, ...Object.values(meta.fieldHeapNames ?? {})]);
+  const pointerFieldByHeapName = new Map(
+    (meta.pointerFields ?? []).map((field) => [meta.fieldHeapNames?.[field], field]),
+  );
+  pointerFieldByHeapName.delete(undefined);
+  const valueFieldByHeapName = new Map(
+    (meta.valueFields ?? []).map((field) => [meta.fieldHeapNames?.[field], field]),
+  );
+  valueFieldByHeapName.delete(undefined);
 
   return {
     taskName: rawTask.name ?? "synthesized",
@@ -129,10 +137,38 @@ const createCompileContext = (rawTask, job) => {
     heapNames,
     valueFields: new Set(meta.valueFields ?? []),
     pointerFields: new Set(meta.pointerFields ?? []),
+    pointerFieldByHeapName,
+    valueFieldByHeapName,
     primaryValueField: meta.valueFields?.[0] ?? null,
     primaryPointerField: meta.pointerFields?.[0] ?? null,
     returnKind: inferReturnKind(job.returnType),
   };
+};
+
+const variableNameFromTerm = (term) => {
+  if (term?.kind === "variable") {
+    return term.name;
+  }
+  if (term?.kind === "var") {
+    return term.name;
+  }
+  return null;
+};
+
+const pointerFieldFromHeapArg = (term, ctx) => {
+  const heapName = variableNameFromTerm(term);
+  if (heapName !== null && ctx.pointerFieldByHeapName.has(heapName)) {
+    return ctx.pointerFieldByHeapName.get(heapName);
+  }
+  return ctx.primaryPointerField;
+};
+
+const valueFieldFromHeapArg = (term, ctx) => {
+  const heapName = variableNameFromTerm(term);
+  if (heapName !== null && ctx.valueFieldByHeapName.has(heapName)) {
+    return ctx.valueFieldByHeapName.get(heapName);
+  }
+  return ctx.primaryValueField;
 };
 
 const compileVar = (name, ctx) => {
@@ -228,7 +264,7 @@ const compileComponent = (name, args, ctx) => {
       if (args.length !== 4) {
         throw new Error("nthNextRef expects 4 args");
       }
-      const fieldName = ctx.primaryPointerField;
+      const fieldName = pointerFieldFromHeapArg(args[2], ctx);
       if (fieldName === null) {
         throw new Error("nthNextRef requires at least one pointer field");
       }
@@ -246,8 +282,8 @@ const compileComponent = (name, args, ctx) => {
       if (args.length !== 5) {
         throw new Error("findByValueRef expects 5 args");
       }
-      const pointerField = ctx.primaryPointerField;
-      const valueField = ctx.primaryValueField;
+      const pointerField = pointerFieldFromHeapArg(args[2], ctx);
+      const valueField = valueFieldFromHeapArg(args[3], ctx);
       if (pointerField === null || valueField === null) {
         throw new Error("findByValueRef requires one pointer field and one value field");
       }
@@ -265,7 +301,7 @@ const compileComponent = (name, args, ctx) => {
       if (args.length !== 2) {
         throw new Error("last_ptr expects 2 args");
       }
-      const fieldName = ctx.primaryPointerField;
+      const fieldName = pointerFieldFromHeapArg(args[1], ctx);
       if (fieldName === null) {
         throw new Error("last_ptr requires at least one pointer field");
       }
@@ -282,7 +318,7 @@ const compileComponent = (name, args, ctx) => {
       if (args.length !== 2) {
         throw new Error("penultimateRef expects 2 args");
       }
-      const fieldName = ctx.primaryPointerField;
+      const fieldName = pointerFieldFromHeapArg(args[1], ctx);
       if (fieldName === null) {
         throw new Error("penultimateRef requires at least one pointer field");
       }

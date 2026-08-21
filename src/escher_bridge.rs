@@ -1073,13 +1073,13 @@ fn default_task_components(
         push_library_component(&mut components, &mut seen, "dec");
     }
 
-    if meta.pointer_fields.len() == 1 {
+    if !meta.pointer_fields.is_empty() {
         push_library_component(&mut components, &mut seen, "last_ptr");
         push_library_component(&mut components, &mut seen, "penultimateRef");
         push_library_component(&mut components, &mut seen, "nthNextRef");
     }
 
-    if meta.pointer_fields.len() == 1 && meta.value_fields.len() == 1 {
+    if !meta.pointer_fields.is_empty() && !meta.value_fields.is_empty() {
         push_library_component(&mut components, &mut seen, "findByValueRef");
     }
 
@@ -1266,6 +1266,92 @@ mod tests {
                     from: "n2".to_string(),
                     to: "n3".to_string(),
                     label: "next".to_string(),
+                },
+                Edge {
+                    from: "n1".to_string(),
+                    to: "v10".to_string(),
+                    label: "val".to_string(),
+                },
+                Edge {
+                    from: "n2".to_string(),
+                    to: "v20".to_string(),
+                    label: "val".to_string(),
+                },
+                Edge {
+                    from: "n3".to_string(),
+                    to: "v30".to_string(),
+                    label: "val".to_string(),
+                },
+                Edge {
+                    from: "__Variable-lst".to_string(),
+                    to: "n1".to_string(),
+                    label: "lst".to_string(),
+                },
+            ],
+        };
+        let env = ListEnvironment::from_vis_graph(&vis_graph);
+        (vis_graph, env)
+    }
+
+    fn graph_for_doubly_linked_list() -> (VisGraph, ListEnvironment) {
+        let vis_graph = VisGraph {
+            nodes: vec![
+                Node {
+                    id: "n1".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                Node {
+                    id: "n2".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                Node {
+                    id: "n3".to_string(),
+                    is_literal: false,
+                    label: json!("Node"),
+                },
+                Node {
+                    id: "__Variable-lst".to_string(),
+                    is_literal: false,
+                    label: json!("Var"),
+                },
+                Node {
+                    id: "v10".to_string(),
+                    is_literal: true,
+                    label: json!(10),
+                },
+                Node {
+                    id: "v20".to_string(),
+                    is_literal: true,
+                    label: json!(20),
+                },
+                Node {
+                    id: "v30".to_string(),
+                    is_literal: true,
+                    label: json!(30),
+                },
+            ],
+            edges: vec![
+                Edge {
+                    from: "n1".to_string(),
+                    to: "n2".to_string(),
+                    label: "next".to_string(),
+                },
+                Edge {
+                    from: "n2".to_string(),
+                    to: "n3".to_string(),
+                    label: "next".to_string(),
+                },
+                Edge {
+                    from: "n2".to_string(),
+                    to: "n1".to_string(),
+                    label: "prev".to_string(),
+                },
+                Edge {
+                    from: "n3".to_string(),
+                    to: "n2".to_string(),
+                    label: "prev".to_string(),
                 },
                 Edge {
                     from: "n1".to_string(),
@@ -1483,6 +1569,43 @@ mod tests {
         let spec = build_escher_spec("read-at", "Int", &[case], None).expect("spec");
         let task = build_escher_task_spec(&spec, &meta).expect("task");
 
+        assert!(task
+            .components
+            .iter()
+            .any(|component| component.name == "nthNextRef" && component.kind == "libraryRef"));
+        assert!(task
+            .components
+            .iter()
+            .any(|component| component.name == "findByValueRef" && component.kind == "libraryRef"));
+    }
+
+    #[test]
+    fn test_build_task_spec_keeps_pointer_libraries_for_multiple_pointer_fields() {
+        let (vis_graph, env) = graph_for_doubly_linked_list();
+        let case = EscherCase {
+            env,
+            vis_graph,
+            class_name: Some("Node".to_string()),
+            arguments: vec![json!(0), json!(42)],
+            arg_names: vec!["this".to_string(), "value".to_string()],
+            arg_types: Some(vec!["Ptr".to_string(), "Int".to_string()]),
+            receiver_arg_index: Some(0),
+            output: json!(2),
+        };
+
+        let meta = derive_spec_meta(std::slice::from_ref(&case)).expect("meta");
+        assert_eq!(meta.pointer_fields.len(), 2);
+        let spec = build_escher_spec("dll-tail", "Ptr", &[case], None).expect("spec");
+        let task = build_escher_task_spec(&spec, &meta).expect("task");
+
+        assert!(task
+            .components
+            .iter()
+            .any(|component| component.name == "last_ptr" && component.kind == "libraryRef"));
+        assert!(task
+            .components
+            .iter()
+            .any(|component| component.name == "penultimateRef" && component.kind == "libraryRef"));
         assert!(task
             .components
             .iter()
