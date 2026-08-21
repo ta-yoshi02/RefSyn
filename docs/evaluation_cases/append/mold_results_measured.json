@@ -1,0 +1,88 @@
+[
+  {
+    "task": "append-f",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.51,
+      "median_ms": 0.674,
+      "max_ms": 3.503,
+      "mean_ms": 1.5623333333333334
+    },
+    "last_rendered": "append-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 3.503,
+        "success": true,
+        "rendered": "append-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+        "error": null,
+        "compiled_js": "append_f(arg0) { return arg0; }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.674,
+        "success": true,
+        "rendered": "append-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+        "error": null,
+        "compiled_js": "append_f(arg0) { return arg0; }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.51,
+        "success": true,
+        "rendered": "append-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+        "error": null,
+        "compiled_js": "append_f(arg0) { return arg0; }"
+      }
+    ]
+  },
+  {
+    "task": "append-h",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 1.121,
+      "median_ms": 1.635,
+      "max_ms": 2.795,
+      "mean_ms": 1.8503333333333334
+    },
+    "last_rendered": "append-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  last_ptr(@thisRef, @gHeap)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 2.795,
+        "success": true,
+        "rendered": "append-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  last_ptr(@thisRef, @gHeap)",
+        "error": null,
+        "compiled_js": "append_h(arg0) { return (() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).g !== null) { __refsynCur = (__refsynCur).g; } return __refsynCur; })(); }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 1.635,
+        "success": true,
+        "rendered": "append-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  last_ptr(@thisRef, @gHeap)",
+        "error": null,
+        "compiled_js": "append_h(arg0) { return (() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).g !== null) { __refsynCur = (__refsynCur).g; } return __refsynCur; })(); }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 1.121,
+        "success": true,
+        "rendered": "append-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  last_ptr(@thisRef, @gHeap)",
+        "error": null,
+        "compiled_js": "append_h(arg0) { return (() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).g !== null) { __refsynCur = (__refsynCur).g; } return __refsynCur; })(); }"
+      }
+    ]
+  }
+]

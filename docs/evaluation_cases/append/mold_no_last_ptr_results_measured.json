@@ -1,0 +1,88 @@
+[
+  {
+    "task": "append-f",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.506,
+      "median_ms": 0.852,
+      "max_ms": 3.322,
+      "mean_ms": 1.5600000000000003
+    },
+    "last_rendered": "append-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 3.322,
+        "success": true,
+        "rendered": "append-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+        "error": null,
+        "compiled_js": "append_f(arg0) { return arg0; }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.852,
+        "success": true,
+        "rendered": "append-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+        "error": null,
+        "compiled_js": "append_f(arg0) { return arg0; }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.506,
+        "success": true,
+        "rendered": "append-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+        "error": null,
+        "compiled_js": "append_f(arg0) { return arg0; }"
+      }
+    ]
+  },
+  {
+    "task": "append-h",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 4.048,
+      "median_ms": 4.725,
+      "max_ms": 7.149,
+      "mean_ms": 5.307333333333333
+    },
+    "last_rendered": "append-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  gOf(penultimateRef(@thisRef, @gHeap), @nodeHeap, @nodeHeap)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 7.149,
+        "success": true,
+        "rendered": "append-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  gOf(penultimateRef(@thisRef, @gHeap), @nodeHeap, @nodeHeap)",
+        "error": null,
+        "compiled_js": "append_h(arg0) { return ((() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).g !== null && ((__refsynCur).g).g !== null) { __refsynCur = (__refsynCur).g; } return (__refsynCur === null || (__refsynCur).g === null) ? null : __refsynCur; })()).g; }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 4.725,
+        "success": true,
+        "rendered": "append-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  gOf(penultimateRef(@thisRef, @gHeap), @nodeHeap, @nodeHeap)",
+        "error": null,
+        "compiled_js": "append_h(arg0) { return ((() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).g !== null && ((__refsynCur).g).g !== null) { __refsynCur = (__refsynCur).g; } return (__refsynCur === null || (__refsynCur).g === null) ? null : __refsynCur; })()).g; }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 4.048,
+        "success": true,
+        "rendered": "append-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  gOf(penultimateRef(@thisRef, @gHeap), @nodeHeap, @nodeHeap)",
+        "error": null,
+        "compiled_js": "append_h(arg0) { return ((() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).g !== null && ((__refsynCur).g).g !== null) { __refsynCur = (__refsynCur).g; } return (__refsynCur === null || (__refsynCur).g === null) ? null : __refsynCur; })()).g; }"
+      }
+    ]
+  }
+]

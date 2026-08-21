@@ -1,0 +1,131 @@
+[
+  {
+    "task": "append-fixed-fHeap",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 10.811,
+      "median_ms": 11.48,
+      "max_ms": 14.191,
+      "mean_ms": 12.160666666666666
+    },
+    "last_rendered": "append-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Int] =\n  insert(@fHeap, @arg0, @arg0)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 11.48,
+        "success": true,
+        "rendered": "append-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Int] =\n  insert(@fHeap, @arg0, @arg0)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 14.191,
+        "success": true,
+        "rendered": "append-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Int] =\n  insert(@fHeap, @arg0, @arg0)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 10.811,
+        "success": true,
+        "rendered": "append-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Int] =\n  insert(@fHeap, @arg0, @arg0)",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "append-fixed-gHeap",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 15000.051,
+      "median_ms": 15001.333,
+      "max_ms": 15002.301,
+      "mean_ms": 15001.228333333333
+    },
+    "last_rendered": null,
+    "last_error": "escher-ts could not synthesize 'append-fixed-gHeap' within the configured budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 15000.051,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'append-fixed-gHeap' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 15001.333,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'append-fixed-gHeap' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 15002.301,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'append-fixed-gHeap' within the configured budget",
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "append-fixed-env-pair",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 15000.495,
+      "median_ms": 15002.551,
+      "max_ms": 15005.548,
+      "mean_ms": 15002.864666666668
+    },
+    "last_rendered": null,
+    "last_error": "escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 15002.551,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 15005.548,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 15000.495,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      }
+    ]
+  }
+]

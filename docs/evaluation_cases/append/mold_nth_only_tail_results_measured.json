@@ -1,0 +1,88 @@
+[
+  {
+    "task": "append-f",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.593,
+      "median_ms": 1.424,
+      "max_ms": 6.144,
+      "mean_ms": 2.720333333333333
+    },
+    "last_rendered": "append-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 6.144,
+        "success": true,
+        "rendered": "append-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+        "error": null,
+        "compiled_js": "append_f(arg0) { return arg0; }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 1.424,
+        "success": true,
+        "rendered": "append-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+        "error": null,
+        "compiled_js": "append_f(arg0) { return arg0; }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.593,
+        "success": true,
+        "rendered": "append-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+        "error": null,
+        "compiled_js": "append_f(arg0) { return arg0; }"
+      }
+    ]
+  },
+  {
+    "task": "append-h",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 711.381,
+      "median_ms": 847.848,
+      "max_ms": 921.295,
+      "mean_ms": 826.8413333333333
+    },
+    "last_rendered": "append-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  if isNull(nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(zero())))) then gOf(@thisRef, @nodeHeap, @nodeHeap) else if isNull(nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(inc(zero()))))) then nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(zero()))) else nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(inc(zero()))))",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 847.848,
+        "success": true,
+        "rendered": "append-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  if isNull(nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(zero())))) then gOf(@thisRef, @nodeHeap, @nodeHeap) else if isNull(nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(inc(zero()))))) then nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(zero()))) else nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(inc(zero()))))",
+        "error": null,
+        "compiled_js": "append_h(arg0) { return ((() => { let __refsynCur = this; let __refsynSteps = 0 + 1 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })() === null) ? ((this).g) : (((() => { let __refsynCur = this; let __refsynSteps = 0 + 1 + 1 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })() === null) ? ((() => { let __refsynCur = this; let __refsynSteps = 0 + 1 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })()) : ((() => { let __refsynCur = this; let __refsynSteps = 0 + 1 + 1 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })())); }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 921.295,
+        "success": true,
+        "rendered": "append-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  if isNull(nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(zero())))) then gOf(@thisRef, @nodeHeap, @nodeHeap) else if isNull(nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(inc(zero()))))) then nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(zero()))) else nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(inc(zero()))))",
+        "error": null,
+        "compiled_js": "append_h(arg0) { return ((() => { let __refsynCur = this; let __refsynSteps = 0 + 1 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })() === null) ? ((this).g) : (((() => { let __refsynCur = this; let __refsynSteps = 0 + 1 + 1 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })() === null) ? ((() => { let __refsynCur = this; let __refsynSteps = 0 + 1 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })()) : ((() => { let __refsynCur = this; let __refsynSteps = 0 + 1 + 1 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })())); }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 711.381,
+        "success": true,
+        "rendered": "append-h(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  if isNull(nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(zero())))) then gOf(@thisRef, @nodeHeap, @nodeHeap) else if isNull(nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(inc(zero()))))) then nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(zero()))) else nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(inc(inc(zero()))))",
+        "error": null,
+        "compiled_js": "append_h(arg0) { return ((() => { let __refsynCur = this; let __refsynSteps = 0 + 1 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })() === null) ? ((this).g) : (((() => { let __refsynCur = this; let __refsynSteps = 0 + 1 + 1 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })() === null) ? ((() => { let __refsynCur = this; let __refsynSteps = 0 + 1 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })()) : ((() => { let __refsynCur = this; let __refsynSteps = 0 + 1 + 1 + 1; while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).g; __refsynSteps -= 1; } return __refsynCur; })())); }"
+      }
+    ]
+  }
+]
