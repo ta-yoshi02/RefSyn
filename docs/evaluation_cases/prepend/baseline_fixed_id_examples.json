@@ -1,0 +1,167 @@
+[
+  {
+    "inputs": [
+      {
+        "ref": 0
+      },
+      [
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 0
+              },
+              "g": {
+                "ref": 1
+              }
+            }
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 1
+              },
+              "g": {
+                "ref": -1
+              }
+            }
+          }
+        }
+      ],
+      [
+        39,
+        27
+      ],
+      [
+        {
+          "ref": 1
+        },
+        {
+          "ref": -1
+        }
+      ],
+      53
+    ],
+    "out": {
+      "fHeap": [
+        39,
+        27,
+        53
+      ],
+      "gHeap": [
+        {
+          "ref": 1
+        },
+        {
+          "ref": -1
+        },
+        {
+          "ref": 0
+        }
+      ],
+      "returnRef": {
+        "ref": 2
+      }
+    },
+    "args": [
+      53
+    ]
+  },
+  {
+    "inputs": [
+      {
+        "ref": 2
+      },
+      [
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 0
+              },
+              "g": {
+                "ref": 1
+              }
+            }
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 1
+              },
+              "g": {
+                "ref": -1
+              }
+            }
+          }
+        },
+        {
+          "object": {
+            "className": "Obj",
+            "fields": {
+              "f": {
+                "ref": 2
+              },
+              "g": {
+                "ref": 0
+              }
+            }
+          }
+        }
+      ],
+      [
+        39,
+        27,
+        53
+      ],
+      [
+        {
+          "ref": 1
+        },
+        {
+          "ref": -1
+        },
+        {
+          "ref": 0
+        }
+      ],
+      89
+    ],
+    "out": {
+      "fHeap": [
+        39,
+        27,
+        53,
+        89
+      ],
+      "gHeap": [
+        {
+          "ref": 1
+        },
+        {
+          "ref": -1
+        },
+        {
+          "ref": 0
+        },
+        {
+          "ref": 2
+        }
+      ],
+      "returnRef": {
+        "ref": 3
+      }
+    },
+    "args": [
+      89
+    ]
+  }
+]
