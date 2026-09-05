@@ -3730,7 +3730,7 @@ fn collect_common_edge_labels_for_diff_endpoint(
                 ..
             }) => {
                 let matches = if match_source {
-                    from == diff_node_op_id && common_created_op_ids.contains(new_to)
+                    from == diff_node_op_id
                 } else {
                     new_to == diff_node_op_id && common_created_op_ids.contains(from)
                 };
@@ -3812,10 +3812,10 @@ fn common_edge_context_for_diff_node(
                 ) => from == diff_node_op_id && common_created_ids.contains(to),
                 (
                     crate::unify_ops::GraphOp::Edge(
-                        crate::unify_ops::EdgeExpr::EditEdgeReference { from, new_to, .. },
+                        crate::unify_ops::EdgeExpr::EditEdgeReference { from, .. },
                     ),
                     HoleRole::EdgeSource,
-                ) => from == diff_node_op_id && common_created_ids.contains(new_to),
+                ) => from == diff_node_op_id,
                 (
                     crate::unify_ops::GraphOp::Edge(crate::unify_ops::EdgeExpr::AddEdge {
                         from,
@@ -4145,16 +4145,38 @@ fn project_common_ops_to_source_operations(
     source_operations: &[serde_json::Value],
     common_ops: &[crate::unify_ops::Op],
 ) -> Vec<serde_json::Value> {
-    let mut indices: Vec<usize> = common_ops
+    let mut selected_indices: HashSet<usize> = common_ops
         .iter()
         .filter_map(|op| parse_op_index(&op.id))
         .collect();
-    indices.sort_unstable();
-    indices.dedup();
 
-    indices
-        .into_iter()
-        .filter_map(|idx| source_operations.get(idx).cloned())
+    let referenced_ids: HashSet<String> = selected_indices
+        .iter()
+        .filter_map(|idx| source_operations.get(*idx))
+        .filter_map(|value| {
+            serde_json::from_value::<crate::list_env::GraphOperation>(value.clone()).ok()
+        })
+        .flat_map(|op| [op.from, op.to, op.old_to, op.new_to].into_iter().flatten())
+        .collect();
+
+    // Keep non-common node declarations as conversion context for common operations.
+    // They remain diffs in the next comparison and are not emitted into the final plan.
+    for (idx, value) in source_operations.iter().enumerate() {
+        let Ok(op) = serde_json::from_value::<crate::list_env::GraphOperation>(value.clone())
+        else {
+            continue;
+        };
+        if op.edit_type == "addNode" && op.id.as_ref().is_some_and(|id| referenced_ids.contains(id))
+        {
+            selected_indices.insert(idx);
+        }
+    }
+
+    source_operations
+        .iter()
+        .enumerate()
+        .filter(|(idx, _)| selected_indices.contains(idx))
+        .map(|(_, op)| op.clone())
         .collect()
 }
 
@@ -4673,7 +4695,7 @@ fn extract_called_js_methods_from_code(code: &str) -> HashSet<String> {
     methods
 }
 
-fn filter_common_plan_hole_bindings(pattern_text: &str, keep_specs: &HashSet<String>) -> String {
+fn filter_common_plan_hole_bindings(pattern_text: &str, keep_holes: &HashSet<String>) -> String {
     let mut lines_out: Vec<String> = Vec::new();
     let mut in_hole_bindings = false;
 
@@ -4690,9 +4712,8 @@ fn filter_common_plan_hole_bindings(pattern_text: &str, keep_specs: &HashSet<Str
                 lines_out.push(line.to_string());
                 continue;
             }
-            if let Some((_, right)) = line.split_once("->") {
-                let spec = right.trim().split_whitespace().next().unwrap_or_default();
-                if keep_specs.contains(spec) {
+            if let Some((left, _)) = line.split_once("->") {
+                if keep_holes.contains(left.trim()) {
                     lines_out.push(line.to_string());
                 }
                 continue;
@@ -4736,28 +4757,50 @@ fn prune_unused_holes_and_specs(
         return;
     }
 
-    let mut keep_specs: HashSet<String> = HashSet::new();
     artifact.hole_information.retain(|_, values| {
-        let mut spec_name: Option<String> = None;
         let mut js_method: Option<String> = None;
         for value in values {
-            if let Some(spec) = value.strip_prefix("spec=") {
-                spec_name = Some(spec.to_string());
-            } else if let Some(method) = value.strip_prefix("jsMethod=") {
+            if let Some(method) = value.strip_prefix("jsMethod=") {
                 js_method = Some(method.to_string());
             }
         }
-        let keep = js_method
+        js_method
             .as_ref()
             .map(|method| used_js_methods.contains(method))
-            .unwrap_or(false);
-        if keep {
-            if let Some(spec) = spec_name {
-                keep_specs.insert(spec);
-            }
-        }
-        keep
+            .unwrap_or(false)
     });
+
+    let operation_pattern = artifact
+        .pattern_text
+        .split("HOLE_BINDINGS")
+        .next()
+        .unwrap_or_default();
+    // Spec deduplication can map an unused alias hole to the same helper as an operand hole.
+    // Keep every referenced occurrence, but discard unreferenced aliases of that same spec.
+    let mut referenced_specs: HashSet<String> = HashSet::new();
+    for (hole, values) in &artifact.hole_information {
+        if !contains_js_identifier_reference(operation_pattern, hole) {
+            continue;
+        }
+        if let Some(spec) = values.iter().find_map(|value| value.strip_prefix("spec=")) {
+            referenced_specs.insert(spec.to_string());
+        }
+    }
+    artifact.hole_information.retain(|hole, values| {
+        let Some(spec) = values.iter().find_map(|value| value.strip_prefix("spec=")) else {
+            return true;
+        };
+        contains_js_identifier_reference(operation_pattern, hole)
+            || !referenced_specs.contains(spec)
+    });
+
+    let keep_holes: HashSet<String> = artifact.hole_information.keys().cloned().collect();
+    let keep_specs: HashSet<String> = artifact
+        .hole_information
+        .values()
+        .filter_map(|values| values.iter().find_map(|value| value.strip_prefix("spec=")))
+        .map(str::to_string)
+        .collect();
 
     if keep_specs.is_empty() {
         return;
@@ -4765,7 +4808,7 @@ fn prune_unused_holes_and_specs(
 
     specs.retain(|spec| keep_specs.contains(&spec.name));
     spec_meta_by_name.retain(|name, _| keep_specs.contains(name));
-    artifact.pattern_text = filter_common_plan_hole_bindings(&artifact.pattern_text, &keep_specs);
+    artifact.pattern_text = filter_common_plan_hole_bindings(&artifact.pattern_text, &keep_holes);
 }
 
 fn remap_common_plan_artifact(
@@ -8275,6 +8318,37 @@ mod tests {
     use serde_json::json;
 
     #[test]
+    fn incremental_unification_keeps_diff_add_node_needed_by_common_edit() {
+        let operations = vec![
+            vec![
+                json!({"editType":"addNode","id":"temp-a","label":"10","isLiteral":true}),
+                json!({"editType":"editEdgeReference","from":"node-a","newTo":"temp-a","label":"val"}),
+            ],
+            vec![
+                json!({"editType":"addNode","id":"temp-b","label":"20","isLiteral":true}),
+                json!({"editType":"editEdgeReference","from":"node-b","newTo":"temp-b","label":"val"}),
+            ],
+            vec![
+                json!({"editType":"addNode","id":"temp-c","label":"30","isLiteral":true}),
+                json!({"editType":"editEdgeReference","from":"node-c","newTo":"temp-c","label":"val"}),
+            ],
+        ];
+
+        let result = analyze_operations_incrementally(&operations, None).unwrap();
+
+        assert_eq!(result.common_operations_count, 1);
+        assert_eq!(result.consensus_operations.len(), 2);
+        assert_eq!(
+            result.consensus_operations[0].get("editType"),
+            Some(&json!("addNode"))
+        );
+        assert_eq!(
+            result.consensus_operations[1].get("editType"),
+            Some(&json!("editEdgeReference"))
+        );
+    }
+
+    #[test]
     fn parse_task_json_spec_names_extracts_names() {
         let task_json = r#"
         [
@@ -11234,15 +11308,15 @@ mod tests {
     }
 
     #[test]
-    fn infer_mapped_existing_node_role_from_common_edges_returns_edge_source() {
+    fn infer_mapped_existing_node_role_from_common_edit_with_literal_returns_edge_source() {
         use crate::unify_ops::{EdgeExpr, GraphOp, NodeExpr, Op};
 
         let common_a = vec![
             Op {
                 id: "op_new".to_string(),
                 kind: GraphOp::Node(NodeExpr::AddNode {
-                    is_literal: false,
-                    label: "Node".to_string(),
+                    is_literal: true,
+                    label: "10".to_string(),
                     id: "__temp1".to_string(),
                 }),
             },
@@ -11260,8 +11334,8 @@ mod tests {
             Op {
                 id: "op_new".to_string(),
                 kind: GraphOp::Node(NodeExpr::AddNode {
-                    is_literal: false,
-                    label: "Node".to_string(),
+                    is_literal: true,
+                    label: "20".to_string(),
                     id: "__temp3".to_string(),
                 }),
             },
@@ -12804,6 +12878,74 @@ mod tests {
 
         assert!(artifact.composed_method_code.is_none());
         assert_eq!(specs.len(), 1);
+    }
+
+    #[test]
+    fn prune_unused_holes_and_specs_drops_unreferenced_alias_hole() {
+        let mut artifact = CommonPlanArtifact {
+            pattern_text: [
+                "COMMON_PLAN (operation-level, ordered)",
+                "[op_1] editEdgeReference(from=__hole_1, to=__hole_0, label=val)",
+                "",
+                "HOLE_BINDINGS",
+                "__hole_0 -> setAt-h (Int)",
+                "__hole_1 -> setAt-p (Ptr)",
+                "__hole_4 -> setAt-h (Int)",
+            ]
+            .join("\n"),
+            hole_information: HashMap::from([
+                (
+                    "__hole_0".to_string(),
+                    vec![
+                        "spec=setAt-h".to_string(),
+                        "jsMethod=setAt_h".to_string(),
+                    ],
+                ),
+                (
+                    "__hole_1".to_string(),
+                    vec![
+                        "spec=setAt-p".to_string(),
+                        "jsMethod=setAt_p".to_string(),
+                    ],
+                ),
+                (
+                    "__hole_4".to_string(),
+                    vec![
+                        "spec=setAt-h".to_string(),
+                        "jsMethod=setAt_h".to_string(),
+                    ],
+                ),
+            ]),
+            composed_method_code: Some(
+                "setAt(a, b) { const h = this.setAt_h(a, b); const p = this.setAt_p(a, b); p.val = h; }"
+                    .to_string(),
+            ),
+        };
+        let mut specs = vec![
+            EscherSpec {
+                name: "setAt-h".to_string(),
+                input_types: vec![],
+                return_type: "Int".to_string(),
+                examples: vec![],
+            },
+            EscherSpec {
+                name: "setAt-p".to_string(),
+                input_types: vec![],
+                return_type: "Ptr".to_string(),
+                examples: vec![],
+            },
+        ];
+        let mut metas = HashMap::from([
+            ("setAt-h".to_string(), dummy_meta()),
+            ("setAt-p".to_string(), dummy_meta()),
+        ]);
+
+        prune_unused_holes_and_specs(&mut artifact, &mut specs, &mut metas);
+
+        assert!(artifact.hole_information.contains_key("__hole_0"));
+        assert!(artifact.hole_information.contains_key("__hole_1"));
+        assert!(!artifact.hole_information.contains_key("__hole_4"));
+        assert!(!artifact.pattern_text.contains("__hole_4 ->"));
     }
 
     #[cfg(all(feature = "server", not(target_arch = "wasm32")))]

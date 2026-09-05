@@ -4,6 +4,7 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use std::process::Command;
 use warp::http::StatusCode;
 use warp::Reply;
 
@@ -222,6 +223,59 @@ fn require_escher_ts_backend() {
         "backend execution test requires {}. Run `git submodule update --init --recursive` and then `cd external/escher-ts && pnpm install --frozen-lockfile && pnpm build`.",
         dist_index.display()
     );
+}
+
+fn run_generated_list_program(response: &SynthesisResponse, assertions: &str) {
+    let composed = response
+        .composed_method_code
+        .as_deref()
+        .expect("semantic execution requires a composed method");
+    let script = format!(
+        r#"
+const assert = require("node:assert/strict");
+class Obj {{
+  constructor(f, g = null) {{ this.f = f; this.g = g; }}
+  {}
+  {}
+}}
+const list = values => values.reduceRight((next, value) => new Obj(value, next), null);
+const snapshot = head => {{
+  const values = [];
+  const seen = new Set();
+  for (let node = head; node !== null; node = node.g) {{
+    assert.ok(!seen.has(node), "generated list must not contain a cycle");
+    seen.add(node);
+    values.push(node.f);
+  }}
+  return values;
+}};
+{}
+"#,
+        response.code.join("\n"),
+        composed,
+        assertions
+    );
+    let output = Command::new("node")
+        .arg("-e")
+        .arg(script)
+        .output()
+        .expect("node should execute generated methods");
+    assert!(
+        output.status.success(),
+        "generated method failed semantic execution:\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+async fn synthesize_saved_case(path: &str) -> SynthesisResponse {
+    require_escher_ts_backend();
+    let text = fs::read_to_string(path).expect("saved evaluation payload should be readable");
+    let request: SynthesisRequest =
+        serde_json::from_str(&text).expect("saved evaluation payload should deserialize");
+    let (status, response) = run_synthesis_and_decode(request).await;
+    assert_eq!(status, StatusCode::OK);
+    response
 }
 
 fn extract_saved_return_type(spec: &Value) -> Option<&str> {
@@ -629,6 +683,140 @@ async fn test_operations_json_set_supports_edit_edge_reference_analysis() {
         .common_pattern
         .expect("common pattern should be generated");
     assert!(common_pattern.contains("editEdgeReference"));
+}
+
+#[tokio::test]
+async fn test_saved_set_at_payload_keeps_edit_reference_in_three_trace_plan() {
+    require_escher_ts_backend();
+    let request: SynthesisRequest = serde_json::from_str(include_str!(
+        "../docs/evaluation_cases/setAt/mold_payload.json"
+    ))
+    .expect("saved setAt payload should deserialize");
+
+    let (status, response) = run_synthesis_and_decode(request).await;
+
+    assert_eq!(status, StatusCode::OK);
+    let common_pattern = response
+        .common_pattern
+        .expect("saved setAt payload should produce a common plan");
+    assert!(common_pattern.contains("editEdgeReference(from=__hole_"));
+    assert!(common_pattern.contains(", to=__hole_"));
+    assert!(common_pattern.contains(", label=f)"));
+    assert_eq!(
+        response
+            .operation_analysis
+            .expect("three traces should be analyzed")
+            .common_operations_count,
+        1
+    );
+    assert_eq!(
+        response
+            .hole_information
+            .expect("setAt should expose source and value holes")
+            .len(),
+        2
+    );
+    let composed = response
+        .composed_method_code
+        .expect("setAt should compose from its common edit operation");
+    assert!(composed.contains("h_ptr_0.f = h_int_"));
+}
+
+#[tokio::test]
+async fn saved_set_at_code_matches_reference_on_valid_unseen_inputs() {
+    let response = synthesize_saved_case("docs/evaluation_cases/setAt/mold_payload.json").await;
+    run_generated_list_program(
+        &response,
+        r#"
+let head = list([3, 7, 11, 19, 23]);
+head.setAt(1, 101);
+assert.deepEqual(snapshot(head), [3, 101, 11, 19, 23]);
+head.setAt(4, -8);
+assert.deepEqual(snapshot(head), [3, 101, 11, 19, -8]);
+"#,
+    );
+}
+
+#[tokio::test]
+async fn saved_append_code_matches_reference_on_unseen_inputs() {
+    let response = synthesize_saved_case("docs/evaluation_cases/append/mold_payload.json").await;
+    run_generated_list_program(
+        &response,
+        r#"
+let one = list([4]);
+one.append(91);
+assert.deepEqual(snapshot(one), [4, 91]);
+let many = list([2, 5, 8, 13, 21]);
+many.append(-6);
+assert.deepEqual(snapshot(many), [2, 5, 8, 13, 21, -6]);
+"#,
+    );
+}
+
+#[tokio::test]
+async fn saved_prepend_code_matches_reference_on_unseen_inputs() {
+    let response = synthesize_saved_case("docs/evaluation_cases/prepend/mold_payload.json").await;
+    run_generated_list_program(
+        &response,
+        r#"
+let head = list([7, 12, 18]);
+head = head.prepend(44);
+assert.deepEqual(snapshot(head), [44, 7, 12, 18]);
+head = head.prepend(-3);
+assert.deepEqual(snapshot(head), [-3, 44, 7, 12, 18]);
+"#,
+    );
+}
+
+#[tokio::test]
+async fn saved_insert_code_matches_reference_on_valid_unseen_inputs() {
+    let response =
+        synthesize_saved_case("docs/evaluation_cases/insert_general/mold_payload.json").await;
+    let holes = response
+        .hole_information
+        .as_ref()
+        .expect("insert should expose its three operand holes");
+    assert_eq!(
+        holes.len(),
+        3,
+        "insert must keep three distinct operand holes"
+    );
+    let roles: std::collections::HashSet<&str> = holes
+        .values()
+        .flatten()
+        .filter_map(|entry| entry.strip_prefix("role="))
+        .collect();
+    assert_eq!(
+        roles,
+        std::collections::HashSet::from(["value", "edge_source", "pointer_target"]),
+        "insert must retain value, predecessor, and old-successor roles"
+    );
+    run_generated_list_program(
+        &response,
+        r#"
+let head = list([5, 10, 20, 40, 80]);
+head.insert(0, 7);
+assert.deepEqual(snapshot(head), [5, 7, 10, 20, 40, 80]);
+head.insert(4, 55);
+assert.deepEqual(snapshot(head), [5, 7, 10, 20, 40, 55, 80]);
+"#,
+    );
+}
+
+#[tokio::test]
+async fn saved_pop_back_code_matches_reference_on_unseen_inputs() {
+    let response = synthesize_saved_case("docs/evaluation_cases/popBack/mold_payload.json").await;
+    run_generated_list_program(
+        &response,
+        r#"
+let two = list([6, 9]);
+two.popBack();
+assert.deepEqual(snapshot(two), [6]);
+let many = list([1, 3, 5, 7, 9]);
+many.popBack();
+assert.deepEqual(snapshot(many), [1, 3, 5, 7]);
+"#,
+    );
 }
 
 #[tokio::test]
@@ -1117,28 +1305,36 @@ async fn test_integrated_synthesis_three_append_like_specs_group_holes() {
         }
     }
 
-    let ptr_helper = response
-        .code
-        .iter()
-        .find(|code| code.contains("append_h("))
-        .expect("Ptr helper JS should be present");
     let ptr_result = response
         .escher_results
         .as_ref()
-        .and_then(|results| results.iter().find(|result| result.name == "append-h"))
-        .expect("append-h escher result should be present");
+        .and_then(|results| {
+            results.iter().find(|result| {
+                result
+                    .rendered
+                    .as_deref()
+                    .is_some_and(|rendered| rendered.contains("last_ptr("))
+            })
+        })
+        .expect("last_ptr Escher result should be present");
     assert!(
         ptr_result
             .rendered
             .as_deref()
             .map(|rendered| rendered.contains("last_ptr("))
             .unwrap_or(false),
-        "append-h should synthesize through last_ptr instead of a fixed-hop pattern: {:?}",
+        "append Ptr helper should synthesize through last_ptr instead of a fixed-hop pattern: {:?}",
         ptr_result.rendered
     );
+    let ptr_js_name = ptr_result.name.replace('-', "_");
+    let ptr_helper = response
+        .code
+        .iter()
+        .find(|code| code.contains(&format!("{}(", ptr_js_name)))
+        .expect("Ptr helper JS should be present");
     assert!(
         !ptr_helper.contains(".next).next"),
-        "append_h should not underfit to a two-hop pattern: {}",
+        "append Ptr helper should not underfit to a two-hop pattern: {}",
         ptr_helper
     );
 }

@@ -99,6 +99,27 @@ fn relation_endpoint_attributes_match(
     }
 }
 
+fn mapped_targets_are_literal(
+    op_a_id: &OpNum,
+    op_b_id: &OpNum,
+    ops_a_map: &HashMap<OpNum, &Op>,
+    ops_b_map: &HashMap<OpNum, &Op>,
+) -> bool {
+    let is_literal = |op: &&Op| {
+        matches!(
+            &op.kind,
+            GraphOp::Node(NodeExpr::AddNode {
+                is_literal: true,
+                ..
+            }) | GraphOp::Node(NodeExpr::ExistNode {
+                is_literal: true,
+                ..
+            })
+        )
+    };
+    ops_a_map.get(op_a_id).is_some_and(is_literal) && ops_b_map.get(op_b_id).is_some_and(is_literal)
+}
+
 pub fn unify_operation_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
     let ops_a_map: HashMap<_, _> = a.iter().map(|op| (op.id.clone(), op)).collect();
     let ops_b_map: HashMap<_, _> = b.iter().map(|op| (op.id.clone(), op)).collect();
@@ -221,23 +242,27 @@ pub fn unify_operation_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
                     if let (Some(from_b), Some(new_to_b)) =
                         (final_mapping.get(from_a), final_mapping.get(new_to_a))
                     {
-                        let old_to_matches = match old_to_a {
-                            Some(old_to_a) => final_mapping
-                                .get(old_to_a)
-                                .filter(|old_to_b| {
-                                    relation_endpoint_attributes_match(
-                                        old_to_a, old_to_b, &ops_a_map, &ops_b_map,
-                                    )
-                                })
-                                .is_some(),
+                        let value_update =
+                            mapped_targets_are_literal(new_to_a, new_to_b, &ops_a_map, &ops_b_map);
+                        // Literal assignments share one update operation even when the receiver,
+                        // previous value, and new value are different mapped nodes. Pointer
+                        // rewires retain the stricter rule because their operand relationships
+                        // are handled by the existing rewire-hole path.
+                        let old_to_attributes_match = match old_to_a {
+                            Some(old_to_a) => final_mapping.get(old_to_a).is_some_and(|old_to_b| {
+                                relation_endpoint_attributes_match(
+                                    old_to_a, old_to_b, &ops_a_map, &ops_b_map,
+                                )
+                            }),
                             None => true,
                         };
-                        if relation_endpoint_attributes_match(
-                            from_a, from_b, &ops_a_map, &ops_b_map,
-                        ) && relation_endpoint_attributes_match(
-                            new_to_a, new_to_b, &ops_a_map, &ops_b_map,
-                        ) && old_to_matches
-                        {
+                        let operands_may_unify = value_update
+                            || (relation_endpoint_attributes_match(
+                                from_a, from_b, &ops_a_map, &ops_b_map,
+                            ) && relation_endpoint_attributes_match(
+                                new_to_a, new_to_b, &ops_a_map, &ops_b_map,
+                            ) && old_to_attributes_match);
+                        operands_may_unify.then_some(()).and_then(|_| {
                             b.iter().find_map(|op_b| {
                                 if let GraphOp::Edge(EdgeExpr::EditEdgeReference {
                                     from,
@@ -246,7 +271,7 @@ pub fn unify_operation_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
                                     label,
                                 }) = &op_b.kind
                                 {
-                                    let old_to_is_equal = match (old_to_a, old_to.as_ref()) {
+                                    let old_to_matches = match (old_to_a, old_to.as_ref()) {
                                         (Some(old_to_a), Some(old_to_b)) => {
                                             final_mapping.get(old_to_a) == Some(old_to_b)
                                         }
@@ -256,16 +281,14 @@ pub fn unify_operation_graphs(a: &[Op], b: &[Op]) -> UnificationResult {
                                     if label == label_a
                                         && from == from_b
                                         && new_to == new_to_b
-                                        && old_to_is_equal
+                                        && old_to_matches
                                     {
                                         return Some(op_b.id.clone());
                                     }
                                 }
                                 None
                             })
-                        } else {
-                            None
-                        }
+                        })
                     } else {
                         None
                     }
@@ -451,32 +474,44 @@ fn calculate_structural_score(
                     if let (Some(from_b), Some(new_to_b)) =
                         (mapping.get(from_a), mapping.get(new_to_a))
                     {
-                        let old_to_matches = match old_to_a {
-                            Some(old_to_a) => mapping
-                                .get(old_to_a)
-                                .filter(|old_to_b| {
-                                    relation_endpoint_attributes_match(
-                                        old_to_a, old_to_b, ops_a_map, ops_b_map,
-                                    )
-                                })
-                                .is_some(),
+                        let value_update =
+                            mapped_targets_are_literal(new_to_a, new_to_b, ops_a_map, ops_b_map);
+                        let old_to_attributes_match = match old_to_a {
+                            Some(old_to_a) => mapping.get(old_to_a).is_some_and(|old_to_b| {
+                                relation_endpoint_attributes_match(
+                                    old_to_a, old_to_b, ops_a_map, ops_b_map,
+                                )
+                            }),
                             None => true,
                         };
-                        relation_endpoint_attributes_match(from_a, from_b, ops_a_map, ops_b_map)
-                            && relation_endpoint_attributes_match(
+                        let operands_may_unify = value_update
+                            || (relation_endpoint_attributes_match(
+                                from_a, from_b, ops_a_map, ops_b_map,
+                            ) && relation_endpoint_attributes_match(
                                 new_to_a, new_to_b, ops_a_map, ops_b_map,
-                            )
-                            && old_to_matches
+                            ) && old_to_attributes_match);
+                        operands_may_unify
                             && ops_b_map.values().any(|edge_b| {
-                                matches!(
-                                    &edge_b.kind,
-                                    GraphOp::Edge(EdgeExpr::EditEdgeReference {
-                                        from,
-                                        new_to,
-                                        label,
-                                        ..
-                                    }) if label == label_a && from == from_b && new_to == new_to_b
-                                )
+                                let GraphOp::Edge(EdgeExpr::EditEdgeReference {
+                                    from,
+                                    old_to,
+                                    new_to,
+                                    label,
+                                }) = &edge_b.kind
+                                else {
+                                    return false;
+                                };
+                                let old_to_matches = match (old_to_a, old_to.as_ref()) {
+                                    (Some(old_to_a), Some(old_to_b)) => {
+                                        mapping.get(old_to_a) == Some(old_to_b)
+                                    }
+                                    (None, None) => true,
+                                    _ => false,
+                                };
+                                label == label_a
+                                    && from == from_b
+                                    && new_to == new_to_b
+                                    && old_to_matches
                             })
                     } else {
                         false
