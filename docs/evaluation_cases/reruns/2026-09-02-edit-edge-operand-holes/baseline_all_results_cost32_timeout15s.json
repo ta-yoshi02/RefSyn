@@ -1,0 +1,690 @@
+[
+  {
+    "task": "setAt-fixed-fHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 304.207,
+      "median_ms": 370.627,
+      "max_ms": 394.561,
+      "mean_ms": 356.465
+    },
+    "last_rendered": "setAt-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Int] =\n  if isZero(@arg0) then cons(@arg1, tail(@fHeap)) else if isZero(dec(dec(@arg0))) then storeAtRef(@fHeap, head(tail(@gHeap)), @arg1) else storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 394.561,
+        "success": true,
+        "rendered": "setAt-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Int] =\n  if isZero(@arg0) then cons(@arg1, tail(@fHeap)) else if isZero(dec(dec(@arg0))) then storeAtRef(@fHeap, head(tail(@gHeap)), @arg1) else storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 370.627,
+        "success": true,
+        "rendered": "setAt-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Int] =\n  if isZero(@arg0) then cons(@arg1, tail(@fHeap)) else if isZero(dec(dec(@arg0))) then storeAtRef(@fHeap, head(tail(@gHeap)), @arg1) else storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 304.207,
+        "success": true,
+        "rendered": "setAt-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Int] =\n  if isZero(@arg0) then cons(@arg1, tail(@fHeap)) else if isZero(dec(dec(@arg0))) then storeAtRef(@fHeap, head(tail(@gHeap)), @arg1) else storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1)",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "setAt-fixed-gHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.158,
+      "median_ms": 0.213,
+      "max_ms": 3.811,
+      "mean_ms": 1.3940000000000001
+    },
+    "last_rendered": "setAt-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Ref[Object<Obj>]] =\n  @gHeap",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 3.811,
+        "success": true,
+        "rendered": "setAt-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Ref[Object<Obj>]] =\n  @gHeap",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.213,
+        "success": true,
+        "rendered": "setAt-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Ref[Object<Obj>]] =\n  @gHeap",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.158,
+        "success": true,
+        "rendered": "setAt-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Ref[Object<Obj>]] =\n  @gHeap",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "setAt-fixed-env-pair",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 4495.933,
+      "median_ms": 5001.237,
+      "max_ms": 5292.862,
+      "mean_ms": 4930.010666666666
+    },
+    "last_rendered": "setAt-fixed-env-pair(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): Pair[List[Int],List[Ref[Object<Obj>]]] =\n  if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 4495.933,
+        "success": true,
+        "rendered": "setAt-fixed-env-pair(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): Pair[List[Int],List[Ref[Object<Obj>]]] =\n  if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 5001.237,
+        "success": true,
+        "rendered": "setAt-fixed-env-pair(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): Pair[List[Int],List[Ref[Object<Obj>]]] =\n  if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 5292.862,
+        "success": true,
+        "rendered": "setAt-fixed-env-pair(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): Pair[List[Int],List[Ref[Object<Obj>]]] =\n  if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "append-fixed-fHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 1.58,
+      "median_ms": 1.965,
+      "max_ms": 2.731,
+      "mean_ms": 2.092
+    },
+    "last_rendered": "append-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Int] =\n  insert(@fHeap, @arg0, @arg0)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 1.965,
+        "success": true,
+        "rendered": "append-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Int] =\n  insert(@fHeap, @arg0, @arg0)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 2.731,
+        "success": true,
+        "rendered": "append-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Int] =\n  insert(@fHeap, @arg0, @arg0)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 1.58,
+        "success": true,
+        "rendered": "append-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Int] =\n  insert(@fHeap, @arg0, @arg0)",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "append-fixed-gHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 29.948,
+      "median_ms": 31.099,
+      "max_ms": 59.287,
+      "mean_ms": 40.111333333333334
+    },
+    "last_rendered": "append-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Ref[Object<Obj>]] =\n  insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 59.287,
+        "success": true,
+        "rendered": "append-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Ref[Object<Obj>]] =\n  insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 31.099,
+        "success": true,
+        "rendered": "append-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Ref[Object<Obj>]] =\n  insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 29.948,
+        "success": true,
+        "rendered": "append-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Ref[Object<Obj>]] =\n  insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "append-fixed-env-pair",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 14999.808,
+      "median_ms": 15000.099,
+      "max_ms": 15003.229,
+      "mean_ms": 15001.045333333333
+    },
+    "last_rendered": null,
+    "last_error": "escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 15003.229,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 15000.099,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 14999.808,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "prepend-fixed-fHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 1.377,
+      "median_ms": 1.94,
+      "max_ms": 2.614,
+      "mean_ms": 1.9769999999999996
+    },
+    "last_rendered": "prepend-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Int] =\n  insert(@fHeap, @arg0, @arg0)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 2.614,
+        "success": true,
+        "rendered": "prepend-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Int] =\n  insert(@fHeap, @arg0, @arg0)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 1.377,
+        "success": true,
+        "rendered": "prepend-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Int] =\n  insert(@fHeap, @arg0, @arg0)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 1.94,
+        "success": true,
+        "rendered": "prepend-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Int] =\n  insert(@fHeap, @arg0, @arg0)",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "prepend-fixed-gHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 1.283,
+      "median_ms": 1.842,
+      "max_ms": 4.718,
+      "mean_ms": 2.614333333333333
+    },
+    "last_rendered": "prepend-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Ref[Object<Obj>]] =\n  insert(@gHeap, @arg0, @thisRef)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 1.283,
+        "success": true,
+        "rendered": "prepend-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Ref[Object<Obj>]] =\n  insert(@gHeap, @arg0, @thisRef)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 1.842,
+        "success": true,
+        "rendered": "prepend-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Ref[Object<Obj>]] =\n  insert(@gHeap, @arg0, @thisRef)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 4.718,
+        "success": true,
+        "rendered": "prepend-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): List[Ref[Object<Obj>]] =\n  insert(@gHeap, @arg0, @thisRef)",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "prepend-fixed-returnRef",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.173,
+      "median_ms": 0.191,
+      "max_ms": 0.217,
+      "mean_ms": 0.19366666666666665
+    },
+    "last_rendered": "prepend-fixed-returnRef(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): Ref[Object<Obj>] =\n  freshRefFromHeap(@nodeHeap)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 0.217,
+        "success": true,
+        "rendered": "prepend-fixed-returnRef(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): Ref[Object<Obj>] =\n  freshRefFromHeap(@nodeHeap)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.191,
+        "success": true,
+        "rendered": "prepend-fixed-returnRef(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): Ref[Object<Obj>] =\n  freshRefFromHeap(@nodeHeap)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.173,
+        "success": true,
+        "rendered": "prepend-fixed-returnRef(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): Ref[Object<Obj>] =\n  freshRefFromHeap(@nodeHeap)",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "prepend-fixed-env-pair",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 253.126,
+      "median_ms": 271.285,
+      "max_ms": 379.778,
+      "mean_ms": 301.39633333333336
+    },
+    "last_rendered": "prepend-fixed-env-pair(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): Pair[List[Int],List[Ref[Object<Obj>]]] =\n  pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 379.778,
+        "success": true,
+        "rendered": "prepend-fixed-env-pair(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): Pair[List[Int],List[Ref[Object<Obj>]]] =\n  pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 253.126,
+        "success": true,
+        "rendered": "prepend-fixed-env-pair(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): Pair[List[Int],List[Ref[Object<Obj>]]] =\n  pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 271.285,
+        "success": true,
+        "rendered": "prepend-fixed-env-pair(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int): Pair[List[Int],List[Ref[Object<Obj>]]] =\n  pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "insert-fixed-fHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 1.784,
+      "median_ms": 1.926,
+      "max_ms": 2.49,
+      "mean_ms": 2.066666666666667
+    },
+    "last_rendered": "insert-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Int] =\n  insert(@fHeap, @arg1, @arg1)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 1.926,
+        "success": true,
+        "rendered": "insert-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Int] =\n  insert(@fHeap, @arg1, @arg1)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 2.49,
+        "success": true,
+        "rendered": "insert-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Int] =\n  insert(@fHeap, @arg1, @arg1)",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 1.784,
+        "success": true,
+        "rendered": "insert-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]], @arg0: Int, @arg1: Int): List[Int] =\n  insert(@fHeap, @arg1, @arg1)",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "insert-fixed-gHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 14999.769,
+      "median_ms": 14999.867,
+      "max_ms": 15002.716,
+      "mean_ms": 15000.784
+    },
+    "last_rendered": null,
+    "last_error": "escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 14999.769,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 14999.867,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 15002.716,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget",
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "insert-fixed-env-pair",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 14999.808,
+      "median_ms": 14999.864,
+      "max_ms": 15000.164,
+      "mean_ms": 14999.945333333331
+    },
+    "last_rendered": null,
+    "last_error": "escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 15000.164,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 14999.864,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 14999.808,
+        "success": false,
+        "rendered": null,
+        "error": "escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget",
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "popBack-fixed-fHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.119,
+      "median_ms": 0.157,
+      "max_ms": 0.41,
+      "mean_ms": 0.22866666666666666
+    },
+    "last_rendered": "popBack-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): List[Int] =\n  @fHeap",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 0.41,
+        "success": true,
+        "rendered": "popBack-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): List[Int] =\n  @fHeap",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.157,
+        "success": true,
+        "rendered": "popBack-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): List[Int] =\n  @fHeap",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.119,
+        "success": true,
+        "rendered": "popBack-fixed-fHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): List[Int] =\n  @fHeap",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "popBack-fixed-gHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 625.952,
+      "median_ms": 639.878,
+      "max_ms": 645.518,
+      "mean_ms": 637.116
+    },
+    "last_rendered": "popBack-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): List[Ref[Object<Obj>]] =\n  if isNull(head(tail(tail(@gHeap)))) then storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap)))) else storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap)))))",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 625.952,
+        "success": true,
+        "rendered": "popBack-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): List[Ref[Object<Obj>]] =\n  if isNull(head(tail(tail(@gHeap)))) then storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap)))) else storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap)))))",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 645.518,
+        "success": true,
+        "rendered": "popBack-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): List[Ref[Object<Obj>]] =\n  if isNull(head(tail(tail(@gHeap)))) then storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap)))) else storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap)))))",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 639.878,
+        "success": true,
+        "rendered": "popBack-fixed-gHeap(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): List[Ref[Object<Obj>]] =\n  if isNull(head(tail(tail(@gHeap)))) then storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap)))) else storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap)))))",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  },
+  {
+    "task": "popBack-fixed-env-pair",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 5047.261,
+      "median_ms": 5204.172,
+      "max_ms": 5241.434,
+      "mean_ms": 5164.289000000001
+    },
+    "last_rendered": "popBack-fixed-env-pair(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): Pair[List[Int],List[Ref[Object<Obj>]]] =\n  if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 5047.261,
+        "success": true,
+        "rendered": "popBack-fixed-env-pair(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): Pair[List[Int],List[Ref[Object<Obj>]]] =\n  if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 5204.172,
+        "success": true,
+        "rendered": "popBack-fixed-env-pair(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): Pair[List[Int],List[Ref[Object<Obj>]]] =\n  if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))",
+        "error": null,
+        "compiled_js": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 5241.434,
+        "success": true,
+        "rendered": "popBack-fixed-env-pair(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Ref[Object<Obj>]]): Pair[List[Int],List[Ref[Object<Obj>]]] =\n  if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))",
+        "error": null,
+        "compiled_js": null
+      }
+    ]
+  }
+]

@@ -1,0 +1,69 @@
+{
+  "encoding": "fixed object-ID field heaps",
+  "output": {
+    "fHeap": "List[Int]",
+    "gHeap": "List[Ref[Object[Obj]]]",
+    "envPair": "Pair[List[Int],List[Ref[Object[Obj]]]]"
+  },
+  "measurement": {
+    "maxCost": 14,
+    "timeoutMs": 15000,
+    "repetitions": 3,
+    "taskFile": "baseline_fixed_id_task.json",
+    "resultFile": "baseline_fixed_id_results_measured.json",
+    "runtimeFile": "baseline_fixed_id_runtime.csv"
+  },
+  "baseComponents": [
+    "isNull",
+    "equal",
+    "and",
+    "or",
+    "not",
+    "isZero",
+    "isNonNeg",
+    "zero",
+    "inc",
+    "dec",
+    "head",
+    "tail",
+    "cons",
+    "nil",
+    "concat",
+    "insert",
+    "length",
+    "nthNextRef",
+    "last_ptr",
+    "penultimateRef"
+  ],
+  "customComponents": [
+    {
+      "name": "pairHeap",
+      "kind": "js",
+      "inputTypes": [
+        "List[Int]",
+        "List[Ref[Object[Obj]]]"
+      ],
+      "returnType": "Pair[List[Int],List[Ref[Object[Obj]]]]",
+      "args": [
+        "vals",
+        "ptrs"
+      ],
+      "bodyJs": "return { pair: [vals, ptrs] };",
+      "usedBy": [
+        "insert-fixed-env-pair"
+      ],
+      "interpretation": "A packaging helper for the baseline output pair, not a semantic insert helper."
+    }
+  ],
+  "excludedComponents": [
+    {
+      "name": "freshRefFromHeap",
+      "reason": "Not part of the current paper-facing fixed-ID baseline. It was tested only as a diagnostic helper."
+    }
+  ],
+  "notes": [
+    "The baseline receives pre-state heaps and method arguments, but not MOLD operation records.",
+    "The whole-environment task is intentionally favorable to the baseline: it excludes opaque nodeHeap reconstruction and unchanged variable heaps.",
+    "The current fixed-ID baseline fails on gHeap and envPair under this component set and budget."
+  ]
+}

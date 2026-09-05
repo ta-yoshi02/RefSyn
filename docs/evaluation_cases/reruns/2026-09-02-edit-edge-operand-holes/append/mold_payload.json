@@ -1,0 +1,2105 @@
+{
+  "method_calls": [
+    {
+      "callLabel": "call1",
+      "contextSensitiveID": "main",
+      "receiverObject": "main-new1",
+      "methodName": "append",
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "__temp1",
+          "label": "Obj",
+          "isLiteral": false
+        },
+        {
+          "editType": "addNode",
+          "id": "__temp2",
+          "label": "53",
+          "isLiteral": true,
+          "type": "string"
+        },
+        {
+          "editType": "addEdge",
+          "from": "__temp1",
+          "to": "__temp2",
+          "label": "f"
+        },
+        {
+          "editType": "addEdge",
+          "from": "main-new2",
+          "to": "__temp1",
+          "label": "g"
+        }
+      ],
+      "arguments": [
+        53
+      ],
+      "argumentTypes": [
+        "Int"
+      ],
+      "argumentNames": [
+        "arg0"
+      ],
+      "receiverClassName": "Obj",
+      "methodParamNames": [
+        "x"
+      ],
+      "precondGraph": {
+        "nodes": [
+          {
+            "color": "skyblue",
+            "id": "main-new1",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": false,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-new1-f",
+            "label": "39",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": false,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "main-new2",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": false,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-new2-f",
+            "label": "27",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": false,
+            "value": 10
+          },
+          {
+            "hidden": true,
+            "id": "__Variable-l",
+            "label": "l"
+          }
+        ],
+        "edges": [
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new1",
+            "to": "main-new1-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new2",
+            "to": "main-new2-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new1",
+            "to": "main-new2",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "__Variable-l",
+            "to": "main-new1",
+            "label": "l",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            },
+            "color": "seagreen"
+          }
+        ]
+      },
+      "actualGraph": {
+        "nodes": [
+          {
+            "color": "skyblue",
+            "id": "main-new1",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": true,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-new1-f",
+            "label": "39",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": true,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "main-new2",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": true,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-new2-f",
+            "label": "27",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": true,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "main-call1-FunctionExpression4-new3",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": true,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-call1-FunctionExpression4-new3-f",
+            "label": "53",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": true,
+            "value": 10
+          },
+          {
+            "hidden": true,
+            "id": "__Variable-l",
+            "label": "l"
+          }
+        ],
+        "edges": [
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new1",
+            "to": "main-new1-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new2",
+            "to": "main-new2-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-call1-FunctionExpression4-new3",
+            "to": "main-call1-FunctionExpression4-new3-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new2",
+            "to": "main-call1-FunctionExpression4-new3",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new1",
+            "to": "main-new2",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "__Variable-l",
+            "to": "main-new1",
+            "label": "l",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            },
+            "color": "seagreen"
+          }
+        ]
+      },
+      "idMapping": {
+        "__temp1": "main-call1-FunctionExpression4-new3",
+        "__temp2": "main-call1-FunctionExpression4-new3-f"
+      }
+    },
+    {
+      "callLabel": "call2",
+      "contextSensitiveID": "main",
+      "receiverObject": "main-new1",
+      "methodName": "append",
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "__temp3",
+          "label": "89",
+          "isLiteral": true,
+          "type": "string"
+        },
+        {
+          "editType": "addNode",
+          "id": "__temp4",
+          "label": "Obj",
+          "isLiteral": false
+        },
+        {
+          "editType": "addEdge",
+          "from": "__temp1",
+          "to": "__temp4",
+          "label": "g"
+        },
+        {
+          "editType": "addEdge",
+          "from": "__temp4",
+          "to": "__temp3",
+          "label": "f"
+        }
+      ],
+      "arguments": [
+        89
+      ],
+      "argumentTypes": [
+        "Int"
+      ],
+      "argumentNames": [
+        "arg0"
+      ],
+      "receiverClassName": "Obj",
+      "methodParamNames": [
+        "x"
+      ],
+      "precondGraph": {
+        "nodes": [
+          {
+            "color": "skyblue",
+            "id": "main-new1",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": false,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-new1-f",
+            "label": "39",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": false,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "main-new2",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": false,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-new2-f",
+            "label": "27",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": false,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "__temp1",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": false,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "__temp1-f",
+            "label": "53",
+            "type": "string",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": false,
+            "value": 10
+          },
+          {
+            "hidden": true,
+            "id": "__Variable-l",
+            "label": "l"
+          }
+        ],
+        "edges": [
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new1",
+            "to": "main-new1-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new2",
+            "to": "main-new2-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "__temp1",
+            "to": "__temp1-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new2",
+            "to": "__temp1",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new1",
+            "to": "main-new2",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "__Variable-l",
+            "to": "main-new1",
+            "label": "l",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            },
+            "color": "seagreen"
+          }
+        ]
+      },
+      "actualGraph": {
+        "nodes": [
+          {
+            "color": "skyblue",
+            "id": "main-new1",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": true,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-new1-f",
+            "label": "39",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": true,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "main-new2",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": true,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-new2-f",
+            "label": "27",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": true,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "main-call1-FunctionExpression4-new3",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": true,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-call1-FunctionExpression4-new3-f",
+            "label": "53",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": true,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "main-call2-FunctionExpression4-new3",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": true,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-call2-FunctionExpression4-new3-f",
+            "label": "89",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": true,
+            "value": 10
+          },
+          {
+            "hidden": true,
+            "id": "__Variable-l",
+            "label": "l"
+          }
+        ],
+        "edges": [
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new1",
+            "to": "main-new1-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new2",
+            "to": "main-new2-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-call1-FunctionExpression4-new3",
+            "to": "main-call1-FunctionExpression4-new3-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-call2-FunctionExpression4-new3",
+            "to": "main-call2-FunctionExpression4-new3-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-call1-FunctionExpression4-new3",
+            "to": "main-call2-FunctionExpression4-new3",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new2",
+            "to": "main-call1-FunctionExpression4-new3",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new1",
+            "to": "main-new2",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "__Variable-l",
+            "to": "main-new1",
+            "label": "l",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            },
+            "color": "seagreen"
+          }
+        ]
+      },
+      "idMapping": {
+        "__temp1": "main-call1-FunctionExpression4-new3",
+        "__temp1-f": "main-call1-FunctionExpression4-new3-f",
+        "__temp4": "main-call2-FunctionExpression4-new3",
+        "__temp3": "main-call2-FunctionExpression4-new3-f"
+      }
+    },
+    {
+      "callLabel": "call3",
+      "contextSensitiveID": "main",
+      "receiverObject": "main-new1",
+      "methodName": "append",
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "__temp5",
+          "label": "Obj",
+          "isLiteral": false
+        },
+        {
+          "editType": "addNode",
+          "id": "__temp6",
+          "label": "46",
+          "isLiteral": true,
+          "type": "string"
+        },
+        {
+          "editType": "addEdge",
+          "from": "__temp5",
+          "to": "__temp6",
+          "label": "f"
+        },
+        {
+          "editType": "addEdge",
+          "from": "__temp4",
+          "to": "__temp5",
+          "label": "g"
+        }
+      ],
+      "arguments": [
+        46
+      ],
+      "argumentTypes": [
+        "Int"
+      ],
+      "argumentNames": [
+        "arg0"
+      ],
+      "receiverClassName": "Obj",
+      "methodParamNames": [
+        "x"
+      ],
+      "precondGraph": {
+        "nodes": [
+          {
+            "color": "skyblue",
+            "id": "main-new1",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": false,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-new1-f",
+            "label": "39",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": false,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "main-new2",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": false,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-new2-f",
+            "label": "27",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": false,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "main-call1-FunctionExpression4-new3",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": false,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-call1-FunctionExpression4-new3-f",
+            "label": "53",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": false,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "main-call2-FunctionExpression4-new3",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": false,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-call2-FunctionExpression4-new3-f",
+            "label": "89",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": false,
+            "value": 10
+          },
+          {
+            "hidden": true,
+            "id": "__Variable-l",
+            "label": "l"
+          }
+        ],
+        "edges": [
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new1",
+            "to": "main-new1-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new2",
+            "to": "main-new2-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-call1-FunctionExpression4-new3",
+            "to": "main-call1-FunctionExpression4-new3-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-call2-FunctionExpression4-new3",
+            "to": "main-call2-FunctionExpression4-new3-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-call1-FunctionExpression4-new3",
+            "to": "main-call2-FunctionExpression4-new3",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new2",
+            "to": "main-call1-FunctionExpression4-new3",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new1",
+            "to": "main-new2",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "__Variable-l",
+            "to": "main-new1",
+            "label": "l",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            },
+            "color": "seagreen"
+          }
+        ]
+      },
+      "actualGraph": {
+        "nodes": [
+          {
+            "color": "skyblue",
+            "id": "main-new1",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": true,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-new1-f",
+            "label": "39",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": true,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "main-new2",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": true,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-new2-f",
+            "label": "27",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": true,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "main-call1-FunctionExpression4-new3",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": true,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-call1-FunctionExpression4-new3-f",
+            "label": "53",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": true,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "main-call2-FunctionExpression4-new3",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": true,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-call2-FunctionExpression4-new3-f",
+            "label": "89",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": true,
+            "value": 10
+          },
+          {
+            "color": "skyblue",
+            "id": "main-call3-FunctionExpression4-new3",
+            "label": "Obj",
+            "shape": "ellipse",
+            "fixed": true,
+            "value": 15,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 15,
+                "max": 15
+              }
+            }
+          },
+          {
+            "color": {
+              "border": "white",
+              "background": "white",
+              "highlight": {
+                "border": "white",
+                "background": "white"
+              },
+              "hover": {
+                "border": "white",
+                "background": "white"
+              }
+            },
+            "id": "main-call3-FunctionExpression4-new3-f",
+            "label": "46",
+            "type": "number",
+            "isLiteral": true,
+            "scaling": {
+              "label": {
+                "enable": true,
+                "min": 10,
+                "max": 10
+              }
+            },
+            "fixed": true,
+            "value": 10
+          },
+          {
+            "hidden": true,
+            "id": "__Variable-l",
+            "label": "l"
+          }
+        ],
+        "edges": [
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new1",
+            "to": "main-new1-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new2",
+            "to": "main-new2-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-call1-FunctionExpression4-new3",
+            "to": "main-call1-FunctionExpression4-new3-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-call2-FunctionExpression4-new3",
+            "to": "main-call2-FunctionExpression4-new3-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-call3-FunctionExpression4-new3",
+            "to": "main-call3-FunctionExpression4-new3-f",
+            "label": "f",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-call2-FunctionExpression4-new3",
+            "to": "main-call3-FunctionExpression4-new3",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-call1-FunctionExpression4-new3",
+            "to": "main-call2-FunctionExpression4-new3",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new2",
+            "to": "main-call1-FunctionExpression4-new3",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "main-new1",
+            "to": "main-new2",
+            "label": "g",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            }
+          },
+          {
+            "arrows": {
+              "to": {
+                "enabled": true,
+                "scaleFactor": 1
+              }
+            },
+            "from": "__Variable-l",
+            "to": "main-new1",
+            "label": "l",
+            "width": 3,
+            "font": {
+              "size": 14
+            },
+            "smooth": {
+              "enabled": true
+            },
+            "color": "seagreen"
+          }
+        ]
+      },
+      "idMapping": {
+        "__temp5": "main-call3-FunctionExpression4-new3",
+        "__temp6": "main-call3-FunctionExpression4-new3-f"
+      }
+    }
+  ],
+  "vis_graph": {
+    "nodes": [
+      {
+        "color": "skyblue",
+        "id": "main-new1",
+        "label": "Obj",
+        "shape": "ellipse",
+        "fixed": true,
+        "value": 15,
+        "scaling": {
+          "label": {
+            "enable": true,
+            "min": 15,
+            "max": 15
+          }
+        },
+        "x": -73,
+        "y": 3
+      },
+      {
+        "color": {
+          "border": "white",
+          "background": "white",
+          "highlight": {
+            "border": "white",
+            "background": "white"
+          },
+          "hover": {
+            "border": "white",
+            "background": "white"
+          }
+        },
+        "id": "main-new1-f",
+        "label": "39",
+        "type": "number",
+        "isLiteral": true,
+        "scaling": {
+          "label": {
+            "enable": true,
+            "min": 10,
+            "max": 10
+          }
+        },
+        "fixed": true,
+        "value": 10,
+        "x": -80,
+        "y": 97
+      },
+      {
+        "color": "skyblue",
+        "id": "main-new2",
+        "label": "Obj",
+        "shape": "ellipse",
+        "fixed": true,
+        "value": 15,
+        "scaling": {
+          "label": {
+            "enable": true,
+            "min": 15,
+            "max": 15
+          }
+        },
+        "x": 73,
+        "y": 3
+      },
+      {
+        "color": {
+          "border": "white",
+          "background": "white",
+          "highlight": {
+            "border": "white",
+            "background": "white"
+          },
+          "hover": {
+            "border": "white",
+            "background": "white"
+          }
+        },
+        "id": "main-new2-f",
+        "label": "27",
+        "type": "number",
+        "isLiteral": true,
+        "scaling": {
+          "label": {
+            "enable": true,
+            "min": 10,
+            "max": 10
+          }
+        },
+        "fixed": true,
+        "value": 10,
+        "x": 80,
+        "y": 97
+      },
+      {
+        "hidden": true,
+        "id": "__Variable-l",
+        "label": "l"
+      },
+      {
+        "id": "__RectForVariable__",
+        "label": "def var",
+        "color": {
+          "border": "lightsalmon",
+          "background": "lightsalmon",
+          "highlight": {
+            "border": "lightsalmon",
+            "background": "lightsalmon"
+          },
+          "hover": {
+            "border": "lightsalmon",
+            "background": "lightsalmon"
+          }
+        },
+        "shape": "box",
+        "physics": false
+      },
+      {
+        "id": "__temp1",
+        "x": -3.5,
+        "y": 55.51159676114162,
+        "label": "Obj",
+        "isLiteral": false,
+        "fixed": true
+      },
+      {
+        "id": "__temp2",
+        "x": -26.5,
+        "y": 148.51159676114162,
+        "label": "53",
+        "isLiteral": true,
+        "fixed": true,
+        "color": {
+          "border": "white",
+          "background": "white",
+          "highlight": {
+            "border": "white",
+            "background": "white"
+          },
+          "hover": {
+            "border": "white",
+            "background": "white"
+          }
+        },
+        "type": "string"
+      }
+    ],
+    "edges": [
+      {
+        "arrows": {
+          "to": {
+            "enabled": true,
+            "scaleFactor": 1
+          }
+        },
+        "from": "main-new1",
+        "to": "main-new1-f",
+        "label": "f",
+        "width": 3,
+        "font": {
+          "size": 14
+        },
+        "smooth": {
+          "enabled": true
+        },
+        "id": "f4c4acbb-cbe2-4c21-a688-6f6c54e9c94b"
+      },
+      {
+        "arrows": {
+          "to": {
+            "enabled": true,
+            "scaleFactor": 1
+          }
+        },
+        "from": "main-new2",
+        "to": "main-new2-f",
+        "label": "f",
+        "width": 3,
+        "font": {
+          "size": 14
+        },
+        "smooth": {
+          "enabled": true
+        },
+        "id": "ff416b4d-4435-413b-8817-b64d49d9de9d"
+      },
+      {
+        "arrows": {
+          "to": {
+            "enabled": true,
+            "scaleFactor": 1
+          }
+        },
+        "from": "main-new1",
+        "to": "main-new2",
+        "label": "g",
+        "width": 3,
+        "font": {
+          "size": 14
+        },
+        "smooth": {
+          "enabled": true
+        },
+        "id": "11b5fc0c-6b78-4e8e-895f-06b2c57c0358"
+      },
+      {
+        "arrows": {
+          "to": {
+            "enabled": true,
+            "scaleFactor": 1
+          }
+        },
+        "from": "__Variable-l",
+        "to": "main-new1",
+        "label": "l",
+        "width": 3,
+        "font": {
+          "size": 14
+        },
+        "smooth": {
+          "enabled": true
+        },
+        "color": "seagreen",
+        "id": "8ed65eea-f7bb-4ce3-9f34-daae7af04254"
+      },
+      {
+        "from": "__temp1",
+        "to": "__temp2",
+        "label": "f",
+        "id": "bc3c2db2-e295-46d1-ab05-eae3b848cd96"
+      },
+      {
+        "from": "main-new2",
+        "to": "__temp1",
+        "label": "g",
+        "id": "7cc4b469-441a-4053-9d50-fa8a466b1c5f"
+      }
+    ]
+  }
+}

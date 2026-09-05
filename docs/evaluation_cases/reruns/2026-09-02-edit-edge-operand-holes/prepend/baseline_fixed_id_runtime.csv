@@ -1,0 +1,13 @@
+task,iteration,success,elapsed_ms,max_cost,timeout_ms,error
+prepend-fixed-fHeap,1,true,9.457,14,15000,
+prepend-fixed-fHeap,2,true,6.298,14,15000,
+prepend-fixed-fHeap,3,true,6.685,14,15000,
+prepend-fixed-gHeap,1,true,4.973,14,15000,
+prepend-fixed-gHeap,2,true,5.041,14,15000,
+prepend-fixed-gHeap,3,true,3.71,14,15000,
+prepend-fixed-returnRef,1,false,15000.052,14,15000,escher-ts could not synthesize 'prepend-fixed-returnRef' within the configured budget
+prepend-fixed-returnRef,2,false,15058.013,14,15000,escher-ts could not synthesize 'prepend-fixed-returnRef' within the configured budget
+prepend-fixed-returnRef,3,false,14999.655,14,15000,escher-ts could not synthesize 'prepend-fixed-returnRef' within the configured budget
+prepend-fixed-env-pair,1,true,318.21,14,15000,
+prepend-fixed-env-pair,2,true,155.47,14,15000,
+prepend-fixed-env-pair,3,true,152.788,14,15000,

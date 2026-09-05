@@ -1,0 +1,88 @@
+[
+  {
+    "task": "prepend-f",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.477,
+      "median_ms": 0.526,
+      "max_ms": 2.797,
+      "mean_ms": 1.2666666666666666
+    },
+    "last_rendered": "prepend-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 2.797,
+        "success": true,
+        "rendered": "prepend-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+        "error": null,
+        "compiled_js": "prepend_f(arg0) { return arg0; }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.477,
+        "success": true,
+        "rendered": "prepend-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+        "error": null,
+        "compiled_js": "prepend_f(arg0) { return arg0; }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.526,
+        "success": true,
+        "rendered": "prepend-f(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Int =\n  @arg0",
+        "error": null,
+        "compiled_js": "prepend_f(arg0) { return arg0; }"
+      }
+    ]
+  },
+  {
+    "task": "prepend-g",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.168,
+      "median_ms": 0.297,
+      "max_ms": 0.506,
+      "mean_ms": 0.32366666666666666
+    },
+    "last_rendered": "prepend-g(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  @thisRef",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 0.297,
+        "success": true,
+        "rendered": "prepend-g(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  @thisRef",
+        "error": null,
+        "compiled_js": "prepend_g(arg0) { return this; }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.506,
+        "success": true,
+        "rendered": "prepend-g(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  @thisRef",
+        "error": null,
+        "compiled_js": "prepend_g(arg0) { return this; }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.168,
+        "success": true,
+        "rendered": "prepend-g(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  @thisRef",
+        "error": null,
+        "compiled_js": "prepend_g(arg0) { return this; }"
+      }
+    ]
+  }
+]

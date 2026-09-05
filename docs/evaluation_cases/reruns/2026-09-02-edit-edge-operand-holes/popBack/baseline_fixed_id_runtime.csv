@@ -1,0 +1,10 @@
+task,iteration,success,elapsed_ms,max_cost,timeout_ms,error
+popBack-fixed-fHeap,1,true,3.099,14,15000,
+popBack-fixed-fHeap,2,true,0.437,14,15000,
+popBack-fixed-fHeap,3,true,0.429,14,15000,
+popBack-fixed-gHeap,1,false,15000.095,14,15000,escher-ts could not synthesize 'popBack-fixed-gHeap' within the configured budget
+popBack-fixed-gHeap,2,false,14999.975,14,15000,escher-ts could not synthesize 'popBack-fixed-gHeap' within the configured budget
+popBack-fixed-gHeap,3,false,15156.99,14,15000,escher-ts could not synthesize 'popBack-fixed-gHeap' within the configured budget
+popBack-fixed-env-pair,1,false,15000.021,14,15000,escher-ts could not synthesize 'popBack-fixed-env-pair' within the configured budget
+popBack-fixed-env-pair,2,false,15000.279,14,15000,escher-ts could not synthesize 'popBack-fixed-env-pair' within the configured budget
+popBack-fixed-env-pair,3,false,14999.917,14,15000,escher-ts could not synthesize 'popBack-fixed-env-pair' within the configured budget

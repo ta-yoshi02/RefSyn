@@ -1,0 +1,49 @@
+task,iteration,success,elapsed_ms,max_cost,timeout_ms,error
+setAt-fixed-fHeap,1,true,394.561,32,15000,
+setAt-fixed-fHeap,2,true,370.627,32,15000,
+setAt-fixed-fHeap,3,true,304.207,32,15000,
+setAt-fixed-gHeap,1,true,3.811,32,15000,
+setAt-fixed-gHeap,2,true,0.213,32,15000,
+setAt-fixed-gHeap,3,true,0.158,32,15000,
+setAt-fixed-env-pair,1,true,4495.933,32,15000,
+setAt-fixed-env-pair,2,true,5001.237,32,15000,
+setAt-fixed-env-pair,3,true,5292.862,32,15000,
+append-fixed-fHeap,1,true,1.965,32,15000,
+append-fixed-fHeap,2,true,2.731,32,15000,
+append-fixed-fHeap,3,true,1.58,32,15000,
+append-fixed-gHeap,1,true,59.287,32,15000,
+append-fixed-gHeap,2,true,31.099,32,15000,
+append-fixed-gHeap,3,true,29.948,32,15000,
+append-fixed-env-pair,1,false,15003.229,32,15000,escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget
+append-fixed-env-pair,2,false,15000.099,32,15000,escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget
+append-fixed-env-pair,3,false,14999.808,32,15000,escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget
+prepend-fixed-fHeap,1,true,2.614,32,15000,
+prepend-fixed-fHeap,2,true,1.377,32,15000,
+prepend-fixed-fHeap,3,true,1.94,32,15000,
+prepend-fixed-gHeap,1,true,1.283,32,15000,
+prepend-fixed-gHeap,2,true,1.842,32,15000,
+prepend-fixed-gHeap,3,true,4.718,32,15000,
+prepend-fixed-returnRef,1,true,0.217,32,15000,
+prepend-fixed-returnRef,2,true,0.191,32,15000,
+prepend-fixed-returnRef,3,true,0.173,32,15000,
+prepend-fixed-env-pair,1,true,379.778,32,15000,
+prepend-fixed-env-pair,2,true,253.126,32,15000,
+prepend-fixed-env-pair,3,true,271.285,32,15000,
+insert-fixed-fHeap,1,true,1.926,32,15000,
+insert-fixed-fHeap,2,true,2.49,32,15000,
+insert-fixed-fHeap,3,true,1.784,32,15000,
+insert-fixed-gHeap,1,false,14999.769,32,15000,escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget
+insert-fixed-gHeap,2,false,14999.867,32,15000,escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget
+insert-fixed-gHeap,3,false,15002.716,32,15000,escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget
+insert-fixed-env-pair,1,false,15000.164,32,15000,escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget
+insert-fixed-env-pair,2,false,14999.864,32,15000,escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget
+insert-fixed-env-pair,3,false,14999.808,32,15000,escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget
+popBack-fixed-fHeap,1,true,0.41,32,15000,
+popBack-fixed-fHeap,2,true,0.157,32,15000,
+popBack-fixed-fHeap,3,true,0.119,32,15000,
+popBack-fixed-gHeap,1,true,625.952,32,15000,
+popBack-fixed-gHeap,2,true,645.518,32,15000,
+popBack-fixed-gHeap,3,true,639.878,32,15000,
+popBack-fixed-env-pair,1,true,5047.261,32,15000,
+popBack-fixed-env-pair,2,true,5204.172,32,15000,
+popBack-fixed-env-pair,3,true,5241.434,32,15000,

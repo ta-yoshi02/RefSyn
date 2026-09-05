@@ -1,0 +1,45 @@
+[
+  {
+    "task": "popBack-g",
+    "config": {
+      "maxCost": 14,
+      "timeoutMs": 15000,
+      "repetitions": 3
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.874,
+      "median_ms": 1.42,
+      "max_ms": 4.737,
+      "mean_ms": 2.3436666666666666
+    },
+    "last_rendered": "popBack-g(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>]): Ref[Object<Obj>] =\n  penultimateRef(@thisRef, @gHeap)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 4.737,
+        "success": true,
+        "rendered": "popBack-g(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>]): Ref[Object<Obj>] =\n  penultimateRef(@thisRef, @gHeap)",
+        "error": null,
+        "compiled_js": "popBack_g() { return (() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).g !== null && ((__refsynCur).g).g !== null) { __refsynCur = (__refsynCur).g; } return (__refsynCur === null || (__refsynCur).g === null) ? null : __refsynCur; })(); }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 1.42,
+        "success": true,
+        "rendered": "popBack-g(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>]): Ref[Object<Obj>] =\n  penultimateRef(@thisRef, @gHeap)",
+        "error": null,
+        "compiled_js": "popBack_g() { return (() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).g !== null && ((__refsynCur).g).g !== null) { __refsynCur = (__refsynCur).g; } return (__refsynCur === null || (__refsynCur).g === null) ? null : __refsynCur; })(); }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.874,
+        "success": true,
+        "rendered": "popBack-g(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>]): Ref[Object<Obj>] =\n  penultimateRef(@thisRef, @gHeap)",
+        "error": null,
+        "compiled_js": "popBack_g() { return (() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).g !== null && ((__refsynCur).g).g !== null) { __refsynCur = (__refsynCur).g; } return (__refsynCur === null || (__refsynCur).g === null) ? null : __refsynCur; })(); }"
+      }
+    ]
+  }
+]
