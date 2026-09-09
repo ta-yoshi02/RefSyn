@@ -16,4 +16,6 @@ roles, and the selected correspondence is not validated by executing the whole
 recomposed method. It does not support treating the older output sequence
 `2,3,2` as the unique failure path.
 
-Run `validate.mjs --out validation.json` to reproduce the execution check.
+The complete PBE inputs for the three runs are stored as
+`mold_escher_tasks-1.json` through `mold_escher_tasks-3.json`. Run
+`validate.mjs --out validation.json` to reproduce the execution check.

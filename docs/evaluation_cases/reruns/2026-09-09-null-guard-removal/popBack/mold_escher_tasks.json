@@ -1,0 +1,288 @@
+[
+  {
+    "name": "popBack-f",
+    "category": "refsyn",
+    "classes": [
+      {
+        "name": "Obj",
+        "fields": {
+          "f": "Ref[Int]",
+          "g": "Ref[Object[Obj]]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "signature": {
+      "returnType": "Ref[Object[Obj]]",
+      "autoExpandClassSignature": {
+        "className": "Obj",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "f": "fHeap",
+          "g": "gHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ]
+        ],
+        {
+          "ref": 2
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Obj",
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ]
+        ],
+        {
+          "ref": 1
+        }
+      ]
+    ],
+    "refsynMeta": {
+      "jsMethodName": "popBack_f",
+      "className": "Obj",
+      "thisRefName": "thisRef",
+      "classHeapName": "nodeHeap",
+      "valueFields": [
+        "f"
+      ],
+      "pointerFields": [
+        "g"
+      ],
+      "fieldHeapNames": {
+        "f": "fHeap",
+        "g": "gHeap"
+      },
+      "explicitArgs": []
+    }
+  }
+]

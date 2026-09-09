@@ -20,8 +20,9 @@ assignment is emitted unconditionally.
   of cycles
 
 The five payloads are copied from the existing evaluation cases. Each case
-directory contains the posted `payload.json` and the resulting `response.json`,
-including the helper tasks, synthesized terms, and composed method code.
+directory contains the posted `payload.json`, the complete PBE input in
+`mold_escher_tasks.json`, and the resulting `response.json` with synthesized
+terms and composed method code.
 
 ## Result
 
