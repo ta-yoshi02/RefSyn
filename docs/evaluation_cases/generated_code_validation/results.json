@@ -1,0 +1,1623 @@
+{
+  "source_commit": "3b323c5ac64852b91c2f3baaaabdb4cd4733daaa",
+  "source_directory": "docs/evaluation_cases/reruns/2026-09-09-null-guard-removal",
+  "observation": "value sequence reachable through g and absence of cycles",
+  "generation_rule": {
+    "setAt": "list lengths 1..5; every valid index; held-out values",
+    "append": "list lengths 1..5; one held-out appended value per length",
+    "prepend": "list lengths 1..5; one held-out prepended value per length; observe returned head",
+    "insert": "list lengths 1..5; every valid predecessor index; held-out values",
+    "popBack": "list lengths 2..6; singleton and empty lists excluded from the claimed domain"
+  },
+  "summary": {
+    "setAt": {
+      "total": 15,
+      "passed": 15,
+      "failed": 0
+    },
+    "append": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "prepend": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "insert": {
+      "total": 15,
+      "passed": 15,
+      "failed": 0
+    },
+    "popBack": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "setAtControl": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "insertControl": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0
+    }
+  },
+  "total": 49,
+  "passed": 49,
+  "failed": 0,
+  "records": [
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1020
+        ],
+        "index": 0,
+        "assigned": 2020
+      },
+      "expected": {
+        "values": [
+          2020
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          2020
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "append",
+      "input": {
+        "values": [
+          1020
+        ],
+        "appended": 3001
+      },
+      "expected": {
+        "values": [
+          1020,
+          3001
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1020,
+          3001
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "prepend",
+      "input": {
+        "values": [
+          1020
+        ],
+        "prepended": 4001
+      },
+      "expected": {
+        "values": [
+          4001,
+          1020
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          4001,
+          1020
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1020
+        ],
+        "index": 0,
+        "inserted": 5020
+      },
+      "expected": {
+        "values": [
+          1020,
+          5020
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1020,
+          5020
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1040,
+          1043
+        ],
+        "index": 0,
+        "assigned": 2040
+      },
+      "expected": {
+        "values": [
+          2040,
+          1043
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          2040,
+          1043
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1040,
+          1043
+        ],
+        "index": 1,
+        "assigned": 2041
+      },
+      "expected": {
+        "values": [
+          1040,
+          2041
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1040,
+          2041
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "append",
+      "input": {
+        "values": [
+          1040,
+          1043
+        ],
+        "appended": 3002
+      },
+      "expected": {
+        "values": [
+          1040,
+          1043,
+          3002
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1040,
+          1043,
+          3002
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "prepend",
+      "input": {
+        "values": [
+          1040,
+          1043
+        ],
+        "prepended": 4002
+      },
+      "expected": {
+        "values": [
+          4002,
+          1040,
+          1043
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          4002,
+          1040,
+          1043
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1040,
+          1043
+        ],
+        "index": 0,
+        "inserted": 5040
+      },
+      "expected": {
+        "values": [
+          1040,
+          5040,
+          1043
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1040,
+          5040,
+          1043
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1040,
+          1043
+        ],
+        "index": 1,
+        "inserted": 5041
+      },
+      "expected": {
+        "values": [
+          1040,
+          1043,
+          5041
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1040,
+          1043,
+          5041
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1060,
+          1063,
+          1066
+        ],
+        "index": 0,
+        "assigned": 2060
+      },
+      "expected": {
+        "values": [
+          2060,
+          1063,
+          1066
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          2060,
+          1063,
+          1066
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1060,
+          1063,
+          1066
+        ],
+        "index": 1,
+        "assigned": 2061
+      },
+      "expected": {
+        "values": [
+          1060,
+          2061,
+          1066
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1060,
+          2061,
+          1066
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1060,
+          1063,
+          1066
+        ],
+        "index": 2,
+        "assigned": 2062
+      },
+      "expected": {
+        "values": [
+          1060,
+          1063,
+          2062
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1060,
+          1063,
+          2062
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "append",
+      "input": {
+        "values": [
+          1060,
+          1063,
+          1066
+        ],
+        "appended": 3003
+      },
+      "expected": {
+        "values": [
+          1060,
+          1063,
+          1066,
+          3003
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1060,
+          1063,
+          1066,
+          3003
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "prepend",
+      "input": {
+        "values": [
+          1060,
+          1063,
+          1066
+        ],
+        "prepended": 4003
+      },
+      "expected": {
+        "values": [
+          4003,
+          1060,
+          1063,
+          1066
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          4003,
+          1060,
+          1063,
+          1066
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1060,
+          1063,
+          1066
+        ],
+        "index": 0,
+        "inserted": 5060
+      },
+      "expected": {
+        "values": [
+          1060,
+          5060,
+          1063,
+          1066
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1060,
+          5060,
+          1063,
+          1066
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1060,
+          1063,
+          1066
+        ],
+        "index": 1,
+        "inserted": 5061
+      },
+      "expected": {
+        "values": [
+          1060,
+          1063,
+          5061,
+          1066
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1060,
+          1063,
+          5061,
+          1066
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1060,
+          1063,
+          1066
+        ],
+        "index": 2,
+        "inserted": 5062
+      },
+      "expected": {
+        "values": [
+          1060,
+          1063,
+          1066,
+          5062
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1060,
+          1063,
+          1066,
+          5062
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089
+        ],
+        "index": 0,
+        "assigned": 2080
+      },
+      "expected": {
+        "values": [
+          2080,
+          1083,
+          1086,
+          1089
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          2080,
+          1083,
+          1086,
+          1089
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089
+        ],
+        "index": 1,
+        "assigned": 2081
+      },
+      "expected": {
+        "values": [
+          1080,
+          2081,
+          1086,
+          1089
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1080,
+          2081,
+          1086,
+          1089
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089
+        ],
+        "index": 2,
+        "assigned": 2082
+      },
+      "expected": {
+        "values": [
+          1080,
+          1083,
+          2082,
+          1089
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1080,
+          1083,
+          2082,
+          1089
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089
+        ],
+        "index": 3,
+        "assigned": 2083
+      },
+      "expected": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          2083
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          2083
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "append",
+      "input": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089
+        ],
+        "appended": 3004
+      },
+      "expected": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089,
+          3004
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089,
+          3004
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "prepend",
+      "input": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089
+        ],
+        "prepended": 4004
+      },
+      "expected": {
+        "values": [
+          4004,
+          1080,
+          1083,
+          1086,
+          1089
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          4004,
+          1080,
+          1083,
+          1086,
+          1089
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089
+        ],
+        "index": 0,
+        "inserted": 5080
+      },
+      "expected": {
+        "values": [
+          1080,
+          5080,
+          1083,
+          1086,
+          1089
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1080,
+          5080,
+          1083,
+          1086,
+          1089
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089
+        ],
+        "index": 1,
+        "inserted": 5081
+      },
+      "expected": {
+        "values": [
+          1080,
+          1083,
+          5081,
+          1086,
+          1089
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1080,
+          1083,
+          5081,
+          1086,
+          1089
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089
+        ],
+        "index": 2,
+        "inserted": 5082
+      },
+      "expected": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          5082,
+          1089
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          5082,
+          1089
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089
+        ],
+        "index": 3,
+        "inserted": 5083
+      },
+      "expected": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089,
+          5083
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089,
+          5083
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "index": 0,
+        "assigned": 2100
+      },
+      "expected": {
+        "values": [
+          2100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          2100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "index": 1,
+        "assigned": 2101
+      },
+      "expected": {
+        "values": [
+          1100,
+          2101,
+          1106,
+          1109,
+          1112
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1100,
+          2101,
+          1106,
+          1109,
+          1112
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "index": 2,
+        "assigned": 2102
+      },
+      "expected": {
+        "values": [
+          1100,
+          1103,
+          2102,
+          1109,
+          1112
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1100,
+          1103,
+          2102,
+          1109,
+          1112
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "index": 3,
+        "assigned": 2103
+      },
+      "expected": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          2103,
+          1112
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          2103,
+          1112
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAt",
+      "input": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "index": 4,
+        "assigned": 2104
+      },
+      "expected": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          2104
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          2104
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "append",
+      "input": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "appended": 3005
+      },
+      "expected": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112,
+          3005
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112,
+          3005
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "prepend",
+      "input": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "prepended": 4005
+      },
+      "expected": {
+        "values": [
+          4005,
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          4005,
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "index": 0,
+        "inserted": 5100
+      },
+      "expected": {
+        "values": [
+          1100,
+          5100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1100,
+          5100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "index": 1,
+        "inserted": 5101
+      },
+      "expected": {
+        "values": [
+          1100,
+          1103,
+          5101,
+          1106,
+          1109,
+          1112
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1100,
+          1103,
+          5101,
+          1106,
+          1109,
+          1112
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "index": 2,
+        "inserted": 5102
+      },
+      "expected": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          5102,
+          1109,
+          1112
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          5102,
+          1109,
+          1112
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "index": 3,
+        "inserted": 5103
+      },
+      "expected": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          5103,
+          1112
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          5103,
+          1112
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insert",
+      "input": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ],
+        "index": 4,
+        "inserted": 5104
+      },
+      "expected": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112,
+          5104
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112,
+          5104
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "popBack",
+      "input": {
+        "values": [
+          1040,
+          1043
+        ]
+      },
+      "expected": {
+        "values": [
+          1040
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1040
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "popBack",
+      "input": {
+        "values": [
+          1060,
+          1063,
+          1066
+        ]
+      },
+      "expected": {
+        "values": [
+          1060,
+          1063
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1060,
+          1063
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "popBack",
+      "input": {
+        "values": [
+          1080,
+          1083,
+          1086,
+          1089
+        ]
+      },
+      "expected": {
+        "values": [
+          1080,
+          1083,
+          1086
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1080,
+          1083,
+          1086
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "popBack",
+      "input": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109,
+          1112
+        ]
+      },
+      "expected": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1100,
+          1103,
+          1106,
+          1109
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "popBack",
+      "input": {
+        "values": [
+          1120,
+          1123,
+          1126,
+          1129,
+          1132,
+          1135
+        ]
+      },
+      "expected": {
+        "values": [
+          1120,
+          1123,
+          1126,
+          1129,
+          1132
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          1120,
+          1123,
+          1126,
+          1129,
+          1132
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAtControl",
+      "input": {
+        "values": [
+          7,
+          7,
+          7
+        ],
+        "index": 1,
+        "value": 0
+      },
+      "expected": {
+        "values": [
+          7,
+          0,
+          7
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          7,
+          0,
+          7
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "setAtControl",
+      "input": {
+        "values": [
+          4,
+          9,
+          2
+        ],
+        "index": 1,
+        "value": 4
+      },
+      "expected": {
+        "values": [
+          4,
+          4,
+          2
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          4,
+          4,
+          2
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insertControl",
+      "input": {
+        "values": [
+          10,
+          -5,
+          10
+        ],
+        "index": 1,
+        "value": 0
+      },
+      "expected": {
+        "values": [
+          10,
+          -5,
+          0,
+          10
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          10,
+          -5,
+          0,
+          10
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    },
+    {
+      "method": "insertControl",
+      "input": {
+        "values": [
+          10,
+          -5,
+          10
+        ],
+        "index": 0,
+        "value": 10
+      },
+      "expected": {
+        "values": [
+          10,
+          10,
+          -5,
+          10
+        ],
+        "acyclic": true
+      },
+      "actual": {
+        "values": [
+          10,
+          10,
+          -5,
+          10
+        ],
+        "acyclic": true
+      },
+      "error": null,
+      "passed": true
+    }
+  ]
+}

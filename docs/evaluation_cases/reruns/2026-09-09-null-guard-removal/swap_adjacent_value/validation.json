@@ -1,0 +1,280 @@
+{
+  "source_commit": "3b323c5ac64852b91c2f3baaaabdb4cd4733daaa",
+  "observation": "value sequence reachable through g and absence of cycles",
+  "conclusion": "all helper tasks succeeded, but no generated method matched all three recorded executions",
+  "responses": [
+    {
+      "run": 1,
+      "all_helpers_synthesized": true,
+      "common_operations_count": 2,
+      "generated_code": "swapAd(i) {\n    const h_int_0 = this.swapAd_f(i);\n    const h_ptr_0 = this.swapAd_f64(i);\n    const h_int_1 = this.swapAd_j(i);\n    const h_ptr_1 = this.swapAd_f66(i);\n    h_ptr_1.f = h_int_1;\n    h_ptr_0.f = h_int_0;\n    h_ptr_0.f = this.g.g.g.f;\n    h_ptr_1.f = this.g.g.g.g.f;\n}",
+      "records": [
+        {
+          "arguments": [
+            1
+          ],
+          "expected": {
+            "values": [
+              39,
+              53,
+              27,
+              46,
+              89
+            ],
+            "acyclic": true
+          },
+          "actual": {
+            "values": [
+              39,
+              27,
+              89,
+              46,
+              89
+            ],
+            "acyclic": true
+          },
+          "error": null,
+          "passed": false
+        },
+        {
+          "arguments": [
+            3
+          ],
+          "expected": {
+            "values": [
+              39,
+              53,
+              27,
+              89,
+              46
+            ],
+            "acyclic": true
+          },
+          "actual": {
+            "values": [
+              39,
+              53,
+              27,
+              89,
+              89
+            ],
+            "acyclic": true
+          },
+          "error": null,
+          "passed": false
+        },
+        {
+          "arguments": [
+            2
+          ],
+          "expected": {
+            "values": [
+              39,
+              53,
+              89,
+              27,
+              46
+            ],
+            "acyclic": true
+          },
+          "actual": {
+            "values": [
+              39,
+              53,
+              46,
+              89,
+              46
+            ],
+            "acyclic": true
+          },
+          "error": null,
+          "passed": false
+        }
+      ],
+      "passed": 0,
+      "failed": 3
+    },
+    {
+      "run": 2,
+      "all_helpers_synthesized": true,
+      "common_operations_count": 2,
+      "generated_code": "swapAd(i) {\n    const h_ptr_0 = this.swapAd_f64(i);\n    const h_int_0 = this.swapAd_f(i);\n    const h_ptr_1 = this.swapAd_f66(i);\n    const h_int_1 = this.swapAd_j(i);\n    h_ptr_0.f = h_int_0;\n    h_ptr_1.f = h_int_1;\n    h_ptr_0.f = this.g.g.g.g.f;\n    h_ptr_1.f = this.g.g.g.f;\n}",
+      "records": [
+        {
+          "arguments": [
+            1
+          ],
+          "expected": {
+            "values": [
+              39,
+              53,
+              27,
+              46,
+              89
+            ],
+            "acyclic": true
+          },
+          "actual": {
+            "values": [
+              39,
+              46,
+              53,
+              46,
+              89
+            ],
+            "acyclic": true
+          },
+          "error": null,
+          "passed": false
+        },
+        {
+          "arguments": [
+            3
+          ],
+          "expected": {
+            "values": [
+              39,
+              53,
+              27,
+              89,
+              46
+            ],
+            "acyclic": true
+          },
+          "actual": {
+            "values": [
+              39,
+              53,
+              27,
+              46,
+              46
+            ],
+            "acyclic": true
+          },
+          "error": null,
+          "passed": false
+        },
+        {
+          "arguments": [
+            2
+          ],
+          "expected": {
+            "values": [
+              39,
+              53,
+              89,
+              27,
+              46
+            ],
+            "acyclic": true
+          },
+          "actual": {
+            "values": [
+              39,
+              53,
+              89,
+              89,
+              46
+            ],
+            "acyclic": true
+          },
+          "error": null,
+          "passed": false
+        }
+      ],
+      "passed": 0,
+      "failed": 3
+    },
+    {
+      "run": 3,
+      "all_helpers_synthesized": true,
+      "common_operations_count": 2,
+      "generated_code": "swapAd(i) {\n    const h_int_0 = this.swapAd_f(i);\n    const h_ptr_0 = this.swapAd_f64(i);\n    const h_int_1 = this.swapAd_j(i);\n    const h_ptr_1 = this.swapAd_f66(i);\n    h_ptr_0.f = h_int_1;\n    h_ptr_1.f = h_int_0;\n    h_ptr_0.f = this.g.g.g.g.f;\n    h_ptr_1.f = this.g.g.g.f;\n}",
+      "records": [
+        {
+          "arguments": [
+            1
+          ],
+          "expected": {
+            "values": [
+              39,
+              53,
+              27,
+              46,
+              89
+            ],
+            "acyclic": true
+          },
+          "actual": {
+            "values": [
+              39,
+              46,
+              53,
+              46,
+              89
+            ],
+            "acyclic": true
+          },
+          "error": null,
+          "passed": false
+        },
+        {
+          "arguments": [
+            3
+          ],
+          "expected": {
+            "values": [
+              39,
+              53,
+              27,
+              89,
+              46
+            ],
+            "acyclic": true
+          },
+          "actual": {
+            "values": [
+              39,
+              53,
+              27,
+              46,
+              46
+            ],
+            "acyclic": true
+          },
+          "error": null,
+          "passed": false
+        },
+        {
+          "arguments": [
+            2
+          ],
+          "expected": {
+            "values": [
+              39,
+              53,
+              89,
+              27,
+              46
+            ],
+            "acyclic": true
+          },
+          "actual": {
+            "values": [
+              39,
+              53,
+              89,
+              89,
+              46
+            ],
+            "acyclic": true
+          },
+          "error": null,
+          "passed": false
+        }
+      ],
+      "passed": 0,
+      "failed": 3
+    }
+  ]
+}
