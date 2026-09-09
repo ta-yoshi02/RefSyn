@@ -5334,8 +5334,7 @@ fn build_composed_method_code(
                         &mut snapshot_index,
                         &mut snapshot_expr_by_object_id,
                     );
-                    let assignment = js_field_assignment(&from_expr, &field, &to_expr);
-                    body_lines.push(format!("if ({} !== null) {{ {} }}", from_expr, assignment));
+                    body_lines.push(js_field_assignment(&from_expr, &field, &to_expr));
                     continue;
                 }
 
@@ -5529,7 +5528,7 @@ fn build_composed_method_code(
                 continue;
             }
             let assignment = js_field_assignment(from_expr, &field, &to_expr);
-            let line = format!("if ({} !== null) {{ {} }}", from_expr, assignment);
+            let line = assignment;
             if field_assignment_to_expr_exists(&body_lines, &field, &to_expr) {
                 continue;
             }
@@ -8405,7 +8404,7 @@ mod tests {
                     "    const h_int_0 = this.append_f(arg);",
                     "    const tmp0 = new Node();",
                     "    tmp0.val = h_int_0;",
-                    "    if (h_ptr_0 !== null) { h_ptr_0.next = tmp0; }",
+                    "    h_ptr_0.next = tmp0;",
                     "}",
                 ]
                 .join("\n"),
@@ -10303,7 +10302,8 @@ mod tests {
 
         assert!(code.contains("const tmp0 = new Node();"));
         assert!(code.contains("tmp0.val = h_int_0;"));
-        assert!(code.contains("if (h_ptr_0 !== null) { h_ptr_0.next = tmp0; }"));
+        assert!(code.contains("h_ptr_0.next = tmp0;"));
+        assert!(!code.contains("if (h_ptr_0 !== null)"));
         assert!(!code.contains("tmp0.next = (h_ptr_0 === null ? null : h_ptr_0.next);"));
         assert!(!code.contains("h_ptr_0.val = h_int_0;"));
     }
@@ -10446,7 +10446,8 @@ mod tests {
         .unwrap();
 
         assert!(code.contains("const tmp0 = new Node();"));
-        assert!(code.contains("if (h_ptr_0 !== null) { h_ptr_0.next = tmp0; }"));
+        assert!(code.contains("h_ptr_0.next = tmp0;"));
+        assert!(!code.contains("if (h_ptr_0 !== null)"));
         assert!(!code.contains("this.next = tmp0;"));
     }
 
@@ -10570,7 +10571,8 @@ mod tests {
 
         assert!(code.contains("tmp0.val = h_int_0;"));
         assert!(code.contains("tmp0.next = h_ptr_1;"));
-        assert!(code.contains("if (h_ptr_0 !== null) { h_ptr_0.next = tmp0; }"));
+        assert!(code.contains("h_ptr_0.next = tmp0;"));
+        assert!(!code.contains("if (h_ptr_0 !== null)"));
         assert!(
             !code.contains("h_ptr_0.next = h_ptr_1;"),
             "oldSucc must remain the new node target, not a second predecessor rewire:\n{}",
