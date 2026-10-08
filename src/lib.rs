@@ -7,7 +7,10 @@ pub mod models;
 pub mod operation_analyzer;
 #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
 pub mod server;
+pub mod synthesis_template;
 pub mod unify_ops;
+mod validation;
+pub use validation::{ValidationResult, ValidationStatus};
 
 use crate::escher_bridge::{
     build_escher_spec, build_escher_task_spec, derive_spec_meta_with_fields, resolve_field_order,
@@ -71,6 +74,8 @@ pub struct FieldTables {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SynthesisResponse {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub validation: Option<ValidationResult>,
     pub common_pattern: Option<String>,
     pub hole_information: Option<HashMap<String, Vec<String>>>,
     pub code: Vec<String>,
@@ -339,6 +344,7 @@ fn collect_suspicious_synthesis_diagnostics(
 
 fn blank_synthesis_response(list_env_info: Option<String>) -> SynthesisResponse {
     SynthesisResponse {
+        validation: None,
         common_pattern: None,
         hole_information: None,
         code: vec![],
@@ -387,6 +393,7 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
         }
     };
     finalize_native_synthesis(&mut artifacts);
+    validation::validate_for_adoption(&body, &mut artifacts);
     log_synthesis_response(&artifacts.response);
 
     Ok(warp::reply::with_status(
@@ -1134,6 +1141,7 @@ pub fn synthesize_core(
     }
 
     let response = SynthesisResponse {
+        validation: None,
         common_pattern: common_plan_artifact
             .as_ref()
             .map(|artifact| artifact.pattern_text.clone()),
@@ -1249,7 +1257,11 @@ fn log_synthesis_response(response: &SynthesisResponse) {
 #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
 fn apply_escher_results(artifacts: &mut SynthesisArtifacts, results: &[EscherJsInternalOutcome]) {
     for out in results {
-        if let Some(js) = out.compiled_js.as_ref().filter(|js| !js.is_empty()) {
+        if let Some(js) = out
+            .compiled_js
+            .as_ref()
+            .filter(|js| out.success && !js.is_empty())
+        {
             artifacts.response.code.push(js.clone());
             artifacts
                 .response
@@ -8364,6 +8376,7 @@ mod tests {
     #[test]
     fn collect_suspicious_synthesis_diagnostics_allows_one_sided_holes() {
         let response = SynthesisResponse {
+            validation: None,
             common_pattern: Some(
                 "COMMON_PLAN (operation-level, ordered)\n[op_0] addNode(id=__temp1, label=Node, isLiteral=false)"
                     .to_string(),
@@ -8436,6 +8449,7 @@ mod tests {
     #[test]
     fn collect_suspicious_synthesis_diagnostics_flags_missing_both_hole_sides() {
         let response = SynthesisResponse {
+            validation: None,
             common_pattern: None,
             hole_information: Some(HashMap::from([(
                 "__hole_0".to_string(),
@@ -8469,6 +8483,7 @@ mod tests {
     #[test]
     fn collect_suspicious_synthesis_diagnostics_flags_task_result_mismatch() {
         let response = SynthesisResponse {
+            validation: None,
             common_pattern: None,
             hole_information: Some(HashMap::from([(
                 "__hole_0".to_string(),

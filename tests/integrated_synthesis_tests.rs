@@ -179,7 +179,11 @@ fn duplicate_method_call(call: &MethodCallOperation, suffix: &str) -> MethodCall
     }
 }
 
-async fn run_synthesis_and_decode(request: SynthesisRequest) -> (StatusCode, SynthesisResponse) {
+async fn run_candidate_synthesis_and_decode(
+    request: SynthesisRequest,
+) -> (StatusCode, SynthesisResponse) {
+    let candidate =
+        refsyn::synthesize_core(request.clone(), refsyn::SynthesisCoreOptions::default()).unwrap();
     let request_body = serde_json::to_vec(&request).unwrap();
     let body_bytes = bytes::Bytes::from(request_body);
 
@@ -191,8 +195,21 @@ async fn run_synthesis_and_decode(request: SynthesisRequest) -> (StatusCode, Syn
     let body = hyper::body::to_bytes(response.into_body())
         .await
         .expect("response body should be readable");
-    let parsed: SynthesisResponse =
+    let mut parsed: SynthesisResponse =
         serde_json::from_slice(&body).expect("response body should be valid synthesis json");
+    assert!(parsed.composed_method_code.is_none());
+    assert!(parsed.code.is_empty());
+    // These legacy fixtures exercise candidate generation; they have no typed replay snapshots.
+    // Keep their independent execution checks without treating them as HTTP adoption successes.
+    parsed.composed_method_code = candidate.response.composed_method_code;
+    if let Some(tasks) = candidate.task_json {
+        parsed.code = refsyn::escher_bridge::run_escher_js(&tasks)
+            .expect("candidate backend should execute")
+            .into_iter()
+            .filter(|outcome| outcome.success)
+            .filter_map(|outcome| outcome.compiled_js)
+            .collect();
+    }
     (status, parsed)
 }
 
@@ -273,7 +290,7 @@ async fn synthesize_saved_case(path: &str) -> SynthesisResponse {
     let text = fs::read_to_string(path).expect("saved evaluation payload should be readable");
     let request: SynthesisRequest =
         serde_json::from_str(&text).expect("saved evaluation payload should deserialize");
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
     assert_eq!(status, StatusCode::OK);
     response
 }
@@ -344,7 +361,7 @@ async fn test_integrated_synthesis_single_operation_list() {
         method_calls: vec![method_call],
         vis_graph,
     };
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
 
     assert_eq!(status, StatusCode::OK);
     assert!(response.code.is_empty());
@@ -414,7 +431,7 @@ async fn test_integrated_synthesis_multiple_operation_lists() {
         method_calls: vec![method_call_a, method_call_b],
         vis_graph,
     };
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
 
     assert_eq!(status, StatusCode::OK);
     let analysis = response
@@ -471,7 +488,7 @@ async fn test_integrated_synthesis_three_operation_lists_recompute_consensus() {
         method_calls: vec![method_call_a, method_call_b, method_call_c],
         vis_graph,
     };
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
 
     assert_eq!(status, StatusCode::OK);
     let analysis = response
@@ -489,7 +506,7 @@ async fn test_integrated_synthesis_empty_method_calls() {
         method_calls: vec![],
         vis_graph: base_vis_graph(),
     };
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
 
     assert_eq!(status, StatusCode::OK);
     assert!(response.code.is_empty());
@@ -510,7 +527,7 @@ async fn test_integrated_synthesis_rejects_mixed_method_names() {
         method_calls: vec![call_a, call_b],
         vis_graph,
     };
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
 
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_eq!(response.common_pattern, None);
@@ -538,7 +555,7 @@ async fn test_integrated_synthesis_rejects_remove_operations() {
         method_calls: vec![call],
         vis_graph,
     };
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
 
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_eq!(response.common_pattern, None);
@@ -560,7 +577,7 @@ async fn test_operations_json_removeval_accepts_delete_edge() {
         method_calls,
         vis_graph: fixture_vis_graph_for_operations_json(),
     };
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
 
     assert_eq!(status, StatusCode::OK);
     let info = response
@@ -635,7 +652,7 @@ async fn test_popback_delete_edge_uses_edge_source_hole() {
         method_calls: vec![call_a, call_b],
         vis_graph: graph_a,
     };
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
 
     assert_eq!(status, StatusCode::OK);
     let code = response
@@ -672,7 +689,7 @@ async fn test_operations_json_set_supports_edit_edge_reference_analysis() {
         method_calls: vec![base_call, duplicate],
         vis_graph: fixture_vis_graph_for_operations_json(),
     };
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
 
     assert_eq!(status, StatusCode::OK);
     let analysis = response
@@ -693,7 +710,7 @@ async fn test_saved_set_at_payload_keeps_edit_reference_in_three_trace_plan() {
     ))
     .expect("saved setAt payload should deserialize");
 
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
 
     assert_eq!(status, StatusCode::OK);
     let common_pattern = response
@@ -834,7 +851,7 @@ async fn test_operations_json_reverse_supports_edit_edge_reference_analysis() {
         method_calls: vec![base_call, duplicate],
         vis_graph: fixture_vis_graph_for_operations_json(),
     };
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
 
     assert_eq!(status, StatusCode::OK);
     let analysis = response
@@ -969,7 +986,7 @@ async fn test_set_with_existing_kanon_id_and_mismatched_receiver_still_composes(
         method_calls: vec![call_a, call_b],
         vis_graph,
     };
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
 
     assert_eq!(status, StatusCode::OK);
     let composed = response
@@ -1209,7 +1226,7 @@ async fn test_integrated_synthesis_three_append_like_specs_group_holes() {
         method_calls: vec![call1, call2, call3],
         vis_graph: graph_call1,
     };
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
 
     assert_eq!(status, StatusCode::OK);
     let analysis = response
@@ -1470,7 +1487,7 @@ async fn test_integrated_synthesis_insert_groups_value_and_edge_source_holes() {
     }))
     .expect("insert request fixture should deserialize");
 
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
     assert_eq!(status, StatusCode::OK);
     assert!(
         response.common_pattern.is_some(),
@@ -1678,7 +1695,7 @@ async fn test_integrated_synthesis_insert_keeps_edge_source_with_runtime_scoped_
     }))
     .expect("runtime-scoped insert request should deserialize");
 
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
     assert_eq!(status, StatusCode::OK);
     let hole_info = response
         .hole_information
@@ -1713,7 +1730,7 @@ async fn test_integrated_synthesis_insert_three_traces_task_json_keeps_ts_ptr_co
     let request: SynthesisRequest = serde_json::from_str(&request_text)
         .expect("three-trace insert request fixture should deserialize");
 
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
     assert_eq!(status, StatusCode::OK);
 
     let list_info = response
@@ -1843,7 +1860,7 @@ async fn test_integrated_synthesis_insert_three_traces_executes_backend_tasks() 
     let request: SynthesisRequest = serde_json::from_str(&request_text)
         .expect("three-trace insert request fixture should deserialize");
 
-    let (status, response) = run_synthesis_and_decode(request).await;
+    let (status, response) = run_candidate_synthesis_and_decode(request).await;
     assert_eq!(status, StatusCode::OK);
 
     let list_info = response
