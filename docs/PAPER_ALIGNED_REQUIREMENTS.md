@@ -30,8 +30,10 @@ setter、Proxy、特殊なproperty、一般の副作用を持つconstructorへ�
 
 実装の順序を、R13の翻訳失敗の扱い、R15の全体検証とR16の採用条件、R01〜R03の正規化の順へ変更する。
 今回、翻訳例外を `success: false` とし、native、web、Kanon埋込み版で全体検証を結果採用へ接続した。
-全実演で `validation.status = passed` となった応答だけが適用用コードを持つ。
+`handle_synthesis` とbrowserラッパーでは、全実演で `validation.status = passed` となった応答だけが適用用コードを持つ。`synthesize_core` と `synthesize_browser` は検証前の候補を返す。
 Kanonは呼出し前の実オブジェクトを記録し、検証情報が不足する旧payloadは反映しない。
+2026-10-08のレビュー対応で、field種別と返り値を観測から補完する処理を除き、ヒープ外の副作用、addEdgeの前提、生成物の対応付け、検証不能の分類、Kanonでの適用範囲を修正した。
+R16のうち、対象曖昧と補助メソッド名の衝突は適用を拒否するようにしたが、置換後の再実行結果の確認は未実装である。
 対応入力と保証の限界は `SYNTHESIS_TEMPLATE_CONTRACT.md` の「本番採用前の実演検証」に記す。
 `clear_edge_reference` の未知fromでの成功返却とfield種別の上書きは、次のR01〜R03で修正する。
 

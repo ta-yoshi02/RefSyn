@@ -96,40 +96,72 @@ cargo test --locked --offline --test synthesis_template_tests
 ## 本番採用前の実演検証
 
 2026-10-08に追加した `runtime/whole-method-validation.mjs` は、上記の試作モジュールとは独立して、本番が生成したJavaScriptを検査する。
-翻訳例外はadapterの失敗とし、全穴の成功と補助定義を確認してから、各実演の呼出し前状態へ生成メソッドを適用する。
-期待状態は同じ呼出し前状態から、記録順にMOLDの操作を実行して構成する。
-`deleteEdge` はオブジェクト参照fieldへのnull代入、`addNode(C)` は送信されたクラス定義の `new C()` とする。
-比較は全既存物、値、propertyの有無、undefined、循環参照、既存物のidentity、生成物間の別名関係、生成数、返り値を含む。
-既存物はIDで固定対応し、新規物は参照関係に従って対応付ける。
-到達不能の生成物は生成順で対応させるため、同じ結果でも生成順の異なる候補を不採用にする場合がある。
+2026-10-08にレビュー指摘を受けて入力形式を `validation.version = 2` へ改め、以下の契約に揃えた。
 
-検証入力は `validation.version = 1` の `classes` と `cases` で受け取る。
-各classは `name`、元の `source`、`referenceFields` を持ち、各caseは実演ID、`objects`、`values`、`arguments`、`returnValue`（または操作上の `returnTarget`）を持つ。
-各objectの `fields` は完全なown data propertyのmapであり、数値、文字列、真偽値、null、`{undefined:true}`、`{ref:"ID"}` を区別する。
-mapにないpropertyは不在を表す。
-`values` は操作が指す既存literalのIDと値の対応である。
-Kanonは呼出し直前に受信物、引数、登録済み実オブジェクトを走査し、テスト保存時にそのsnapshotを複製する。
-表示グラフから欠落fieldやconstructorの既定値を推測しない。
+### 保証する範囲
+
+検証が `passed` を返すとき、保証するのは次の2点である。
+
+1. **実演との一致**：生成メソッドは、与えられた全実演について、以下の観測範囲で期待状態を再現する。
+2. **検証の健全性**：`passed` は、この観測範囲での全実演一致を意味する。観測範囲の外の正しさは含まない。
+
+未観測の入力に対する正しさ（汎化）は保証しない。実演が区別しない誤りは検出できず、その対策は実演の追加である。
+同一fieldへの複数回書込みは、件数で拒否も圧縮もせず記録順に再生するが、その一般的な正しさは主張しない。
+
+### 期待状態
+
+期待状態は、各実演の型付き呼出し前状態から、記録順にMOLDの操作を再生して構成する。生成コードには依存しない。
+
+- `addNode(C)` は送信されたクラス定義の `new C()` とする。constructorの既定値を保ち、全fieldをnullにはしない。
+- `addEdge(m,f,n)` は、Kanonが辺を描かないnull、undefined、または不在のfieldにだけ適用できる。辺がある場合は記録と状態が矛盾するため検証不能とする。
+- `editEdgeReference` と `deleteEdge` は、記録された旧対象が現在値と一致することを確認する。
+- `deleteEdge` はfieldへのnull代入であり、propertyは残す。旧対象がオブジェクトである参照fieldにだけ適用し、値fieldへの削除は検証不能とする。参照fieldであることは、その実演で削除された辺そのものから判断し、他の物で観測した値から型を推測しない。null化を許すことは入力側の前提とする。
+- 返り値は、`return` への編集があればその対象、なければ `undefined` とする。Kanonは返り値の矢印がない実演を「返り値なし」と表示するため、既存メソッドを呼んだ結果では補完しない。
+- Kanonのリテラル入力は型を持たず常に文字列として記録される。合成側（`js_literal_expr_from_graph_label`）は数字として読める文字列を数値として扱うため、検証も同じ規約で読む。この規約により、数字の形をした文字列値は実演できない。
+- 期待状態の導出中の例外（外部変数を読むconstructor等）は、候補の誤りではなく実演の問題として検証不能とする。
+
+### 比較する観測範囲
+
+- 全既存物と、生成物を含むそこから到達できる物の値、propertyの有無とdescriptor、undefinedと不在の区別、クラス、identityの全単射（循環、共有、外部alias）
+- 返り値（値またはidentity）
+- 生成数。到達不能な生成物は、生成順ではなく構造で対応付ける（バックトラック探索）
+- ヒープ外の状態：`globalThis` の名前付きproperty、`Object.prototype`、`Function.prototype`、`Array.prototype`、各クラスのconstructorとprototypeの own property。比較は浅く、これらから辿れる別オブジェクトの内部変更は見ない。hostが自ら登録するSymbolキーのglobalは比較しない。
+
+### 入力形式
+
+各classは `name` と元の `source` を持つ。各caseは実演ID、`objects`、`values`、`arguments` を持つ。
+各objectの `fields` は完全なown data propertyのmapであり、数値、文字列、真偽値、null、`{undefined:true}`、`{ref:"ID"}` を区別する。mapにないpropertyは不在を表す。
+`values` は操作が指す既存literalのIDと値の対応である。KanonはliteralノードをID `<object id>-<field>` で表示し、操作もこのIDで記録するため、この命名規約に依存する。
+Kanonは呼出し直前に受信物、引数、登録済み実オブジェクトを走査し、テスト保存時にそのsnapshotを複製する。表示グラフから欠落fieldやconstructorの既定値を推測しない。
 操作IDの変換とsnapshot中のIDの変換には同じ対応表を使う。
-返り値の編集があればその対象IDを、なければ元の呼出しで取得した返り値を照合する。
+全実演は同じクラスの同じメソッドを対象としなければならない。
 
-初期対応は、ソース中のトップレベルclass宣言と通常のdata fieldを持つ有限のobject graphに限る。
-constructorは引数なしで実行でき、決定的で、既存状態や外部状態を変更しないという前提を維持する。
-外部自由変数に依存する定義、継承、accessor、Proxy、private field、関数値、配列、非有限数、負のゼロ、外部変数の更新は対応範囲に含めない。
-Kanonの予約metadataだけをsnapshotから除外し、独自のクラス名やfield名は保持する。
-`referenceFields` は実測したオブジェクト参照fieldを区別する情報であり、クラスの不変条件やnull許容性を証明する型推論ではない。
-実演でnull化を指定するfieldにnull代入を許すことは入力側の前提とする。
+### 対象とするプログラム
+
+ソース中のトップレベルclass宣言と、通常のdata fieldを持つ有限のobject graphに限る。
+constructorは引数なしで実行でき、決定的で、既存状態や外部状態を変更しないことを前提とする。乱数や時刻を使うconstructorでは、正しい候補を不採用にし得る。
+継承、accessor、Proxy、private field、Symbolキー、関数値、配列、Map/Set、非有限数、負のゼロ、外部変数の更新は対象外であり、検出した場合は `passed` にしない。
 既存メソッドが実演編集の前にheapを変更した場合は、編集列だけでは期待最終状態を構成できないため検証不能とする。
-対応外や情報不足、元ソースの変更を、成功へ補完しない。
+
+### 実行と採用
 
 結果は `validation.status`（`passed`、`failed`、`unavailable`）、`checked_demonstrations`、`error` で返す。
-nativeはNode VM、browserは終了可能な専用Workerで実行し、検証に1秒の上限を設ける。
+nativeはNode VM（同期実行1秒）を子プロセスで動かし、プロセス全体にも10秒の上限を設ける。
+browserは専用Workerで実行し、Workerの起動を待ってから1秒の実行上限を計る（起動は10秒まで）。Workerからの応答は要求ごとのnonceを持つものだけを受理する。
 この実行分離は一般の悪意あるJSに対するセキュリティ保証ではない。
 `passed` 以外では `composed_method_code` と適用用 `code` を返さず、穴ごとの結果は診断として残す。
-Kanonも、全実演の検証成功と送信時からの元ソース不変を確認するまで、メソッド置換や補助コードの挿入を行わない。
-旧payloadには必要なsnapshotがないため、対応するKanonで実演を記録し直す必要がある。
+この採用判定を行うのは `handle_synthesis` とbrowserのラッパーである。`synthesize_core` とwasmの `synthesize_browser` は検証前の候補を返すので、直接呼ぶ場合は採用に使わない。
 
-この検査は、対応範囲内で与えられた実演を再現することを採用条件にする。
-未知入力全般や複数回書込みの一般的な正しさ、Kanonの表示グラフ自体のMOLD意味への変更は保証しない。
-複数回書込みを件数で拒否せず、圧縮せずに記録順で期待状態を作る。
+Kanonは、全実演の検証成功と送信時からの元ソース不変を確認したうえで、検証器が実行したのと同じ変更だけをソースへ適用する（`buildValidatedSource`）。
+
+- 対象クラスがトップレベルにちょうど1つあり、対象メソッドがその通常のメソッドとしてちょうど1つあること
+- 補助メソッドは対象メソッドの直前に `// refsyn: generated helper` を付けて追加する。同名のメンバーが既にある場合は、この印の付いた以前の生成物だけを置き換え、利用者が書いたメンバーとの衝突は適用を拒否する
+- 再構築したソースが構文解析できること
+
+検証器はメソッドをprototypeへ定義して実行し、Kanonはclass本体のメソッド定義を置き換える。上の条件（継承なし、同名メンバーは対象か印付き補助だけ、通常のメソッド）の下では両者は同じ動作になる。
+置換後のKanonでの再実行結果の確認は、まだ実装していない。
+
+旧payloadには必要なsnapshotがないため、対応するKanonで実演を記録し直す必要がある。
+保存済みの主要5ケース（append、insert_general、popBack、prepend、setAt）は、記録済みの `precondGraph` から型付き呼出し前状態を組み立てたfixtureで、合成から検証、採用までを確認している（`tests/whole_method_validation_tests.rs`）。fixtureは表示グラフで省略されたfieldをObjのconstructorに合わせてnullとして補っており、Kanonの実際の記録経路の確認ではない。
+
 R01〜R03の正規化、`clear_edge_reference` の修正、試作雛形の本番接続は次の作業として残る。

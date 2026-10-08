@@ -5,14 +5,15 @@ import { validateWholeMethod, applyValidationResult } from './whole-method-valid
 
 export const fixture = (code = 'cut() { this.link = null; return this; }') => ({
   request: {
-    method_calls: [{ callLabel: 'c', contextSensitiveID: 'ctx', receiverObject: 'a', receiverClassName: 'Cell', methodName: 'cut', arguments: [], operations: [{ editType: 'deleteEdge', from: 'a', label: 'link', to: 'b' }] }],
-    validation: { version: 1, classes: [{ name: 'Cell', source: 'class Cell { constructor() { this.payload = 7; this.link = null; } }', referenceFields: ['link'] }], cases: [{ callLabel: 'c', contextSensitiveID: 'ctx', objects: [{ id: 'a', className: 'Cell', fields: { payload: 1, link: { ref: 'b' }, extra: { undefined: true } } }, { id: 'b', className: 'Cell', fields: { payload: 1, link: { ref: 'a' } } }], arguments: [], returnValue: { ref: 'a' } }] },
+    method_calls: [{ callLabel: 'c', contextSensitiveID: 'ctx', receiverObject: 'a', receiverClassName: 'Cell', methodName: 'cut', arguments: [], operations: [{ editType: 'deleteEdge', from: 'a', label: 'link', to: 'b' }, { editType: 'addVariable', label: 'return', to: 'a' }] }],
+    validation: { version: 2, classes: [{ name: 'Cell', source: 'class Cell { constructor() { this.payload = 7; this.link = null; } }' }], cases: [{ callLabel: 'c', contextSensitiveID: 'ctx', objects: [{ id: 'a', className: 'Cell', fields: { payload: 1, link: { ref: 'b' }, extra: { undefined: true } } }, { id: 'b', className: 'Cell', fields: { payload: 1, link: { ref: 'a' } } }], values: { 'a-payload': 1, 'b-payload': 1 }, arguments: [] }] },
   },
   response: { composed_method_code: code, code: [], escher_results: [] }, taskNames: [],
 });
 
 test('accepts null assignment and retains identity, cycles and undefined fields', () => {
-  assert.equal(validateWholeMethod(fixture()).status, 'passed');
+  const result = validateWholeMethod(fixture());
+  assert.equal(result.status, 'passed', result.error);
 });
 for (const [name, code] of [
   ['property deletion is different from null', 'cut() { delete this.link; return this; }'],
@@ -24,8 +25,7 @@ for (const [name, code] of [
 
 test('constructor defaults and fresh return aliases are compared', () => {
   const payload = fixture('cut() { const cell = new Cell(); this.link = cell; return cell; }');
-  payload.request.method_calls[0].operations = [{ editType: 'addNode', id: 'new', label: 'Cell' }, { editType: 'editEdgeReference', from: 'a', label: 'link', oldTo: 'b', newTo: 'new' }];
-  payload.request.validation.cases[0].returnValue = { ref: 'new' };
+  payload.request.method_calls[0].operations = [{ editType: 'addNode', id: 'new', label: 'Cell' }, { editType: 'editEdgeReference', from: 'a', label: 'link', oldTo: 'b', newTo: 'new' }, { editType: 'addVariable', label: 'return', to: 'new' }];
   assert.equal(validateWholeMethod(payload).status, 'passed');
   payload.response.composed_method_code = 'cut() { const cell = new Cell(); cell.payload = null; this.link = cell; return cell; }';
   assert.equal(validateWholeMethod(payload).status, 'failed');
@@ -51,8 +51,13 @@ test('missing state and missing successful holes never produce adoptable code', 
   assert.equal(validateWholeMethod(payload).status, 'failed');
 });
 
-test('non-reference delete and unresolved source are unavailable', () => {
-  for (const operation of [{ editType: 'deleteEdge', from: 'a', label: 'payload', to: 'n' }, { editType: 'deleteEdge', from: 'missing', label: 'link', to: 'b' }]) {
+test('value-field delete, stale old targets and unresolved sources are unavailable', () => {
+  for (const operation of [
+    { editType: 'deleteEdge', from: 'a', label: 'payload', to: 'a-payload' },
+    { editType: 'deleteEdge', from: 'a', label: 'link', to: 'a' },
+    { editType: 'addEdge', from: 'a', label: 'link', to: 'a' },
+    { editType: 'deleteEdge', from: 'missing', label: 'link', to: 'b' },
+  ]) {
     const payload = fixture();
     payload.request.method_calls[0].operations = [operation];
     assert.equal(validateWholeMethod(payload).status, 'unavailable');
@@ -71,7 +76,7 @@ test('hole helpers are installed with composed code', () => {
 
 test('repeated writes are replayed in demonstration order without compression or rejection', () => {
   const payload = fixture('cut() { this.link = this; return this; }');
-  payload.request.method_calls[0].operations.push({ editType: 'editEdgeReference', from: 'a', label: 'link', oldTo: 'null', newTo: 'a' });
+  payload.request.method_calls[0].operations.splice(1, 0, { editType: 'addEdge', from: 'a', label: 'link', to: 'a' });
   assert.equal(validateWholeMethod(payload).status, 'passed');
   payload.response.composed_method_code = 'cut() { this.link = null; return this; }';
   assert.equal(validateWholeMethod(payload).status, 'failed');
@@ -96,5 +101,75 @@ test('duplicate generated method names are rejected before execution', () => {
   payload.taskNames = ['h'];
   payload.response.escher_results = [{ name: 'h', success: true }];
   payload.response.code = ['cut() { return null; }'];
+  assert.equal(validateWholeMethod(payload).status, 'failed');
+});
+
+for (const [name, code] of [
+  ['doing nothing is rejected', 'cut() { return this; }'],
+  ['updating a different object is rejected', 'cut() { this.link.link = null; return this; }'],
+  ['allocating instead of writing null is rejected', 'cut() { this.link = new Cell(); return this; }'],
+  ['prototype mutation is rejected', 'cut() { this.link = null; Object.getPrototypeOf(this).leak = 1; return this; }'],
+  ['static state mutation is rejected', 'cut() { this.link = null; Cell.count = 1; return this; }'],
+  ['global mutation is rejected', 'cut() { this.link = null; globalThis.leak = 1; return this; }'],
+  ['builtin prototype mutation is rejected', 'cut() { this.link = null; Array.prototype.leak = 1; return this; }'],
+]) test(name, () => {
+  const result = validateWholeMethod(fixture(code));
+  assert.equal(result.status, 'failed', result.error);
+});
+
+test('without a return edit the demonstrated return value is undefined', () => {
+  const payload = fixture('cut() { this.link = null; }');
+  payload.request.method_calls[0].operations.pop();
+  assert.equal(validateWholeMethod(payload).status, 'passed');
+  payload.response.composed_method_code = 'cut() { this.link = null; return this; }';
+  assert.equal(validateWholeMethod(payload).status, 'failed');
+});
+
+test('addEdge starts from a field without an edge', () => {
+  const payload = fixture('cut() { this.link = null; this.link = this; return this; }');
+  payload.request.method_calls[0].operations.splice(1, 0, { editType: 'addEdge', from: 'a', label: 'link', to: 'a' });
+  assert.equal(validateWholeMethod(payload).status, 'passed');
+});
+
+test('unreachable allocations are paired by structure rather than creation order', () => {
+  const payload = fixture();
+  payload.request.method_calls[0].operations.splice(1, 0,
+    { editType: 'addNode', id: 'n1', label: 'Cell' },
+    { editType: 'addNode', id: 'n2', label: 'Cell' },
+    { editType: 'addEdge', from: 'n1', label: 'link', to: 'a' });
+  for (const code of [
+    'cut() { const x = new Cell(); new Cell(); x.link = this; this.link = null; return this; }',
+    'cut() { new Cell(); const x = new Cell(); x.link = this; this.link = null; return this; }',
+  ]) {
+    payload.response.composed_method_code = code;
+    assert.equal(validateWholeMethod(payload).status, 'passed', code);
+  }
+  payload.response.composed_method_code = 'cut() { new Cell(); new Cell(); this.link = null; return this; }';
+  assert.equal(validateWholeMethod(payload).status, 'failed');
+});
+
+test('a constructor that cannot run in isolation makes the demonstration unavailable', () => {
+  const payload = fixture('cut() { this.link = new Cell(); return this; }');
+  payload.request.validation.classes[0].source = 'class Cell { constructor() { this.id = nextId++; this.link = null; } }';
+  payload.request.method_calls[0].operations.splice(1, 0, { editType: 'addNode', id: 'n', label: 'Cell' });
+  const result = validateWholeMethod(payload);
+  assert.equal(result.status, 'unavailable');
+  assert.match(result.error, /Expected state could not be derived/);
+});
+
+test('demonstrations of different methods are not validated together', () => {
+  const payload = fixture();
+  payload.request.method_calls.push({ ...payload.request.method_calls[0], contextSensitiveID: 'ctx2', methodName: 'other' });
+  payload.request.validation.cases.push({ ...payload.request.validation.cases[0], contextSensitiveID: 'ctx2' });
+  assert.equal(validateWholeMethod(payload).status, 'unavailable');
+});
+
+test('numerals typed into Kanon are read as numbers, as synthesis reads them', () => {
+  const payload = fixture('cut() { this.link = null; this.payload = 53; return this; }');
+  payload.request.method_calls[0].operations.splice(1, 0,
+    { editType: 'addNode', id: 'lit', label: '53', isLiteral: true, type: 'string' },
+    { editType: 'editEdgeReference', from: 'a', label: 'payload', oldTo: 'a-payload', newTo: 'lit' });
+  assert.equal(validateWholeMethod(payload).status, 'passed');
+  payload.request.method_calls[0].operations[1].label = 'x53';
   assert.equal(validateWholeMethod(payload).status, 'failed');
 });

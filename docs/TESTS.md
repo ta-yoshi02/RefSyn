@@ -22,12 +22,20 @@ suite with `cargo test`.
 
 ## Whole-method adoption
 
-- `tests/whole_method_validation_tests.rs` checks native adoption and rejection through HTTP.
-- `node --test runtime/whole-method-validation.test.mjs` checks complete state,
-  identity, return values, constructor defaults, repeated-write replay and timeout.
-- `npm test --prefix web` checks browser adoption, translation failure and Worker timeout.
+- `tests/whole_method_validation_tests.rs` checks native adoption and rejection through HTTP,
+  including the five saved evaluation cases with typed pre-states built from their recorded
+  `precondGraph` (requires a built `external/escher-ts`).
+- `node --test runtime/whole-method-validation.test.mjs` checks the demonstrated heap
+  (values, presence, identity, allocations by structure), return values, side effects on
+  globals, built-in and class prototypes and statics, rejection of incorrect candidates,
+  unavailable inputs, repeated-write replay and timeout.
+- `npm test --prefix web` checks browser adoption, translation failure, Worker startup and
+  run timeouts, and reply nonces.
 - Kanon's `src/js/test/testize-whole-method-validation.test.js` checks typed capture,
-  payload delivery to the actual validator, and editor mutation guards.
+  payload delivery to the actual validator, editor mutation guards, application of exactly
+  the validated change (helper markers, collisions, ambiguous targets) and re-execution of
+  the applied class. Its jest setup requires `escodegen`, which Kanon ships as the
+  `external/escodegen` submodule rather than an npm dependency.
 - The protocol and bounded guarantee are described in `SYNTHESIS_TEMPLATE_CONTRACT.md`.
 
 ## Graph / Unification Tooling

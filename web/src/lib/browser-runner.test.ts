@@ -119,9 +119,9 @@ describe("browser runner", () => {
 });
 
 const verifiedRequest: SynthesisRequest = {
-  method_calls: [{ callLabel: "c", contextSensitiveID: "ctx", receiverObject: "r", receiverClassName: "Box", methodName: "run", operations: [] }],
+  method_calls: [{ callLabel: "c", contextSensitiveID: "ctx", receiverObject: "r", receiverClassName: "Box", methodName: "run", operations: [{ editType: "addVariable", label: "return", to: "r" }] }],
   vis_graph: { nodes: [], edges: [] },
-  validation: { version: 1, classes: [{ name: "Box", source: "class Box {}" }], cases: [{ callLabel: "c", contextSensitiveID: "ctx", objects: [{ id: "r", className: "Box", fields: {} }], arguments: [], returnValue: { ref: "r" } }] },
+  validation: { version: 2, classes: [{ name: "Box", source: "class Box {}" }], cases: [{ callLabel: "c", contextSensitiveID: "ctx", objects: [{ id: "r", className: "Box", fields: {} }], arguments: [] }] },
 };
 
 it("adopts only a method that reproduces the full demonstration", async () => {

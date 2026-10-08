@@ -17,8 +17,11 @@ pub struct ValidationResult {
 
 #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
 pub fn validate_for_adoption(body: &[u8], artifacts: &mut crate::SynthesisArtifacts) {
-    use std::io::Write;
+    use std::io::{Read, Write};
     use std::process::{Command, Stdio};
+    use std::time::{Duration, Instant};
+
+    const PROCESS_TIMEOUT: Duration = Duration::from_secs(10);
 
     let run = || -> anyhow::Result<ValidationResult> {
         let request: serde_json::Value = serde_json::from_slice(body)?;
@@ -57,13 +60,39 @@ pub fn validate_for_adoption(body: &[u8], artifacts: &mut crate::SynthesisArtifa
             let _ = child.wait();
             return Err(error.into());
         }
-        let output = child.wait_with_output()?;
+        // The VM timeout only bounds synchronous execution; this bounds the whole process.
+        let read_all = |mut pipe: Box<dyn Read + Send>| {
+            std::thread::spawn(move || {
+                let mut buffer = Vec::new();
+                pipe.read_to_end(&mut buffer).map(|_| buffer)
+            })
+        };
+        let stdout = read_all(Box::new(child.stdout.take().unwrap()));
+        let stderr = read_all(Box::new(child.stderr.take().unwrap()));
+        let deadline = Instant::now() + PROCESS_TIMEOUT;
+        let status = loop {
+            if let Some(status) = child.try_wait()? {
+                break status;
+            }
+            if Instant::now() >= deadline {
+                let _ = child.kill();
+                let _ = child.wait();
+                anyhow::bail!("Whole-method validator process timed out");
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        };
+        let stdout = stdout
+            .join()
+            .map_err(|_| anyhow::anyhow!("stdout reader panicked"))??;
+        let stderr = stderr
+            .join()
+            .map_err(|_| anyhow::anyhow!("stderr reader panicked"))??;
         anyhow::ensure!(
-            output.status.success(),
+            status.success(),
             "Whole-method validator exited: {}",
-            String::from_utf8_lossy(&output.stderr)
+            String::from_utf8_lossy(&stderr)
         );
-        Ok(serde_json::from_slice(&output.stdout)?)
+        Ok(serde_json::from_slice(&stdout)?)
     };
     let result = run().unwrap_or_else(|error| ValidationResult {
         status: ValidationStatus::Unavailable,
