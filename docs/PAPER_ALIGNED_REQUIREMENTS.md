@@ -33,7 +33,8 @@ setter、Proxy、特殊なproperty、一般の副作用を持つconstructorへ�
 `handle_synthesis` とbrowserラッパーでは、全実演で `validation.status = passed` となった応答だけが適用用コードを持つ。`synthesize_core` と `synthesize_browser` は検証前の候補を返す。
 Kanonは呼出し前の実オブジェクトを記録し、検証情報が不足する旧payloadは反映しない。
 2026-10-08のレビュー対応で、field種別と返り値を観測から補完する処理を除き、ヒープ外の副作用、addEdgeの前提、生成物の対応付け、検証不能の分類、Kanonでの適用範囲を修正した。
-R16のうち、対象曖昧と補助メソッド名の衝突は適用を拒否するようにしたが、置換後の再実行結果の確認は未実装である。
+R16のうち、対象曖昧と補助メソッド名の衝突は適用を拒否するようにした。置換後の再実行結果の自動確認は未実装で、手動のE2E確認は1例にとどまる。
+この変更は採用判定の改善であり、論文準拠の完成ではない。次の優先順位は、Kanonの状態反映をMOLDの意味（null代入、constructor）へ揃えること、および本番の同型対応、雛形、穴入力環境の置換である。正式な論文評価は、その適合を確認してから行う。
 対応入力と保証の限界は `SYNTHESIS_TEMPLATE_CONTRACT.md` の「本番採用前の実演検証」に記す。
 `clear_edge_reference` の未知fromでの成功返却とfield種別の上書きは、次のR01〜R03で修正する。
 
