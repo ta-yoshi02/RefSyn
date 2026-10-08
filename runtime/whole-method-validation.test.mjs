@@ -164,12 +164,15 @@ test('demonstrations of different methods are not validated together', () => {
   assert.equal(validateWholeMethod(payload).status, 'unavailable');
 });
 
-test('numerals typed into Kanon are read as numbers, as synthesis reads them', () => {
-  const payload = fixture('cut() { this.link = null; this.payload = 53; return this; }');
+test('literals keep their recorded type', () => {
+  const payload = fixture();
   payload.request.method_calls[0].operations.splice(1, 0,
-    { editType: 'addNode', id: 'lit', label: '53', isLiteral: true, type: 'string' },
+    { editType: 'addNode', id: 'lit', label: '007', isLiteral: true, type: 'string' },
     { editType: 'editEdgeReference', from: 'a', label: 'payload', oldTo: 'a-payload', newTo: 'lit' });
-  assert.equal(validateWholeMethod(payload).status, 'passed');
-  payload.request.method_calls[0].operations[1].label = 'x53';
-  assert.equal(validateWholeMethod(payload).status, 'failed');
+  const run = (code) => { payload.response.composed_method_code = code; return validateWholeMethod(payload).status; };
+  assert.equal(run('cut() { this.link = null; this.payload = "007"; return this; }'), 'passed');
+  assert.equal(run('cut() { this.link = null; this.payload = 7; return this; }'), 'failed');
+  payload.request.method_calls[0].operations[1] = { editType: 'addNode', id: 'lit', label: '53', isLiteral: true, type: 'number' };
+  assert.equal(run('cut() { this.link = null; this.payload = 53; return this; }'), 'passed');
+  assert.equal(run('cut() { this.link = null; this.payload = "53"; return this; }'), 'failed');
 });

@@ -102,9 +102,8 @@ export function validateWholeMethod({ request, response, taskNames = [] }) {
               if (expected.objects.has(op.id) || expected.values.has(op.id)) unavailable("Duplicate created ID");
               if (op.isLiteral) {
                 let value = op.label;
-                // Kanon records every literal typed into the editor as a string, and RefSyn's synthesis reads
-                // numerals among them as numbers (js_literal_expr_from_graph_label); validation reads them the same way.
-                if (op.type === "number" || (op.type === "string" && /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(value))) value = Number(value);
+                // The recorded type is the demonstrated one; a value that synthesis reads differently must fail here.
+                if (op.type === "number") value = Number(value);
                 else if (op.type === "boolean" && typeof value === "string") {
                   if (!["true", "false"].includes(value)) unavailable("Invalid boolean literal");
                   value = value === "true";

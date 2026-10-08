@@ -160,6 +160,43 @@ fn with_typed_pre_state(mut request: Value, class_source: String) -> Value {
     request
 }
 
+// These payloads were recorded before Kanon typed literal input, so every literal says "string".
+// Re-type them as Kanon's literalInputType now records them.
+fn with_typed_literal_input(mut request: Value) -> Value {
+    for call in request["method_calls"].as_array_mut().unwrap() {
+        for op in call["operations"].as_array_mut().unwrap() {
+            let label = op["label"].as_str().unwrap_or_default();
+            // The saved literals are integers; canonical integers are numbers under Kanon's rule.
+            let canonical = label
+                .parse::<i64>()
+                .is_ok_and(|number| number.to_string() == label);
+            if op["isLiteral"] == true && op["type"] == "string" && canonical {
+                op["type"] = json!("number");
+            }
+        }
+    }
+    request
+}
+
+#[tokio::test]
+async fn untyped_numeral_literals_are_not_adopted_as_numbers() {
+    let payload: Value = serde_json::from_str(
+        &std::fs::read_to_string(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/docs/evaluation_cases/append/mold_payload.json"
+        ))
+        .unwrap(),
+    )
+    .unwrap();
+    let response = run(with_typed_pre_state(payload, obj_class_source("append"))).await;
+    let validation = response.validation.unwrap();
+    assert!(
+        matches!(validation.status, ValidationStatus::Failed),
+        "{validation:?}"
+    );
+    assert!(response.composed_method_code.is_none());
+}
+
 #[tokio::test]
 async fn saved_evaluation_cases_are_adopted_after_validation() {
     assert!(
@@ -180,7 +217,11 @@ async fn saved_evaluation_cases_are_adopted_after_validation() {
         )
         .unwrap();
         let demonstrations = payload["method_calls"].as_array().unwrap().len();
-        let response = run(with_typed_pre_state(payload, obj_class_source(case))).await;
+        let response = run(with_typed_pre_state(
+            with_typed_literal_input(payload),
+            obj_class_source(case),
+        ))
+        .await;
         let validation = response.validation.unwrap();
         assert!(
             matches!(validation.status, ValidationStatus::Passed),
