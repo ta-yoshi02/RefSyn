@@ -522,16 +522,7 @@ export const runRefsynTasks = (rawTasks, options = {}) => {
         result.program.body,
       );
 
-      let compiledJs = null;
-      try {
-        compiledJs = compileRefsynMethod(rawTask, job, result.program.body);
-      } catch (compileError) {
-        if (!options.quiet) {
-          const message =
-            compileError instanceof Error ? compileError.message : String(compileError);
-          console.error(`refsyn adapter codegen skipped for '${taskName}': ${message}`);
-        }
-      }
+      const compiledJs = compileRefsynMethod(rawTask, job, result.program.body);
 
       return {
         name: taskName,
@@ -573,7 +564,7 @@ export const applyRefsynTaskOutcomes = (response, outcomes) => {
       error: outcome.error,
     });
 
-    if (typeof outcome.compiled_js === "string" && outcome.compiled_js.length > 0) {
+    if (outcome.success && typeof outcome.compiled_js === "string" && outcome.compiled_js.length > 0) {
       response.code.push(outcome.compiled_js);
       response.individual_codes.push(`${outcome.name}: ${outcome.compiled_js}`);
       continue;

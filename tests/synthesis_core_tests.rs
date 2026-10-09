@@ -86,7 +86,7 @@ async fn run_handle(request: &SynthesisRequest) -> SynthesisResponse {
 }
 
 #[tokio::test]
-async fn synthesize_core_matches_handle_for_single_trace_response() {
+async fn http_blocks_unverified_candidate_but_preserves_analysis() {
     let request = SynthesisRequest {
         method_calls: vec![append_call(
             "call1",
@@ -106,10 +106,13 @@ async fn synthesize_core_matches_handle_for_single_trace_response() {
     let http = run_handle(&request).await;
 
     assert_eq!(core.response.common_pattern, http.common_pattern);
-    assert_eq!(
-        core.response.composed_method_code,
-        http.composed_method_code
-    );
+    assert!(core.response.composed_method_code.is_some());
+    assert!(http.composed_method_code.is_none());
+    assert!(http.code.is_empty());
+    assert!(matches!(
+        http.validation.as_ref().unwrap().status,
+        refsyn::ValidationStatus::Unavailable
+    ));
     let core_info = core
         .response
         .list_environment_info

@@ -1,3 +1,5 @@
+import { applyValidationResult, type ValidationResult } from "../../../runtime/whole-method-validation.mjs";
+import { validateInWorker } from "../../../runtime/whole-method-validator-client.mjs";
 import {
   applyRefsynTaskOutcomes,
   runRefsynTasks,
@@ -19,6 +21,7 @@ export interface EscherResult {
 }
 
 export interface SynthesisResponse {
+  validation?: ValidationResult;
   common_pattern?: string | null;
   hole_information?: Record<string, string[]> | null;
   code: string[];
@@ -42,6 +45,7 @@ export interface BrowserSynthesisArtifacts {
 }
 
 export interface SynthesisRequest {
+  validation?: unknown;
   method_calls: unknown[];
   vis_graph: {
     nodes: unknown[];
@@ -71,15 +75,12 @@ const appendWarnings = (response: SynthesisResponse, warnings: string[] = []): v
 export const completeBrowserSynthesis = async (
   artifacts: BrowserSynthesisArtifacts,
   options: BrowserSynthesisOptions = {},
+  request?: SynthesisRequest,
 ): Promise<SynthesisResponse> => {
   const response = cloneResponse(artifacts.response);
   appendWarnings(response, artifacts.warnings);
 
-  if (!artifacts.task_json) {
-    return response;
-  }
-
-  const tasks = JSON.parse(artifacts.task_json) as RefsynTaskSpec[];
+  const tasks = artifacts.task_json ? JSON.parse(artifacts.task_json) as RefsynTaskSpec[] : [];
   const outcomes = runRefsynTasks(tasks, {
     quiet: true,
     maxCost: options.maxCost ?? defaultOptions.maxCost,
@@ -87,7 +88,8 @@ export const completeBrowserSynthesis = async (
     searchSizeFactor: options.searchSizeFactor ?? defaultOptions.searchSizeFactor,
   });
   applyRefsynTaskOutcomes(response, outcomes);
-  return response;
+  const result = await validateInWorker({ request, response, taskNames: tasks.map((task) => task.name ?? "") });
+  return applyValidationResult(response, result);
 };
 
 export const handleSynthesisMessage = async (
@@ -99,5 +101,5 @@ export const handleSynthesisMessage = async (
   options: BrowserSynthesisOptions = {},
 ): Promise<SynthesisResponse> => {
   const artifacts = await runCore(request, options);
-  return completeBrowserSynthesis(artifacts, options);
+  return completeBrowserSynthesis(artifacts, options, request);
 };
