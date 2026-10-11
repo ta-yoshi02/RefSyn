@@ -6,9 +6,9 @@ import { validateWholeMethod, applyValidationResult } from './whole-method-valid
 export const fixture = (code = 'cut() { this.link = null; return this; }') => ({
   request: {
     method_calls: [{ callLabel: 'c', contextSensitiveID: 'ctx', receiverObject: 'a', receiverClassName: 'Cell', methodName: 'cut', arguments: [], operations: [{ editType: 'deleteEdge', from: 'a', label: 'link', to: 'b' }, { editType: 'addVariable', label: 'return', to: 'a' }] }],
-    validation: { version: 2, classes: [{ name: 'Cell', source: 'class Cell { constructor() { this.payload = 7; this.link = null; } }' }], cases: [{ callLabel: 'c', contextSensitiveID: 'ctx', objects: [{ id: 'a', className: 'Cell', fields: { payload: 1, link: { ref: 'b' }, extra: { undefined: true } } }, { id: 'b', className: 'Cell', fields: { payload: 1, link: { ref: 'a' } } }], values: { 'a-payload': 1, 'b-payload': 1 }, arguments: [] }] },
+    validation: { version: 3, classes: [{ name: 'Cell', source: 'class Cell { constructor() { this.payload = 7; this.link = null; } }', instance: { payload: 7, link: null } }], cases: [{ callLabel: 'c', contextSensitiveID: 'ctx', objects: [{ id: 'a', className: 'Cell', fields: { payload: 1, link: { ref: 'b' }, extra: { undefined: true } } }, { id: 'b', className: 'Cell', fields: { payload: 1, link: { ref: 'a' } } }], values: { 'a-payload': 1, 'b-payload': 1 }, arguments: [] }] },
   },
-  response: { composed_method_code: code, code: [], escher_results: [] }, taskNames: [],
+  response: { composed_method_code: code, code: [], escher_results: [], hole_checks: [] }, taskNames: [],
 });
 
 test('accepts null assignment and retains identity, cycles and undefined fields', () => {
@@ -68,6 +68,7 @@ test('hole helpers are installed with composed code', () => {
   const payload = fixture('cut() { this.link = this.nullValue(); return this; }');
   payload.response.code = ['nullValue() { return null; }'];
   payload.response.escher_results = [{ name: 'h', success: true }];
+  payload.response.hole_checks = [{ helper: 'nullValue', expected: [null] }];
   payload.taskNames = ['h'];
   assert.equal(validateWholeMethod(payload).status, 'passed');
   payload.response.escher_results[0].success = false;
@@ -101,6 +102,7 @@ test('duplicate generated method names are rejected before execution', () => {
   payload.taskNames = ['h'];
   payload.response.escher_results = [{ name: 'h', success: true }];
   payload.response.code = ['cut() { return null; }'];
+  payload.response.hole_checks = [{ helper: 'cut', expected: [null] }];
   assert.equal(validateWholeMethod(payload).status, 'failed');
 });
 
@@ -175,4 +177,17 @@ test('literals keep their recorded type', () => {
   payload.request.method_calls[0].operations[1] = { editType: 'addNode', id: 'lit', label: '53', isLiteral: true, type: 'number' };
   assert.equal(run('cut() { this.link = null; this.payload = 53; return this; }'), 'passed');
   assert.equal(run('cut() { this.link = null; this.payload = "53"; return this; }'), 'failed');
+});
+
+test('a helper must return its output example, not just lead to the right final state', () => {
+  const payload = fixture('cut() { const target = this.pick(); this.link = null; return this; }');
+  payload.response.code = ['pick() { return this; }'];
+  payload.response.escher_results = [{ name: 'h', success: true }];
+  payload.taskNames = ['h'];
+  payload.response.hole_checks = [{ helper: 'pick', expected: [{ ref: 'a' }] }];
+  assert.equal(validateWholeMethod(payload).status, 'passed');
+  payload.response.hole_checks = [{ helper: 'pick', expected: [{ ref: 'b' }] }];
+  assert.equal(validateWholeMethod(payload).status, 'failed');
+  payload.response.hole_checks = [];
+  assert.equal(validateWholeMethod(payload).status, 'unavailable');
 });

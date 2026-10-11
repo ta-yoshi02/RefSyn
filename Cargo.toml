@@ -28,11 +28,3 @@ wasm-bindgen = "0.2"
 [dev-dependencies]
 tokio-test = "0.4"
 hyper = { version = "0.14", features = ["full"] }
-
-[[test]]
-name = "synthesis_api_tests"
-path = "tests/synthesis_api_tests.rs"
-
-[[test]]
-name = "isomorphism_tests"
-path = "tests/isomorphism_tests.rs"

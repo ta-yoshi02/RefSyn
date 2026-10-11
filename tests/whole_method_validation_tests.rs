@@ -9,7 +9,7 @@ fn request() -> Value {
             {"editType":"addEdge", "from":"r", "label":"link", "to":"new"}
         ], "arguments":[], "actualGraph":{"nodes":[{"id":"r", "label":"Cell"}],"edges":[]}}],
         "vis_graph":{"nodes":[{"id":"r", "label":"Cell"}],"edges":[]},
-        "validation":{"version":2,"classes":[{"name":"Cell","source":"class Cell { constructor() { this.payload = 7; this.link = null; } }"}],"cases":[{
+        "validation":{"version":3,"classes":[{"name":"Cell","source":"class Cell { constructor() { this.payload = 7; this.link = null; } }","instance":{"payload":7,"link":null}}],"cases":[{
             "callLabel":"call","contextSensitiveID":"ctx","objects":[{"id":"r","className":"Cell","fields":{"payload":1,"link":null}}],"arguments":[]
         }]}
     })
@@ -102,6 +102,26 @@ fn obj_class_source(case: &str) -> String {
 // Builds the typed pre-state that Kanon now captures from each call's recorded precondGraph.
 // The display graph omits null fields, so f and g start as null, matching Obj's constructor.
 // Like Kanon's synthesize(), runtime IDs of objects created in earlier demonstrations become their temp IDs.
+/// Own properties right after `new C()`, evaluated the way Kanon captures them.
+fn instance_of(class_source: &str) -> Value {
+    let script = format!(
+        "const C = ({class_source}); const o = new C(); \
+         console.log(JSON.stringify(Object.fromEntries(Object.entries(o).map(([k, v]) => \
+         [k, v === undefined ? {{ undefined: true }} : v]))));"
+    );
+    let output = std::process::Command::new("node")
+        .arg("-e")
+        .arg(script)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    serde_json::from_slice(&output.stdout).unwrap()
+}
+
 fn with_typed_pre_state(mut request: Value, class_source: String) -> Value {
     let mut temp_ids = std::collections::HashMap::new();
     for call in request["method_calls"].as_array().unwrap() {
@@ -135,8 +155,10 @@ fn with_typed_pre_state(mut request: Value, class_source: String) -> Value {
                             json!({"ref": id_of(to)})
                         } else {
                             let label = target["label"].as_str().unwrap();
-                            let value = match (target["type"].as_str(), label.parse::<i64>()) {
-                                (Some("number"), Ok(number)) => json!(number),
+                            // Values typed in earlier demonstrations were recorded untyped; the
+                            // runtime value Kanon now captures is the number Kanon now records.
+                            let value = match label.parse::<i64>() {
+                                Ok(number) if number.to_string() == label => json!(number),
                                 _ => json!(label),
                             };
                             values.insert(id_of(to), value.clone());
@@ -155,8 +177,9 @@ fn with_typed_pre_state(mut request: Value, class_source: String) -> Value {
             })
         })
         .collect();
-    request["validation"] =
-        json!({"version": 2, "classes": [{"name": "Obj", "source": class_source}], "cases": cases});
+    let instance = instance_of(&class_source);
+    request["validation"] = json!({"version": 3,
+        "classes": [{"name": "Obj", "source": class_source, "instance": instance}], "cases": cases});
     request
 }
 
@@ -191,10 +214,14 @@ async fn untyped_numeral_literals_are_not_adopted_as_numbers() {
     let response = run(with_typed_pre_state(payload, obj_class_source("append"))).await;
     let validation = response.validation.unwrap();
     assert!(
-        matches!(validation.status, ValidationStatus::Failed),
+        matches!(validation.status, ValidationStatus::Unavailable),
         "{validation:?}"
     );
     assert!(response.composed_method_code.is_none());
+    assert!(response
+        .list_environment_info
+        .unwrap()
+        .contains("string-valued holes cannot be encoded"));
 }
 
 #[tokio::test]
@@ -225,9 +252,150 @@ async fn saved_evaluation_cases_are_adopted_after_validation() {
         let validation = response.validation.unwrap();
         assert!(
             matches!(validation.status, ValidationStatus::Passed),
-            "{case}: {validation:?}"
+            "{case}: {validation:?}\n{:?}",
+            response.list_environment_info
         );
         assert_eq!(validation.checked_demonstrations, demonstrations, "{case}");
         assert!(response.composed_method_code.is_some(), "{case}");
     }
+}
+
+async fn adopted(case: &str) -> SynthesisResponse {
+    let payload: Value = serde_json::from_str(
+        &std::fs::read_to_string(format!(
+            "{}/docs/evaluation_cases/{case}/mold_payload.json",
+            env!("CARGO_MANIFEST_DIR")
+        ))
+        .unwrap(),
+    )
+    .unwrap();
+    let response = run(with_typed_pre_state(
+        with_typed_literal_input(payload),
+        obj_class_source(case),
+    ))
+    .await;
+    assert!(
+        matches!(
+            response.validation.as_ref().unwrap().status,
+            ValidationStatus::Passed
+        ),
+        "{case}: {:?}",
+        response.validation
+    );
+    response
+}
+
+/// Runs adopted code on inputs that were never demonstrated. Passing says nothing about
+/// inputs beyond these; it only separates "reproduces the demonstrations" from these cases.
+fn run_on_unseen_inputs(response: &SynthesisResponse, assertions: &str) {
+    let script = format!(
+        r#"
+const assert = require("node:assert/strict");
+class Obj {{
+  constructor(f, g = null) {{ this.f = f; this.g = g; }}
+  {}
+  {}
+}}
+const list = values => values.reduceRight((next, value) => new Obj(value, next), null);
+const snapshot = head => {{
+  const values = [];
+  const seen = new Set();
+  for (let node = head; node !== null; node = node.g) {{
+    assert.ok(!seen.has(node), "generated list must not contain a cycle");
+    seen.add(node);
+    values.push(node.f);
+  }}
+  return values;
+}};
+{}
+"#,
+        response.code.join("\n"),
+        response.composed_method_code.as_deref().unwrap(),
+        assertions
+    );
+    let output = std::process::Command::new("node")
+        .arg("-e")
+        .arg(script)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stderr),
+        response.composed_method_code.as_deref().unwrap()
+    );
+}
+
+#[tokio::test]
+async fn adopted_set_at_matches_the_reference_on_unseen_inputs() {
+    run_on_unseen_inputs(
+        &adopted("setAt").await,
+        r#"
+let head = list([3, 7, 11, 19, 23]);
+head.setAt(1, 101);
+assert.deepEqual(snapshot(head), [3, 101, 11, 19, 23]);
+head.setAt(4, -8);
+assert.deepEqual(snapshot(head), [3, 101, 11, 19, -8]);
+"#,
+    );
+}
+
+#[tokio::test]
+async fn adopted_append_matches_the_reference_on_unseen_inputs() {
+    run_on_unseen_inputs(
+        &adopted("append").await,
+        r#"
+let one = list([4]);
+one.append(91);
+assert.deepEqual(snapshot(one), [4, 91]);
+let many = list([2, 5, 8, 13, 21]);
+many.append(-6);
+assert.deepEqual(snapshot(many), [2, 5, 8, 13, 21, -6]);
+"#,
+    );
+}
+
+#[tokio::test]
+async fn adopted_prepend_matches_the_reference_on_unseen_inputs() {
+    run_on_unseen_inputs(
+        &adopted("prepend").await,
+        r#"
+let head = list([7, 12, 18]);
+head = head.prepend(44);
+assert.deepEqual(snapshot(head), [44, 7, 12, 18]);
+head = head.prepend(-3);
+assert.deepEqual(snapshot(head), [-3, 44, 7, 12, 18]);
+"#,
+    );
+}
+
+#[tokio::test]
+async fn adopted_insert_matches_the_reference_on_unseen_inputs() {
+    let response = adopted("insert_general").await;
+    assert_eq!(response.hole_information.as_ref().unwrap().len(), 3);
+    run_on_unseen_inputs(
+        &response,
+        r#"
+let head = list([5, 10, 20, 40, 80]);
+head.insert(0, 7);
+assert.deepEqual(snapshot(head), [5, 7, 10, 20, 40, 80]);
+head.insert(4, 55);
+assert.deepEqual(snapshot(head), [5, 7, 10, 20, 40, 55, 80]);
+"#,
+    );
+}
+
+#[tokio::test]
+async fn adopted_pop_back_matches_the_reference_on_unseen_inputs() {
+    run_on_unseen_inputs(
+        &adopted("popBack").await,
+        r#"
+let two = list([6, 9]);
+two.popBack();
+assert.deepEqual(snapshot(two), [6]);
+let many = list([1, 3, 5, 7, 9]);
+many.popBack();
+assert.deepEqual(snapshot(many), [1, 3, 5, 7]);
+"#,
+    );
 }
