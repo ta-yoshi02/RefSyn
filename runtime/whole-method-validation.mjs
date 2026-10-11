@@ -14,8 +14,12 @@ export function validateWholeMethod({ request, response, taskNames = [] }) {
     }
     if ((response.code ?? []).length !== taskNames.length) throw new Error("Not all hole implementations are available");
     const validation = request.validation;
-    if (validation?.version !== 2 || !Array.isArray(validation.cases) || !Array.isArray(validation.classes)) {
-      unavailable(validation?.error ?? "Typed pre-state and constructor definitions are required (validation.version=2)");
+    if (validation?.version !== 3 || !Array.isArray(validation.cases) || !Array.isArray(validation.classes)) {
+      unavailable(validation?.error ?? "Typed pre-state and constructor definitions are required (validation.version=3)");
+    }
+    const holeChecks = response.hole_checks ?? [];
+    if (!Array.isArray(holeChecks) || holeChecks.length !== taskNames.length || holeChecks.some((check) => !Array.isArray(check.expected) || check.expected.length !== request.method_calls.length)) {
+      unavailable("Every hole needs its expected output in every demonstration");
     }
     const calls = request.method_calls;
     if (!Array.isArray(calls) || calls.length === 0 || validation.cases.length !== calls.length) {
@@ -158,6 +162,22 @@ export function validateWholeMethod({ request, response, taskNames = [] }) {
         if (typeof descriptor.value !== "function") throw new Error("Generated member is not a method");
         Object.defineProperty(prototype, name, descriptor);
       }
+      // A helper's actual result, not its output example, is what the next hole received.
+      const holeResults = new Map(holeChecks.map((check) => [check.helper, []]));
+      for (const check of holeChecks) {
+        const helper = prototype[check.helper];
+        if (typeof helper !== "function") throw new Error(`Hole helper ${check.helper} is missing`);
+        Object.defineProperty(prototype, check.helper, {
+          value: function (...args) {
+            const result = helper.apply(this, args);
+            holeResults.get(check.helper).push(result);
+            return result;
+          },
+          writable: true,
+          enumerable: false,
+          configurable: true,
+        });
+      }
       // The comparison below only sees the demonstrated heap, so state outside it must stay untouched.
       const ambient = [["globalThis", globalThis], ["Object.prototype", Object.prototype], ["Function.prototype", Function.prototype], ["Array.prototype", Array.prototype],
         ...[...actual.classes].flatMap(([name, constructor]) => [[name, constructor], [`${name}.prototype`, constructor.prototype]])];
@@ -198,6 +218,15 @@ export function validateWholeMethod({ request, response, taskNames = [] }) {
       };
       for (const id of initialIds) compare(expected.objects.get(id), actual.objects.get(id), id, state);
       compare(expectedReturn, actualReturn, "return", state);
+      for (const check of holeChecks) {
+        const results = holeResults.get(check.helper);
+        const expectedValue = check.expected[index];
+        const wanted = expectedValue !== null && typeof expectedValue === "object" ? actual.objects.get(expectedValue.ref) : expectedValue;
+        if (wanted === undefined && expectedValue !== null && typeof expectedValue === "object") unavailable(`Hole ${check.helper} expects unknown object ${expectedValue.ref}`);
+        if (results.length !== 1 || !Object.is(results[0], wanted)) {
+          throw new Error(`Hole ${check.helper} did not reproduce its output example in demonstration ${index + 1}`);
+        }
+      }
       if (expected.allocations.length !== actual.allocations.length) throw new Error("Allocation count mismatch");
       // Unreachable allocations still belong to the demonstrated heap; pair them by structure, not by creation order.
       const pending = expected.allocations.filter((object) => !state.pairs.has(object));
