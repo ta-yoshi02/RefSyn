@@ -18,7 +18,7 @@
 5. `Synthesize` 前に、最低限次を確認する。
    - test modal が開いたままではないこと。
    - editor に対象メソッド呼び出しが残っていること。
-   - 直前の失敗表示、特に `Runtime Error: this.append_f is not a function` が残っていないこと。
+   - 直前の失敗表示（`Runtime Error: ...`）が残っていないこと。
 
 ## Kanon UI で仕様を入れる時の注意
 
@@ -44,39 +44,27 @@ var __temp2 = new ();
 
 ## `Synthesize` 実行後の確認
 
-append の健康な合成結果は、おおむね次の構造を持つ。
+合成に成功すると、エディタの対象メソッドが論文4.3節の文列に置き換わり、穴ごとの補助メソッドが `// refsyn: generated helper` 付きで直前に入る。論文の `insert` では次の形になる。
 
 ```js
-append_f(arg0) { return arg0; }
-
-append_h(arg0) {
-    // this から next をたどって末尾 node を返す helper
-}
-
-append(arg) {
-    const h_ptr_0 = this.append_h(arg);
-    const h_int_0 = this.append_f(arg);
-    const tmp0 = new Node();
-    tmp0.val = h_int_0;
-    if (h_ptr_0 !== null) { h_ptr_0.next = tmp0; }
+insert(i, arg) {
+    const created0 = new Node();
+    const hole0 = this.insert_h0(i, arg, created0);
+    const hole1 = this.insert_h1(i, arg, created0, hole0);
+    const hole2 = this.insert_h2(i, arg, created0, hole0, hole1);
+    created0.val = hole0;
+    hole1.next = created0;
+    created0.next = hole2;
 }
 ```
 
-class 名は editor の定義に応じて `Node` ではなく `ListNode` などになる。
+成功と判断できる最低条件:
 
-成功寄りと判断できる最低条件:
+- RefSyn response の `validation.status` が `passed` で、`checked_demonstrations` が実演数と一致する。
+- 置換後の再実行で、各呼出しのテストが通る（呼出しが緑になる）。
+- 補助メソッド名は `<メソッド名>_h<穴の番号>` で、穴の番号は束縛順（第1実演の辺列での初出順）である。
 
-- `Runtime Error` が表示されていない。
-- `append_f` など、本体から呼ばれている helper が定義されている。
-- 新規 node 作成がある。
-- `tmp0.val = ...` がある。
-- `tail.next = tmp0` 相当の代入がある。
-
-注意点:
-
-- `append_f`, `append_g`, `append_h` の suffix は意味名ではなく、spec 生成順に `f`, `g`, `h`, ... と採番される。
-- 本体から呼ばれていない helper が残る場合がある。これは helper 掃除の問題であり、合成本体の成否とは分けて判断する。
-- `append_f(arg0) { return arg0; }` は一見余計だが、`tmp0.val` に入れる値を返す value-hole として使われているなら未使用ではない。
+置換されない場合は、反映を拒否した理由がコンソールに出る（`検証済みコードを反映できません` または `合成結果は未検証または実演に不一致のため反映しません`）。エディタには何も挿入されない。
 
 ## 失敗時に見る場所
 
@@ -100,12 +88,12 @@ class 名は editor の定義に応じて `Node` ではなく `ListNode` など�
 
 - `var __temp2 = new ();`
   - label 未入力または `isLiteral` チェック漏れ。UI 入力の失敗として扱う。
-- `Runtime Error: this.append_f is not a function`
-  - composed method が未定義 helper を呼んでいる。helper spec の coverage / rename / postprocess を疑う。
-- `append_g(arg0) { return arg0; }` だけが本体から呼ばれていない
-  - 未使用 helper が `response.code` から掃除されていない。合成本体とは別問題。
-- `append_h` が `last_ptr` 相当ではなく固定 hop になる
-  - 複数仕様が不足しているか、tail predecessor の spec がうまくできていない。`target/escher/ts/*.json` の Ptr-returning task を確認する。
+- `list_environment_info` に `not isomorphic`
+  - 実演どうしの操作グラフが同型でない。生成数、書込み数、書込み先のfield、nullと非nullの違いを見直す。
+- `list_environment_info` に `typed pre-call state` や `instanceError`
+  - 型付き状態を記録できていない。実演を記録し直すか、constructorが対応範囲（引数なし、プリミティブ・null・undefinedだけで初期化）かを確認する。
+- `validation.status` が `failed`
+  - 合成した式が実演を再現しない。`validation.error` に、どの値・参照・補助メソッドが食い違ったかが出る。実演を増やして穴の出力例を区別できるようにする。
 
 ## 直接 payload を見たい場合
 

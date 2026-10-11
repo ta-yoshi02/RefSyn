@@ -1,5 +1,7 @@
 # Paper Case Study and Limits Notes
 
+> 2026-10-10: These notes describe the pipeline before it was replaced by the paper-aligned one (see `architecture.md`). The tests and modules cited below (`integrated_synthesis_tests`, `unify_ops`, `list_env`, ...) have been removed; re-derive any claim from the current tests before using it.
+
 This memo records implementation-side questions that should stay synchronized with the MOLD paper repository at `/Users/taku/workspace/kenkyu/paint26-tmp`. It is not manuscript prose. Use it to track what can be claimed, what still needs evidence, and where to look in the RefSyn/MOLD implementation.
 
 ## Proposed Section-4 Evidence Shape
