@@ -1,0 +1,123 @@
+{
+  "method_calls": [
+    {
+      "callLabel": "c0",
+      "contextSensitiveID": "main",
+      "receiverObject": "r",
+      "receiverClassName": "Flag",
+      "methodName": "set",
+      "methodParamNames": [
+        "b"
+      ],
+      "arguments": [
+        true
+      ],
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "lit0",
+          "label": "true",
+          "isLiteral": true,
+          "type": "boolean"
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "r",
+          "label": "on",
+          "oldTo": "r-on",
+          "newTo": "lit0"
+        }
+      ]
+    },
+    {
+      "callLabel": "c1",
+      "contextSensitiveID": "main",
+      "receiverObject": "r",
+      "receiverClassName": "Flag",
+      "methodName": "set",
+      "methodParamNames": [
+        "b"
+      ],
+      "arguments": [
+        false
+      ],
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "lit1",
+          "label": "false",
+          "isLiteral": true,
+          "type": "boolean"
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "r",
+          "label": "on",
+          "oldTo": "r-on",
+          "newTo": "lit1"
+        }
+      ]
+    }
+  ],
+  "vis_graph": {
+    "nodes": [],
+    "edges": []
+  },
+  "validation": {
+    "version": 3,
+    "classes": [
+      {
+        "name": "Flag",
+        "source": "class Flag {\n    constructor() {\n        this.on = false;\n        this.next = null;\n    }\n\n    set(b) {\n    }\n\n    copy() {\n    }\n}",
+        "instance": {
+          "on": false,
+          "next": null
+        }
+      }
+    ],
+    "cases": [
+      {
+        "callLabel": "c0",
+        "contextSensitiveID": "main",
+        "objects": [
+          {
+            "id": "r",
+            "className": "Flag",
+            "fields": {
+              "on": false,
+              "next": null
+            }
+          }
+        ],
+        "arguments": [
+          true
+        ],
+        "values": {
+          "r-on": false,
+          "r-next": null
+        }
+      },
+      {
+        "callLabel": "c1",
+        "contextSensitiveID": "main",
+        "objects": [
+          {
+            "id": "r",
+            "className": "Flag",
+            "fields": {
+              "on": true,
+              "next": null
+            }
+          }
+        ],
+        "arguments": [
+          false
+        ],
+        "values": {
+          "r-on": true,
+          "r-next": null
+        }
+      }
+    ]
+  }
+}
