@@ -218,26 +218,51 @@ const compileAutoFieldComponent = (name, args, ctx) => {
       if (args.length < 2) {
         throw new Error(`${name} expects receiver + heap args`);
       }
-      const base = compileExpr(args[0], ctx);
-      const access = fieldAccess(base.code, field);
-      if (ctx.pointerFields.has(field)) {
-        return { code: access, kind: "object" };
+      // A value field's slot only names the object, so in escher-ts it compares and tests like the
+      // object itself; only loadInt gives it the meaning of the field, see compileValueFieldRead.
+      if (!ctx.pointerFields.has(field)) {
+        throw new Error(`${name} is only supported as the reference read by loadInt`);
       }
-      return { code: access, kind: "valueFieldAccess" };
+      const base = compileExpr(args[0], ctx);
+      return { code: fieldAccess(base.code, field), kind: "object" };
     }
     if (name === `has${capitalize(field)}`) {
       if (args.length < 2) {
         throw new Error(`${name} expects receiver + heap args`);
       }
       const base = compileExpr(args[0], ctx);
-      const access = fieldAccess(base.code, field);
       if (ctx.pointerFields.has(field)) {
-        return { code: `(${access} !== null)`, kind: "bool" };
+        return { code: `(${fieldAccess(base.code, field)} !== null)`, kind: "bool" };
       }
-      return { code: `(${access} !== undefined)`, kind: "bool" };
+      // As with loadInt, the value heap passed last decides which field is tested.
+      const tested = ctx.valueFieldByHeapName.get(variableNameFromTerm(args[2]));
+      if (tested === undefined) {
+        throw new Error(`${name} must test the heap of a value field`);
+      }
+      return { code: `(${fieldAccess(base.code, tested)} !== undefined)`, kind: "bool" };
     }
   }
   return null;
+};
+
+// Every value field's slot holds the index of its own object, and the heap passed to loadInt
+// decides which field is read: loadInt(valHeap, keyOf(o, ...)) is o.val, not o.key.
+const compileValueFieldRead = (heapTerm, slotTerm, ctx) => {
+  const heapName = variableNameFromTerm(heapTerm);
+  const field = heapName === null ? undefined : ctx.valueFieldByHeapName.get(heapName);
+  if (field === undefined) {
+    throw new Error("loadInt must read the heap of a value field");
+  }
+  const owner =
+    slotTerm?.kind === "component" &&
+    [...ctx.valueFields].some((valueField) => slotTerm.name === `${valueField}Of`) &&
+    slotTerm.args.length >= 2
+      ? compileExpr(slotTerm.args[0], ctx)
+      : null;
+  if (owner === null || owner.kind !== "object") {
+    throw new Error("loadInt is only supported on a value field reference of an object");
+  }
+  return fieldAccess(owner.code, field);
 };
 
 const compileRecursiveCall = (args, ctx) => {
@@ -351,11 +376,7 @@ const compileComponent = (name, args, ctx) => {
       if (args.length !== 2) {
         throw new Error("loadInt expects 2 args");
       }
-      const refExpr = compileExpr(args[1], ctx);
-      if (refExpr.kind !== "valueFieldAccess") {
-        throw new Error("loadInt is only supported on valueOf(...) expressions in refsyn codegen");
-      }
-      return { code: refExpr.code, kind: "int" };
+      return { code: compileValueFieldRead(args[0], args[1], ctx), kind: "int" };
     }
     case "isNull": {
       if (args.length !== 1) {
