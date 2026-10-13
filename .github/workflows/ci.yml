@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # The pinned Kanon and escher-ts are what the native path builds against.
+      - name: Checkout RefSyn with its pinned submodules
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Record pinned revisions
+        run: |
+          {
+            echo "## Pinned revisions"
+            echo "- RefSyn: $(git rev-parse HEAD)"
+            echo "- Kanon: $(git -C Kanon rev-parse HEAD)"
+            echo "- escher-ts: $(git -C external/escher-ts rev-parse HEAD)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: external/escher-ts/package.json
+
+      - name: Build escher-ts
+        working-directory: external/escher-ts
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+
+      - name: Rust format
+        run: cargo fmt --check
+
+      - name: Rust lint
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Rust tests
+        run: cargo test
+
+      # Differential tests of escher-ts evaluation against the translated JS, and the
+      # whole-method validator.
+      - name: Runtime tests
+        run: node --test runtime/*.test.mjs
+
+      - name: Install wasm-bindgen-cli
+        run: cargo install wasm-bindgen-cli --version 0.2.114 --locked
+
+      - name: Build wasm package
+        run: node web/scripts/build-wasm.mjs
+
+      - name: Web tests
+        working-directory: web
+        run: |
+          npm ci
+          npm test
+
+      - name: Install Kanon dependencies
+        working-directory: Kanon
+        run: |
+          npm install --ignore-scripts
+          npm install --ignore-scripts --prefix external/escodegen
+
+      # The browser path end to end: WASM synthesis, escher-ts, adapter, then whole-method
+      # validation of the paper's insert demonstrations, which must pass.
+      - name: Browser synthesis of Kanon's fixture
+        run: npm --prefix Kanon run verify-refsyn-browser
+
+      # Kanon's capture and reflection tests, including the one that runs this checkout's
+      # validator on a captured payload.
+      - name: Kanon capture and reflection tests
+        working-directory: Kanon
+        run: npx jest src/js/test/testize-whole-method-validation.test.js src/js/test/testize-receiver-capture.test.js
