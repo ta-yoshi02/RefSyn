@@ -232,9 +232,9 @@ const compileAutoFieldComponent = (name, args, ctx) => {
       const base = compileExpr(args[0], ctx);
       const access = fieldAccess(base.code, field);
       if (ctx.pointerFields.has(field)) {
-        return { code: `${access} !== null`, kind: "bool" };
+        return { code: `(${access} !== null)`, kind: "bool" };
       }
-      return { code: `${access} !== undefined`, kind: "bool" };
+      return { code: `(${access} !== undefined)`, kind: "bool" };
     }
   }
   return null;
@@ -362,7 +362,7 @@ const compileComponent = (name, args, ctx) => {
         throw new Error("isNull expects 1 arg");
       }
       const value = compileExpr(args[0], ctx);
-      return { code: `${value.code} === null`, kind: "bool" };
+      return { code: `(${value.code} === null)`, kind: "bool" };
     }
     case "equal": {
       if (args.length !== 2) {
@@ -370,7 +370,7 @@ const compileComponent = (name, args, ctx) => {
       }
       const left = compileExpr(args[0], ctx);
       const right = compileExpr(args[1], ctx);
-      return { code: `${left.code} === ${right.code}`, kind: "bool" };
+      return { code: `(${left.code} === ${right.code})`, kind: "bool" };
     }
     case "and": {
       if (args.length !== 2) {
@@ -378,7 +378,7 @@ const compileComponent = (name, args, ctx) => {
       }
       const left = compileExpr(args[0], ctx);
       const right = compileExpr(args[1], ctx);
-      return { code: `${left.code} && ${right.code}`, kind: "bool" };
+      return { code: `(${left.code} && ${right.code})`, kind: "bool" };
     }
     case "or": {
       if (args.length !== 2) {
@@ -386,7 +386,7 @@ const compileComponent = (name, args, ctx) => {
       }
       const left = compileExpr(args[0], ctx);
       const right = compileExpr(args[1], ctx);
-      return { code: `${left.code} || ${right.code}`, kind: "bool" };
+      return { code: `(${left.code} || ${right.code})`, kind: "bool" };
     }
     case "not": {
       if (args.length !== 1) {
@@ -400,28 +400,28 @@ const compileComponent = (name, args, ctx) => {
         throw new Error("isZero expects 1 arg");
       }
       const value = compileExpr(args[0], ctx);
-      return { code: `${value.code} === 0`, kind: "bool" };
+      return { code: `(${value.code} === 0)`, kind: "bool" };
     }
     case "isNonNeg": {
       if (args.length !== 1) {
         throw new Error("isNonNeg expects 1 arg");
       }
       const value = compileExpr(args[0], ctx);
-      return { code: `${value.code} >= 0`, kind: "bool" };
+      return { code: `(${value.code} >= 0)`, kind: "bool" };
     }
     case "inc": {
       if (args.length !== 1) {
         throw new Error("inc expects 1 arg");
       }
       const value = compileExpr(args[0], ctx);
-      return { code: `${value.code} + 1`, kind: "int" };
+      return { code: `(${value.code} + 1)`, kind: "int" };
     }
     case "dec": {
       if (args.length !== 1) {
         throw new Error("dec expects 1 arg");
       }
       const value = compileExpr(args[0], ctx);
-      return { code: `${value.code} - 1`, kind: "int" };
+      return { code: `(${value.code} - 1)`, kind: "int" };
     }
     case "neg": {
       if (args.length !== 1) {
@@ -436,7 +436,7 @@ const compileComponent = (name, args, ctx) => {
       }
       const left = compileExpr(args[0], ctx);
       const right = compileExpr(args[1], ctx);
-      return { code: `${left.code} + ${right.code}`, kind: "int" };
+      return { code: `(${left.code} + ${right.code})`, kind: "int" };
     }
     case "zero":
       return { code: "0", kind: "int" };
@@ -450,13 +450,14 @@ const compileComponent = (name, args, ctx) => {
       }
       const left = compileExpr(args[0], ctx);
       const right = compileExpr(args[1], ctx);
-      return { code: `${left.code} <= ${right.code}`, kind: "bool" };
+      return { code: `(${left.code} <= ${right.code})`, kind: "bool" };
     }
     default:
       throw new Error(`unsupported component '${name}' in refsyn adapter codegen`);
   }
 };
 
+// Every operator result is parenthesized, so a translated subterm keeps its meaning wherever it is placed.
 const compileExpr = (term, ctx) => {
   switch (term.kind) {
     case "var":
@@ -603,3 +604,5 @@ export const applyRefsynTaskOutcomes = (response, outcomes) => {
 
   response.escher_results = merged;
 };
+
+export { compileRefsynMethod };
