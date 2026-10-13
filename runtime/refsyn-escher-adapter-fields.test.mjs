@@ -15,6 +15,7 @@ const task = (returnType, x) => ({
   classes: [{ name: 'C', fields: { key: 'Ref[Int]', next: 'Ref[Object[C]]', val: 'Ref[Int]' } }],
   exposeClassComponents: false,
   autoClassFieldComponents: true,
+  strictFieldAccess: true,
   signature: {
     returnType,
     args: [{ name: 'x', type: 'Ref[Object[C]]' }],
@@ -60,7 +61,14 @@ const run = (returnType, x, term) => {
   Object.assign(C.prototype, new Function(`return ({ ${code} });`)());
   const live = objects.map(() => new C());
   objects.forEach((o, i) => Object.assign(live[i], { key: o.key, next: o.next === null ? null : live[o.next], val: o.val }));
-  return { expected, actual: live[0].f_h0(x === null ? null : live[x]), code };
+  // A failure (escher-ts error, JS exception) is an outcome too, so it is compared rather than skipped.
+  let actual;
+  try {
+    actual = live[0].f_h0(x === null ? null : live[x]);
+  } catch {
+    actual = 'failure';
+  }
+  return { expected: expected.tag === 'error' ? 'failure' : expected.value, actual, code };
 };
 
 test('loadInt reads the field of the heap it is given, whichever field reference names the object', () => {
@@ -72,8 +80,7 @@ test('loadInt reads the field of the heap it is given, whichever field reference
           for (const checked of fields) {
             const term = c('loadInt', heap(read), c(`${named}Of`, owner, v('nodeHeap'), heap(checked)));
             const { expected, actual, code } = run('Int', x, term);
-            if (expected.tag === 'error') continue;
-            if (actual !== expected.value) mismatches.push(`x=${x}: ${code} gave ${actual}, escher ${expected.value}`);
+            if (actual !== expected) mismatches.push(`x=${x}: ${code} gave ${actual}, escher ${expected}`);
           }
         }
       }
@@ -89,8 +96,7 @@ test('has<Field> of an integer field tests the heap it is given', () => {
       for (const checked of fields) {
         const term = c(`has${named[0].toUpperCase()}${named.slice(1)}`, owner, v('nodeHeap'), heap(checked));
         const { expected, actual, code } = run('Bool', 0, term);
-        if (expected.tag === 'error') continue;
-        if (actual !== expected.value) mismatches.push(`${code} gave ${actual}, escher ${expected.value}`);
+        if (actual !== expected) mismatches.push(`${code} gave ${actual}, escher ${expected}`);
       }
     }
   }

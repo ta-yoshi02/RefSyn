@@ -13,6 +13,7 @@ const task = (returnType, k, x) => ({
   classes: [{ name: 'C', fields: { next: 'Ref[Object[C]]' } }],
   exposeClassComponents: false,
   autoClassFieldComponents: true,
+  strictFieldAccess: true,
   signature: {
     returnType,
     args: [{ name: 'k', type: 'Int' }, { name: 'x', type: 'Ref[Object[C]]' }],
@@ -52,7 +53,7 @@ const intTerms = [
   ...atoms.map((b) => iff(b, c('inc', v('k')), c('neg', v('k')))),
 ];
 
-const shown = (value) => (value.tag === 'ref' ? `ref ${value.value}` : `${value.tag} ${value.value}`);
+const shown = (value) => (value.tag === 'error' ? 'failure' : value.tag === 'ref' ? `ref ${value.value}` : `${value.tag} ${value.value}`);
 const jsShown = (value, objects) => (typeof value === 'object' ? `ref ${value === null ? -1 : objects.indexOf(value)}` : `${typeof value === 'boolean' ? 'bool' : 'int'} ${value}`);
 
 const mismatches = (returnType, terms) => {
@@ -64,15 +65,18 @@ const mismatches = (returnType, terms) => {
       const inputs = new Map(job.inputNames.map((name, index) => [name, job.examples[0][0][index]]));
       for (const term of terms) {
         const expected = executeTerm((name) => inputs.get(name), job.env, term);
-        // An escher error has no JS counterpart to compare with; whole-method validation rejects such helpers.
-        if (expected.tag === 'error') continue;
         const code = compileRefsynMethod(raw, job, term);
         class C {}
         Object.assign(C.prototype, new Function(`return ({ ${code} });`)());
         const objects = [new C(), new C()];
         objects[0].next = objects[1];
         objects[1].next = null;
-        const actual = jsShown(objects[0].f_h0(k, x === null ? null : objects[x]), objects);
+        let actual;
+        try {
+          actual = jsShown(objects[0].f_h0(k, x === null ? null : objects[x]), objects);
+        } catch {
+          actual = 'failure';
+        }
         if (actual !== shown(expected)) found.push(`k=${k} x=${x}: ${code} gave ${actual}, escher ${shown(expected)}`);
       }
     }

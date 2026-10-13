@@ -75,6 +75,14 @@ const isValidJsField = (raw) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(raw);
 const fieldAccess = (baseExpr, field) =>
   isValidJsField(field) ? `(${baseExpr}).${field}` : `(${baseExpr})[${JSON.stringify(field)}]`;
 
+// escher-ts reads an undefined or absent reference or integer field as the error value, so the
+// emitted read throws there instead of passing undefined on; a null receiver throws by itself.
+const readDefined = "((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })";
+const definedAccess = (baseExpr, field) => `${readDefined}(${fieldAccess(baseExpr, field)})`;
+// Traversals fail on a revisited object, as escher-ts does, so that a cyclic heap cannot hang.
+const visit = (what) =>
+  `if (__refsynSeen.has(__refsynCur)) { throw new RangeError("refsyn: ${what} met a cycle"); } __refsynSeen.add(__refsynCur);`;
+
 const memberCall = (baseExpr, methodName, args) => {
   const receiver = baseExpr === "this" ? "this" : `(${baseExpr})`;
   return `${receiver}.${methodName}(${args.join(", ")})`;
@@ -224,7 +232,7 @@ const compileAutoFieldComponent = (name, args, ctx) => {
         throw new Error(`${name} is only supported as the reference read by loadInt`);
       }
       const base = compileExpr(args[0], ctx);
-      return { code: fieldAccess(base.code, field), kind: "object" };
+      return { code: definedAccess(base.code, field), kind: "object" };
     }
     if (name === `has${capitalize(field)}`) {
       if (args.length < 2) {
@@ -232,7 +240,7 @@ const compileAutoFieldComponent = (name, args, ctx) => {
       }
       const base = compileExpr(args[0], ctx);
       if (ctx.pointerFields.has(field)) {
-        return { code: `(${fieldAccess(base.code, field)} !== null)`, kind: "bool" };
+        return { code: `(${definedAccess(base.code, field)} !== null)`, kind: "bool" };
       }
       // As with loadInt, the value heap passed last decides which field is tested.
       const tested = ctx.valueFieldByHeapName.get(variableNameFromTerm(args[2]));
@@ -262,7 +270,16 @@ const compileValueFieldRead = (heapTerm, slotTerm, ctx) => {
   if (owner === null || owner.kind !== "object") {
     throw new Error("loadInt is only supported on a value field reference of an object");
   }
-  return fieldAccess(owner.code, field);
+  // The reference component fails unless the field of its own heap argument is defined, even
+  // when loadInt then reads another field; the emitted code checks both.
+  const checked = slotTerm.args[2] === undefined ? field : ctx.valueFieldByHeapName.get(variableNameFromTerm(slotTerm.args[2]));
+  if (checked === undefined) {
+    throw new Error(`${slotTerm.name} must name the heap of a value field`);
+  }
+  if (checked === field) {
+    return definedAccess(owner.code, field);
+  }
+  return `((__refsynOwner) => { ${definedAccess("__refsynOwner", checked)}; return ${definedAccess("__refsynOwner", field)}; })(${owner.code})`;
 };
 
 const compileRecursiveCall = (args, ctx) => {
@@ -298,8 +315,6 @@ const compileComponent = (name, args, ctx) => {
   }
 
   switch (name) {
-    // Generated traversal helpers currently assume acyclic pointer structures.
-    // Cycle-safe execution is not implemented in the emitted JS yet.
     case "nthNextRef": {
       if (args.length !== 4) {
         throw new Error("nthNextRef expects 4 args");
@@ -313,7 +328,8 @@ const compileComponent = (name, args, ctx) => {
       return {
         code:
           `(() => { let __refsynCur = ${base.code}; let __refsynSteps = ${steps.code}; ` +
-          `while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ${fieldAccess("__refsynCur", fieldName)}; __refsynSteps -= 1; } ` +
+          'if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError("refsyn: nthNextRef needs a non-negative step count"); } ' +
+          `while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ${definedAccess("__refsynCur", fieldName)}; __refsynSteps -= 1; } ` +
           "return __refsynCur; })()",
         kind: "object",
       };
@@ -331,9 +347,10 @@ const compileComponent = (name, args, ctx) => {
       const target = compileExpr(args[4], ctx);
       return {
         code:
-          `(() => { let __refsynCur = ${base.code}; const __refsynTarget = ${target.code}; ` +
-          `while (__refsynCur !== null) { if (${fieldAccess("__refsynCur", valueField)} === __refsynTarget) { return __refsynCur; } ` +
-          `__refsynCur = ${fieldAccess("__refsynCur", pointerField)}; } return null; })()`,
+          `(() => { let __refsynCur = ${base.code}; const __refsynTarget = ${target.code}; const __refsynSeen = new Set(); ` +
+          `while (__refsynCur !== null) { ${visit("findByValueRef")} ` +
+          `if (${fieldAccess("__refsynCur", valueField)} === __refsynTarget) { return __refsynCur; } ` +
+          `__refsynCur = ${definedAccess("__refsynCur", pointerField)}; } return null; })()`,
         kind: "object",
       };
     }
@@ -348,9 +365,10 @@ const compileComponent = (name, args, ctx) => {
       const base = compileExpr(args[0], ctx);
       return {
         code:
-          `(() => { let __refsynCur = ${base.code}; ` +
-          `while (__refsynCur !== null && ${fieldAccess("__refsynCur", fieldName)} !== null) { __refsynCur = ${fieldAccess("__refsynCur", fieldName)}; } ` +
-          "return __refsynCur; })()",
+          `(() => { let __refsynCur = ${base.code}; const __refsynSeen = new Set(); ` +
+          `while (__refsynCur !== null) { ${visit("last_ptr")} ` +
+          `const __refsynNext = ${definedAccess("__refsynCur", fieldName)}; if (__refsynNext === null) { return __refsynCur; } __refsynCur = __refsynNext; } ` +
+          "return null; })()",
         kind: "object",
       };
     }
@@ -363,12 +381,13 @@ const compileComponent = (name, args, ctx) => {
         throw new Error("penultimateRef requires at least one pointer field");
       }
       const base = compileExpr(args[0], ctx);
-      const nextAccess = fieldAccess("__refsynCur", fieldName);
       return {
         code:
-          `(() => { let __refsynCur = ${base.code}; ` +
-          `while (__refsynCur !== null && ${nextAccess} !== null && ${fieldAccess(nextAccess, fieldName)} !== null) { __refsynCur = ${nextAccess}; } ` +
-          `return (__refsynCur === null || ${nextAccess} === null) ? null : __refsynCur; })()`,
+          `(() => { let __refsynCur = ${base.code}; const __refsynSeen = new Set(); ` +
+          `while (__refsynCur !== null) { ${visit("penultimateRef")} ` +
+          `const __refsynNext = ${definedAccess("__refsynCur", fieldName)}; if (__refsynNext === null) { return null; } ` +
+          `if (${definedAccess("__refsynNext", fieldName)} === null) { return __refsynCur; } __refsynCur = __refsynNext; } ` +
+          "return null; })()",
         kind: "object",
       };
     }
@@ -399,7 +418,8 @@ const compileComponent = (name, args, ctx) => {
       }
       const left = compileExpr(args[0], ctx);
       const right = compileExpr(args[1], ctx);
-      return { code: `(${left.code} && ${right.code})`, kind: "bool" };
+      // escher-ts evaluates both operands (an error in either fails), so JS must not short-circuit.
+      return { code: `((__refsynLeft, __refsynRight) => __refsynLeft && __refsynRight)(${left.code}, ${right.code})`, kind: "bool" };
     }
     case "or": {
       if (args.length !== 2) {
@@ -407,7 +427,7 @@ const compileComponent = (name, args, ctx) => {
       }
       const left = compileExpr(args[0], ctx);
       const right = compileExpr(args[1], ctx);
-      return { code: `(${left.code} || ${right.code})`, kind: "bool" };
+      return { code: `((__refsynLeft, __refsynRight) => __refsynLeft || __refsynRight)(${left.code}, ${right.code})`, kind: "bool" };
     }
     case "not": {
       if (args.length !== 1) {

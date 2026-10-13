@@ -358,6 +358,12 @@ fn hole_inputs_add_created_objects_and_earlier_holes_but_no_writes() {
     )
     .unwrap();
     let tasks = serde_json::to_value(&problems.tasks).unwrap();
+    // The emitted `receiver.field` throws on null, so field components must fail there too.
+    assert!(tasks
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|t| t["strictFieldAccess"] == json!(true)));
     let prev = &tasks[1];
     assert_eq!(
         prev["refsynMeta"]["explicitArgs"]

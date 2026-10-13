@@ -228,6 +228,7 @@ pub fn build(
             }],
             expose_class_components: false,
             auto_class_field_components: true,
+            strict_field_access: true,
             signature: EscherTaskSignature {
                 return_type: return_type.clone(),
                 args: args
