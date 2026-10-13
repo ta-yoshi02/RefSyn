@@ -48,7 +48,13 @@ const isIntType = (type) =>
 const isBoolType = (type) =>
   type.kind === "apply" && type.constructor.name === "Bool" && type.params.length === 0;
 
+// JS identifiers may be non-ASCII, so a parameter name taken from the user's method is kept as is.
+const isJsIdentifier = (raw) => /^[\p{ID_Start}$_][\p{ID_Continue}$\u200C\u200D]*$/u.test(raw);
+
 const sanitizeJsIdentifier = (raw) => {
+  if (isJsIdentifier(raw)) {
+    return raw;
+  }
   let out = "";
   for (const ch of raw) {
     out += /[A-Za-z0-9_$]/.test(ch) ? ch : "_";
@@ -120,6 +126,13 @@ const createCompileContext = (rawTask, job) => {
     throw new Error(`receiver input '${meta.thisRefName}' is missing from synthesized signature`);
   }
 
+  // Two names that sanitize alike would make duplicate parameters, which JS rejects.
+  const taken = new Set();
+  const uniqueName = (name, index) => {
+    const unique = taken.has(name) ? `${name}_${index}` : name;
+    taken.add(unique);
+    return unique;
+  };
   const explicitArgs = meta.explicitArgs.map((arg, index) => {
     const inputIndex = job.inputNames.indexOf(arg.name);
     if (inputIndex < 0) {
@@ -127,7 +140,7 @@ const createCompileContext = (rawTask, job) => {
     }
     return {
       rawName: arg.name,
-      paramName: resolveParamName(arg.name, index),
+      paramName: uniqueName(resolveParamName(arg.name, index), index),
       taskType: arg.taskType,
       inputIndex,
     };
