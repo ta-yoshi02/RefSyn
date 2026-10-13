@@ -60,3 +60,6 @@ export function applyRefsynTaskOutcomes(
   response: RefsynResponseLike,
   outcomes: readonly RefsynRunOutcome[],
 ): void;
+
+/** Translates a synthesized term into the helper method's JS source. `job` is escher-ts's prepared job for `rawTask`. */
+export function compileRefsynMethod(rawTask: RefsynTaskSpec, job: unknown, term: unknown): string;
