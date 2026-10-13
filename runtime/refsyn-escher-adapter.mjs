@@ -48,7 +48,13 @@ const isIntType = (type) =>
 const isBoolType = (type) =>
   type.kind === "apply" && type.constructor.name === "Bool" && type.params.length === 0;
 
+// JS identifiers may be non-ASCII, so a parameter name taken from the user's method is kept as is.
+const isJsIdentifier = (raw) => /^[\p{ID_Start}$_][\p{ID_Continue}$\u200C\u200D]*$/u.test(raw);
+
 const sanitizeJsIdentifier = (raw) => {
+  if (isJsIdentifier(raw)) {
+    return raw;
+  }
   let out = "";
   for (const ch of raw) {
     out += /[A-Za-z0-9_$]/.test(ch) ? ch : "_";
@@ -128,6 +134,21 @@ const createCompileContext = (rawTask, job) => {
     throw new Error(`receiver input '${meta.thisRefName}' is missing from synthesized signature`);
   }
 
+  // Duplicate parameters are a syntax error, so names kept as written are reserved first and a
+  // replacement name is numbered until it is unused.
+  const bases = meta.explicitArgs.map((arg, index) => resolveParamName(arg.name, index));
+  const reserved = new Set(bases.filter((base, index) => base === meta.explicitArgs[index].name));
+  const taken = new Set();
+  const uniqueName = (base, index) => {
+    let unique = base;
+    if (base !== meta.explicitArgs[index].name || taken.has(base)) {
+      for (let suffix = 1; reserved.has(unique) || taken.has(unique); suffix += 1) {
+        unique = `${base}_${suffix}`;
+      }
+    }
+    taken.add(unique);
+    return unique;
+  };
   const explicitArgs = meta.explicitArgs.map((arg, index) => {
     const inputIndex = job.inputNames.indexOf(arg.name);
     if (inputIndex < 0) {
@@ -135,7 +156,7 @@ const createCompileContext = (rawTask, job) => {
     }
     return {
       rawName: arg.name,
-      paramName: resolveParamName(arg.name, index),
+      paramName: uniqueName(bases[index], index),
       taskType: arg.taskType,
       inputIndex,
     };
