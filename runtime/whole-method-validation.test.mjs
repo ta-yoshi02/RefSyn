@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { validateWholeMethod, applyValidationResult } from './whole-method-validation.mjs';
 
 export const fixture = (code = 'cut() { this.link = null; return this; }') => ({
@@ -191,3 +192,17 @@ test('a helper must return its output example, not just lead to the right final 
   payload.response.hole_checks = [];
   assert.equal(validateWholeMethod(payload).status, 'unavailable');
 });
+
+// set(b) demonstrations whose literal for `on` is typed boolean, number or string.
+const flagRequest = (name) => JSON.parse(readFileSync(new URL(`../tests/data/booleans/${name}.json`, import.meta.url), 'utf8'));
+const flagPayload = (name, code) => ({ request: flagRequest(name), response: { composed_method_code: code, code: [], escher_results: [], hole_checks: [] }, taskNames: [] });
+for (const [name, accepted, rejected] of [
+  ['set_flag', 'set(b) { this.on = b; }', ['set(b) { this.on = String(b); }', 'set(b) { this.on = b ? 1 : 0; }']],
+  ['set_flag_number_literal', 'set(b) { this.on = b ? 1 : 0; }', ['set(b) { this.on = b; }', 'set(b) { this.on = b ? "1" : "0"; }']],
+  ['set_flag_string_literal', 'set(b) { this.on = String(b); }', ['set(b) { this.on = b; }']],
+]) {
+  test(`a value with the demonstrated label but another type fails: ${name}`, () => {
+    assert.equal(validateWholeMethod(flagPayload(name, accepted)).status, 'passed');
+    for (const code of rejected) assert.equal(validateWholeMethod(flagPayload(name, code)).status, 'failed', code);
+  });
+}
