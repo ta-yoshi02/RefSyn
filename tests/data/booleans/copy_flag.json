@@ -1,0 +1,167 @@
+{
+  "method_calls": [
+    {
+      "callLabel": "c0",
+      "contextSensitiveID": "main",
+      "receiverObject": "r",
+      "receiverClassName": "Flag",
+      "methodName": "copy",
+      "methodParamNames": [],
+      "arguments": [],
+      "operations": [
+        {
+          "editType": "editEdgeReference",
+          "from": "d",
+          "label": "on",
+          "oldTo": "d-on",
+          "newTo": "r-on"
+        }
+      ]
+    },
+    {
+      "callLabel": "c1",
+      "contextSensitiveID": "main",
+      "receiverObject": "r",
+      "receiverClassName": "Flag",
+      "methodName": "copy",
+      "methodParamNames": [],
+      "arguments": [],
+      "operations": [
+        {
+          "editType": "editEdgeReference",
+          "from": "d",
+          "label": "on",
+          "oldTo": "d-on",
+          "newTo": "r-on"
+        }
+      ]
+    },
+    {
+      "callLabel": "c2",
+      "contextSensitiveID": "main",
+      "receiverObject": "r",
+      "receiverClassName": "Flag",
+      "methodName": "copy",
+      "methodParamNames": [],
+      "arguments": [],
+      "operations": [
+        {
+          "editType": "editEdgeReference",
+          "from": "d",
+          "label": "on",
+          "oldTo": "d-on",
+          "newTo": "r-on"
+        }
+      ]
+    }
+  ],
+  "vis_graph": {
+    "nodes": [],
+    "edges": []
+  },
+  "validation": {
+    "version": 3,
+    "classes": [
+      {
+        "name": "Flag",
+        "source": "class Flag {\n    constructor() {\n        this.on = false;\n        this.next = null;\n    }\n\n    set(b) {\n    }\n\n    copy() {\n    }\n}",
+        "instance": {
+          "on": false,
+          "next": null
+        }
+      }
+    ],
+    "cases": [
+      {
+        "callLabel": "c0",
+        "contextSensitiveID": "main",
+        "objects": [
+          {
+            "id": "r",
+            "className": "Flag",
+            "fields": {
+              "on": true,
+              "next": {
+                "ref": "d"
+              }
+            }
+          },
+          {
+            "id": "d",
+            "className": "Flag",
+            "fields": {
+              "on": false,
+              "next": null
+            }
+          }
+        ],
+        "arguments": [],
+        "values": {
+          "r-on": true,
+          "d-on": false,
+          "d-next": null
+        }
+      },
+      {
+        "callLabel": "c1",
+        "contextSensitiveID": "main",
+        "objects": [
+          {
+            "id": "r",
+            "className": "Flag",
+            "fields": {
+              "on": false,
+              "next": {
+                "ref": "d"
+              }
+            }
+          },
+          {
+            "id": "d",
+            "className": "Flag",
+            "fields": {
+              "on": true,
+              "next": null
+            }
+          }
+        ],
+        "arguments": [],
+        "values": {
+          "r-on": false,
+          "d-on": true,
+          "d-next": null
+        }
+      },
+      {
+        "callLabel": "c2",
+        "contextSensitiveID": "main",
+        "objects": [
+          {
+            "id": "r",
+            "className": "Flag",
+            "fields": {
+              "on": true,
+              "next": {
+                "ref": "d"
+              }
+            }
+          },
+          {
+            "id": "d",
+            "className": "Flag",
+            "fields": {
+              "on": true,
+              "next": null
+            }
+          }
+        ],
+        "arguments": [],
+        "values": {
+          "r-on": true,
+          "d-on": true,
+          "d-next": null
+        }
+      }
+    ]
+  }
+}

@@ -108,6 +108,9 @@ pub struct EscherTaskMeta {
     pub value_fields: Vec<String>,
     #[serde(rename = "pointerFields")]
     pub pointer_fields: Vec<String>,
+    /// Fields typed Bool in escher-ts, read straight from the object's slot.
+    #[serde(rename = "boolFields")]
+    pub bool_fields: Vec<String>,
     #[serde(rename = "fieldHeapNames")]
     pub field_heap_names: BTreeMap<String, String>,
     #[serde(rename = "explicitArgs")]

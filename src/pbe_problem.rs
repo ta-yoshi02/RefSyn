@@ -33,6 +33,8 @@ pub struct Problems {
 enum FieldKind {
     Int,
     Pointer,
+    /// Held directly in the object's slot: escher-ts has a Bool type, so no heap is needed.
+    Bool,
 }
 
 /// One demonstration's heap as seen by every hole: pre-call objects, then created objects.
@@ -108,8 +110,9 @@ pub fn build(
     let kinds = field_kinds(&states)?;
     // escher-ts finds a field's heap by the name `<field>Heap`, so the name is not converted.
     let field_heap_names: BTreeMap<String, String> = kinds
-        .keys()
-        .map(|f| (f.clone(), format!("{f}Heap")))
+        .iter()
+        .filter(|(_, k)| **k != FieldKind::Bool)
+        .map(|(f, _)| (f.clone(), format!("{f}Heap")))
         .collect();
     let names = template.local_names(params);
     let mut inputs = BTreeSet::new();
@@ -146,6 +149,8 @@ pub fn build(
                 .all(|v| matches!(v, Value::Number(n) if n.is_i64()))
             {
                 Ok("Int".to_string())
+            } else if values.iter().all(|v| matches!(v, Value::Bool(_))) {
+                Ok("Bool".to_string())
             } else if values
                 .iter()
                 .all(|v| matches!(v, Value::Ref(_) | Value::Null))
@@ -207,6 +212,11 @@ pub fn build(
             .filter(|(_, k)| **k == FieldKind::Pointer)
             .map(|(f, _)| f.clone())
             .collect();
+        let bool_fields: Vec<String> = kinds
+            .iter()
+            .filter(|(_, k)| **k == FieldKind::Bool)
+            .map(|(f, _)| f.clone())
+            .collect();
         let uses_ints = !value_fields.is_empty()
             || args.iter().any(|(_, t)| t == "Int")
             || return_type == "Int";
@@ -221,6 +231,7 @@ pub fn build(
                         let ty = match k {
                             FieldKind::Int => "Ref[Int]".to_string(),
                             FieldKind::Pointer => format!("Ref[Object[{class}]]"),
+                            FieldKind::Bool => "Bool".to_string(),
                         };
                         (f.clone(), ty)
                     })
@@ -254,12 +265,17 @@ pub fn build(
                 class_heap_name: "nodeHeap".to_string(),
                 value_fields,
                 pointer_fields,
+                bool_fields,
                 field_heap_names: field_heap_names.clone(),
                 explicit_args: args
                     .iter()
                     .map(|(name, ty)| EscherTaskMetaArg {
                         name: name.clone(),
-                        legacy_type: if ty == "Int" { "Int" } else { "Ptr" }.to_string(),
+                        legacy_type: match ty.as_str() {
+                            "Int" | "Bool" => ty.as_str(),
+                            _ => "Ptr",
+                        }
+                        .to_string(),
                         task_type: ty.clone(),
                     })
                     .collect(),
@@ -276,12 +292,14 @@ fn task_type(ty: &HoleType, class: &str) -> Result<String> {
         HoleType::Object(c) if c == class => Ok(format!("Ref[Object[{class}]]")),
         HoleType::Object(c) => bail!("a hole of class {c} cannot be encoded in a {class} problem"),
         HoleType::String => bail!("string-valued holes cannot be encoded for escher-ts"),
-        HoleType::Bool => bail!("boolean-valued holes are not supported yet"),
+        HoleType::Bool => Ok("Bool".to_string()),
     }
 }
 
 /// escher-ts represents null only as a pointer, so a field that is only ever null is a
-/// pointer field. Undefined and absent are the error value of either kind, never null.
+/// pointer field. Undefined and absent are the error value of any kind, never null or false.
+/// A field whose values mix kinds is refused rather than converted: 1, "true" and null are not
+/// booleans.
 fn field_kinds(states: &[State]) -> Result<BTreeMap<String, FieldKind>> {
     let names: BTreeSet<&String> = states
         .iter()
@@ -294,6 +312,7 @@ fn field_kinds(states: &[State]) -> Result<BTreeMap<String, FieldKind>> {
             .flat_map(|s| s.fields.iter().map(|f| f.get(name)))
             .collect();
         let ints = values.iter().any(|v| matches!(v, Some(Value::Number(_))));
+        let bools = values.iter().any(|v| matches!(v, Some(Value::Bool(_))));
         let refs = values
             .iter()
             .any(|v| matches!(v, Some(Value::Ref(_) | Value::Null)));
@@ -301,15 +320,22 @@ fn field_kinds(states: &[State]) -> Result<BTreeMap<String, FieldKind>> {
             .iter()
             .any(|v| matches!(v, None | Some(Value::Undefined)));
         if let Some(Some(other)) = values.iter().find(|v| {
-            matches!(v, Some(Value::String(_) | Value::Bool(_)))
+            matches!(v, Some(Value::String(_)))
                 || matches!(v, Some(Value::Number(n)) if !n.is_i64())
         }) {
             bail!("field {name} holds {other:?}, which escher-ts cannot represent");
         }
-        let kind = match (ints, refs, undefined) {
-            (true, true, _) => bail!("field {name} holds both integers and references or null"),
-            (false, true, _) => FieldKind::Pointer,
-            (_, false, _) => FieldKind::Int,
+        let kind = match (ints, refs, bools, undefined) {
+            (true, true, _, _) => {
+                bail!("field {name} holds both integers and references or null")
+            }
+            (true, false, true, _) => bail!("field {name} holds both booleans and integers"),
+            (false, true, true, _) => {
+                bail!("field {name} holds both booleans and references or null")
+            }
+            (false, false, true, _) => FieldKind::Bool,
+            (false, true, false, _) => FieldKind::Pointer,
+            (_, false, false, _) => FieldKind::Int,
         };
         kinds.insert(name.clone(), kind);
     }
@@ -328,13 +354,18 @@ fn encode_heap(
             let slot = match kind {
                 FieldKind::Int => json!({ "ref": index }),
                 FieldKind::Pointer => encode_pointer(fields.get(name), state)?,
+                FieldKind::Bool => match fields.get(name) {
+                    Some(Value::Bool(b)) => json!(b),
+                    None | Some(Value::Undefined) => json!({ "error": true }),
+                    Some(other) => bail!("{other:?} in a boolean field"),
+                },
             };
             slots.insert(name.clone(), slot);
         }
         objects.push(json!({ "object": { "className": class, "fields": slots } }));
     }
     let mut heaps = vec![Json::Array(objects)];
-    for (name, kind) in kinds {
+    for (name, kind) in kinds.iter().filter(|(_, k)| **k != FieldKind::Bool) {
         let heap = state
             .fields
             .iter()
@@ -343,6 +374,7 @@ fn encode_heap(
                     (FieldKind::Int, Some(Value::Number(n))) => json!(n),
                     (FieldKind::Int, _) => json!({ "error": true }),
                     (FieldKind::Pointer, value) => encode_pointer(value, state)?,
+                    (FieldKind::Bool, _) => unreachable!("boolean fields have no heap"),
                 })
             })
             .collect::<Result<Vec<_>>>()?;
@@ -363,6 +395,7 @@ fn encode_pointer(value: Option<&Value>, state: &State) -> Result<Json> {
 fn encode_value(value: &Value, state: &State) -> Result<Json> {
     match value {
         Value::Number(n) if n.is_i64() => Ok(json!(n)),
+        Value::Bool(b) => Ok(json!(b)),
         Value::Ref(id) => Ok(json!({ "ref": state.index(id)? })),
         Value::Null => Ok(json!({ "ref": -1 })),
         other => bail!("{other:?} cannot be encoded for escher-ts"),
@@ -373,6 +406,7 @@ fn encode_example(example: &Example, state: &State) -> Result<Json> {
     match example {
         Example::Object(id) => Ok(json!({ "ref": state.index(id)? })),
         Example::Constant(Constant::Number(n)) if n.is_i64() => Ok(json!(n)),
+        Example::Constant(Constant::Bool(b)) => Ok(json!(b)),
         Example::Constant(c) => bail!("{c:?} cannot be encoded for escher-ts"),
     }
 }

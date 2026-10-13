@@ -85,6 +85,9 @@ const fieldAccess = (baseExpr, field) =>
 // emitted read throws there instead of passing undefined on; a null receiver throws by itself.
 const readDefined = "((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })";
 const definedAccess = (baseExpr, field) => `${readDefined}(${fieldAccess(baseExpr, field)})`;
+// A Bool field holds a boolean in every demonstration; any other value, undefined and null
+// included, has no counterpart in escher-ts, so the read fails instead of being taken as false.
+const readBoolean = "((__refsynValue) => { if (typeof __refsynValue !== \"boolean\") { throw new TypeError(\"refsyn: a boolean field holds no boolean\"); } return __refsynValue; })";
 // Traversals fail on a revisited object, as escher-ts does, so that a cyclic heap cannot hang.
 const visit = (what) =>
   `if (__refsynSeen.has(__refsynCur)) { throw new RangeError("refsyn: ${what} met a cycle"); } __refsynSeen.add(__refsynCur);`;
@@ -101,7 +104,7 @@ const capitalize = (text) => (text.length === 0 ? text : text[0].toUpperCase() +
 const assertDistinctFieldComponents = (rawTask) => {
   const meta = rawTask.refsynMeta ?? {};
   const taken = new Set([rawTask.name, ...(rawTask.components ?? []).map((c) => c.name)]);
-  for (const field of [...(meta.valueFields ?? []), ...(meta.pointerFields ?? [])]) {
+  for (const field of [...(meta.valueFields ?? []), ...(meta.pointerFields ?? []), ...(meta.boolFields ?? [])]) {
     for (const name of [`${field}Of`, `has${capitalize(field)}`]) {
       if (taken.has(name)) {
         throw new Error(`field accessor '${name}' for field '${field}' collides with another component`);
@@ -181,6 +184,7 @@ const createCompileContext = (rawTask, job) => {
     heapNames,
     valueFields: new Set(meta.valueFields ?? []),
     pointerFields: new Set(meta.pointerFields ?? []),
+    boolFields: new Set(meta.boolFields ?? []),
     pointerFieldByHeapName,
     valueFieldByHeapName,
     primaryValueField: meta.valueFields?.[0] ?? null,
@@ -242,6 +246,19 @@ const compileVar = (name, ctx) => {
 };
 
 const compileAutoFieldComponent = (name, args, ctx) => {
+  for (const field of ctx.boolFields) {
+    if (name === `${field}Of` || name === `has${capitalize(field)}`) {
+      if (args.length < 2) {
+        throw new Error(`${name} expects receiver + heap args`);
+      }
+      const base = compileExpr(args[0], ctx);
+      // escher-ts keeps the boolean in the slot: reading fails on undefined or absent, while the
+      // test answers false there, as for an integer field.
+      return name === `${field}Of`
+        ? { code: `${readBoolean}(${fieldAccess(base.code, field)})`, kind: "bool" }
+        : { code: `(${fieldAccess(base.code, field)} !== undefined)`, kind: "bool" };
+    }
+  }
   for (const field of [...ctx.valueFields, ...ctx.pointerFields]) {
     if (name === `${field}Of`) {
       if (args.length < 2) {

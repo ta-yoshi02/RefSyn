@@ -3,10 +3,10 @@ export interface ValidationResult {
   checked_demonstrations: number;
   error: string | null;
 }
-/** One helper's output example per demonstration: a number, or a pre-call object ID. */
+/** One helper's output example per demonstration: a number, a boolean, or a pre-call object ID. */
 export interface HoleCheck {
   helper: string;
-  expected: Array<number | { ref: string }>;
+  expected: Array<number | boolean | { ref: string }>;
 }
 export interface ValidationPayload {
   request: unknown;

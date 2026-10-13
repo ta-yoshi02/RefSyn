@@ -11,6 +11,7 @@ export interface RefsynTaskMeta {
   readonly classHeapName: string;
   readonly valueFields: readonly string[];
   readonly pointerFields: readonly string[];
+  readonly boolFields?: readonly string[];
   readonly fieldHeapNames: Readonly<Record<string, string>>;
   readonly explicitArgs: readonly RefsynTaskMetaArg[];
 }
