@@ -23,6 +23,16 @@ const task = (names) => ({
   },
 });
 
+// The parameter list of the compiled helper, which returns its last parameter.
+const paramsOf = (names) => {
+  const raw = task(names);
+  raw.examples = raw.examples.map(([input]) => [[...input.slice(0, 3), ...names.map((_, i) => input[3 + Math.min(i, 1)])], input[4]]);
+  const [outcome] = runRefsynTasks([raw], { quiet: true });
+  assert.equal(outcome.success, true, outcome.error ?? '');
+  new Function(`return ({ ${outcome.compiled_js} });`);
+  return outcome.compiled_js.slice(outcome.compiled_js.indexOf('(') + 1, outcome.compiled_js.indexOf(')')).split(', ');
+};
+
 const helper = (names) => {
   const [outcome] = runRefsynTasks([task(names)], { quiet: true });
   assert.equal(outcome.success, true, outcome.error ?? '');
@@ -40,3 +50,14 @@ test('names that are not identifiers get distinct replacements', () => {
   assert.match(code, /^f_h0\(a_b, a_b_1\)/);
   assert.equal(method(2, 9), 9);
 });
+
+// A replacement must not take a name that a later parameter keeps as written, nor one already given.
+for (const names of [['a-b', 'a_b_2', 'a+b'], ['a-b', 'a+b', 'a_b_1'], ['a_b', 'a-b', 'a+b', 'a_b_1']]) {
+  test(`replacements avoid every other parameter name: ${names.join(', ')}`, () => {
+    const params = paramsOf(names);
+    assert.equal(new Set(params).size, names.length, params.join(', '));
+    names.forEach((name, index) => {
+      if (/^[A-Za-z_$][\w$]*$/.test(name)) assert.equal(params[index], name);
+    });
+  });
+}

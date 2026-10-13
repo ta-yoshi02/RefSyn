@@ -126,10 +126,18 @@ const createCompileContext = (rawTask, job) => {
     throw new Error(`receiver input '${meta.thisRefName}' is missing from synthesized signature`);
   }
 
-  // Two names that sanitize alike would make duplicate parameters, which JS rejects.
+  // Duplicate parameters are a syntax error, so names kept as written are reserved first and a
+  // replacement name is numbered until it is unused.
+  const bases = meta.explicitArgs.map((arg, index) => resolveParamName(arg.name, index));
+  const reserved = new Set(bases.filter((base, index) => base === meta.explicitArgs[index].name));
   const taken = new Set();
-  const uniqueName = (name, index) => {
-    const unique = taken.has(name) ? `${name}_${index}` : name;
+  const uniqueName = (base, index) => {
+    let unique = base;
+    if (base !== meta.explicitArgs[index].name || taken.has(base)) {
+      for (let suffix = 1; reserved.has(unique) || taken.has(unique); suffix += 1) {
+        unique = `${base}_${suffix}`;
+      }
+    }
     taken.add(unique);
     return unique;
   };
@@ -140,7 +148,7 @@ const createCompileContext = (rawTask, job) => {
     }
     return {
       rawName: arg.name,
-      paramName: uniqueName(resolveParamName(arg.name, index), index),
+      paramName: uniqueName(bases[index], index),
       taskType: arg.taskType,
       inputIndex,
     };
