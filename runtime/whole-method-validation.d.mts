@@ -3,11 +3,17 @@ export interface ValidationResult {
   checked_demonstrations: number;
   error: string | null;
 }
+/** One helper's output example per demonstration: a number, or a pre-call object ID. */
+export interface HoleCheck {
+  helper: string;
+  expected: Array<number | { ref: string }>;
+}
 export interface ValidationPayload {
   request: unknown;
   response: {
     code: string[];
     composed_method_code?: string | null;
+    hole_checks?: HoleCheck[] | null;
     escher_results?: { name: string; success: boolean }[] | null;
     validation?: ValidationResult;
   };
