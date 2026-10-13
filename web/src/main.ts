@@ -1,6 +1,6 @@
 import "./style.css";
 import { runRefsynBrowser } from "./lib/refsyn-browser";
-import { appendSample } from "./samples/append";
+import { insertSample } from "./samples/insert";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -23,7 +23,7 @@ app.innerHTML = `
         <label class="field">
           <span>Sample</span>
           <select id="sample-select">
-            <option value="append">append-like trace pair</option>
+            <option value="insert">insert(i, arg), three demonstrations</option>
           </select>
         </label>
         <label class="field">
@@ -115,7 +115,7 @@ if (
 }
 
 const samples = {
-  append: appendSample,
+  insert: insertSample,
 };
 
 const renderSample = (): void => {
@@ -141,7 +141,7 @@ loadSampleButton.addEventListener("click", renderSample);
 runButton.addEventListener("click", async () => {
   try {
     setStatus("Running synthesis in worker...", "busy");
-    const request = JSON.parse(requestInput.value) as typeof appendSample;
+    const request = JSON.parse(requestInput.value) as typeof insertSample;
     const response = await runRefsynBrowser(request, {
       trace: traceInput.checked,
       maxCost: Number(maxCostInput.value),
