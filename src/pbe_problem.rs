@@ -10,9 +10,8 @@ use serde_json::{json, Value as Json};
 use crate::alignment::Mapping;
 use crate::demonstration::{Recording, Value};
 use crate::escher_bridge::{
-    field_to_heap_name, library_components, sanitize_js_identifier, EscherTaskAutoExpandSignature,
-    EscherTaskClassSpec, EscherTaskMeta, EscherTaskMetaArg, EscherTaskSignature,
-    EscherTaskSignatureArg, EscherTaskSpec,
+    library_components, EscherTaskAutoExpandSignature, EscherTaskClassSpec, EscherTaskMeta,
+    EscherTaskMetaArg, EscherTaskSignature, EscherTaskSignatureArg, EscherTaskSpec,
 };
 use crate::operation_graph::{Constant, OperationGraph, Vertex};
 use crate::template::{Example, HoleType, Template};
@@ -107,7 +106,24 @@ pub fn build(
         })
         .collect::<Result<Vec<_>>>()?;
     let kinds = field_kinds(&states)?;
+    // escher-ts finds a field's heap by the name `<field>Heap`, so the name is not converted.
+    let field_heap_names: BTreeMap<String, String> = kinds
+        .keys()
+        .map(|f| (f.clone(), format!("{f}Heap")))
+        .collect();
     let names = template.local_names(params);
+    let mut inputs = BTreeSet::new();
+    for name in ["thisRef", "nodeHeap"]
+        .into_iter()
+        .chain(field_heap_names.values().map(String::as_str))
+        .chain(params.iter().map(String::as_str))
+        .chain(names.iter().flatten().map(String::as_str))
+    {
+        ensure!(
+            inputs.insert(name),
+            "the PBE input name {name} is used twice; rename the field or parameter"
+        );
+    }
     let created_args: Vec<(String, String)> = template
         .creates
         .iter()
@@ -191,10 +207,6 @@ pub fn build(
             .filter(|(_, k)| **k == FieldKind::Pointer)
             .map(|(f, _)| f.clone())
             .collect();
-        let field_heap_names: BTreeMap<String, String> = kinds
-            .keys()
-            .map(|f| (f.clone(), field_to_heap_name(f)))
-            .collect();
         let uses_ints = !value_fields.is_empty()
             || args.iter().any(|(_, t)| t == "Int")
             || return_type == "Int";
@@ -235,13 +247,13 @@ pub fn build(
             components: library_components(uses_ints, !pointer_fields.is_empty()),
             examples,
             refsyn_meta: EscherTaskMeta {
-                js_method_name: sanitize_js_identifier(&helper),
+                js_method_name: helper.clone(),
                 class_name: class.clone(),
                 this_ref_name: "thisRef".to_string(),
                 class_heap_name: "nodeHeap".to_string(),
                 value_fields,
                 pointer_fields,
-                field_heap_names,
+                field_heap_names: field_heap_names.clone(),
                 explicit_args: args
                     .iter()
                     .map(|(name, ty)| EscherTaskMetaArg {
@@ -268,7 +280,7 @@ fn task_type(ty: &HoleType, class: &str) -> Result<String> {
 }
 
 /// escher-ts represents null only as a pointer, so a field that is only ever null is a
-/// pointer field, and undefined can only be the error value of an integer field.
+/// pointer field. Undefined and absent are the error value of either kind, never null.
 fn field_kinds(states: &[State]) -> Result<BTreeMap<String, FieldKind>> {
     let names: BTreeSet<&String> = states
         .iter()
@@ -295,10 +307,7 @@ fn field_kinds(states: &[State]) -> Result<BTreeMap<String, FieldKind>> {
         }
         let kind = match (ints, refs, undefined) {
             (true, true, _) => bail!("field {name} holds both integers and references or null"),
-            (false, true, true) => {
-                bail!("pointer field {name} is undefined or absent on some object")
-            }
-            (false, true, false) => FieldKind::Pointer,
+            (false, true, _) => FieldKind::Pointer,
             (_, false, _) => FieldKind::Int,
         };
         kinds.insert(name.clone(), kind);
@@ -317,10 +326,7 @@ fn encode_heap(
         for (name, kind) in kinds {
             let slot = match kind {
                 FieldKind::Int => json!({ "ref": index }),
-                FieldKind::Pointer => match fields.get(name) {
-                    Some(Value::Ref(id)) => json!({ "ref": state.index(id)? }),
-                    _ => json!({ "ref": -1 }),
-                },
+                FieldKind::Pointer => encode_pointer(fields.get(name), state)?,
             };
             slots.insert(name.clone(), slot);
         }
@@ -335,16 +341,22 @@ fn encode_heap(
                 Ok(match (kind, fields.get(name)) {
                     (FieldKind::Int, Some(Value::Number(n))) => json!(n),
                     (FieldKind::Int, _) => json!({ "error": true }),
-                    (FieldKind::Pointer, Some(Value::Ref(id))) => {
-                        json!({ "ref": state.index(id)? })
-                    }
-                    (FieldKind::Pointer, _) => json!({ "ref": -1 }),
+                    (FieldKind::Pointer, value) => encode_pointer(value, state)?,
                 })
             })
             .collect::<Result<Vec<_>>>()?;
         heaps.push(Json::Array(heap));
     }
     Ok(heaps)
+}
+
+fn encode_pointer(value: Option<&Value>, state: &State) -> Result<Json> {
+    Ok(match value {
+        Some(Value::Ref(id)) => json!({ "ref": state.index(id)? }),
+        Some(Value::Null) => json!({ "ref": -1 }),
+        None | Some(Value::Undefined) => json!({ "error": true }),
+        Some(other) => bail!("{other:?} in a pointer field"),
+    })
 }
 
 fn encode_value(value: &Value, state: &State) -> Result<Json> {

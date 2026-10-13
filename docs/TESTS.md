@@ -24,6 +24,20 @@ Uses the paper's three `insert` demonstrations as the fixture.
   methods and non-isomorphic demonstrations produce no code; the core hands the browser one
   task and one hole check per hole.
 
+## Fields and names (`tests/fields_and_names_tests.rs`)
+
+- A class without a constructor: updating existing objects needs no absent fields; a created
+  object's absent pointer field is encoded as the error value (slot and heap), not null; a
+  method that creates such an object and later writes a reference to it is synthesized,
+  validated and adopted.
+- A non-ASCII method name (`追加`) calls exactly the helpers it defines, and `hole_checks`
+  use the same name.
+- A field that is not an identifier (`data-value`) is written and read with bracket notation.
+- Field heaps that collide with other inputs (`node` → `nodeHeap`) are refused; fields whose
+  accessors share a name (`next`, `Next` → `hasNext`) produce no code.
+- escher-ts' `tests/unit/components/user-friendly-json.test.ts` checks that undefined
+  reference and integer slots read as the error value in `fOf` and `hasF`.
+
 ## Whole-method adoption
 
 - `tests/whole_method_validation_tests.rs` checks native adoption and rejection through HTTP,
@@ -34,10 +48,12 @@ Uses the paper's three `insert` demonstrations as the fixture.
   against their output examples, side effects on globals, built-in and class prototypes and
   statics, rejection of incorrect candidates, unavailable inputs, repeated-write replay and timeout.
 - `npm test --prefix web` checks browser adoption, translation failure, Worker startup and
-  run timeouts, and reply nonces.
+  run timeouts, and reply nonces, and validates a response typed as `SynthesisResponse` with
+  `hole_checks` (adopted when the helper reproduces its output example, rejected otherwise).
 - Kanon's `src/js/test/testize-whole-method-validation.test.js` checks typed capture including
   `new C()` states, the MOLD state reflection (null writes keep properties and aliases, created
-  objects run their constructor, unsupported edits leave the heap untouched), payload delivery
+  objects run their constructor, unsupported edits, uncaptured or throwing constructors leave the
+  heap untouched and mark the demonstration as unsynthesizable), payload delivery
   to the actual validator, editor mutation guards, application of exactly the validated change
   and re-execution of the applied class. Its jest setup requires `escodegen`, which Kanon ships
   as the `external/escodegen` submodule rather than an npm dependency.

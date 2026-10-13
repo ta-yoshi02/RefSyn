@@ -159,6 +159,15 @@ impl Template {
         format!("{method}_h{k}")
     }
 
+    /// Whether `name` can be written as a JavaScript identifier (method or dot-notation property).
+    pub fn is_identifier(name: &str) -> bool {
+        let mut chars = name.chars();
+        chars
+            .next()
+            .is_some_and(|c| c == '$' || c == '_' || unicode_ident::is_xid_start(c))
+            && chars.all(|c| c == '$' || unicode_ident::is_xid_continue(c))
+    }
+
     /// Renders the method; hole `k` calls its helper with the method parameters followed by
     /// `hole_inputs(k)`.
     pub fn render_method(&self, method: &str, params: &[String]) -> String {
@@ -186,7 +195,18 @@ impl Template {
                         Self::helper_name(method, k)
                     )
                 }
-                Statement::Write(w) => format!("{}.{} = {};", rho(w.from), w.field, rho(w.to)),
+                Statement::Write(w) => {
+                    let target = if Self::is_identifier(&w.field) {
+                        format!("{}.{}", rho(w.from), w.field)
+                    } else {
+                        format!(
+                            "{}[{}]",
+                            rho(w.from),
+                            serde_json::Value::String(w.field.clone())
+                        )
+                    };
+                    format!("{target} = {};", rho(w.to))
+                }
                 Statement::Return(v) => format!("return {};", rho(v)),
             });
         }

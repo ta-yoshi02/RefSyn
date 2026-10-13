@@ -82,6 +82,21 @@ const memberCall = (baseExpr, methodName, args) => {
 
 const capitalize = (text) => (text.length === 0 ? text : text[0].toUpperCase() + text.slice(1));
 
+// escher-ts skips a generated field accessor whose name is already taken, so a collision would
+// make one field's component stand for another's; such tasks are refused before synthesis.
+const assertDistinctFieldComponents = (rawTask) => {
+  const meta = rawTask.refsynMeta ?? {};
+  const taken = new Set([rawTask.name, ...(rawTask.components ?? []).map((c) => c.name)]);
+  for (const field of [...(meta.valueFields ?? []), ...(meta.pointerFields ?? [])]) {
+    for (const name of [`${field}Of`, `has${capitalize(field)}`]) {
+      if (taken.has(name)) {
+        throw new Error(`field accessor '${name}' for field '${field}' collides with another component`);
+      }
+      taken.add(name);
+    }
+  }
+};
+
 const inferReturnKind = (returnType) => {
   if (isRefType(returnType)) {
     return "object";
@@ -485,6 +500,7 @@ export const runRefsynTasks = (rawTasks, options = {}) => {
   return rawTasks.map((rawTask) => {
     const taskName = rawTask.name ?? "synthesized";
     try {
+      assertDistinctFieldComponents(rawTask);
       const spec = parseJsonSynthesisSpec(JSON.stringify(rawTask));
       const job = prepareJsonSynthesisJob(spec);
       const synth = new AscendRecSynthesizer({

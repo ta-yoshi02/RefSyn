@@ -32,6 +32,13 @@ pub fn plan(request: &SynthesisRequest) -> Result<Plan> {
     let mappings = alignment::align_all(&graphs)?;
     let template = Template::build(&graphs, &mappings)?;
     let first = &recording.demonstrations[0];
+    // Helper names extend the method name, so the definitions and the template's calls agree
+    // only if it is an identifier; it is refused rather than renamed.
+    ensure!(
+        Template::is_identifier(&first.method),
+        "method name {:?} is not a JavaScript identifier",
+        first.method
+    );
     ensure!(
         recording
             .demonstrations
