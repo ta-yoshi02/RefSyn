@@ -306,50 +306,6 @@ fn push_library_component(
     }
 }
 
-pub(crate) fn field_to_heap_name(field: &str) -> String {
-    let mut out = String::with_capacity(field.len() + 4);
-    for (idx, ch) in field.chars().enumerate() {
-        let valid = if idx == 0 {
-            ch.is_ascii_alphabetic() || ch == '_' || ch == '$'
-        } else {
-            ch.is_ascii_alphanumeric() || ch == '_' || ch == '$'
-        };
-        if valid {
-            out.push(ch);
-        } else if idx == 0 && ch.is_ascii_digit() {
-            out.push('_');
-            out.push(ch);
-        } else {
-            out.push('_');
-        }
-    }
-    if out.is_empty() {
-        out.push('_');
-    }
-    out.push_str("Heap");
-    out
-}
-
-pub(crate) fn sanitize_js_identifier(raw: &str) -> String {
-    let mut out = String::with_capacity(raw.len());
-    for ch in raw.chars() {
-        let valid = ch.is_ascii_alphanumeric() || ch == '_' || ch == '$';
-        out.push(if valid { ch } else { '_' });
-    }
-    if out.is_empty() {
-        "_".to_string()
-    } else if out
-        .chars()
-        .next()
-        .map(|c| c.is_ascii_digit())
-        .unwrap_or(false)
-    {
-        format!("_{}", out)
-    } else {
-        out
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

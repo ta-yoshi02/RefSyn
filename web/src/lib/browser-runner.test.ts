@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { handleSynthesisMessage, type BrowserSynthesisArtifacts, type SynthesisRequest } from "./browser-runner";
+import {
+  handleSynthesisMessage,
+  type BrowserSynthesisArtifacts,
+  type SynthesisRequest,
+  type SynthesisResponse,
+} from "./browser-runner";
 
 vi.mock("../../../runtime/whole-method-validator-client.mjs", async () => {
   const { validateWholeMethod } = await import("../../../runtime/whole-method-validation.mjs");
@@ -146,4 +151,182 @@ it("reports successful PBE with failed translation as failure and blocks adoptio
   expect(response.validation?.status).toBe("failed");
   expect(response.composed_method_code).toBeNull();
   expect(response.code).toEqual([]);
+});
+
+// `f() { const hole0 = this.f_h0(); hole0.next = hole0; }` from one demonstration where r.next
+// is redirected from a to r; the response has the shape the Rust core returns.
+const selfLoopRequest: SynthesisRequest = {
+  method_calls: [{
+    callLabel: "c0", contextSensitiveID: "main", receiverObject: "r", receiverClassName: "C",
+    methodName: "f", methodParamNames: [], arguments: [],
+    operations: [{ editType: "editEdgeReference", from: "r", label: "next", oldTo: "a", newTo: "r" }],
+  }],
+  vis_graph: { nodes: [], edges: [] },
+  validation: {
+    version: 3,
+    classes: [{ name: "C", source: "class C { f() {} }", instance: {} }],
+    cases: [{
+      callLabel: "c0", contextSensitiveID: "main", arguments: [],
+      objects: [
+        { id: "r", className: "C", fields: { next: { ref: "a" } } },
+        { id: "a", className: "C", fields: { next: null } },
+      ],
+    }],
+  },
+};
+
+// Task JSON as the Rust core emits it for `selfLoopRequest`.
+const selfLoopTask = {
+  "name": "f_h0",
+  "category": "refsyn",
+  "classes": [
+    {
+      "name": "C",
+      "fields": {
+        "next": "Ref[Object[C]]"
+      }
+    }
+  ],
+  "exposeClassComponents": false,
+  "autoClassFieldComponents": true,
+  "signature": {
+    "returnType": "Ref[Object[C]]",
+    "autoExpandClassSignature": {
+      "className": "C",
+      "thisRefName": "thisRef",
+      "classHeapName": "nodeHeap",
+      "fieldHeapNames": {
+        "next": "nextHeap"
+      }
+    }
+  },
+  "components": [
+    {
+      "name": "isNull",
+      "kind": "libraryRef",
+      "ref": "isNull"
+    },
+    {
+      "name": "equal",
+      "kind": "libraryRef",
+      "ref": "equal"
+    },
+    {
+      "name": "and",
+      "kind": "libraryRef",
+      "ref": "and"
+    },
+    {
+      "name": "or",
+      "kind": "libraryRef",
+      "ref": "or"
+    },
+    {
+      "name": "not",
+      "kind": "libraryRef",
+      "ref": "not"
+    },
+    {
+      "name": "last_ptr",
+      "kind": "libraryRef",
+      "ref": "last_ptr"
+    },
+    {
+      "name": "penultimateRef",
+      "kind": "libraryRef",
+      "ref": "penultimateRef"
+    },
+    {
+      "name": "nthNextRef",
+      "kind": "libraryRef",
+      "ref": "nthNextRef"
+    }
+  ],
+  "examples": [
+    [
+      [
+        {
+          "ref": 0
+        },
+        [
+          {
+            "object": {
+              "className": "C",
+              "fields": {
+                "next": {
+                  "ref": 1
+                }
+              }
+            }
+          },
+          {
+            "object": {
+              "className": "C",
+              "fields": {
+                "next": {
+                  "ref": -1
+                }
+              }
+            }
+          }
+        ],
+        [
+          {
+            "ref": 1
+          },
+          {
+            "ref": -1
+          }
+        ]
+      ],
+      {
+        "ref": 0
+      }
+    ]
+  ],
+  "refsynMeta": {
+    "jsMethodName": "f_h0",
+    "className": "C",
+    "thisRefName": "thisRef",
+    "classHeapName": "nodeHeap",
+    "valueFields": [],
+    "pointerFields": [
+      "next"
+    ],
+    "fieldHeapNames": {
+      "next": "nextHeap"
+    },
+    "explicitArgs": []
+  }
+};
+
+const selfLoopArtifacts = (holeChecks: SynthesisResponse["hole_checks"]): BrowserSynthesisArtifacts => ({
+  response: {
+    code: [],
+    composed_method_code: "f() {\n    const hole0 = this.f_h0();\n    hole0.next = hole0;\n}",
+    hole_checks: holeChecks,
+    individual_codes: [],
+  },
+  task_json: JSON.stringify([selfLoopTask]),
+});
+
+describe("browser validation with typed hole checks", () => {
+  it("adopts a method whose helper returns its output example", async () => {
+    const response = await handleSynthesisMessage(
+      async () => selfLoopArtifacts([{ helper: "f_h0", expected: [{ ref: "r" }] }]),
+      selfLoopRequest,
+    );
+    expect(response.validation).toEqual({ status: "passed", checked_demonstrations: 1, error: null });
+    expect(response.code).toEqual(["f_h0() { return this; }"]);
+  });
+
+  it("rejects a helper whose result differs from its output example", async () => {
+    const response = await handleSynthesisMessage(
+      async () => selfLoopArtifacts([{ helper: "f_h0", expected: [{ ref: "a" }] }]),
+      selfLoopRequest,
+    );
+    expect(response.validation?.status).toBe("failed");
+    expect(response.validation?.error).toContain("Hole f_h0 did not reproduce its output example");
+    expect(response.composed_method_code).toBeNull();
+  });
 });

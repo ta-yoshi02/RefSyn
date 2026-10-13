@@ -1,4 +1,4 @@
-import { applyValidationResult, type ValidationResult } from "../../../runtime/whole-method-validation.mjs";
+import { applyValidationResult, type HoleCheck, type ValidationResult } from "../../../runtime/whole-method-validation.mjs";
 import { validateInWorker } from "../../../runtime/whole-method-validator-client.mjs";
 import {
   applyRefsynTaskOutcomes,
@@ -26,6 +26,7 @@ export interface SynthesisResponse {
   hole_information?: Record<string, string[]> | null;
   code: string[];
   composed_method_code?: string | null;
+  hole_checks?: HoleCheck[] | null;
   individual_codes: string[];
   list_environment_info?: string | null;
   operation_analysis?: {
