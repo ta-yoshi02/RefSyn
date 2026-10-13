@@ -33,6 +33,9 @@ pub struct EscherTaskSpec {
     pub expose_class_components: bool,
     #[serde(rename = "autoClassFieldComponents")]
     pub auto_class_field_components: bool,
+    /// Field components fail on a null receiver, as the emitted `receiver.field` does in JS.
+    #[serde(rename = "strictFieldAccess")]
+    pub strict_field_access: bool,
     pub signature: EscherTaskSignature,
     pub components: Vec<EscherTaskComponentSpec>,
     pub examples: Vec<(Vec<Value>, Value)>,
