@@ -1,0 +1,80 @@
+{
+  "common_pattern": "COMMON_PLAN (operation-level, ordered)\n[op_0] addNode(id=__temp1, label=Node, isLiteral=false)\n[op_2] addEdge(from=__temp1, to=__hole_2, label=val)\n[op_3] addEdge(from=__temp1, to=__hole_1, label=next)\n\nHOLE_BINDINGS\n__hole_0 -> insert-n (Ptr)\n__hole_1 -> insert-o (Ptr)\n__hole_2 -> insert-f (Int)",
+  "hole_information": {
+    "__hole_2": [
+      "spec=insert-f",
+      "return=Int",
+      "role=value",
+      "jsMethod=insert_f",
+      "jsCall=this.insert_f(i, arg)",
+      "sideA=addNode id=__temp2 from=- to=- old_to=- label=24 is_literal=true",
+      "sideB=addNode id=__temp4 from=- to=- old_to=- label=50 is_literal=true",
+      "anchorA=1",
+      "anchorB=1"
+    ],
+    "__hole_1": [
+      "spec=insert-o",
+      "return=Ptr",
+      "role=pointer_target",
+      "jsMethod=insert_o",
+      "jsCall=this.insert_o(i, arg)",
+      "sideA=<none>",
+      "sideB=PointerOperand source=__temp3 target=main-new2 operand=edge_target label=next is_literal=false",
+      "anchorB=4"
+    ],
+    "__hole_0": [
+      "spec=insert-n",
+      "return=Ptr",
+      "role=edge_source",
+      "jsMethod=insert_n",
+      "jsCall=this.insert_n(i, arg)",
+      "sideA=<none>",
+      "sideB=editEdgeReference id=- from=__temp1 to=__temp3 old_to=main-new2 label=next is_literal=false",
+      "anchorA=3",
+      "anchorB=3"
+    ]
+  },
+  "code": [
+    "insert_f(arg0, arg1) { return arg1; }",
+    "insert_n(arg0, arg1) { return (() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).next !== null && ((__refsynCur).next).next !== null) { __refsynCur = (__refsynCur).next; } return (__refsynCur === null || (__refsynCur).next === null) ? null : __refsynCur; })(); }",
+    "insert_o(arg0, arg1) { return (() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).next !== null) { __refsynCur = (__refsynCur).next; } return __refsynCur; })(); }"
+  ],
+  "composed_method_code": "insert(i, arg) {\n    const h_ptr_0 = this.insert_n(i, arg);\n    const h_ptr_1 = this.insert_o(i, arg);\n    const h_int_0 = this.insert_f(i, arg);\n    const tmp0 = new Node();\n    tmp0.val = h_int_0;\n    tmp0.next = h_ptr_1;\n    h_ptr_0.next = tmp0;\n}",
+  "individual_codes": [
+    "insert-f: insert_f(arg0, arg1) { return arg1; }",
+    "insert-n: insert_n(arg0, arg1) { return (() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).next !== null && ((__refsynCur).next).next !== null) { __refsynCur = (__refsynCur).next; } return (__refsynCur === null || (__refsynCur).next === null) ? null : __refsynCur; })(); }",
+    "insert-o: insert_o(arg0, arg1) { return (() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).next !== null) { __refsynCur = (__refsynCur).next; } return __refsynCur; })(); }"
+  ],
+  "list_environment_info": "List Environment Summary:\n- 3 objects tracked\n- 2 literals\n- 3 field types: lst, next, val\n\nCurrent state:\nList Environment:\nobj_lst = 0\nList[obj_lst] = [Null, Null, Null, Number(1)]\nList[obj_next] = [Null, Number(2), Null, Null]\nList[obj_val] = [Number(-1), String(\"39\"), String(\"80\"), Number(-1)]\n\nescher-ts task JSON saved: target/escher/ts/insert_1791342519_209577000_p37640_0.json",
+  "operation_analysis": {
+    "common_operations_count": 4,
+    "total_operations_counts": [
+      7,
+      7,
+      7
+    ],
+    "difference_summary": "統合ベース分析（多仕様）: 3件の仕様に共通する操作を4個特定。各仕様との差分は最大3個。",
+    "differences_found": 3,
+    "synthesis_matches": 4
+  },
+  "escher_results": [
+    {
+      "name": "insert-f",
+      "success": true,
+      "rendered": "insert-f(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @arg0: Int, @arg1: Int): Int =\n  @arg1",
+      "error": null
+    },
+    {
+      "name": "insert-n",
+      "success": true,
+      "rendered": "insert-n(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @arg0: Int, @arg1: Int): Ref[Object<Node>] =\n  penultimateRef(@thisRef, @nextHeap)",
+      "error": null
+    },
+    {
+      "name": "insert-o",
+      "success": true,
+      "rendered": "insert-o(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @arg0: Int, @arg1: Int): Ref[Object<Node>] =\n  last_ptr(@thisRef, @nextHeap)",
+      "error": null
+    }
+  ]
+}

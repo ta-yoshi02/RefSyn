@@ -1,0 +1,19 @@
+[
+  {
+    "call": "audit",
+    "arguments": [],
+    "mismatches": [
+      {
+        "id": "N",
+        "field": "next",
+        "expected": {
+          "ref": "C"
+        },
+        "actual": {
+          "ref": "B"
+        }
+      }
+    ],
+    "pass": false
+  }
+]

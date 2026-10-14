@@ -1,0 +1,29 @@
+[
+  {
+    "call": "call1",
+    "arguments": [
+      0,
+      24
+    ],
+    "mismatches": [],
+    "pass": true
+  },
+  {
+    "call": "call2",
+    "arguments": [
+      1,
+      50
+    ],
+    "mismatches": [],
+    "pass": true
+  },
+  {
+    "call": "call3",
+    "arguments": [
+      2,
+      73
+    ],
+    "mismatches": [],
+    "pass": true
+  }
+]

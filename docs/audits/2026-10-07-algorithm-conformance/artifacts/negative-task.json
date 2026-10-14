@@ -1,0 +1,88 @@
+{
+  "autoClassFieldComponents": true,
+  "category": "refsyn",
+  "classes": [
+    {
+      "fields": {
+        "val": "Ref[Int]"
+      },
+      "name": "Node"
+    }
+  ],
+  "components": [],
+  "examples": [
+    [
+      [
+        {
+          "ref": 0
+        },
+        [
+          {
+            "object": {
+              "className": "Node",
+              "fields": {
+                "val": {
+                  "ref": -1
+                }
+              }
+            }
+          }
+        ],
+        [
+          -2
+        ]
+      ],
+      false
+    ],
+    [
+      [
+        {
+          "ref": 0
+        },
+        [
+          {
+            "object": {
+              "className": "Node",
+              "fields": {
+                "val": {
+                  "ref": 0
+                }
+              }
+            }
+          }
+        ],
+        [
+          2
+        ]
+      ],
+      true
+    ]
+  ],
+  "exposeClassComponents": false,
+  "name": "negativeHas",
+  "refsynMeta": {
+    "classHeapName": "nodeHeap",
+    "className": "Node",
+    "explicitArgs": [],
+    "fieldHeapNames": {
+      "val": "valHeap"
+    },
+    "jsMethodName": "negativeHas",
+    "pointerFields": [],
+    "thisRefName": "thisRef",
+    "valueFields": [
+      "val"
+    ]
+  },
+  "signature": {
+    "autoExpandClassSignature": {
+      "classHeapName": "nodeHeap",
+      "className": "Node",
+      "fieldHeapNames": {
+        "val": "valHeap"
+      },
+      "thisRefName": "thisRef"
+    },
+    "returnType": "Bool"
+  }
+}

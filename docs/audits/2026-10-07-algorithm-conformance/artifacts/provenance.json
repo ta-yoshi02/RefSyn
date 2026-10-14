@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-07",
+  "refsyn_head": "cc370bc56eca3655bdf09de97a4fa555705e7ad4",
+  "paper_head": "949ffd2cfffd63ea39c45e03fdefcdaa831c1f63",
+  "sha256": {
+    "src/lib.rs": "77c8845024eb485dd002d2b1bff4de5ebf8936d6563f646fc5de3cf089099530",
+    "src/unify_ops.rs": "490f910c8c8684cefe4d0fd15ea92d8766d3be21373f6199aa0d237687013d8c",
+    "src/list_env.rs": "9ba3cf8c9fb556c9b1ec6166e7dc7de9c0dc1f10bea839dd1dfcd8c06e4e1280",
+    "src/escher_bridge.rs": "8274cd7436a1e76e8aa29600b44a3fc0a19b3e9a0edfd698c012a85b5f375266",
+    "runtime/refsyn-escher-adapter.mjs": "d16e2ec46317fdf63681d5b5580d08b716affefa3b88e9a6988de5d6e2c9016f",
+    "external/escher-ts/src/library/common-comps-heap.ts": "e36a9d07de39c481aa35311966aeb4fb9ed1c275e85baa76f4a9290db2f8d6b1",
+    "/Users/taku/workspace/paint2026-yoshio/ja/sections/method.tex": "782dd8e179f2766cef6c8a1427a0ddbea93c9f17920fcd4b2263ac61cc78f83f",
+    "/Users/taku/workspace/paint2026-yoshio/ja/sections/operation-graphs.tex": "805517ac07c91ca5094f286c1c6f8e964eae11f6d94097954e24c294e69fd6e3",
+    "/Users/taku/workspace/paint2026-yoshio/ja/sections/implementation.tex": "5923d717bd887e66ed2a80974096d4dfc148edb6d2bddbc9d56c91df6b809281"
+  },
+  "evidence": "fresh executions against local sources; no old benchmark results used"
+}

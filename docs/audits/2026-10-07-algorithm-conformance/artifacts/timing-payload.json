@@ -1,0 +1,403 @@
+{
+  "method_calls": [
+    {
+      "callLabel": "call0",
+      "contextSensitiveID": "audit",
+      "receiverObject": "A",
+      "receiverClassName": "Node",
+      "methodName": "copyMiddle",
+      "arguments": [],
+      "argumentTypes": [],
+      "methodParamNames": [],
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "X",
+          "label": "7",
+          "isLiteral": true
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "A",
+          "oldTo": "av",
+          "newTo": "X",
+          "label": "val"
+        },
+        {
+          "editType": "addNode",
+          "id": "Y",
+          "label": "7",
+          "isLiteral": true
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "C",
+          "oldTo": "cv",
+          "newTo": "Y",
+          "label": "val"
+        }
+      ],
+      "precondGraph": {
+        "nodes": [
+          {
+            "id": "A",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "B",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "C",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "av",
+            "label": "1",
+            "isLiteral": true
+          },
+          {
+            "id": "bv",
+            "label": "7",
+            "isLiteral": true
+          },
+          {
+            "id": "cv",
+            "label": "0",
+            "isLiteral": true
+          }
+        ],
+        "edges": [
+          {
+            "from": "A",
+            "to": "B",
+            "label": "next"
+          },
+          {
+            "from": "B",
+            "to": "C",
+            "label": "next"
+          },
+          {
+            "from": "A",
+            "to": "av",
+            "label": "val"
+          },
+          {
+            "from": "B",
+            "to": "bv",
+            "label": "val"
+          },
+          {
+            "from": "C",
+            "to": "cv",
+            "label": "val"
+          }
+        ]
+      },
+      "actualGraph": {
+        "nodes": [
+          {
+            "id": "A",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "B",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "C",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "av",
+            "label": "1",
+            "isLiteral": true
+          },
+          {
+            "id": "bv",
+            "label": "7",
+            "isLiteral": true
+          },
+          {
+            "id": "cv",
+            "label": "0",
+            "isLiteral": true
+          }
+        ],
+        "edges": [
+          {
+            "from": "A",
+            "to": "B",
+            "label": "next"
+          },
+          {
+            "from": "B",
+            "to": "C",
+            "label": "next"
+          },
+          {
+            "from": "A",
+            "to": "av",
+            "label": "val"
+          },
+          {
+            "from": "B",
+            "to": "bv",
+            "label": "val"
+          },
+          {
+            "from": "C",
+            "to": "cv",
+            "label": "val"
+          }
+        ]
+      },
+      "idMapping": {},
+      "fieldTables": {
+        "value": [
+          "val"
+        ],
+        "pointer": [
+          "next"
+        ]
+      }
+    },
+    {
+      "callLabel": "call1",
+      "contextSensitiveID": "audit",
+      "receiverObject": "A",
+      "receiverClassName": "Node",
+      "methodName": "copyMiddle",
+      "arguments": [],
+      "argumentTypes": [],
+      "methodParamNames": [],
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "X",
+          "label": "9",
+          "isLiteral": true
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "A",
+          "oldTo": "av",
+          "newTo": "X",
+          "label": "val"
+        },
+        {
+          "editType": "addNode",
+          "id": "Y",
+          "label": "9",
+          "isLiteral": true
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "C",
+          "oldTo": "cv",
+          "newTo": "Y",
+          "label": "val"
+        }
+      ],
+      "precondGraph": {
+        "nodes": [
+          {
+            "id": "A",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "B",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "C",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "av",
+            "label": "2",
+            "isLiteral": true
+          },
+          {
+            "id": "bv",
+            "label": "9",
+            "isLiteral": true
+          },
+          {
+            "id": "cv",
+            "label": "0",
+            "isLiteral": true
+          }
+        ],
+        "edges": [
+          {
+            "from": "A",
+            "to": "B",
+            "label": "next"
+          },
+          {
+            "from": "B",
+            "to": "C",
+            "label": "next"
+          },
+          {
+            "from": "A",
+            "to": "av",
+            "label": "val"
+          },
+          {
+            "from": "B",
+            "to": "bv",
+            "label": "val"
+          },
+          {
+            "from": "C",
+            "to": "cv",
+            "label": "val"
+          }
+        ]
+      },
+      "actualGraph": {
+        "nodes": [
+          {
+            "id": "A",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "B",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "C",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "av",
+            "label": "2",
+            "isLiteral": true
+          },
+          {
+            "id": "bv",
+            "label": "9",
+            "isLiteral": true
+          },
+          {
+            "id": "cv",
+            "label": "0",
+            "isLiteral": true
+          }
+        ],
+        "edges": [
+          {
+            "from": "A",
+            "to": "B",
+            "label": "next"
+          },
+          {
+            "from": "B",
+            "to": "C",
+            "label": "next"
+          },
+          {
+            "from": "A",
+            "to": "av",
+            "label": "val"
+          },
+          {
+            "from": "B",
+            "to": "bv",
+            "label": "val"
+          },
+          {
+            "from": "C",
+            "to": "cv",
+            "label": "val"
+          }
+        ]
+      },
+      "idMapping": {},
+      "fieldTables": {
+        "value": [
+          "val"
+        ],
+        "pointer": [
+          "next"
+        ]
+      }
+    }
+  ],
+  "vis_graph": {
+    "nodes": [
+      {
+        "id": "A",
+        "label": "Node",
+        "isLiteral": false
+      },
+      {
+        "id": "B",
+        "label": "Node",
+        "isLiteral": false
+      },
+      {
+        "id": "C",
+        "label": "Node",
+        "isLiteral": false
+      },
+      {
+        "id": "av",
+        "label": "1",
+        "isLiteral": true
+      },
+      {
+        "id": "bv",
+        "label": "7",
+        "isLiteral": true
+      },
+      {
+        "id": "cv",
+        "label": "0",
+        "isLiteral": true
+      }
+    ],
+    "edges": [
+      {
+        "from": "A",
+        "to": "B",
+        "label": "next"
+      },
+      {
+        "from": "B",
+        "to": "C",
+        "label": "next"
+      },
+      {
+        "from": "A",
+        "to": "av",
+        "label": "val"
+      },
+      {
+        "from": "B",
+        "to": "bv",
+        "label": "val"
+      },
+      {
+        "from": "C",
+        "to": "cv",
+        "label": "val"
+      }
+    ]
+  }
+}

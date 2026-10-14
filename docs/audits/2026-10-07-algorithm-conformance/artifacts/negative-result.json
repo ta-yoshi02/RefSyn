@@ -1,0 +1,67 @@
+{
+  "taskInput": [
+    [
+      [
+        {
+          "ref": 0
+        },
+        [
+          {
+            "object": {
+              "className": "Node",
+              "fields": {
+                "val": {
+                  "ref": -1
+                }
+              }
+            }
+          }
+        ],
+        [
+          -2
+        ]
+      ],
+      false
+    ],
+    [
+      [
+        {
+          "ref": 0
+        },
+        [
+          {
+            "object": {
+              "className": "Node",
+              "fields": {
+                "val": {
+                  "ref": 0
+                }
+              }
+            }
+          }
+        ],
+        [
+          2
+        ]
+      ],
+      true
+    ]
+  ],
+  "result": [
+    {
+      "name": "negativeHas",
+      "success": true,
+      "rendered": "negativeHas(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @valHeap: List[Int]): Bool =\n  hasVal(@thisRef, @nodeHeap, @valHeap)",
+      "error": null,
+      "compiled_js": "negativeHas() { return (this).val !== undefined; }"
+    }
+  ],
+  "actualJavaScriptResult": [
+    true,
+    true
+  ],
+  "expectedTaskResult": [
+    false,
+    true
+  ]
+}

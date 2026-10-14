@@ -1,0 +1,61 @@
+{
+  "common_pattern": "COMMON_PLAN (operation-level, ordered)\n[op_1] editEdgeReference(from=A, to=__hole_1, label=val)\n[op_3] editEdgeReference(from=C, to=__hole_0, label=val)\n\nHOLE_BINDINGS\n__hole_0 -> copyMiddle-f (Int)\n__hole_1 -> copyMiddle-g (Int)",
+  "hole_information": {
+    "__hole_1": [
+      "spec=copyMiddle-g",
+      "return=Int",
+      "role=value",
+      "jsMethod=copyMiddle_g",
+      "jsCall=this.copyMiddle_g()",
+      "sideA=addNode id=X from=- to=- old_to=- label=7 is_literal=true",
+      "sideB=addNode id=X from=- to=- old_to=- label=9 is_literal=true",
+      "anchorA=0",
+      "anchorB=0"
+    ],
+    "__hole_0": [
+      "spec=copyMiddle-f",
+      "return=Int",
+      "role=value",
+      "jsMethod=copyMiddle_f",
+      "jsCall=this.copyMiddle_f()",
+      "sideA=addNode id=Y from=- to=- old_to=- label=7 is_literal=true",
+      "sideB=addNode id=Y from=- to=- old_to=- label=9 is_literal=true",
+      "anchorA=2",
+      "anchorB=2"
+    ]
+  },
+  "code": [
+    "copyMiddle_f() { return (this).val; }",
+    "copyMiddle_g() { return ((() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).next !== null && ((__refsynCur).next).next !== null) { __refsynCur = (__refsynCur).next; } return (__refsynCur === null || (__refsynCur).next === null) ? null : __refsynCur; })()).val; }"
+  ],
+  "composed_method_code": "copyMiddle() {\n    const h_int_0 = this.copyMiddle_f();\n    const h_int_1 = this.copyMiddle_g();\n    const snap0 = this.next.next;\n    this.val = h_int_1;\n    snap0.val = h_int_0;\n}",
+  "individual_codes": [
+    "copyMiddle-f: copyMiddle_f() { return (this).val; }",
+    "copyMiddle-g: copyMiddle_g() { return ((() => { let __refsynCur = this; while (__refsynCur !== null && (__refsynCur).next !== null && ((__refsynCur).next).next !== null) { __refsynCur = (__refsynCur).next; } return (__refsynCur === null || (__refsynCur).next === null) ? null : __refsynCur; })()).val; }"
+  ],
+  "list_environment_info": "List Environment Summary:\n- 3 objects tracked\n- 3 literals\n- 2 field types: val, next\n\nCurrent state:\nList Environment:\nList[obj_val] = [String(\"1\"), String(\"7\"), String(\"0\")]\nList[obj_next] = [Number(1), Number(2), Null]\n\nescher-ts task JSON saved: target/escher/ts/copyMiddle_1791342865_531612000_p45665_0.json",
+  "operation_analysis": {
+    "common_operations_count": 6,
+    "total_operations_counts": [
+      8,
+      8
+    ],
+    "difference_summary": "\u7d71\u5408\u30d9\u30fc\u30b9\u5206\u6790: 6\u500b\u306e\u5171\u901a\u64cd\u4f5c\u30d1\u30bf\u30fc\u30f3\u3092\u7279\u5b9a\u3002\u5dee\u7570\u90e8\u5206\u3067\u306f2\u500b\u30682\u500b\u306e\u7570\u306a\u308b\u64cd\u4f5c\u3002",
+    "differences_found": 2,
+    "synthesis_matches": 6
+  },
+  "escher_results": [
+    {
+      "name": "copyMiddle-f",
+      "success": true,
+      "rendered": "copyMiddle-f(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int]): Int =\n  loadInt(@valHeap, valOf(@thisRef, @nodeHeap, @valHeap))",
+      "error": null
+    },
+    {
+      "name": "copyMiddle-g",
+      "success": true,
+      "rendered": "copyMiddle-g(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int]): Int =\n  loadInt(@valHeap, valOf(penultimateRef(@thisRef, @nextHeap), @nodeHeap, @valHeap))",
+      "error": null
+    }
+  ]
+}

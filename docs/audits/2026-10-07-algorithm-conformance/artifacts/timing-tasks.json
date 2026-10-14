@@ -1,0 +1,498 @@
+[
+  {
+    "name": "copyMiddle-f",
+    "category": "refsyn",
+    "classes": [
+      {
+        "name": "Node",
+        "fields": {
+          "next": "Ref[Object[Node]]",
+          "val": "Ref[Int]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "signature": {
+      "returnType": "Int",
+      "autoExpandClassSignature": {
+        "className": "Node",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "next": "nextHeap",
+          "val": "valHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            7,
+            7,
+            0
+          ]
+        ],
+        7
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            9,
+            9,
+            0
+          ]
+        ],
+        9
+      ]
+    ],
+    "refsynMeta": {
+      "jsMethodName": "copyMiddle_f",
+      "className": "Node",
+      "thisRefName": "thisRef",
+      "classHeapName": "nodeHeap",
+      "valueFields": [
+        "val"
+      ],
+      "pointerFields": [
+        "next"
+      ],
+      "fieldHeapNames": {
+        "next": "nextHeap",
+        "val": "valHeap"
+      },
+      "explicitArgs": []
+    }
+  },
+  {
+    "name": "copyMiddle-g",
+    "category": "refsyn",
+    "classes": [
+      {
+        "name": "Node",
+        "fields": {
+          "next": "Ref[Object[Node]]",
+          "val": "Ref[Int]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "signature": {
+      "returnType": "Int",
+      "autoExpandClassSignature": {
+        "className": "Node",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "next": "nextHeap",
+          "val": "valHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            1,
+            7,
+            0
+          ]
+        ],
+        7
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            2,
+            9,
+            0
+          ]
+        ],
+        9
+      ]
+    ],
+    "refsynMeta": {
+      "jsMethodName": "copyMiddle_g",
+      "className": "Node",
+      "thisRefName": "thisRef",
+      "classHeapName": "nodeHeap",
+      "valueFields": [
+        "val"
+      ],
+      "pointerFields": [
+        "next"
+      ],
+      "fieldHeapNames": {
+        "next": "nextHeap",
+        "val": "valHeap"
+      },
+      "explicitArgs": []
+    }
+  }
+]

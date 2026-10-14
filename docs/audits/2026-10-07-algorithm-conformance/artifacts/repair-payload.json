@@ -1,0 +1,129 @@
+{
+  "method_calls": [
+    {
+      "callLabel": "audit",
+      "contextSensitiveID": "audit",
+      "receiverObject": "A",
+      "receiverClassName": "Node",
+      "methodName": "skipInsert",
+      "arguments": [],
+      "argumentTypes": [],
+      "methodParamNames": [],
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "N",
+          "label": "Node",
+          "isLiteral": false
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "A",
+          "oldTo": "B",
+          "newTo": "N",
+          "label": "next"
+        },
+        {
+          "editType": "addEdge",
+          "from": "N",
+          "to": "C",
+          "label": "next"
+        }
+      ],
+      "precondGraph": {
+        "nodes": [
+          {
+            "id": "A",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "B",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "C",
+            "label": "Node",
+            "isLiteral": false
+          }
+        ],
+        "edges": [
+          {
+            "from": "A",
+            "to": "B",
+            "label": "next"
+          },
+          {
+            "from": "B",
+            "to": "C",
+            "label": "next"
+          }
+        ]
+      },
+      "actualGraph": {
+        "nodes": [
+          {
+            "id": "A",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "B",
+            "label": "Node",
+            "isLiteral": false
+          },
+          {
+            "id": "C",
+            "label": "Node",
+            "isLiteral": false
+          }
+        ],
+        "edges": [
+          {
+            "from": "A",
+            "to": "B",
+            "label": "next"
+          },
+          {
+            "from": "B",
+            "to": "C",
+            "label": "next"
+          }
+        ]
+      },
+      "idMapping": {}
+    }
+  ],
+  "vis_graph": {
+    "nodes": [
+      {
+        "id": "A",
+        "label": "Node",
+        "isLiteral": false
+      },
+      {
+        "id": "B",
+        "label": "Node",
+        "isLiteral": false
+      },
+      {
+        "id": "C",
+        "label": "Node",
+        "isLiteral": false
+      }
+    ],
+    "edges": [
+      {
+        "from": "A",
+        "to": "B",
+        "label": "next"
+      },
+      {
+        "from": "B",
+        "to": "C",
+        "label": "next"
+      }
+    ]
+  }
+}

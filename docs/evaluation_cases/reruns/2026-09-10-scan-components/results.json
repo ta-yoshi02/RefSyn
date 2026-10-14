@@ -1,0 +1,76 @@
+{
+  "date": "2026-09-10",
+  "purpose": "Diagnose recursive list traversal without supplied scan components",
+  "sourceTasks": [
+    "docs/evaluation_cases/append/mold_escher_tasks.json",
+    "docs/evaluation_cases/reruns/2026-09-09-null-guard-removal/setAt/mold_escher_tasks.json"
+  ],
+  "lengths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "removedComponents": [
+    "last_ptr",
+    "penultimateRef",
+    "nthNextRef",
+    "findByValueRef"
+  ],
+  "options": {
+    "maxCost": 20,
+    "timeoutMs": 10000,
+    "searchSizeFactor": 3,
+    "quiet": true
+  },
+  "repetitions": 1,
+  "runs": [
+    {
+      "task": "tail-decreasing-id-len1to6",
+      "repetition": 1,
+      "elapsedMs": 45.523542000000006,
+      "name": "tail-decreasing-id-len1to6",
+      "success": true,
+      "rendered": "tail-decreasing-id-len1to6(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int): Ref[Object<Obj>] =\n  if isNull(gOf(@thisRef, @nodeHeap, @nodeHeap)) then @thisRef else tail-decreasing-id-len1to6(gOf(@thisRef, @nodeHeap, @nodeHeap), @nodeHeap, @fHeap, @nodeHeap, @arg0)",
+      "error": null,
+      "compiled_js": "append_h(arg0) { return ((this).g === null) ? (this) : (((this).g).append_h(arg0)); }"
+    },
+    {
+      "task": "tail-increasing-id-len1to6",
+      "repetition": 1,
+      "elapsedMs": 10000.395167,
+      "name": "tail-increasing-id-len1to6",
+      "success": false,
+      "rendered": null,
+      "error": "escher-ts could not synthesize 'tail-increasing-id-len1to6' within the configured budget",
+      "compiled_js": null
+    },
+    {
+      "task": "nth-decreasing-id-len1to6",
+      "repetition": 1,
+      "elapsedMs": 6691.478625000002,
+      "name": "nth-decreasing-id-len1to6",
+      "success": true,
+      "rendered": "nth-decreasing-id-len1to6(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Ref[Object<Obj>] =\n  if isZero(@arg0) then @thisRef else gOf(nth-decreasing-id-len1to6(@thisRef, @nodeHeap, @fHeap, @gHeap, dec(@arg0), @arg1), @nodeHeap, @nodeHeap)",
+      "error": null,
+      "compiled_js": "setAt_p(arg0, arg1) { return (arg0 === 0) ? (this) : ((this.setAt_p(arg0 - 1, arg1)).g); }"
+    },
+    {
+      "task": "nth-increasing-id-len1to6",
+      "repetition": 1,
+      "elapsedMs": 6084.4205420000035,
+      "name": "nth-increasing-id-len1to6",
+      "success": true,
+      "rendered": "nth-increasing-id-len1to6(@thisRef: Ref[Object<Obj>], @nodeHeap: List[Object<Obj>], @fHeap: List[Int], @gHeap: List[Object<Obj>], @arg0: Int, @arg1: Int): Ref[Object<Obj>] =\n  if isZero(@arg0) then @thisRef else gOf(nth-increasing-id-len1to6(@thisRef, @nodeHeap, @fHeap, @gHeap, dec(@arg0), @arg1), @nodeHeap, @nodeHeap)",
+      "error": null,
+      "compiled_js": "setAt_p(arg0, arg1) { return (arg0 === 0) ? (this) : ((this.setAt_p(arg0 - 1, arg1)).g); }"
+    }
+  ],
+  "refsynCommit": "cc370bc56eca3655bdf09de97a4fa555705e7ad4",
+  "escherTsCommit": "e187df0795af897ba208f8e2e7b801236e045c86",
+  "platform": "Darwin 25.6.0 arm64",
+  "nodeVersion": "v22.17.0",
+  "rustVersion": "1.93.0"
+}

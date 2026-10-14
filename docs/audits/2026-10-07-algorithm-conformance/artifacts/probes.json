@@ -1,0 +1,590 @@
+[
+  {
+    "common_a": [
+      {
+        "id": "e",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "a",
+              "label": "val",
+              "to": "v"
+            }
+          }
+        }
+      }
+    ],
+    "common_b": [
+      {
+        "id": "f",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "b",
+              "label": "val",
+              "to": "w"
+            }
+          }
+        }
+      }
+    ],
+    "mapping": {
+      "a": "b",
+      "v": "w"
+    },
+    "probe": "class_mismatch"
+  },
+  {
+    "common_a": [
+      {
+        "id": "a",
+        "kind": {
+          "Node": {
+            "AddNode": {
+              "id": "a",
+              "is_literal": false,
+              "label": "Node"
+            }
+          }
+        }
+      },
+      {
+        "id": "e",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "a",
+              "label": "val",
+              "to": "v"
+            }
+          }
+        }
+      }
+    ],
+    "mapping": {
+      "a": "b",
+      "v": "w"
+    },
+    "probe": "primitive_type_mismatch"
+  },
+  {
+    "common_a": [
+      {
+        "id": "a",
+        "kind": {
+          "Node": {
+            "AddNode": {
+              "id": "a",
+              "is_literal": false,
+              "label": "Node"
+            }
+          }
+        }
+      },
+      {
+        "id": "e",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "a",
+              "label": "val",
+              "to": "v"
+            }
+          }
+        }
+      },
+      {
+        "id": "e2",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "a",
+              "label": "val",
+              "to": "v"
+            }
+          }
+        }
+      },
+      {
+        "id": "v",
+        "kind": {
+          "Node": {
+            "AddNode": {
+              "id": "v",
+              "is_literal": true,
+              "label": "1"
+            }
+          }
+        }
+      }
+    ],
+    "common_b": [
+      {
+        "id": "a",
+        "kind": {
+          "Node": {
+            "AddNode": {
+              "id": "a",
+              "is_literal": false,
+              "label": "Node"
+            }
+          }
+        }
+      },
+      {
+        "id": "e",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "a",
+              "label": "val",
+              "to": "v"
+            }
+          }
+        }
+      },
+      {
+        "id": "v",
+        "kind": {
+          "Node": {
+            "AddNode": {
+              "id": "v",
+              "is_literal": true,
+              "label": "1"
+            }
+          }
+        }
+      }
+    ],
+    "diff_a": [],
+    "diff_b": [],
+    "probe": "edge_multiplicity"
+  },
+  {
+    "common_a": [
+      {
+        "id": "a",
+        "kind": {
+          "Node": {
+            "AddNode": {
+              "id": "a",
+              "is_literal": false,
+              "label": "Node"
+            }
+          }
+        }
+      },
+      {
+        "id": "e1",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "a",
+              "label": "left",
+              "to": "t"
+            }
+          }
+        }
+      },
+      {
+        "id": "e2",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "a",
+              "label": "left",
+              "to": "t"
+            }
+          }
+        }
+      },
+      {
+        "id": "e3",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "a",
+              "label": "right",
+              "to": "t"
+            }
+          }
+        }
+      },
+      {
+        "id": "t",
+        "kind": {
+          "Node": {
+            "AddNode": {
+              "id": "t",
+              "is_literal": false,
+              "label": "Node"
+            }
+          }
+        }
+      }
+    ],
+    "common_b": [
+      {
+        "id": "a",
+        "kind": {
+          "Node": {
+            "AddNode": {
+              "id": "a",
+              "is_literal": false,
+              "label": "Node"
+            }
+          }
+        }
+      },
+      {
+        "id": "e1",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "a",
+              "label": "left",
+              "to": "t"
+            }
+          }
+        }
+      },
+      {
+        "id": "e2",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "a",
+              "label": "right",
+              "to": "t"
+            }
+          }
+        }
+      },
+      {
+        "id": "t",
+        "kind": {
+          "Node": {
+            "AddNode": {
+              "id": "t",
+              "is_literal": false,
+              "label": "Node"
+            }
+          }
+        }
+      }
+    ],
+    "diff_a": [],
+    "diff_b": [
+      {
+        "id": "e3",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "a",
+              "label": "right",
+              "to": "t"
+            }
+          }
+        }
+      }
+    ],
+    "probe": "equal_total_edge_multiplicity"
+  },
+  {
+    "common_a": [
+      {
+        "id": "a",
+        "kind": {
+          "Node": {
+            "AddNode": {
+              "id": "a",
+              "is_literal": false,
+              "label": "Node"
+            }
+          }
+        }
+      },
+      {
+        "id": "e",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "a",
+              "label": "val",
+              "to": "v"
+            }
+          }
+        }
+      },
+      {
+        "id": "v",
+        "kind": {
+          "Node": {
+            "AddNode": {
+              "id": "v",
+              "is_literal": true,
+              "label": "1"
+            }
+          }
+        }
+      }
+    ],
+    "diff_b": [
+      {
+        "id": "different",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "a",
+              "label": "other",
+              "to": "v"
+            }
+          }
+        }
+      }
+    ],
+    "mapping": {
+      "a": "a",
+      "v": "v"
+    },
+    "probe": "nonisomorphic_partial_acceptance"
+  },
+  {
+    "common_a": [
+      {
+        "id": "a",
+        "kind": {
+          "Node": {
+            "AddNode": {
+              "id": "a",
+              "is_literal": false,
+              "label": "Node"
+            }
+          }
+        }
+      },
+      {
+        "id": "e",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "a",
+              "label": "val",
+              "to": "v"
+            }
+          }
+        }
+      },
+      {
+        "id": "v",
+        "kind": {
+          "Node": {
+            "AddNode": {
+              "id": "v",
+              "is_literal": true,
+              "label": "1"
+            }
+          }
+        }
+      }
+    ],
+    "diff_a": [],
+    "probe": "equal_operands_not_holed"
+  },
+  {
+    "common_a": [
+      {
+        "id": "op_0",
+        "kind": {
+          "Node": {
+            "AddNode": {
+              "id": "A",
+              "is_literal": false,
+              "label": "Node"
+            }
+          }
+        }
+      },
+      {
+        "id": "op_2",
+        "kind": {
+          "Edge": {
+            "AddEdge": {
+              "from": "op_0",
+              "label": "val",
+              "to": "op_exist_0"
+            }
+          }
+        }
+      },
+      {
+        "id": "op_exist_0",
+        "kind": {
+          "Node": {
+            "ExistNode": {
+              "id": "v",
+              "is_literal": false,
+              "label": ""
+            }
+          }
+        }
+      }
+    ],
+    "diff_a": [],
+    "probe": "numeric_label_conversion"
+  },
+  {
+    "augmented_vis_graph": {
+      "examples": [
+        {
+          "input": [
+            [
+              1,
+              null
+            ]
+          ],
+          "output": null
+        }
+      ],
+      "inputTypes": [
+        "List[Ptr]"
+      ],
+      "name": "audit",
+      "returnType": "Ptr"
+    },
+    "original_vis_graph": {
+      "examples": [
+        {
+          "input": [
+            [
+              null
+            ]
+          ],
+          "output": null
+        }
+      ],
+      "inputTypes": [
+        "List[Ptr]"
+      ],
+      "name": "audit",
+      "returnType": "Ptr"
+    },
+    "probe": "prefix_new_object_dropped",
+    "raw_env": "List Environment:\nList[obj_next] = [Number(1), Null]\n"
+  },
+  {
+    "probe": "value_encoding",
+    "spec": {
+      "examples": [
+        {
+          "input": [
+            [
+              -1
+            ],
+            [
+              0
+            ]
+          ],
+          "output": null
+        }
+      ],
+      "inputTypes": [
+        "List[Int]",
+        "List[Int]"
+      ],
+      "name": "audit",
+      "returnType": "Ptr"
+    }
+  },
+  {
+    "native_task": {
+      "autoClassFieldComponents": true,
+      "category": "refsyn",
+      "classes": [
+        {
+          "fields": {
+            "val": "Ref[Int]"
+          },
+          "name": "Node"
+        }
+      ],
+      "components": [],
+      "examples": [
+        [
+          [
+            {
+              "ref": 0
+            },
+            [
+              {
+                "object": {
+                  "className": "Node",
+                  "fields": {
+                    "val": {
+                      "ref": -1
+                    }
+                  }
+                }
+              }
+            ],
+            [
+              -2
+            ]
+          ],
+          false
+        ],
+        [
+          [
+            {
+              "ref": 0
+            },
+            [
+              {
+                "object": {
+                  "className": "Node",
+                  "fields": {
+                    "val": {
+                      "ref": 0
+                    }
+                  }
+                }
+              }
+            ],
+            [
+              2
+            ]
+          ],
+          true
+        ]
+      ],
+      "exposeClassComponents": false,
+      "name": "negativeHas",
+      "refsynMeta": {
+        "classHeapName": "nodeHeap",
+        "className": "Node",
+        "explicitArgs": [],
+        "fieldHeapNames": {
+          "val": "valHeap"
+        },
+        "jsMethodName": "negativeHas",
+        "pointerFields": [],
+        "thisRefName": "thisRef",
+        "valueFields": [
+          "val"
+        ]
+      },
+      "signature": {
+        "autoExpandClassSignature": {
+          "classHeapName": "nodeHeap",
+          "className": "Node",
+          "fieldHeapNames": {
+            "val": "valHeap"
+          },
+          "thisRefName": "thisRef"
+        },
+        "returnType": "Bool"
+      }
+    },
+    "probe": "negative_value_treated_as_missing"
+  }
+]

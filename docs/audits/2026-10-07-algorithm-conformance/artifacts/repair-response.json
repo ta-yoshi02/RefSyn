@@ -1,0 +1,9 @@
+{
+  "common_pattern": "COMMON_PLAN (operation-level, ordered)\n[op_0] addNode(id=N, label=Node, isLiteral=false)\n[op_1] editEdgeReference(from=A, to=N, label=next)\n[op_2] addEdge(from=N, to=B, label=next)",
+  "hole_information": {},
+  "code": [],
+  "composed_method_code": "skipInsert() {\n    const tmp0 = new Node();\n    const snap0 = this.next;\n    this.next = tmp0;\n    tmp0.next = snap0;\n}",
+  "individual_codes": [],
+  "list_environment_info": "List Environment Summary:\n- 3 objects tracked\n- 0 literals\n- 1 field types: next\n\nCurrent state:\nList Environment:\nList[obj_next] = [Number(1), Number(2), Null]\n\n\nOperation Repair:\ncall 0 repaired: renamed_ids=0, fixed_old_to=1, fixed_sources=0, normalized_set_refs=0, repaired_self_loops=0",
+  "operation_analysis": null
+}
