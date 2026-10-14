@@ -134,6 +134,54 @@ test('addEdge starts from a field without an edge', () => {
   assert.equal(validateWholeMethod(payload).status, 'passed');
 });
 
+// Kanon shows a created node without fields, so its `new C()` defaults can only be replaced
+// with addEdge. The demonstration: a.link becomes a new Cell whose payload 7 is replaced
+// with 9, whose tag 3 stays, and whose link points back to a; the new Cell is returned.
+const created = (operations, code = 'cut() { const n = new Cell(); n.payload = 9; n.link = this; this.link = n; return n; }') => {
+  const payload = fixture(code);
+  payload.request.validation.classes[0] = { name: 'Cell', source: 'class Cell { constructor() { this.payload = 7; this.tag = 3; this.link = null; } }', instance: { payload: 7, tag: 3, link: null } };
+  payload.request.method_calls[0].operations = [
+    { editType: 'addNode', id: 'n', label: 'Cell' },
+    { editType: 'addNode', id: 'nine', label: '9', isLiteral: true, type: 'number' },
+    { editType: 'addNode', id: 'four', label: '4', isLiteral: true, type: 'number' },
+    { editType: 'addNode', id: 'seven', label: '7', isLiteral: true, type: 'number' },
+    ...operations,
+    { editType: 'editEdgeReference', from: 'a', label: 'link', oldTo: 'b', newTo: 'n' },
+    { editType: 'addVariable', label: 'return', to: 'n' },
+  ];
+  return payload;
+};
+const overwrite = { editType: 'addEdge', from: 'n', label: 'payload', to: 'nine' };
+const linkBack = { editType: 'addEdge', from: 'n', label: 'link', to: 'a' };
+
+test('addEdge replaces an unwritten constructor default of a created object', () => {
+  assert.equal(validateWholeMethod(created([overwrite, linkBack])).status, 'passed');
+  for (const code of [
+    'cut() { const n = new Cell(); n.link = this; this.link = n; return n; }', // default not replaced
+    'cut() { const n = new Cell(); n.payload = 9; n.tag = 4; n.link = this; this.link = n; return n; }', // untouched default changed
+    'cut() { const n = new Cell(); n.payload = 9; n.link = new Cell(); this.link = n; return n; }', // link is not a itself
+    'cut() { const n = new Cell(); n.payload = 9; n.link = this; this.link = n; return this; }', // wrong return
+  ]) assert.equal(validateWholeMethod(created([overwrite, linkBack], code)).status, 'failed', code);
+});
+
+test('the first-write exception applies per field and survives addEdge, deleteEdge, addEdge', () => {
+  const tag = { editType: 'addEdge', from: 'n', label: 'tag', to: 'four' };
+  assert.equal(validateWholeMethod(created([overwrite, tag, linkBack],
+    'cut() { const n = new Cell(); n.payload = 9; n.tag = 4; n.link = this; this.link = n; return n; }')).status, 'passed');
+  const relink = [overwrite, linkBack, { editType: 'deleteEdge', from: 'n', label: 'link', to: 'a' }, { editType: 'addEdge', from: 'n', label: 'link', to: 'b' }];
+  assert.equal(validateWholeMethod(created(relink,
+    'cut() { const n = new Cell(); n.payload = 9; n.link = this.link; this.link = n; return n; }')).status, 'passed');
+});
+
+test('a written field, a pre-call value and a stale old target still reject the edit', () => {
+  for (const operations of [
+    [overwrite, linkBack, { editType: 'addEdge', from: 'n', label: 'payload', to: 'four' }],
+    [{ editType: 'editEdgeReference', from: 'n', label: 'payload', oldTo: 'seven', newTo: 'nine' }, linkBack, { editType: 'addEdge', from: 'n', label: 'payload', to: 'four' }],
+    [{ editType: 'editEdgeReference', from: 'n', label: 'payload', oldTo: 'four', newTo: 'nine' }, linkBack],
+    [overwrite, linkBack, { editType: 'addEdge', from: 'a', label: 'payload', to: 'nine' }],
+  ]) assert.equal(validateWholeMethod(created(operations)).status, 'unavailable', JSON.stringify(operations));
+});
+
 test('unreachable allocations are paired by structure rather than creation order', () => {
   const payload = fixture();
   payload.request.method_calls[0].operations.splice(1, 0,

@@ -209,6 +209,186 @@ fn creating_a_class_outside_the_supported_constructors_fails() {
     assert!(format!("{err:#}").contains("constructor threw"));
 }
 
+/// The insert request with a class whose `new Node()` sets the given fields.
+fn with_constructor(mut raw: Json, source: &str, instance: Json) -> Json {
+    raw["validation"]["classes"][0] =
+        json!({ "name": "Node", "source": source, "instance": instance });
+    raw
+}
+
+fn delete_edge(from: &str, label: &str, to: &str) -> Json {
+    json!({ "editType": "deleteEdge", "from": from, "label": label, "to": to })
+}
+
+fn three_nodes() -> Json {
+    json!([
+        obj("A", 39, Some("B")),
+        obj("B", 27, Some("C")),
+        obj("C", 53, None)
+    ])
+}
+
+// Kanon shows a created node without fields, so its `new C()` defaults can only be replaced
+// with addEdge; the first write to each such field must be accepted.
+#[test]
+fn add_edge_replaces_an_unwritten_constructor_default_of_a_created_object() {
+    let source = "class Node { constructor() { this.val = 0; this.aux = 5; this.next = null; } }";
+    let instance = json!({ "val": 0, "aux": 5, "next": null });
+    let accepted = [
+        // the numeric default of a created object
+        json!([add_node("D"), lit("n89", "89"), add_edge("D", "val", "n89")]),
+        // another field keeps its own first-write exception
+        json!([
+            add_node("D"),
+            lit("n89", "89"),
+            lit("n7", "7"),
+            add_edge("D", "val", "n89"),
+            add_edge("D", "aux", "n7")
+        ]),
+        // addEdge, deleteEdge, addEdge
+        json!([
+            add_node("D"),
+            add_edge("D", "next", "B"),
+            delete_edge("D", "next", "B"),
+            add_edge("D", "next", "C")
+        ]),
+    ];
+    for ops in accepted {
+        let raw = with_constructor(single(ops.clone(), three_nodes()), source, instance.clone());
+        assert!(graphs(raw).is_ok(), "{ops}");
+    }
+    let rejected = [
+        // a second addEdge while the first write's value remains
+        json!([
+            add_node("D"),
+            lit("n89", "89"),
+            lit("n46", "46"),
+            add_edge("D", "val", "n89"),
+            add_edge("D", "val", "n46")
+        ]),
+        // editEdgeReference also counts as the field's write
+        json!([
+            add_node("D"),
+            lit("z0", "0"),
+            lit("n89", "89"),
+            lit("n46", "46"),
+            edit_edge("D", "val", "z0", "n89"),
+            add_edge("D", "val", "n46")
+        ]),
+        // a pre-call object's value keeps rejecting addEdge
+        json!([lit("n89", "89"), add_edge("A", "val", "n89")]),
+        json!([add_edge("A", "next", "C")]),
+        // old targets are still checked, also against a created object's default
+        json!([
+            add_node("D"),
+            lit("n1", "1"),
+            lit("n89", "89"),
+            edit_edge("D", "val", "n1", "n89")
+        ]),
+        json!([add_node("D"), delete_edge("D", "next", "B")]),
+    ];
+    for ops in rejected {
+        let raw = with_constructor(single(ops.clone(), three_nodes()), source, instance.clone());
+        assert!(graphs(raw).is_err(), "{ops}");
+    }
+}
+
+#[test]
+fn creation_and_write_history_do_not_carry_over_to_the_next_demonstration() {
+    let raw = with_constructor(
+        insert_request(),
+        "class Node { constructor() { this.val = 0; this.next = null; } }",
+        json!({ "val": 0, "next": null }),
+    );
+    assert!(graphs(raw.clone()).is_ok());
+    // In c2, D is a pre-call object (created in c1), so its value cannot take addEdge.
+    let mut stale = raw;
+    stale["method_calls"][1]["operations"] = json!([lit("n46", "46"), add_edge("D", "val", "n46")]);
+    let err = graphs(stale).unwrap_err();
+    assert!(format!("{err:#}").contains("D.val"), "{err:#}");
+}
+
+#[test]
+fn hole_inputs_keep_the_constructor_default_of_a_created_object() {
+    let raw = with_constructor(
+        insert_request(),
+        "class Node { constructor() { this.val = 0; this.next = null; } }",
+        json!({ "val": 0, "next": null }),
+    );
+    let (_, problems) = plan_of(raw);
+    let tasks = serde_json::to_value(&problems.tasks).unwrap();
+    // [this, nodeHeap, nextHeap, valHeap, i, arg, created0, ...]: D is index 3 in c1.
+    let input = &tasks[1]["examples"][0][0];
+    assert_eq!(
+        input[3][3],
+        json!(0),
+        "new Node() sets val = 0 before any write"
+    );
+    assert_eq!(input[2][3], json!({ "ref": -1 }));
+}
+
+#[tokio::test]
+async fn insert_with_a_numeric_constructor_default_is_synthesized_validated_and_adopted() {
+    let raw = with_constructor(
+        insert_request(),
+        "class Node { constructor() { this.val = 0; this.next = null; } }",
+        json!({ "val": 0, "next": null }),
+    );
+    let response = synthesize(raw).await;
+    let validation = response.validation.clone().unwrap();
+    assert!(
+        matches!(validation.status, refsyn::ValidationStatus::Passed),
+        "{validation:?}\n{:?}",
+        response.list_environment_info
+    );
+    assert_eq!(validation.checked_demonstrations, 3);
+}
+
+// Accepting the edit does not widen what PBE can represent: field kinds come from the
+// pre-call objects and the created objects' `new C()` state, and mixed kinds stay rejected.
+#[test]
+fn a_default_of_another_type_is_accepted_as_an_edit_but_rejected_by_the_pbe_encoding() {
+    let ops = json!([
+        add_node("D"),
+        lit("n89", "89"),
+        add_edge("D", "val", "n89"),
+        add_edge("D", "next", "B"),
+        edit_edge("A", "next", "B", "D")
+    ]);
+    for (source, instance, reason) in [
+        (
+            "class Node { constructor() { this.val = \"\"; this.next = null; } }",
+            json!({ "val": "", "next": null }),
+            "cannot represent",
+        ),
+        (
+            "class Node { constructor() { this.val = false; this.next = null; } }",
+            json!({ "val": false, "next": null }),
+            "both booleans and integers",
+        ),
+        (
+            "class Node { constructor() { this.val = 0; this.next = 0; } }",
+            json!({ "val": 0, "next": 0 }),
+            "both integers and references",
+        ),
+    ] {
+        let raw = with_constructor(single(ops.clone(), three_nodes()), source, instance);
+        assert!(
+            graphs(raw.clone()).is_ok(),
+            "the edits are valid for {source}"
+        );
+        let recording = demonstration::read(&request(raw.clone())).unwrap();
+        let graphs = graphs(raw).unwrap();
+        let mappings = align_all(&graphs).unwrap();
+        let template = Template::build(&graphs, &mappings).unwrap();
+        let params = recording.demonstrations[0].param_names.clone();
+        let err = pbe_problem::build(&recording, &graphs, &mappings, &template, &params)
+            .err()
+            .unwrap_or_else(|| panic!("PBE accepted {source}"));
+        assert!(format!("{err:#}").contains(reason), "{source}: {err:#}");
+    }
+}
+
 #[test]
 fn insert_demonstrations_correspond_as_in_the_paper() {
     let graphs = graphs(insert_request()).unwrap();
