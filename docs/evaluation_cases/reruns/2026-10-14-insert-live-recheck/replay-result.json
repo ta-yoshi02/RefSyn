@@ -1,0 +1,183 @@
+{
+ "runtime": "v22.17.0",
+ "finalTopLevel": [
+  39,
+  89,
+  71,
+  27,
+  46,
+  53
+ ],
+ "finalFresh": [
+  39,
+  89,
+  71,
+  27,
+  46,
+  53
+ ],
+ "results": [
+  {
+   "args": [
+    0,
+    89
+   ],
+   "helpers": [
+    {
+     "helper": "insert_h0",
+     "value": 89
+    },
+    {
+     "helper": "insert_h1",
+     "value": {
+      "refIndexInPreState": 0
+     }
+    },
+    {
+     "helper": "insert_h2",
+     "value": {
+      "refIndexInPreState": 1
+     }
+    }
+   ]
+  },
+  {
+   "args": [
+    2,
+    46
+   ],
+   "helpers": [
+    {
+     "helper": "insert_h0",
+     "value": 46
+    },
+    {
+     "helper": "insert_h1",
+     "value": {
+      "refIndexInPreState": 2
+     }
+    },
+    {
+     "helper": "insert_h2",
+     "value": {
+      "refIndexInPreState": 3
+     }
+    }
+   ]
+  },
+  {
+   "args": [
+    1,
+    71
+   ],
+   "helpers": [
+    {
+     "helper": "insert_h0",
+     "value": 71
+    },
+    {
+     "helper": "insert_h1",
+     "value": {
+      "refIndexInPreState": 1
+     }
+    },
+    {
+     "helper": "insert_h2",
+     "value": {
+      "refIndexInPreState": 2
+     }
+    }
+   ]
+  }
+ ],
+ "holeExampleChecks": [
+  {
+   "helper": "insert_h0",
+   "demo": 0,
+   "actual": 89,
+   "expected": 89,
+   "ok": true
+  },
+  {
+   "helper": "insert_h1",
+   "demo": 0,
+   "actual": {
+    "refIndexInPreState": 0
+   },
+   "expected": {
+    "ref": 0
+   },
+   "ok": true
+  },
+  {
+   "helper": "insert_h2",
+   "demo": 0,
+   "actual": {
+    "refIndexInPreState": 1
+   },
+   "expected": {
+    "ref": 1
+   },
+   "ok": true
+  },
+  {
+   "helper": "insert_h0",
+   "demo": 1,
+   "actual": 46,
+   "expected": 46,
+   "ok": true
+  },
+  {
+   "helper": "insert_h1",
+   "demo": 1,
+   "actual": {
+    "refIndexInPreState": 2
+   },
+   "expected": {
+    "ref": 2
+   },
+   "ok": true
+  },
+  {
+   "helper": "insert_h2",
+   "demo": 1,
+   "actual": {
+    "refIndexInPreState": 3
+   },
+   "expected": {
+    "ref": 3
+   },
+   "ok": true
+  },
+  {
+   "helper": "insert_h0",
+   "demo": 2,
+   "actual": 71,
+   "expected": 71,
+   "ok": true
+  },
+  {
+   "helper": "insert_h1",
+   "demo": 2,
+   "actual": {
+    "refIndexInPreState": 1
+   },
+   "expected": {
+    "ref": 1
+   },
+   "ok": true
+  },
+  {
+   "helper": "insert_h2",
+   "demo": 2,
+   "actual": {
+    "refIndexInPreState": 2
+   },
+   "expected": {
+    "ref": 2
+   },
+   "ok": true
+  }
+ ],
+ "allHoleChecksPass": true
+}

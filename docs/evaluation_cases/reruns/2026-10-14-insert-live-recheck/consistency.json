@@ -1,0 +1,13 @@
+{
+ "validation_snapshot_equals_terminal_validation": true,
+ "terminal_helpers_in_editor_source": {
+  "insert_h0": true,
+  "insert_h1": true,
+  "insert_h2": true
+ },
+ "rerun_matches_terminal": {
+  "insert_h0": true,
+  "insert_h1": true,
+  "insert_h2": true
+ }
+}

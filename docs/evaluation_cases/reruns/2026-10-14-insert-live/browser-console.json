@@ -1,0 +1,602 @@
+[
+  {
+    "level": "log",
+    "message": "check counter starts 94 times",
+    "timestamp": "2026-10-14T01:55:39.530Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "checkpoint function\n   2.799999952316284 ms",
+    "timestamp": "2026-10-14T01:55:39.530Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "PositionUpdate\n   17.099999994039536 ms",
+    "timestamp": "2026-10-14T01:55:39.530Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "----FiFA----",
+    "timestamp": "2026-10-14T01:55:39.530Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "edgeListInit\n   0.29999998211860657 ms",
+    "timestamp": "2026-10-14T01:55:39.530Z",
+    "url": "http://localhost:8000/src/js/layout/setGraphLocation.js"
+  },
+  {
+    "level": "log",
+    "message": "forceDirectedMethod\n   6.300000011920929 ms",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/layout/setGraphLocation.js"
+  },
+  {
+    "level": "log",
+    "message": "graph =",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "__Graph__",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "ContextUpdate\n   8.5 ms",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "var __temp3 = 46;",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Object",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Array(15)",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "var __temp4 = new Node();",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Object Object",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Array(15)",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "__temp4.val = __temp3;",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Object Object Object",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Array(15)",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "__temp4.next = main-new3;",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Object Object Object Object",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Array(15)",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "main-new2.next = __temp4;",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Object Object Object Object Object",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Array(15)",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "evalCodeWithCP\n   4.0999999940395355 ms",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "check counter starts 150 times",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "checkpoint function\n   3.299999952316284 ms",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "PositionUpdate\n   14.5 ms",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "----FiFA----",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "edgeListInit\n   0.10000002384185791 ms",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/layout/setGraphLocation.js"
+  },
+  {
+    "level": "log",
+    "message": "forceDirectedMethod\n   6.899999976158142 ms",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/layout/setGraphLocation.js"
+  },
+  {
+    "level": "log",
+    "message": "graph =",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "__Graph__",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "ContextUpdate\n   8.799999982118607 ms",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "var __temp5 = new Node();",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Object",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Array(15)",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "var __temp6 = 71;",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Object Object",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Array(15)",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "__temp5.next = main-new2;",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Object Object Object",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Array(15)",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "__temp1.next = __temp5;",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Object Object Object Object",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Array(15)",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "__temp5.val = __temp6;",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Object Object Object Object Object",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "Array(15)",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "evalCodeWithCP\n   5.4000000059604645 ms",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "check counter starts 212 times",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "checkpoint function\n   5.299999952316284 ms",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "PositionUpdate\n   15.800000011920929 ms",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "----FiFA----",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "edgeListInit\n   0.30000001192092896 ms",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/layout/setGraphLocation.js"
+  },
+  {
+    "level": "log",
+    "message": "forceDirectedMethod\n   9.900000005960464 ms",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/layout/setGraphLocation.js"
+  },
+  {
+    "level": "log",
+    "message": "graph =",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "__Graph__",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "ContextUpdate\n   12 ms",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "warn",
+    "message": "[Testize] idMapping generation failed for call1/main; empty idMapping is sent",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "warn",
+    "message": "[Testize] idMapping generation failed for call2/main; empty idMapping is sent",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "warn",
+    "message": "[Testize] idMapping generation failed for call3/main; empty idMapping is sent",
+    "timestamp": "2026-10-14T01:55:39.531Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "合成結果: Array(3)",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "個別メソッド呼び出しのコード:",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "--- call1 (main) ---",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "insert_h0: insert_h0(i, arg, created0) { return arg; }",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "--- call2 (main) ---",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "insert_h1: insert_h1(i, arg, created0, hole0) { return (() => { let __refsynCur = this; let __refsynSteps = i; if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError(\"refsyn: nthNextRef needs a non-negative step count\"); } while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); __refsynSteps -= 1; } return __refsynCur; })(); }",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "--- call3 (main) ---",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "log",
+    "message": "insert_h2: insert_h2(i, arg, created0, hole0, hole1) { return ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((hole1).next); }",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/testize.js"
+  },
+  {
+    "level": "warn",
+    "message": "Automatically scrolling cursor into view after selection change this will be disabled in the next version set editor.$blockScrolling = Infinity to disable this message",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/node_modules/ace-builds/src/ace.js"
+  },
+  {
+    "level": "warn",
+    "message": "Automatically scrolling cursor into view after selection change this will be disabled in the next version set editor.$blockScrolling = Infinity to disable this message",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/node_modules/ace-builds/src/ace.js"
+  },
+  {
+    "level": "log",
+    "message": "evalCodeWithCP\n   10.099999994039536 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "check counter starts 478 times",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "checkpoint function\n   6.900000065565109 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "PositionUpdate\n   18 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "----FiFA----",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "edgeListInit\n   0.09999999403953552 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/setGraphLocation.js"
+  },
+  {
+    "level": "log",
+    "message": "forceDirectedMethod\n   6.4000000059604645 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/setGraphLocation.js"
+  },
+  {
+    "level": "log",
+    "message": "graph =",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "__Graph__",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "ContextUpdate\n   8.599999994039536 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "----FiFA----",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "edgeListInit\n   0.5 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/setGraphLocation.js"
+  },
+  {
+    "level": "log",
+    "message": "forceDirectedMethod\n   13.5 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/setGraphLocation.js"
+  },
+  {
+    "level": "log",
+    "message": "graph =",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "__Graph__",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "ContextUpdate\n   20 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "----FiFA----",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "edgeListInit\n   0.6000000238418579 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/setGraphLocation.js"
+  },
+  {
+    "level": "log",
+    "message": "forceDirectedMethod\n   17.099999994039536 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/setGraphLocation.js"
+  },
+  {
+    "level": "log",
+    "message": "graph =",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "__Graph__",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "ContextUpdate\n   22.5 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  },
+  {
+    "level": "log",
+    "message": "----FiFA----",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "edgeListInit\n   0.30000001192092896 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/setGraphLocation.js"
+  },
+  {
+    "level": "log",
+    "message": "forceDirectedMethod\n   8.5 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/setGraphLocation.js"
+  },
+  {
+    "level": "log",
+    "message": "graph =",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "__Graph__",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/layout/ogushi.js"
+  },
+  {
+    "level": "log",
+    "message": "ContextUpdate\n   12.299999982118607 ms",
+    "timestamp": "2026-10-14T01:55:39.532Z",
+    "url": "http://localhost:8000/src/js/update.js"
+  }
+]

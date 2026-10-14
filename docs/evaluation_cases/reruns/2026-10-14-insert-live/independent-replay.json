@@ -1,0 +1,21 @@
+{
+  "runtime": "v22.17.0",
+  "execution": "Captured editor source in Node VM, 1000ms timeout",
+  "values": [
+    39,
+    89,
+    71,
+    27,
+    46,
+    53
+  ],
+  "expected": [
+    39,
+    89,
+    71,
+    27,
+    46,
+    53
+  ],
+  "passed": true
+}

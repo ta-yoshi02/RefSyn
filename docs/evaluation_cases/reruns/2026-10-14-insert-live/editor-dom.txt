@@ -1,0 +1,74 @@
+- banner:
+  - button "menu":
+  - generic: Kanon
+  - generic: View mode
+  - button "View mode Snapshot": Snapshot
+  - textbox: Snapshot
+  - generic: Select sample
+  - button
+  - textbox
+  - checkbox [checked]
+  - text: Node
+  - button "Redraw":
+    - generic: Redraw
+- textbox [active]: "\x01\x01"
+- generic: "1"
+- generic: "2"
+- generic: "3"
+- generic: "4"
+- generic: "5"
+- generic: "6"
+- generic: "7"
+- generic: "8"
+- generic: "9"
+- generic: "10"
+- generic: "11"
+- generic: "12"
+- generic: "13"
+- generic: "14"
+- generic: "15"
+- generic: "16"
+- generic: "17"
+- generic: "18"
+- generic: "19"
+- generic: "20"
+- generic: "21"
+- generic: "22"
+- generic: "23"
+- generic: "24"
+- generic: "25"
+- generic: "26"
+- generic: "27"
+- generic: "28"
+- generic: "29"
+- generic: "30"
+- generic: "31"
+- generic: "class Node {"
+- generic: "constructor(v) {"
+- generic: this.next = null;
+- generic: this.val = v;
+- generic: "}"
+- generic: "// refsyn: generated helper"
+- generic: "insert_h0(i, arg, created0) { return arg; }"
+- generic: "// refsyn: generated helper"
+- generic: "insert_h1(i, arg, created0, hole0) { return (() => { let __refsynCur = this; let __refsynSteps = i; if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError(\"refsyn: nthNextRef needs a non-negative step count\"); } while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); __refsynSteps -= 1; } return __refsynCur; })(); }"
+- generic: "// refsyn: generated helper"
+- generic: "insert_h2(i, arg, created0, hole0, hole1) { return ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((hole1).next); }"
+- generic: "insert(i, arg) {"
+- generic: const created0 = new Node();
+- generic: const hole0 = this.insert_h0(i, arg, created0);
+- generic: const hole1 = this.insert_h1(i, arg, created0, hole0);
+- generic: const hole2 = this.insert_h2(i, arg, created0, hole0, hole1);
+- generic: created0.val = hole0;
+- generic: hole1.next = created0;
+- generic: created0.next = hole2;
+- generic: "}"
+- generic: "}"
+- generic: const lst = new Node(39);
+- generic: lst.next = new Node(27);
+- generic: lst.next.next = new Node(53);
+- generic: lst.insert(0, 89);
+- generic: lst.insert(2, 46);
+- generic: lst.insert(1, 71);
+- generic: Edit
+- button "Synthesize"

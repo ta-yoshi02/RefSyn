@@ -1,0 +1,21 @@
+{
+  "captured_on": "2026-10-14 Asia/Tokyo",
+  "page": "http://localhost:8000/",
+  "source_task": "target/escher/ts/insert_1791942373_349922000_p63926_0.json",
+  "terminal_buffer_truncated": true,
+  "provenance_scope": "Checkout revisions at capture time; the running server binary revision is not independently established.",
+  "revisions": {
+    "RefSyn": {
+      "head": "af76b2edad6f954498ce147c0e74afcfef75435b",
+      "status": " D INTEGRATED_SYNTHESIS_API.md\n m Kanon\n M architecture.md\n D doc/AssociationGraph_MaximumClique.md\n D doc/VF2_Algorithm.md\n D doc/ex_abstract.pdf\n D doc/ex_abstract.tex\n D docs/EVALUATION_BASELINE_PLAN.md\n D docs/IMPLEMENTATION_REVIEW_PROMPT.md\n D docs/KANON_CODEX_VERIFICATION.md\n D docs/NONSEPARATED_BASELINE_WITNESSES.md\n D docs/PAPER_ALIGNED_REQUIREMENTS.md\n D docs/PAPER_CASE_STUDY_AND_LIMITS_NOTES.md\n D docs/REFSYN_TO_ESCHER.md\n D docs/SYNTHESIS_TEMPLATE_CONTRACT.md\n M docs/SYSTEM_FLOW_AND_COMMANDS.md\n M docs/TESTS.md\n M docs/evaluation_cases/README.md\n M external/escher-ts\n?? .claude/\n?? docs/PAPER_ALIGNMENT_WORKLIST.md\n?? docs/README.md\n?? docs/archive/\n?? docs/audits/\n?? docs/evaluation_cases/reruns/2026-09-10-scan-components/\n?? docs/evaluation_cases/reruns/2026-10-14-insert-live/\n"
+    },
+    "Kanon": {
+      "head": "60fa5c8e80d05a28dd12438ee1f4876a49bba79f",
+      "status": " M .DS_Store\n M src/js/menubar.js\n"
+    },
+    "escher-ts": {
+      "head": "dc13e6a87d92106d76e16b81b18ccd825d223a52",
+      "status": ""
+    }
+  }
+}
