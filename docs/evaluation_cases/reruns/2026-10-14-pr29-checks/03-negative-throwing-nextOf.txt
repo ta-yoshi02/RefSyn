@@ -1,0 +1,45 @@
+## mutation
+diff --git a/web/src/lib/binding-conditions.test.ts b/web/src/lib/binding-conditions.test.ts
+index f36d4fa..2c668e3 100644
+--- a/web/src/lib/binding-conditions.test.ts
++++ b/web/src/lib/binding-conditions.test.ts
+@@ -283,7 +283,7 @@ describe("C5: translated helpers leave the state the later holes read unchanged"
+     const seen = { failure: 0, value: 0 };
+     let traversed = 0;
+     for (const term of terms) {
+-      const code = compileRefsynMethod(task, job, term);
++      const code = term.kind === "component" && term.name === "nextOf" ? "insert_h2() { throw new Error('no read'); }" : compileRefsynMethod(task, job, term);
+       const head = term.kind === "component" ? term.name : "if";
+       for (let example = 0; example < task.examples.length; example += 1) {
+         const expected = escherOutcome(term, example);
+## vitest
+
+ RUN  v4.1.4 /private/tmp/claude-501/-Users-taku-workspace-kenkyu-proj-ref-refsyn/2755e50e-1042-47ac-9772-22ae28594c24/scratchpad/wt/refsyn-c1c5/web
+
+ ❯ src/lib/binding-conditions.test.ts (14 tests | 1 failed) 80ms
+     × translations of the traversal and field components give their outcome and write only their own locals 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/binding-conditions.test.ts > C5: translated helpers leave the state the later holes read unchanged > translations of the traversal and field components give their outcome and write only their own locals
+AssertionError: nextOf(@thisRef, @nodeHeap, @nextHeap) #0: expected 'failure' to be 'ref 1' // Object.is equality
+
+Expected: "ref 1"
+Received: "failure"
+
+ ❯ src/lib/binding-conditions.test.ts:295:61
+    293|           Set.prototype.add = realAdd;
+    294|           const label = `${showTerm(term)} #${example}${cycle ? " (rin…
+    295|           expect(outcomeOf(objects, result, failed), label).toBe(cycle…
+       |                                                             ^
+    296|           expect(writes, label).toEqual([]);
+    297|           seen[failed ? "failure" : "value"] += 1;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)
+   Start at  11:44:06
+   Duration  311ms (transform 128ms, setup 0ms, import 154ms, tests 80ms, environment 0ms)
+

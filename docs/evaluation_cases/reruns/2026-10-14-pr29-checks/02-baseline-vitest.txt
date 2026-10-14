@@ -1,0 +1,9 @@
+
+ RUN  v4.1.4 /private/tmp/claude-501/-Users-taku-workspace-kenkyu-proj-ref-refsyn/2755e50e-1042-47ac-9772-22ae28594c24/scratchpad/wt/refsyn-c1c5/web
+
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  11:43:54
+   Duration  340ms (transform 145ms, setup 0ms, import 174ms, tests 88ms, environment 0ms)
+

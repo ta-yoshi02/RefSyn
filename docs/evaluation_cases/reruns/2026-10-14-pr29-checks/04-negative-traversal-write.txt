@@ -1,0 +1,81 @@
+## mutation
+diff --git a/runtime/refsyn-escher-adapter.mjs b/runtime/refsyn-escher-adapter.mjs
+index 5e83fc4..17212fc 100644
+--- a/runtime/refsyn-escher-adapter.mjs
++++ b/runtime/refsyn-escher-adapter.mjs
+@@ -90,7 +90,7 @@ const definedAccess = (baseExpr, field) => `${readDefined}(${fieldAccess(baseExp
+ const readBoolean = "((__refsynValue) => { if (typeof __refsynValue !== \"boolean\") { throw new TypeError(\"refsyn: a boolean field holds no boolean\"); } return __refsynValue; })";
+ // Traversals fail on a revisited object, as escher-ts does, so that a cyclic heap cannot hang.
+ const visit = (what) =>
+-  `if (__refsynSeen.has(__refsynCur)) { throw new RangeError("refsyn: ${what} met a cycle"); } __refsynSeen.add(__refsynCur);`;
++  `if (__refsynSeen.has(__refsynCur)) { throw new RangeError("refsyn: ${what} met a cycle"); } __refsynSeen.add(__refsynCur); __refsynCur.seen = true; delete __refsynCur.seen;`;
+ 
+ const memberCall = (baseExpr, methodName, args) => {
+   const receiver = baseExpr === "this" ? "this" : `(${baseExpr})`;
+## vitest
+
+ RUN  v4.1.4 /private/tmp/claude-501/-Users-taku-workspace-kenkyu-proj-ref-refsyn/2755e50e-1042-47ac-9772-22ae28594c24/scratchpad/wt/refsyn-c1c5/web
+
+ ❯ src/lib/binding-conditions.test.ts (14 tests | 2 failed) 77ms
+     × booleans/copy_flag 5ms
+     × translations of the traversal and field components give their outcome and write only their own locals 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/binding-conditions.test.ts > C5: translated helpers leave the state the later holes read unchanged > booleans/copy_flag
+AssertionError: copy_h0 #0: expected [ 'set #0.seen', …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "set #0.seen",
++   "delete #0.seen",
++   "set #1.seen",
++   "delete #1.seen",
++ ]
+
+ ❯ src/lib/binding-conditions.test.ts:250:54
+    248|         task.examples.forEach(([, expected], example) => {
+    249|           const { objects, result, failed, writes } = runHelper(task, …
+    250|           expect(writes, `${task.name} #${example}`).toEqual([]);
+       |                                                      ^
+    251|           // The inputs were built right: the helper returns its outpu…
+    252|           expect(failed).toBe(false);
+ ❯ src/lib/binding-conditions.test.ts:248:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/lib/binding-conditions.test.ts > C5: translated helpers leave the state the later holes read unchanged > translations of the traversal and field components give their outcome and write only their own locals
+AssertionError: last_ptr(@thisRef, @nextHeap) #0: expected [ 'set #0.seen', …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "set #0.seen",
++   "delete #0.seen",
++   "set #1.seen",
++   "delete #1.seen",
++   "set #2.seen",
++   "delete #2.seen",
++ ]
+
+ ❯ src/lib/binding-conditions.test.ts:296:33
+    294|           const label = `${showTerm(term)} #${example}${cycle ? " (rin…
+    295|           expect(outcomeOf(objects, result, failed), label).toBe(cycle…
+    296|           expect(writes, label).toEqual([]);
+       |                                 ^
+    297|           seen[failed ? "failure" : "value"] += 1;
+    298|           traversed += setAdds;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)
+   Start at  11:44:07
+   Duration  311ms (transform 125ms, setup 0ms, import 155ms, tests 77ms, environment 0ms)
+

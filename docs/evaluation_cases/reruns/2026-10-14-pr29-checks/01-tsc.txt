@@ -1,0 +1,37 @@
+$ npx tsc --noEmit -p . (filtered to the new test file; full output follows)
+../external/escher-ts/node_modules/vitest/dist/browser.d.ts(3,39): error TS2307: Cannot find module '@vitest/utils/diff' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/browser.d.ts(5,42): error TS2307: Cannot find module '@vitest/runner' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/browser.d.ts(6,30): error TS2307: Cannot find module '@vitest/spy' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/browser.d.ts(8,61): error TS2307: Cannot find module '@vitest/utils' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/browser.d.ts(9,59): error TS2307: Cannot find module '@vitest/utils/display' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/browser.d.ts(10,30): error TS2307: Cannot find module '@vitest/utils/error' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/browser.d.ts(11,25): error TS2307: Cannot find module '@vitest/utils/helpers' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/browser.d.ts(12,49): error TS2307: Cannot find module '@vitest/utils/source-map' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/browser.d.ts(13,46): error TS2307: Cannot find module '@vitest/utils/timers' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/benchmark.d.DAaHLpsq.d.ts(1,22): error TS2307: Cannot find module '@vitest/runner' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/benchmark.d.DAaHLpsq.d.ts(2,35): error TS2307: Cannot find module '@vitest/runner/utils' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/benchmark.d.DAaHLpsq.d.ts(3,44): error TS2307: Cannot find module 'tinybench' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/browser.d.ChKACdzH.d.ts(1,35): error TS2307: Cannot find module '@vitest/runner' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/config.d.Cy95HiCx.d.ts(1,37): error TS2307: Cannot find module '@vitest/pretty-format' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/config.d.Cy95HiCx.d.ts(2,51): error TS2307: Cannot find module '@vitest/runner' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/config.d.Cy95HiCx.d.ts(3,58): error TS2307: Cannot find module '@vitest/snapshot' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/config.d.Cy95HiCx.d.ts(4,39): error TS2307: Cannot find module '@vitest/utils/diff' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/environment.d.CrsxCzP1.d.ts(1,27): error TS2307: Cannot find module '@vitest/utils' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/plugin.d.CtqpEehP.d.ts(1,10): error TS2305: Module '"vite"' has no exported member 'DevEnvironment'.
+../external/escher-ts/node_modules/vitest/dist/chunks/reporters.d.CWXNI2jG.d.ts(1,181): error TS2307: Cannot find module '@vitest/runner' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/reporters.d.CWXNI2jG.d.ts(2,79): error TS2307: Cannot find module '@vitest/utils' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/reporters.d.CWXNI2jG.d.ts(5,10): error TS2305: Module '"vite"' has no exported member 'DevEnvironment'.
+../external/escher-ts/node_modules/vitest/dist/chunks/reporters.d.CWXNI2jG.d.ts(7,30): error TS2307: Cannot find module '@vitest/mocker' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/reporters.d.CWXNI2jG.d.ts(8,41): error TS2307: Cannot find module '@vitest/utils/source-map' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/reporters.d.CWXNI2jG.d.ts(11,37): error TS2307: Cannot find module '@vitest/pretty-format' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/reporters.d.CWXNI2jG.d.ts(12,55): error TS2307: Cannot find module '@vitest/snapshot' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/reporters.d.CWXNI2jG.d.ts(13,39): error TS2307: Cannot find module '@vitest/utils/diff' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/reporters.d.CWXNI2jG.d.ts(14,22): error TS2307: Cannot find module '@vitest/expect' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/reporters.d.CWXNI2jG.d.ts(20,33): error TS2307: Cannot find module '@vitest/snapshot/manager' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/rpc.d.RH3apGEf.d.ts(1,81): error TS2307: Cannot find module '@vitest/runner' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/rpc.d.RH3apGEf.d.ts(2,32): error TS2307: Cannot find module '@vitest/snapshot' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/rpc.d.RH3apGEf.d.ts(3,51): error TS2307: Cannot find module 'vite/module-runner' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/worker.d.Dyxm8DEL.d.ts(1,55): error TS2307: Cannot find module '@vitest/runner' or its corresponding type declarations.
+../external/escher-ts/node_modules/vitest/dist/chunks/worker.d.Dyxm8DEL.d.ts(2,34): error TS2307: Cannot find module 'vite/module-runner' or its corresponding type declarations.
+src/worker.ts(1,42): error TS2307: Cannot find module '/pkg/refsyn.js' or its corresponding type declarations.
+exit=2
