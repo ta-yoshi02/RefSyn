@@ -1,5 +1,8 @@
 # Architecture Overview
 
+この文書は現実装の構成を説明する。
+論文への適合は [残作業](docs/PAPER_ALIGNMENT_WORKLIST.md) で個別に確認し、実装側の説明を仕様の根拠にしない。
+
 RefSynは、Kanonで記録した実演から、論文（MOLD）3〜4章の手順でメソッドを合成する。
 実演を操作グラフに正規化し、全体同型で対応付けて穴付き雛形を作り、各穴をescher-tsのPBEで埋め、全実演での再生に通ったコードだけをKanonへ返す。
 
@@ -31,6 +34,9 @@ Kanon（型付き呼出し前状態・new C()の状態・編集列）
 | `operation_graph` | 実演 → 頂点宣言列、書込み列、返り値の頂点 | 記録された旧対象と再生中の状態の不一致、値fieldへのdeleteEdge、辺があるfieldへのaddEdge、範囲外のconstructorを持つクラスの生成 |
 | `alignment` | 操作グラフ列 → 頂点の全単射の列 | 非同型（型・クラス・既存／新規・辺の向き・フィールド・重複数のいずれかが保存されない） |
 | `template` | グラフと全単射 → 生成文、穴（型と実演ごとの出力）、書込み、返り値 | — |
-| `pbe_problem` | 記録と雛形 → 穴ごとのtask、`hole_checks` | escher-tsが表現できない値（文字列、真偽値、整数以外、複数クラス、未定義のpointer field） |
+| `pbe_problem` | 記録と雛形 → 穴ごとのtask、`hole_checks` | 未対応の値や型（文字列、整数以外の数、複数クラス）と、種類の混在したfield（真偽値と数値・null など）。undefinedと不在のfieldはエラー値として符号化する。真偽値は#28（`af76b2e`）以降、`Bool` としてobjectのslotに直接持つ |
 
-設計判断と受入条件の詳細は `docs/PAPER_ALIGNED_REQUIREMENTS.md`、境界のデータと検証の契約は `docs/SYNTHESIS_TEMPLATE_CONTRACT.md` にある。
+現在は先行穴の出力例を後続穴の入力へ束縛し、全taskを先に構築する。
+論文本文は先行式の評価結果を入力へ加えると記述している。
+両者の入力が一致するための条件（解が全例を再現すること、`hole_checks` による照合など）と、その確認の状態は [残作業](docs/PAPER_ALIGNMENT_WORKLIST.md) の2番にまとめる。
+文書の使い分けは [入口](docs/README.md) にまとめる。

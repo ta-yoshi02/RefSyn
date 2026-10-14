@@ -1,5 +1,8 @@
 # RefSyn Test Suite (Current)
 
+This is an index of existing checks, not a specification of the paper or a fresh test report.
+See [the worklist](PAPER_ALIGNMENT_WORKLIST.md) for the remaining conformance checks.
+
 Run the Rust suite with `cargo test`. Tests that run escher-ts need a built
 `external/escher-ts` (`cd external/escher-ts && pnpm install --frozen-lockfile && pnpm build`).
 Passing these tests shows agreement on the listed demonstrations and inputs only; it
@@ -84,3 +87,26 @@ Uses the paper's three `insert` demonstrations as the fixture.
 ## Bridge helpers
 
 - `src/escher_bridge.rs` unit tests cover the escher-ts process memory setting.
+
+## Translation and CI
+
+- `web/src/lib/binding-conditions.test.ts` (#29) checks C1 and C5 on WASM-built
+  paper_insert and boolean tasks. It evaluates each returned expression with
+  escher-ts, keeping Int/Bool/Ref apart, and catches writes to reachable inputs
+  with Proxies. Component cases compare translated outcomes with escher-ts on
+  list inputs and check the expected outcomes on rings. Expression readback
+  depends on `showTerm` formatting; these finite checks do not prove purity on
+  unobserved inputs. Saved mutation results are indexed in
+  [the PR #29 record](evaluation_cases/reruns/2026-10-14-pr29-checks/README.md).
+- `node --test runtime/refsyn-escher-adapter*.test.mjs` checks operator precedence,
+  the heap selected by `loadInt`, parameter names, and agreement between escher-ts
+  evaluation and translated JavaScript, including failures on null, undefined,
+  absent fields and cyclic traversals, and (since #28) boolean field reads.
+- Boolean fields, arguments and holes (since #28): `tests/boolean_values_tests.rs` checks the
+  encoding and native adoption with independent execution, `web/src/lib/booleans.test.ts`
+  checks the same fixtures (`tests/data/booleans/`) through WASM, and
+  `runtime/whole-method-validation.test.mjs` checks that values sharing a label but not a type
+  (`true`, `"true"`, `1`) are rejected.
+- `.github/workflows/ci.yml` builds the pinned escher-ts before Rust and runtime checks,
+  then builds WASM, runs web checks and checks Kanon's fixture, capture and reflection.
+  Its existence does not establish that the latest run passed.

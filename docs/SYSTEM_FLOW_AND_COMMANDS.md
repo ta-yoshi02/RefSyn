@@ -1,5 +1,8 @@
 # RefSyn → Escher 実行フローとコマンド集
 
+現実装を起動するための手順であり、論文の仕様を定義する文書ではない。
+修正の優先順位は [残作業](PAPER_ALIGNMENT_WORKLIST.md) を参照する。
+
 RefSynの合成経路の概要と、手元で動かすためのコマンドをまとめる。モジュール構成と境界は `architecture.md` を参照。
 
 ## システムの流れ（概要）
@@ -35,10 +38,10 @@ RefSynの合成経路の概要と、手元で動かすためのコマンドを�
 ## よくある注意点
 - リクエストには、Kanonが記録した型付き呼出し前状態と各クラスの `new C()` の状態が必要。旧形式（表示グラフだけ）のpayloadは合成しない
 - 全実演は同じクラスの同じメソッドを対象とし、操作グラフが互いに同型である必要がある
-- escher-tsで表現できるのは整数と参照（nullを含む）。文字列や真偽値を出力する穴は合成しない
-- `runtime/refsyn-escher-adapter.mjs` が生成するポインタ走査 helper は acyclic なリストを前提にしており、循環リスト入力は未サポート
+- PBEで扱えるのは、単一クラスの参照（nullを含む）、整数、真偽値（#28のマージ後、`af76b2e` 以降）。文字列と複数クラスは合成しない
+- `runtime/refsyn-escher-adapter.mjs` の走査helperのうち、`last_ptr`、`penultimateRef`、`findByValueRef` は、同じobjectへの再訪を検出して失敗する。`nthNextRef` は再訪を検出せず、指定した歩数で止まって値を返す（escher-tsの評価と同じ）
 
 ## 参考ドキュメント
-- `docs/REFSYN_TO_ESCHER.md`：穴の入力環境とtask JSONの符号化
-- `docs/KANON_CODEX_VERIFICATION.md`：Kanon UI を操作して `set test` から合成まで検証する時の手順
-- `architecture.md`：全体像とモジュールの責務
+- [文書の入口](README.md)：現在使う資料と隔離した履歴
+- [残作業](PAPER_ALIGNMENT_WORKLIST.md)：論文本文との照合と完了条件
+- [実装構成](../architecture.md)：全体像とモジュールの責務
