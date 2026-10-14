@@ -278,7 +278,7 @@ describe("C5: translated helpers leave the state the later holes read unchanged"
     const escherOutcome = (term: Term, example: number) => {
       const env = new Map(job.inputNames.map((name, i) => [name, job.examples[example]![0][i]!]));
       const value = executeTerm((name) => env.get(name)!, job.env, term);
-      return value.tag === "error" ? "failure" : value.tag === "int" ? `number ${value.value}` : value.tag === "bool" ? `boolean ${value.value}` : `ref ${value.value}`;
+      return value.tag === "error" ? "failure" : value.tag === "int" ? `number ${value.value}` : value.tag === "bool" ? `boolean ${value.value}` : value.tag === "ref" ? `ref ${value.value}` : `unexpected ${value.tag}`;
     };
     const seen = { failure: 0, value: 0 };
     let traversed = 0;
