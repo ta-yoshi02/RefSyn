@@ -344,10 +344,12 @@ async fn insert_with_a_numeric_constructor_default_is_synthesized_validated_and_
     assert_eq!(validation.checked_demonstrations, 3);
 }
 
-// Accepting the edit does not widen what PBE can represent: field kinds come from the
-// pre-call objects and the created objects' `new C()` state, and mixed kinds stay rejected.
+// Accepting the edit does not widen what PBE can represent. Field kinds come from the
+// pre-call objects and the created objects' `new C()` state only, not from written values:
+// a default escher-ts cannot represent, or one whose kind differs from the same field in the
+// pre-call objects (numbers here), makes the input state unencodable.
 #[test]
-fn a_default_of_another_type_is_accepted_as_an_edit_but_rejected_by_the_pbe_encoding() {
+fn an_unrepresentable_or_mixed_kind_input_state_is_rejected_by_the_pbe_encoding() {
     let ops = json!([
         add_node("D"),
         lit("n89", "89"),

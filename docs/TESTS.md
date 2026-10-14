@@ -44,8 +44,11 @@ Uses the paper's three `insert` demonstrations as the fixture.
   before this demonstration writes it (Kanon shows created nodes without fields); a second
   `addEdge` while a written value remains, and `addEdge` on a pre-call object's value, are
   still rejected, and creation and write history do not carry over between demonstrations.
-  The default stays in the hole inputs, and a default of another kind (`""`, `false`, a
-  number in a reference field) is accepted as an edit but rejected by the PBE encoding.
+  The default stays in the hole inputs. The PBE encoding derives field kinds from the
+  pre-call objects and the `new C()` state, not from written values, so a default it cannot
+  represent (`""`) or one whose kind differs from the same field in the pre-call objects
+  (`false` or `0` where they hold numbers or references) is accepted as an edit but rejected
+  there.
 - The correspondence maps the demonstrations as in the paper, ignores edge order, and is
   rejected when kind, class, field, direction or multiplicity differ, or null meets non-null.
 - The template has one creation, three hole bindings and three writes in the paper's order,
