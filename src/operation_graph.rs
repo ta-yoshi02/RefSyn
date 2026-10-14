@@ -1,6 +1,6 @@
 //! Normalizes one demonstration's edits into a MOLD operation graph (paper §4.1).
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use anyhow::{anyhow, bail, ensure, Result};
 
@@ -85,6 +85,8 @@ pub fn build(demo: &Demonstration, classes: &BTreeMap<String, Class>) -> Result<
             .iter()
             .map(|(id, object)| (id.clone(), object.fields.clone()))
             .collect(),
+        created: BTreeSet::new(),
+        written: BTreeSet::new(),
     };
     let mut writes = Vec::new();
     let mut ret = None;
@@ -102,6 +104,7 @@ pub fn build(demo: &Demonstration, classes: &BTreeMap<String, Class>) -> Result<
                     anyhow!("cannot create {class}: new {class}() is outside the supported constructors ({reason})")
                 })?;
                 builder.state.insert(id.clone(), instance.clone());
+                builder.created.insert(id.clone());
                 builder.declare(
                     id,
                     Vertex::Created {
@@ -116,11 +119,13 @@ pub fn build(demo: &Demonstration, classes: &BTreeMap<String, Class>) -> Result<
             }
             Edit::AddEdge { from, field, to } => {
                 let current = builder.slot(from, field)?;
+                // Kanon draws no edge for an empty field, nor any field of a created node, so an
+                // unwritten field of a created object may still hold its `new C()` default.
                 ensure!(
                     matches!(
                         current,
                         Slot::Absent | Slot::Value(Value::Null | Value::Undefined)
-                    ),
+                    ) || builder.unwritten_created(from, field),
                     "addEdge on {from}.{field}, which already has an edge"
                 );
                 writes.push(builder.write(from, field, to)?);
@@ -168,6 +173,10 @@ struct Builder<'a> {
     /// Fields of every object while replaying the edits, used only to check each edit's
     /// recorded old target. Created objects start from their class's `new C()` state.
     state: BTreeMap<String, BTreeMap<String, Value>>,
+    /// Objects created by this demonstration.
+    created: BTreeSet<String>,
+    /// Fields (object, field) written by an edit of this demonstration.
+    written: BTreeSet<(String, String)>,
 }
 
 impl Builder<'_> {
@@ -235,6 +244,13 @@ impl Builder<'_> {
             .map_or(Slot::Absent, |value| Slot::Value(value.clone())))
     }
 
+    fn unwritten_created(&self, object: &str, field: &str) -> bool {
+        self.created.contains(object)
+            && !self
+                .written
+                .contains(&(object.to_string(), field.to_string()))
+    }
+
     fn check_old(&self, object: &str, field: &str, old: &str) -> Result<()> {
         ensure!(
             self.slot(object, field)? == Slot::Value(self.value(old)?),
@@ -248,6 +264,7 @@ impl Builder<'_> {
             .get_mut(object)
             .ok_or_else(|| anyhow!("unknown write source {object}"))?
             .insert(field.to_string(), value);
+        self.written.insert((object.to_string(), field.to_string()));
         Ok(())
     }
 

@@ -40,6 +40,12 @@ Uses the paper's three `insert` demonstrations as the fixture.
 - Edits become writes in order with duplicates; `deleteEdge` writes one shared null vertex;
   stale old targets, value-field deletes, `addEdge` over an edge, node deletion and other
   variables are rejected; creating a class whose `new C()` could not be captured fails.
+- `addEdge` also replaces a `new C()` default that a created object's field still holds
+  before this demonstration writes it (Kanon shows created nodes without fields); a second
+  `addEdge` while a written value remains, and `addEdge` on a pre-call object's value, are
+  still rejected, and creation and write history do not carry over between demonstrations.
+  The default stays in the hole inputs, and a default of another kind (`""`, `false`, a
+  number in a reference field) is accepted as an edit but rejected by the PBE encoding.
 - The correspondence maps the demonstrations as in the paper, ignores edge order, and is
   rejected when kind, class, field, direction or multiplicity differ, or null meets non-null.
 - The template has one creation, three hole bindings and three writes in the paper's order,
@@ -72,7 +78,9 @@ Uses the paper's three `insert` demonstrations as the fixture.
 - `node --test runtime/whole-method-validation.test.mjs` checks the demonstrated heap
   (values, presence, identity, allocations by structure), return values, helper results
   against their output examples, side effects on globals, built-in and class prototypes and
-  statics, rejection of incorrect candidates, unavailable inputs, repeated-write replay and timeout.
+  statics, rejection of incorrect candidates, unavailable inputs, repeated-write replay and timeout,
+  and the same `addEdge` rule for a created object's unwritten `new C()` defaults (replaced
+  value, untouched default, identity and return value of the created object).
 - `npm test --prefix web` checks browser adoption, translation failure, Worker startup and
   run timeouts, and reply nonces, and validates a response typed as `SynthesisResponse` with
   `hole_checks` (adopted when the helper reproduces its output example, rejected otherwise).
