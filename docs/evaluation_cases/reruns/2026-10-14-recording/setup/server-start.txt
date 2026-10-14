@@ -1,0 +1,3 @@
+started 2026-10-14 11:47:04 +0900 pid 90770
+restart attempted 2026-10-14 14:21:30 +0900 after the first server (PID 90770) exited with code 144; binary sha256 3fb5af35c1add9635bd201f7c5c899ac2b711004b7565d741b8f6df3adc3427b
+restart failed (exit 101): port 3030 was already taken at 14:21:24 by PID 4348, target/debug/refsyn from /Users/taku/workspace/kenkyu/proj-ref/refsyn/.claude/worktrees/quizzical-engelbart-4df8c9 (another session, recording to docs/evaluation_cases/reruns/2026-10-14-fresh-recording). That server is not part of this setup.
