@@ -29,7 +29,8 @@ const tasksOf = (fixture: string): RawTask[] => {
 const jobOf = (task: RawTask) => prepareJsonSynthesisJob(parseJsonSynthesisSpec(JSON.stringify(task)));
 
 // The adapter reports the expression only as text; read it back so that the expression checked
-// is the one escher-ts returned, not one re-synthesized here under copied settings.
+// is the one escher-ts returned, not one re-synthesized here under copied settings. This relies on
+// showTerm's format; an expression it cannot read back exactly fails the test.
 const parseTerm = (text: string): Term => {
   let at = 0;
   const expect = (token: string) => {
@@ -257,31 +258,50 @@ describe("C5: translated helpers leave the state the later holes read unchanged"
     });
   }
 
-  it("translations of the traversal and field components write only their own locals", () => {
+  it("translations of the traversal and field components give their outcome and write only their own locals", () => {
     const task = tasksOf("paper_insert")[2]!;
     const job = jobOf(task);
     const v = (name: string): Term => ({ kind: "var", name });
     const c = (name: string, ...args: Term[]): Term => ({ kind: "component", name, args });
     const [T, N, X, V] = [v("thisRef"), v("nodeHeap"), v("nextHeap"), v("valHeap")];
+    // On the ring, the traversals that detect a revisit fail; every other term reads only the
+    // first nodes and keeps its outcome on the list.
+    const failsOnRing = new Set(["last_ptr", "penultimateRef", "findByValueRef"]);
     const terms = [
       c("nextOf", T, N, X), c("nthNextRef", T, N, X, v("i")), c("last_ptr", T, X), c("penultimateRef", T, X),
       c("findByValueRef", T, N, X, V, v("arg")), c("hasNext", T, N, X), c("hasVal", T, N, V),
       c("loadInt", V, c("valOf", T, N, V)), c("equal", T, c("nextOf", T, N, X)), c("isNull", c("nextOf", v("hole1"), N, X)),
       { kind: "if", condition: c("hasNext", T, N, X), thenBranch: c("nextOf", T, N, X), elseBranch: T } as Term,
     ];
+    const outcomeOf = (objects: object[], result: unknown, failed: boolean) =>
+      failed ? "failure" : result === null ? "ref -1" : typeof result === "object" ? `ref ${objects.indexOf(result)}` : `${typeof result} ${result}`;
+    const escherOutcome = (term: Term, example: number) => {
+      const env = new Map(job.inputNames.map((name, i) => [name, job.examples[example]![0][i]!]));
+      const value = executeTerm((name) => env.get(name)!, job.env, term);
+      return value.tag === "error" ? "failure" : value.tag === "int" ? `number ${value.value}` : value.tag === "bool" ? `boolean ${value.value}` : `ref ${value.value}`;
+    };
+    const seen = { failure: 0, value: 0 };
     let traversed = 0;
     for (const term of terms) {
       const code = compileRefsynMethod(task, job, term);
-      for (const cycle of [false, true]) {
-        for (let example = 0; example < task.examples.length; example += 1) {
+      const head = term.kind === "component" ? term.name : "if";
+      for (let example = 0; example < task.examples.length; example += 1) {
+        const expected = escherOutcome(term, example);
+        for (const cycle of [false, true]) {
           countSetAdds();
-          const { writes } = runHelper(task, code, example, cycle);
+          const { objects, result, failed, writes } = runHelper(task, code, example, cycle);
           Set.prototype.add = realAdd;
-          expect(writes, `${showTerm(term)} #${example}${cycle ? " (cycle)" : ""}`).toEqual([]);
+          const label = `${showTerm(term)} #${example}${cycle ? " (ring)" : ""}`;
+          expect(outcomeOf(objects, result, failed), label).toBe(cycle && failsOnRing.has(head) ? "failure" : expected);
+          expect(writes, label).toEqual([]);
+          seen[failed ? "failure" : "value"] += 1;
           traversed += setAdds;
         }
       }
     }
+    // Both outcomes occur, so neither a helper that always throws nor one that never fails passes.
+    expect(seen.failure).toBeGreaterThan(0);
+    expect(seen.value).toBeGreaterThan(0);
     expect(traversed).toBeGreaterThan(0);
   });
 
