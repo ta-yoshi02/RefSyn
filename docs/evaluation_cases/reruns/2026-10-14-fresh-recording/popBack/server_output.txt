@@ -1,0 +1,17 @@
+escher-ts synthesis completed (1 success / 0 failure)
+=== IMPROVED SYNTHESIS RESPONSE ===
+Common Pattern: BindHole(0, Hole { vertex: 0, ty: Object("Node"), examples: [Object("main-new3"), Object("main-new2")] })
+Write(Write { from: 0, field: "next", to: 1 })
+Holes: {"popBack_h0": ["object main-new3", "object main-new2"]}
+List Environment Summary: escher-ts task JSON saved: target/escher/ts/popBack_1791956916_613522000_p4348_5.json
+Synthesized code:
+  [0] popBack_h0() { return (() => { let __refsynCur = this; const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError("refsyn: penultimateRef met a cycle"); } __refsynSeen.add(__refsynCur); const __refsynNext = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError("refsyn: read of an undefined field"); } return __refsynValue; })((__refsynCur).next); if (__refsynNext === null) { return null; } if (((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError("refsyn: read of an undefined field"); } return __refsynValue; })((__refsynNext).next) === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })(); }
+Composed method code:
+popBack() {
+    const hole0 = this.popBack_h0();
+    hole0.next = null;
+}
+Escher results:
+  [OK] popBack_h0 -> popBack_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int]): Ref[Object<Node>] =
+  penultimateRef(@thisRef, @nextHeap)
+=====================================

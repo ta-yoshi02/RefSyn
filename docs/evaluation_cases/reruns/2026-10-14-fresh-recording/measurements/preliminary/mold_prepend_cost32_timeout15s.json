@@ -1,0 +1,120 @@
+[
+  {
+    "task": "prepend_h0",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 5
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.314,
+      "median_ms": 0.571,
+      "max_ms": 3.044,
+      "mean_ms": 0.9960000000000001
+    },
+    "last_rendered": "prepend_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>]): Int =\n  @x",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 3.044,
+        "success": true,
+        "rendered": "prepend_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>]): Int =\n  @x",
+        "error": null,
+        "compiled_js": "prepend_h0(x, created0) { return x; }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.652,
+        "success": true,
+        "rendered": "prepend_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>]): Int =\n  @x",
+        "error": null,
+        "compiled_js": "prepend_h0(x, created0) { return x; }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.399,
+        "success": true,
+        "rendered": "prepend_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>]): Int =\n  @x",
+        "error": null,
+        "compiled_js": "prepend_h0(x, created0) { return x; }"
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 0.314,
+        "success": true,
+        "rendered": "prepend_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>]): Int =\n  @x",
+        "error": null,
+        "compiled_js": "prepend_h0(x, created0) { return x; }"
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 0.571,
+        "success": true,
+        "rendered": "prepend_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>]): Int =\n  @x",
+        "error": null,
+        "compiled_js": "prepend_h0(x, created0) { return x; }"
+      }
+    ]
+  },
+  {
+    "task": "prepend_h1",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 5
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.216,
+      "median_ms": 0.256,
+      "max_ms": 0.418,
+      "mean_ms": 0.29079999999999995
+    },
+    "last_rendered": "prepend_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>], @hole0: Int): Ref[Object<Node>] =\n  @thisRef",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 0.418,
+        "success": true,
+        "rendered": "prepend_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>], @hole0: Int): Ref[Object<Node>] =\n  @thisRef",
+        "error": null,
+        "compiled_js": "prepend_h1(x, created0, hole0) { return this; }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.256,
+        "success": true,
+        "rendered": "prepend_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>], @hole0: Int): Ref[Object<Node>] =\n  @thisRef",
+        "error": null,
+        "compiled_js": "prepend_h1(x, created0, hole0) { return this; }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.216,
+        "success": true,
+        "rendered": "prepend_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>], @hole0: Int): Ref[Object<Node>] =\n  @thisRef",
+        "error": null,
+        "compiled_js": "prepend_h1(x, created0, hole0) { return this; }"
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 0.346,
+        "success": true,
+        "rendered": "prepend_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>], @hole0: Int): Ref[Object<Node>] =\n  @thisRef",
+        "error": null,
+        "compiled_js": "prepend_h1(x, created0, hole0) { return this; }"
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 0.218,
+        "success": true,
+        "rendered": "prepend_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>], @hole0: Int): Ref[Object<Node>] =\n  @thisRef",
+        "error": null,
+        "compiled_js": "prepend_h1(x, created0, hole0) { return this; }"
+      }
+    ]
+  }
+]

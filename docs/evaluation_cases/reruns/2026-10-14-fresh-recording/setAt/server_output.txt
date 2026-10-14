@@ -1,0 +1,22 @@
+escher-ts synthesis completed (2 success / 0 failure)
+=== IMPROVED SYNTHESIS RESPONSE ===
+Common Pattern: BindHole(0, Hole { vertex: 0, ty: Object("Node"), examples: [Object("main-new1"), Object("main-new3"), Object("main-new4")] })
+BindHole(1, Hole { vertex: 1, ty: Number, examples: [Constant(Number(Number(46))), Constant(Number(Number(60))), Constant(Number(Number(18)))] })
+Write(Write { from: 0, field: "val", to: 1 })
+Holes: {"setAt_h0": ["object main-new1", "object main-new3", "object main-new4"], "setAt_h1": ["Number(Number(46))", "Number(Number(60))", "Number(Number(18))"]}
+List Environment Summary: escher-ts task JSON saved: target/escher/ts/setAt_1791957310_697839000_p4348_9.json
+Synthesized code:
+  [0] setAt_h0(a, b) { return (() => { let __refsynCur = this; let __refsynSteps = a; if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError("refsyn: nthNextRef needs a non-negative step count"); } while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError("refsyn: read of an undefined field"); } return __refsynValue; })((__refsynCur).next); __refsynSteps -= 1; } return __refsynCur; })(); }
+  [1] setAt_h1(a, b, hole0) { return b; }
+Composed method code:
+setAt(a, b) {
+    const hole0 = this.setAt_h0(a, b);
+    const hole1 = this.setAt_h1(a, b, hole0);
+    hole0.val = hole1;
+}
+Escher results:
+  [OK] setAt_h0 -> setAt_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int): Ref[Object<Node>] =
+  nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)
+  [OK] setAt_h1 -> setAt_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int, @hole0: Ref[Object<Node>]): Int =
+  @b
+=====================================

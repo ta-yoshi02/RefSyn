@@ -1,0 +1,41 @@
+{
+  "source_sha256": "74c1e19801637e616f451d7dd096212099e6dc8c834af0f26c76158b3c1f2709",
+  "markers": [
+    {
+      "clazz": "testPassed",
+      "range": [
+        23,
+        11,
+        23,
+        13
+      ],
+      "text": "lst.popBack();"
+    },
+    {
+      "clazz": "testPassed",
+      "range": [
+        24,
+        11,
+        24,
+        13
+      ],
+      "text": "lst.popBack();"
+    }
+  ],
+  "annotations": [
+    {
+      "row": 6,
+      "column": 274,
+      "text": "Don't make functions within a loop.",
+      "type": "warning",
+      "raw": "Don't make functions within a loop."
+    },
+    {
+      "row": 6,
+      "column": 486,
+      "text": "Don't make functions within a loop.",
+      "type": "warning",
+      "raw": "Don't make functions within a loop."
+    }
+  ]
+}

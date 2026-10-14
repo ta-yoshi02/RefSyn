@@ -1,0 +1,51 @@
+{
+  "old": "docs/evaluation_cases/popBack/mold_payload.json",
+  "new": "docs/evaluation_cases/reruns/2026-10-14-fresh-recording/popBack/raw_request.json",
+  "calls_old": 2,
+  "calls_new": 2,
+  "rows": [
+    {
+      "call": 1,
+      "old": {
+        "args": [],
+        "list": [
+          39,
+          27,
+          53,
+          89
+        ]
+      },
+      "new": {
+        "args": [],
+        "list": [
+          39,
+          27,
+          53,
+          89
+        ]
+      },
+      "equal": true
+    },
+    {
+      "call": 2,
+      "old": {
+        "args": [],
+        "list": [
+          39,
+          27,
+          53
+        ]
+      },
+      "new": {
+        "args": [],
+        "list": [
+          39,
+          27,
+          53
+        ]
+      },
+      "equal": true
+    }
+  ],
+  "all_equal": true
+}

@@ -1,0 +1,13 @@
+{
+  "method": "node vm re-execution of source_after.js (independent of Kanon)",
+  "node": "v22.17.0",
+  "final_vals": [
+    39,
+    27
+  ],
+  "expected": [
+    39,
+    27
+  ],
+  "match": true
+}

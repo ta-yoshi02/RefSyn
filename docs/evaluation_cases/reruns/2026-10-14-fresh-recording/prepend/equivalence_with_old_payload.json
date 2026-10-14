@@ -1,0 +1,55 @@
+{
+  "old": "docs/evaluation_cases/prepend/mold_payload.json",
+  "new": "docs/evaluation_cases/reruns/2026-10-14-fresh-recording/prepend/raw_request.json",
+  "calls_old": 2,
+  "calls_new": 2,
+  "rows": [
+    {
+      "call": 1,
+      "old": {
+        "args": [
+          53
+        ],
+        "list": [
+          39,
+          27
+        ]
+      },
+      "new": {
+        "args": [
+          53
+        ],
+        "list": [
+          39,
+          27
+        ]
+      },
+      "equal": true
+    },
+    {
+      "call": 2,
+      "old": {
+        "args": [
+          89
+        ],
+        "list": [
+          53,
+          39,
+          27
+        ]
+      },
+      "new": {
+        "args": [
+          89
+        ],
+        "list": [
+          53,
+          39,
+          27
+        ]
+      },
+      "equal": true
+    }
+  ],
+  "all_equal": true
+}

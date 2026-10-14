@@ -1,0 +1,882 @@
+[
+  {
+    "task": "setAt-fixed-fHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 263.59,
+      "median_ms": 268.764,
+      "max_ms": 355.511
+    },
+    "last_rendered": "setAt-fixed-fHeap =\n  if isZero(@arg0) then cons(@arg1, tail(@fHeap)) else if isZero(dec(dec(@arg0))) then storeAtRef(@fHeap, head(tail(@gHeap)), @arg1) else storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 355.511,
+        "success": true,
+        "term": "if isZero(@arg0) then cons(@arg1, tail(@fHeap)) else if isZero(dec(dec(@arg0))) then storeAtRef(@fHeap, head(tail(@gHeap)), @arg1) else storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1)",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 294.344,
+        "success": true,
+        "term": "if isZero(@arg0) then cons(@arg1, tail(@fHeap)) else if isZero(dec(dec(@arg0))) then storeAtRef(@fHeap, head(tail(@gHeap)), @arg1) else storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1)",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 268.764,
+        "success": true,
+        "term": "if isZero(@arg0) then cons(@arg1, tail(@fHeap)) else if isZero(dec(dec(@arg0))) then storeAtRef(@fHeap, head(tail(@gHeap)), @arg1) else storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1)",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 263.59,
+        "success": true,
+        "term": "if isZero(@arg0) then cons(@arg1, tail(@fHeap)) else if isZero(dec(dec(@arg0))) then storeAtRef(@fHeap, head(tail(@gHeap)), @arg1) else storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1)",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 265.434,
+        "success": true,
+        "term": "if isZero(@arg0) then cons(@arg1, tail(@fHeap)) else if isZero(dec(dec(@arg0))) then storeAtRef(@fHeap, head(tail(@gHeap)), @arg1) else storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1)",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "setAt-fixed-gHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.145,
+      "median_ms": 0.266,
+      "max_ms": 0.367
+    },
+    "last_rendered": "setAt-fixed-gHeap =\n  @gHeap",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 0.266,
+        "success": true,
+        "term": "@gHeap",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.16,
+        "success": true,
+        "term": "@gHeap",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.145,
+        "success": true,
+        "term": "@gHeap",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 0.367,
+        "success": true,
+        "term": "@gHeap",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 0.292,
+        "success": true,
+        "term": "@gHeap",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "setAt-fixed-env-pair",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 3651.486,
+      "median_ms": 3741.121,
+      "max_ms": 4076.041
+    },
+    "last_rendered": "setAt-fixed-env-pair =\n  if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 3651.486,
+        "success": true,
+        "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 3729.343,
+        "success": true,
+        "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 3826.855,
+        "success": true,
+        "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 4076.041,
+        "success": true,
+        "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 3741.121,
+        "success": true,
+        "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "append-fixed-fHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 1.477,
+      "median_ms": 1.721,
+      "max_ms": 2.528
+    },
+    "last_rendered": "append-fixed-fHeap =\n  insert(@fHeap, @arg0, @arg0)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 1.721,
+        "success": true,
+        "term": "insert(@fHeap, @arg0, @arg0)",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 2.528,
+        "success": true,
+        "term": "insert(@fHeap, @arg0, @arg0)",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 1.512,
+        "success": true,
+        "term": "insert(@fHeap, @arg0, @arg0)",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 2.244,
+        "success": true,
+        "term": "insert(@fHeap, @arg0, @arg0)",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 1.477,
+        "success": true,
+        "term": "insert(@fHeap, @arg0, @arg0)",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "append-fixed-gHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 29.022,
+      "median_ms": 29.357,
+      "max_ms": 36.764
+    },
+    "last_rendered": "append-fixed-gHeap =\n  insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 36.764,
+        "success": true,
+        "term": "insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 29.224,
+        "success": true,
+        "term": "insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 29.357,
+        "success": true,
+        "term": "insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 29.66,
+        "success": true,
+        "term": "insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 29.022,
+        "success": true,
+        "term": "insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "append-fixed-env-pair",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 14999.728,
+      "median_ms": 15001.346,
+      "max_ms": 15002.392
+    },
+    "last_rendered": null,
+    "last_error": "no program within the budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 14999.728,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 15000.679,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 15002.392,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 15001.346,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 15001.356,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      }
+    ]
+  },
+  {
+    "task": "prepend-fixed-fHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 1.299,
+      "median_ms": 1.47,
+      "max_ms": 2.447
+    },
+    "last_rendered": "prepend-fixed-fHeap =\n  insert(@fHeap, @arg0, @arg0)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 2.447,
+        "success": true,
+        "term": "insert(@fHeap, @arg0, @arg0)",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 1.418,
+        "success": true,
+        "term": "insert(@fHeap, @arg0, @arg0)",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 1.891,
+        "success": true,
+        "term": "insert(@fHeap, @arg0, @arg0)",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 1.299,
+        "success": true,
+        "term": "insert(@fHeap, @arg0, @arg0)",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 1.47,
+        "success": true,
+        "term": "insert(@fHeap, @arg0, @arg0)",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "prepend-fixed-gHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 1.239,
+      "median_ms": 1.798,
+      "max_ms": 16.17
+    },
+    "last_rendered": "prepend-fixed-gHeap =\n  insert(@gHeap, @arg0, @thisRef)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 1.96,
+        "success": true,
+        "term": "insert(@gHeap, @arg0, @thisRef)",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 1.252,
+        "success": true,
+        "term": "insert(@gHeap, @arg0, @thisRef)",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 1.798,
+        "success": true,
+        "term": "insert(@gHeap, @arg0, @thisRef)",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 1.239,
+        "success": true,
+        "term": "insert(@gHeap, @arg0, @thisRef)",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 16.17,
+        "success": true,
+        "term": "insert(@gHeap, @arg0, @thisRef)",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "prepend-fixed-returnRef",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.152,
+      "median_ms": 0.163,
+      "max_ms": 0.243
+    },
+    "last_rendered": "prepend-fixed-returnRef =\n  freshRefFromHeap(@nodeHeap)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 0.243,
+        "success": true,
+        "term": "freshRefFromHeap(@nodeHeap)",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.163,
+        "success": true,
+        "term": "freshRefFromHeap(@nodeHeap)",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.186,
+        "success": true,
+        "term": "freshRefFromHeap(@nodeHeap)",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 0.157,
+        "success": true,
+        "term": "freshRefFromHeap(@nodeHeap)",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 0.152,
+        "success": true,
+        "term": "freshRefFromHeap(@nodeHeap)",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "prepend-fixed-env-pair",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 253.768,
+      "median_ms": 272.667,
+      "max_ms": 294.211
+    },
+    "last_rendered": "prepend-fixed-env-pair =\n  pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 253.768,
+        "success": true,
+        "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 272.667,
+        "success": true,
+        "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 278.473,
+        "success": true,
+        "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 253.876,
+        "success": true,
+        "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 294.211,
+        "success": true,
+        "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "insert-fixed-fHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 1.735,
+      "median_ms": 1.847,
+      "max_ms": 2.433
+    },
+    "last_rendered": "insert-fixed-fHeap =\n  insert(@fHeap, @arg1, @arg1)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 1.847,
+        "success": true,
+        "term": "insert(@fHeap, @arg1, @arg1)",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 2.433,
+        "success": true,
+        "term": "insert(@fHeap, @arg1, @arg1)",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 1.81,
+        "success": true,
+        "term": "insert(@fHeap, @arg1, @arg1)",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 2.367,
+        "success": true,
+        "term": "insert(@fHeap, @arg1, @arg1)",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 1.735,
+        "success": true,
+        "term": "insert(@fHeap, @arg1, @arg1)",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "insert-fixed-gHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 14999.929,
+      "median_ms": 15000.071,
+      "max_ms": 15000.201
+    },
+    "last_rendered": null,
+    "last_error": "no program within the budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 14999.929,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 15000.007,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 15000.201,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 15000.167,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 15000.071,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      }
+    ]
+  },
+  {
+    "task": "insert-fixed-env-pair",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": false,
+    "summary": {
+      "min_ms": 14999.676,
+      "median_ms": 15000.107,
+      "max_ms": 15006.752
+    },
+    "last_rendered": null,
+    "last_error": "no program within the budget",
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 14999.676,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 15000.107,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 15002.302,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 14999.845,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 15006.752,
+        "success": false,
+        "term": null,
+        "error": "no program within the budget"
+      }
+    ]
+  },
+  {
+    "task": "popBack-fixed-fHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.103,
+      "median_ms": 0.115,
+      "max_ms": 0.239
+    },
+    "last_rendered": "popBack-fixed-fHeap =\n  @fHeap",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 0.239,
+        "success": true,
+        "term": "@fHeap",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.154,
+        "success": true,
+        "term": "@fHeap",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.112,
+        "success": true,
+        "term": "@fHeap",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 0.103,
+        "success": true,
+        "term": "@fHeap",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 0.115,
+        "success": true,
+        "term": "@fHeap",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "popBack-fixed-gHeap",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 589.926,
+      "median_ms": 616.584,
+      "max_ms": 646.758
+    },
+    "last_rendered": "popBack-fixed-gHeap =\n  if isNull(head(tail(tail(@gHeap)))) then storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap)))) else storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap)))))",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 646.758,
+        "success": true,
+        "term": "if isNull(head(tail(tail(@gHeap)))) then storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap)))) else storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap)))))",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 619.363,
+        "success": true,
+        "term": "if isNull(head(tail(tail(@gHeap)))) then storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap)))) else storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap)))))",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 589.926,
+        "success": true,
+        "term": "if isNull(head(tail(tail(@gHeap)))) then storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap)))) else storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap)))))",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 616.584,
+        "success": true,
+        "term": "if isNull(head(tail(tail(@gHeap)))) then storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap)))) else storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap)))))",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 601.038,
+        "success": true,
+        "term": "if isNull(head(tail(tail(@gHeap)))) then storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap)))) else storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap)))))",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "popBack-fixed-env-pair",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 5424.418,
+      "median_ms": 5923.046,
+      "max_ms": 6318.325
+    },
+    "last_rendered": "popBack-fixed-env-pair =\n  if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 5424.418,
+        "success": true,
+        "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 5636.003,
+        "success": true,
+        "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 5987.028,
+        "success": true,
+        "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 5923.046,
+        "success": true,
+        "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 6318.325,
+        "success": true,
+        "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))",
+        "error": null
+      }
+    ]
+  }
+]

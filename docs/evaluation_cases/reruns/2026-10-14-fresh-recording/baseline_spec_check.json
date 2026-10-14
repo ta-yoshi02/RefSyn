@@ -1,0 +1,859 @@
+{
+  "field_mapping": {
+    "val": "f",
+    "next": "g"
+  },
+  "cases": [
+    {
+      "case": "insert_general",
+      "baseline_tasks": [
+        "insert-fixed-env-pair"
+      ],
+      "calls_recorded": 3,
+      "calls_baseline": 3,
+      "all_equal": true,
+      "calls": [
+        {
+          "call": "call1",
+          "args_equal": true,
+          "objects": 3,
+          "pre_state_mapping": {
+            "main-new1": 0,
+            "main-new2": 1,
+            "main-new3": 2
+          },
+          "pre_equal": true,
+          "post": {
+            "replayed": [
+              [
+                39,
+                27,
+                53,
+                89
+              ],
+              [
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": 1
+                }
+              ]
+            ],
+            "baseline": [
+              [
+                39,
+                27,
+                53,
+                89
+              ],
+              [
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": 1
+                }
+              ]
+            ]
+          },
+          "post_equal": true
+        },
+        {
+          "call": "call2",
+          "args_equal": true,
+          "objects": 4,
+          "pre_state_mapping": {
+            "main-new1": 0,
+            "__temp1": 3,
+            "main-new2": 1,
+            "main-new3": 2
+          },
+          "pre_equal": true,
+          "post": {
+            "replayed": [
+              [
+                39,
+                27,
+                53,
+                89,
+                46
+              ],
+              [
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": 4
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                }
+              ]
+            ],
+            "baseline": [
+              [
+                39,
+                27,
+                53,
+                89,
+                46
+              ],
+              [
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": 4
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                }
+              ]
+            ]
+          },
+          "post_equal": true
+        },
+        {
+          "call": "call3",
+          "args_equal": true,
+          "objects": 5,
+          "pre_state_mapping": {
+            "main-new1": 0,
+            "__temp1": 3,
+            "main-new2": 1,
+            "__temp3": 4,
+            "main-new3": 2
+          },
+          "pre_equal": true,
+          "post": {
+            "replayed": [
+              [
+                39,
+                27,
+                53,
+                89,
+                46,
+                71
+              ],
+              [
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": 4
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": 5
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": 1
+                }
+              ]
+            ],
+            "baseline": [
+              [
+                39,
+                27,
+                53,
+                89,
+                46,
+                71
+              ],
+              [
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": 4
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": 5
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": 1
+                }
+              ]
+            ]
+          },
+          "post_equal": true
+        }
+      ]
+    },
+    {
+      "case": "append",
+      "baseline_tasks": [
+        "append-fixed-env-pair"
+      ],
+      "calls_recorded": 3,
+      "calls_baseline": 3,
+      "all_equal": true,
+      "calls": [
+        {
+          "call": "call1",
+          "args_equal": true,
+          "objects": 2,
+          "pre_state_mapping": {
+            "main-new1": 0,
+            "main-new2": 1
+          },
+          "pre_equal": true,
+          "post": {
+            "replayed": [
+              [
+                39,
+                27,
+                53
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ],
+            "baseline": [
+              [
+                39,
+                27,
+                53
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ]
+          },
+          "post_equal": true
+        },
+        {
+          "call": "call2",
+          "args_equal": true,
+          "objects": 3,
+          "pre_state_mapping": {
+            "main-new1": 0,
+            "main-new2": 1,
+            "__temp1": 2
+          },
+          "pre_equal": true,
+          "post": {
+            "replayed": [
+              [
+                39,
+                27,
+                53,
+                89
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ],
+            "baseline": [
+              [
+                39,
+                27,
+                53,
+                89
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ]
+          },
+          "post_equal": true
+        },
+        {
+          "call": "call3",
+          "args_equal": true,
+          "objects": 4,
+          "pre_state_mapping": {
+            "main-new1": 0,
+            "main-new2": 1,
+            "__temp1": 2,
+            "__temp4": 3
+          },
+          "pre_equal": true,
+          "post": {
+            "replayed": [
+              [
+                39,
+                27,
+                53,
+                89,
+                46
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": 4
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ],
+            "baseline": [
+              [
+                39,
+                27,
+                53,
+                89,
+                46
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": 4
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ]
+          },
+          "post_equal": true
+        }
+      ]
+    },
+    {
+      "case": "popBack",
+      "baseline_tasks": [
+        "popBack-fixed-env-pair"
+      ],
+      "calls_recorded": 2,
+      "calls_baseline": 2,
+      "all_equal": true,
+      "calls": [
+        {
+          "call": "call1",
+          "args_equal": true,
+          "objects": 4,
+          "pre_state_mapping": {
+            "main-new1": 0,
+            "main-new2": 1,
+            "main-new3": 2,
+            "main-new4": 3
+          },
+          "pre_equal": true,
+          "post": {
+            "replayed": [
+              [
+                39,
+                27,
+                53,
+                89
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ],
+            "baseline": [
+              [
+                39,
+                27,
+                53,
+                89
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ]
+          },
+          "post_equal": true
+        },
+        {
+          "call": "call2",
+          "args_equal": true,
+          "objects": 4,
+          "pre_state_mapping": {
+            "main-new1": 0,
+            "main-new2": 1,
+            "main-new3": 2,
+            "main-new4": 3
+          },
+          "pre_equal": true,
+          "post": {
+            "replayed": [
+              [
+                39,
+                27,
+                53,
+                89
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ],
+            "baseline": [
+              [
+                39,
+                27,
+                53,
+                89
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ]
+          },
+          "post_equal": true
+        }
+      ]
+    },
+    {
+      "case": "prepend",
+      "baseline_tasks": [
+        "prepend-fixed-env-pair",
+        "prepend-fixed-returnRef"
+      ],
+      "calls_recorded": 2,
+      "calls_baseline": 2,
+      "all_equal": true,
+      "calls": [
+        {
+          "call": "call1",
+          "args_equal": true,
+          "objects": 2,
+          "pre_state_mapping": {
+            "main-new1": 0,
+            "main-new2": 1
+          },
+          "pre_equal": true,
+          "post": {
+            "replayed": [
+              [
+                39,
+                27,
+                53
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": 0
+                }
+              ]
+            ],
+            "baseline": [
+              [
+                39,
+                27,
+                53
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": 0
+                }
+              ]
+            ]
+          },
+          "post_equal": true,
+          "return": {
+            "replayed": {
+              "ref": 2
+            },
+            "baseline": {
+              "ref": 2
+            }
+          },
+          "return_equal": true
+        },
+        {
+          "call": "call2",
+          "args_equal": true,
+          "objects": 3,
+          "pre_state_mapping": {
+            "__temp1": 2,
+            "main-new1": 0,
+            "main-new2": 1
+          },
+          "pre_equal": true,
+          "post": {
+            "replayed": [
+              [
+                39,
+                27,
+                53,
+                89
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": 0
+                },
+                {
+                  "ref": 2
+                }
+              ]
+            ],
+            "baseline": [
+              [
+                39,
+                27,
+                53,
+                89
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": -1
+                },
+                {
+                  "ref": 0
+                },
+                {
+                  "ref": 2
+                }
+              ]
+            ]
+          },
+          "post_equal": true,
+          "return": {
+            "replayed": {
+              "ref": 3
+            },
+            "baseline": {
+              "ref": 3
+            }
+          },
+          "return_equal": true
+        }
+      ]
+    },
+    {
+      "case": "setAt",
+      "baseline_tasks": [
+        "setAt-fixed-env-pair"
+      ],
+      "calls_recorded": 3,
+      "calls_baseline": 3,
+      "all_equal": true,
+      "calls": [
+        {
+          "call": "call1",
+          "args_equal": true,
+          "objects": 4,
+          "pre_state_mapping": {
+            "main-new1": 0,
+            "main-new2": 1,
+            "main-new3": 2,
+            "main-new4": 3
+          },
+          "pre_equal": true,
+          "post": {
+            "replayed": [
+              [
+                46,
+                27,
+                53,
+                89
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ],
+            "baseline": [
+              [
+                46,
+                27,
+                53,
+                89
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ]
+          },
+          "post_equal": true
+        },
+        {
+          "call": "call2",
+          "args_equal": true,
+          "objects": 4,
+          "pre_state_mapping": {
+            "main-new1": 0,
+            "main-new2": 1,
+            "main-new3": 2,
+            "main-new4": 3
+          },
+          "pre_equal": true,
+          "post": {
+            "replayed": [
+              [
+                46,
+                27,
+                60,
+                89
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ],
+            "baseline": [
+              [
+                46,
+                27,
+                60,
+                89
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ]
+          },
+          "post_equal": true
+        },
+        {
+          "call": "call3",
+          "args_equal": true,
+          "objects": 4,
+          "pre_state_mapping": {
+            "main-new1": 0,
+            "main-new2": 1,
+            "main-new3": 2,
+            "main-new4": 3
+          },
+          "pre_equal": true,
+          "post": {
+            "replayed": [
+              [
+                46,
+                27,
+                60,
+                18
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ],
+            "baseline": [
+              [
+                46,
+                27,
+                60,
+                18
+              ],
+              [
+                {
+                  "ref": 1
+                },
+                {
+                  "ref": 2
+                },
+                {
+                  "ref": 3
+                },
+                {
+                  "ref": -1
+                }
+              ]
+            ]
+          },
+          "post_equal": true
+        }
+      ]
+    }
+  ]
+}

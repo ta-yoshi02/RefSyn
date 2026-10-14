@@ -1,0 +1,74 @@
+[
+  {
+    "callLabel": "call1",
+    "receiverObject": "main-new1",
+    "arguments": [
+      0,
+      46
+    ],
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "__temp1",
+        "label": "46",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "main-new1",
+        "oldTo": "main-new1-val",
+        "newTo": "__temp1",
+        "label": "val"
+      }
+    ]
+  },
+  {
+    "callLabel": "call2",
+    "receiverObject": "main-new1",
+    "arguments": [
+      2,
+      60
+    ],
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "__temp2",
+        "label": "60",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "main-new3",
+        "oldTo": "main-new3-val",
+        "newTo": "__temp2",
+        "label": "val"
+      }
+    ]
+  },
+  {
+    "callLabel": "call3",
+    "receiverObject": "main-new1",
+    "arguments": [
+      3,
+      18
+    ],
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "__temp3",
+        "label": "18",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "main-new4",
+        "oldTo": "main-new4-val",
+        "newTo": "__temp3",
+        "label": "val"
+      }
+    ]
+  }
+]

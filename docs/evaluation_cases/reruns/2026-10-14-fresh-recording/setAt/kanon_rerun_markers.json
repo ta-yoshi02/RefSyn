@@ -1,0 +1,44 @@
+{
+  "source_sha256": "3810cbc8e64528ada9d2175d42bb4e99c223a77b218ff8ddae1fd521a20f5121",
+  "markers": [
+    {
+      "clazz": "testPassed",
+      "range": [
+        27,
+        9,
+        27,
+        16
+      ],
+      "text": "lst.setAt(0, 46);"
+    },
+    {
+      "clazz": "testPassed",
+      "range": [
+        28,
+        9,
+        28,
+        16
+      ],
+      "text": "lst.setAt(2, 60);"
+    },
+    {
+      "clazz": "testPassed",
+      "range": [
+        29,
+        9,
+        29,
+        16
+      ],
+      "text": "lst.setAt(3, 18);"
+    }
+  ],
+  "annotations": [
+    {
+      "row": 6,
+      "column": 290,
+      "text": "Don't make functions within a loop.",
+      "type": "warning",
+      "raw": "Don't make functions within a loop."
+    }
+  ]
+}

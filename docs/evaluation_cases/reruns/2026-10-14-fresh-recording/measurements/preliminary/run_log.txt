@@ -1,0 +1,15 @@
+started_utc=2026-10-14T05:57:23Z
+uptime_before: 14:57  up 8 days, 33 mins, 2 users, load averages: 2.53 2.59 2.55
+mold insert_general 32/15000 done 05:57:24
+mold insert_general 20/2000 done 05:57:24
+mold append 32/15000 done 05:57:24
+mold append 20/2000 done 05:57:24
+mold popBack 32/15000 done 05:57:24
+mold popBack 20/2000 done 05:57:24
+mold prepend 32/15000 done 05:57:24
+mold prepend 20/2000 done 05:57:24
+mold setAt 32/15000 done 05:57:24
+mold setAt 20/2000 done 05:57:24
+baseline done 06:02:00
+uptime_after: 15:02  up 8 days, 38 mins, 2 users, load averages: 2.34 2.62 2.59
+finished_utc=2026-10-14T06:02:00Z

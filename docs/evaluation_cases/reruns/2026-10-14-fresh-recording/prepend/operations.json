@@ -1,0 +1,80 @@
+[
+  {
+    "callLabel": "call1",
+    "receiverObject": "main-new1",
+    "arguments": [
+      53
+    ],
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "__temp1",
+        "label": "Node",
+        "isLiteral": false
+      },
+      {
+        "editType": "addNode",
+        "id": "__temp2",
+        "label": "53",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp1",
+        "to": "__temp2",
+        "label": "val"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp1",
+        "to": "main-new1",
+        "label": "next"
+      },
+      {
+        "editType": "addVariable",
+        "to": "__temp1",
+        "label": "return"
+      }
+    ]
+  },
+  {
+    "callLabel": "call2",
+    "receiverObject": "__temp1",
+    "arguments": [
+      89
+    ],
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "__temp3",
+        "label": "89",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "addNode",
+        "id": "__temp4",
+        "label": "Node",
+        "isLiteral": false
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp4",
+        "to": "__temp3",
+        "label": "val"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp4",
+        "to": "__temp1",
+        "label": "next"
+      },
+      {
+        "editType": "addVariable",
+        "to": "__temp4",
+        "label": "return"
+      }
+    ]
+  }
+]

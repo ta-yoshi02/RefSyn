@@ -1,0 +1,26 @@
+{
+  "source_sha256": "f1a019bb1a2e4a3dbbe89eeafed01a42e881d0db544c62a8dfee28966b7b2968",
+  "markers": [
+    {
+      "clazz": "testPassed",
+      "range": [
+        26,
+        17,
+        26,
+        21
+      ],
+      "text": "lst = lst.prepend(53);"
+    },
+    {
+      "clazz": "testPassed",
+      "range": [
+        27,
+        17,
+        27,
+        21
+      ],
+      "text": "lst = lst.prepend(89);"
+    }
+  ],
+  "annotations": []
+}

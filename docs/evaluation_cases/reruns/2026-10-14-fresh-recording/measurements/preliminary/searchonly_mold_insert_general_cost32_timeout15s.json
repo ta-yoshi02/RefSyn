@@ -1,0 +1,167 @@
+[
+  {
+    "task": "insert_h0",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.485,
+      "median_ms": 0.556,
+      "max_ms": 4.11
+    },
+    "last_rendered": "insert_h0 =\n  @arg",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 4.11,
+        "success": true,
+        "term": "@arg",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.553,
+        "success": true,
+        "term": "@arg",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.556,
+        "success": true,
+        "term": "@arg",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 0.485,
+        "success": true,
+        "term": "@arg",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 0.853,
+        "success": true,
+        "term": "@arg",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "insert_h1",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 5.67,
+      "median_ms": 8.086,
+      "max_ms": 13.974
+    },
+    "last_rendered": "insert_h1 =\n  nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 9.945,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 13.974,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 8.086,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 7.558,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 5.67,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "insert_h2",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 2.518,
+      "median_ms": 2.927,
+      "max_ms": 3.804
+    },
+    "last_rendered": "insert_h2 =\n  nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 2.927,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 3.052,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 2.78,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 3.804,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 2.518,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)",
+        "error": null
+      }
+    ]
+  }
+]

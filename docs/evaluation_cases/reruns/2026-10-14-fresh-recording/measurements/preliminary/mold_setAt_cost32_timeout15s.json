@@ -1,0 +1,120 @@
+[
+  {
+    "task": "setAt_h0",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 5
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 3.605,
+      "median_ms": 3.893,
+      "max_ms": 9.425,
+      "mean_ms": 4.9988
+    },
+    "last_rendered": "setAt_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int): Ref[Object<Node>] =\n  nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 9.425,
+        "success": true,
+        "rendered": "setAt_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int): Ref[Object<Node>] =\n  nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "error": null,
+        "compiled_js": "setAt_h0(a, b) { return (() => { let __refsynCur = this; let __refsynSteps = a; if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError(\"refsyn: nthNextRef needs a non-negative step count\"); } while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); __refsynSteps -= 1; } return __refsynCur; })(); }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 3.893,
+        "success": true,
+        "rendered": "setAt_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int): Ref[Object<Node>] =\n  nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "error": null,
+        "compiled_js": "setAt_h0(a, b) { return (() => { let __refsynCur = this; let __refsynSteps = a; if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError(\"refsyn: nthNextRef needs a non-negative step count\"); } while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); __refsynSteps -= 1; } return __refsynCur; })(); }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 4.453,
+        "success": true,
+        "rendered": "setAt_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int): Ref[Object<Node>] =\n  nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "error": null,
+        "compiled_js": "setAt_h0(a, b) { return (() => { let __refsynCur = this; let __refsynSteps = a; if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError(\"refsyn: nthNextRef needs a non-negative step count\"); } while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); __refsynSteps -= 1; } return __refsynCur; })(); }"
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 3.605,
+        "success": true,
+        "rendered": "setAt_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int): Ref[Object<Node>] =\n  nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "error": null,
+        "compiled_js": "setAt_h0(a, b) { return (() => { let __refsynCur = this; let __refsynSteps = a; if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError(\"refsyn: nthNextRef needs a non-negative step count\"); } while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); __refsynSteps -= 1; } return __refsynCur; })(); }"
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 3.618,
+        "success": true,
+        "rendered": "setAt_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int): Ref[Object<Node>] =\n  nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "error": null,
+        "compiled_js": "setAt_h0(a, b) { return (() => { let __refsynCur = this; let __refsynSteps = a; if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError(\"refsyn: nthNextRef needs a non-negative step count\"); } while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); __refsynSteps -= 1; } return __refsynCur; })(); }"
+      }
+    ]
+  },
+  {
+    "task": "setAt_h1",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 5
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.234,
+      "median_ms": 0.328,
+      "max_ms": 0.562,
+      "mean_ms": 0.35960000000000003
+    },
+    "last_rendered": "setAt_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int, @hole0: Ref[Object<Node>]): Int =\n  @b",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 0.267,
+        "success": true,
+        "rendered": "setAt_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int, @hole0: Ref[Object<Node>]): Int =\n  @b",
+        "error": null,
+        "compiled_js": "setAt_h1(a, b, hole0) { return b; }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.562,
+        "success": true,
+        "rendered": "setAt_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int, @hole0: Ref[Object<Node>]): Int =\n  @b",
+        "error": null,
+        "compiled_js": "setAt_h1(a, b, hole0) { return b; }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.328,
+        "success": true,
+        "rendered": "setAt_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int, @hole0: Ref[Object<Node>]): Int =\n  @b",
+        "error": null,
+        "compiled_js": "setAt_h1(a, b, hole0) { return b; }"
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 0.407,
+        "success": true,
+        "rendered": "setAt_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int, @hole0: Ref[Object<Node>]): Int =\n  @b",
+        "error": null,
+        "compiled_js": "setAt_h1(a, b, hole0) { return b; }"
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 0.234,
+        "success": true,
+        "rendered": "setAt_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int, @hole0: Ref[Object<Node>]): Int =\n  @b",
+        "error": null,
+        "compiled_js": "setAt_h1(a, b, hole0) { return b; }"
+      }
+    ]
+  }
+]
