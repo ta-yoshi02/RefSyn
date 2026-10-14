@@ -5,6 +5,29 @@ Run the Rust suite with `cargo test`. Tests that run escher-ts need a built
 Passing these tests shows agreement on the listed demonstrations and inputs only; it
 is not evidence of correctness on inputs that were not tried.
 
+## Web tests from a clean checkout
+
+`web/` tests load vitest's config from `external/escher-ts/node_modules`, run escher-ts from
+`external/escher-ts/dist`, and import the WASM package from `web/pkg`, which is generated
+and not committed. From a fresh clone, in the repository root:
+
+1. Check out the pinned submodules: `git submodule update --init --recursive`
+2. Install and build escher-ts (pnpm at the version in its `packageManager` field):
+   `cd external/escher-ts && pnpm install --frozen-lockfile && pnpm run build && cd ../..`
+3. Add the Rust WASM target: `rustup target add wasm32-unknown-unknown`
+4. Install wasm-bindgen-cli at the same version as `wasm-bindgen` in `Cargo.lock`
+   (currently 0.2.114): `cargo install wasm-bindgen-cli --version 0.2.114 --locked`
+5. Install the web dependencies: `npm ci --prefix web`
+6. Build the WASM package and run the tests: `npm run test:rebuild --prefix web`
+
+`npm test --prefix web` runs the tests against whatever is already in `web/pkg`; it does
+not rebuild it. Use `npm run test:rebuild --prefix web` for experiments and evaluation, so
+the WASM matches the checked-out Rust sources.
+
+Node.js: CI runs Node 22. The lowest version the web dependencies declare support for is
+20.19 (vitest's bundled vite requires `^20.19.0 || >=22.12.0`); it is not run in CI.
+`.github/workflows/ci.yml` runs the same steps.
+
 ## Paper pipeline (`tests/paper_pipeline_tests.rs`)
 
 Uses the paper's three `insert` demonstrations as the fixture.

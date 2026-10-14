@@ -13,14 +13,13 @@ RefSynの合成経路の概要と、手元で動かすためのコマンドを�
 
 ## 前提条件
 - Rust ツールチェーン（`cargo`）
-- Node.js 20 以上
+- Node.js（CIで検証している版と最低対応版は [docs/TESTS.md](TESTS.md#web-tests-from-a-clean-checkout) を参照）
 - `pnpm`（`external/escher-ts` の build 用）
 - `npm`（`web/` デモの install/test/build 用）
 
 ## Web デモのセットアップ
 - `web/` は独立した npm パッケージとして管理する
-- 依存 install：`cd web && npm install`
-- テスト実行：`cd web && npm test`
+- クリーンなcheckoutからテストを通す手順（サブモジュール、escher-ts、WASMターゲット、wasm-bindgen-cli、WASMビルド）は [docs/TESTS.md](TESTS.md#web-tests-from-a-clean-checkout) を参照
 - 本番 build：`cd web && npm run build`
 
 ## クイックスタート

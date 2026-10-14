@@ -26,7 +26,8 @@ const ensureTool = (tool) => {
   const result = spawnSync(tool, ["--version"], { stdio: "ignore" });
   if (result.status !== 0) {
     console.error(
-      `${tool} is required. Install wasm-bindgen-cli or wasm-pack before running the web build.`,
+      `${tool} is required. Install wasm-bindgen-cli at the same version as wasm-bindgen in Cargo.lock ` +
+        "(cargo install wasm-bindgen-cli --version <version> --locked); see docs/TESTS.md.",
     );
     process.exit(1);
   }

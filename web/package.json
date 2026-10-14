@@ -7,6 +7,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:rebuild": "npm run build:wasm && npm test",
     "build:wasm": "node ./scripts/build-wasm.mjs",
     "build:all": "npm run build:wasm && npm run build"
   },
