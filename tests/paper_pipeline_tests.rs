@@ -85,6 +85,12 @@ fn single(ops: Json, objects: Json) -> Json {
 }
 
 #[test]
+fn the_web_tests_use_the_paper_insert_request() {
+    let saved: Json = serde_json::from_str(include_str!("data/paper_insert.json")).unwrap();
+    assert_eq!(saved, insert_request());
+}
+
+#[test]
 fn reading_keeps_null_undefined_and_absent_fields_apart() {
     let mut raw = insert_request();
     raw["validation"]["cases"][0]["objects"][2]["fields"] =

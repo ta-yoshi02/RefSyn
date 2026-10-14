@@ -1,0 +1,316 @@
+{
+  "method_calls": [
+    {
+      "callLabel": "c1",
+      "contextSensitiveID": "main",
+      "receiverObject": "A",
+      "receiverClassName": "Node",
+      "methodName": "insert",
+      "methodParamNames": [
+        "i",
+        "arg"
+      ],
+      "arguments": [
+        0,
+        89
+      ],
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "D",
+          "label": "Node",
+          "isLiteral": false
+        },
+        {
+          "editType": "addNode",
+          "id": "n89",
+          "label": "89",
+          "isLiteral": true,
+          "type": "number"
+        },
+        {
+          "editType": "addEdge",
+          "from": "D",
+          "label": "val",
+          "to": "n89"
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "A",
+          "label": "next",
+          "oldTo": "B",
+          "newTo": "D"
+        },
+        {
+          "editType": "addEdge",
+          "from": "D",
+          "label": "next",
+          "to": "B"
+        }
+      ]
+    },
+    {
+      "callLabel": "c2",
+      "contextSensitiveID": "main",
+      "receiverObject": "A",
+      "receiverClassName": "Node",
+      "methodName": "insert",
+      "methodParamNames": [
+        "i",
+        "arg"
+      ],
+      "arguments": [
+        2,
+        46
+      ],
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "E",
+          "label": "Node",
+          "isLiteral": false
+        },
+        {
+          "editType": "addNode",
+          "id": "n46",
+          "label": "46",
+          "isLiteral": true,
+          "type": "number"
+        },
+        {
+          "editType": "addEdge",
+          "from": "E",
+          "label": "val",
+          "to": "n46"
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "B",
+          "label": "next",
+          "oldTo": "C",
+          "newTo": "E"
+        },
+        {
+          "editType": "addEdge",
+          "from": "E",
+          "label": "next",
+          "to": "C"
+        }
+      ]
+    },
+    {
+      "callLabel": "c3",
+      "contextSensitiveID": "main",
+      "receiverObject": "A",
+      "receiverClassName": "Node",
+      "methodName": "insert",
+      "methodParamNames": [
+        "i",
+        "arg"
+      ],
+      "arguments": [
+        1,
+        71
+      ],
+      "operations": [
+        {
+          "editType": "addNode",
+          "id": "F",
+          "label": "Node",
+          "isLiteral": false
+        },
+        {
+          "editType": "addEdge",
+          "from": "F",
+          "label": "next",
+          "to": "B"
+        },
+        {
+          "editType": "editEdgeReference",
+          "from": "D",
+          "label": "next",
+          "oldTo": "B",
+          "newTo": "F"
+        },
+        {
+          "editType": "addNode",
+          "id": "n71",
+          "label": "71",
+          "isLiteral": true,
+          "type": "number"
+        },
+        {
+          "editType": "addEdge",
+          "from": "F",
+          "label": "val",
+          "to": "n71"
+        }
+      ]
+    }
+  ],
+  "vis_graph": {
+    "nodes": [],
+    "edges": []
+  },
+  "validation": {
+    "version": 3,
+    "classes": [
+      {
+        "name": "Node",
+        "source": "class Node {}",
+        "instance": {
+          "val": {
+            "undefined": true
+          },
+          "next": null
+        }
+      }
+    ],
+    "cases": [
+      {
+        "callLabel": "c1",
+        "contextSensitiveID": "main",
+        "objects": [
+          {
+            "id": "A",
+            "className": "Node",
+            "fields": {
+              "val": 39,
+              "next": {
+                "ref": "B"
+              }
+            }
+          },
+          {
+            "id": "B",
+            "className": "Node",
+            "fields": {
+              "val": 27,
+              "next": {
+                "ref": "C"
+              }
+            }
+          },
+          {
+            "id": "C",
+            "className": "Node",
+            "fields": {
+              "val": 53,
+              "next": null
+            }
+          }
+        ],
+        "arguments": [
+          0,
+          89
+        ]
+      },
+      {
+        "callLabel": "c2",
+        "contextSensitiveID": "main",
+        "objects": [
+          {
+            "id": "A",
+            "className": "Node",
+            "fields": {
+              "val": 39,
+              "next": {
+                "ref": "D"
+              }
+            }
+          },
+          {
+            "id": "D",
+            "className": "Node",
+            "fields": {
+              "val": 89,
+              "next": {
+                "ref": "B"
+              }
+            }
+          },
+          {
+            "id": "B",
+            "className": "Node",
+            "fields": {
+              "val": 27,
+              "next": {
+                "ref": "C"
+              }
+            }
+          },
+          {
+            "id": "C",
+            "className": "Node",
+            "fields": {
+              "val": 53,
+              "next": null
+            }
+          }
+        ],
+        "arguments": [
+          2,
+          46
+        ]
+      },
+      {
+        "callLabel": "c3",
+        "contextSensitiveID": "main",
+        "objects": [
+          {
+            "id": "A",
+            "className": "Node",
+            "fields": {
+              "val": 39,
+              "next": {
+                "ref": "D"
+              }
+            }
+          },
+          {
+            "id": "D",
+            "className": "Node",
+            "fields": {
+              "val": 89,
+              "next": {
+                "ref": "B"
+              }
+            }
+          },
+          {
+            "id": "B",
+            "className": "Node",
+            "fields": {
+              "val": 27,
+              "next": {
+                "ref": "E"
+              }
+            }
+          },
+          {
+            "id": "E",
+            "className": "Node",
+            "fields": {
+              "val": 46,
+              "next": {
+                "ref": "C"
+              }
+            }
+          },
+          {
+            "id": "C",
+            "className": "Node",
+            "fields": {
+              "val": 53,
+              "next": null
+            }
+          }
+        ],
+        "arguments": [
+          1,
+          71
+        ]
+      }
+    ]
+  }
+}
