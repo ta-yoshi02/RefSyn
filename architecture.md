@@ -31,7 +31,7 @@ Kanon（型付き呼出し前状態・new C()の状態・編集列）
 | モジュール | 入力 → 出力 | 失敗条件 |
 | --- | --- | --- |
 | `demonstration` | `SynthesisRequest`（`validation.version = 3`）→ `Recording`（クラスと `new C()` の状態、実演ごとのヒープ、引数、編集） | 型付き状態がない、不明なID・クラス・参照、未対応の編集 |
-| `operation_graph` | 実演 → 頂点宣言列、書込み列、返り値の頂点 | 記録された旧対象と再生中の状態の不一致、値fieldへのdeleteEdge、辺があるfieldへのaddEdge、範囲外のconstructorを持つクラスの生成 |
+| `operation_graph` | 実演 → 頂点宣言列、書込み列、返り値の頂点 | 記録された旧対象と再生中の状態の不一致、値fieldへのdeleteEdge、辺があるfieldへのaddEdge（この実演で生成し未書込みのfieldが持つ `new C()` の既定値は上書きとして受理）、範囲外のconstructorを持つクラスの生成 |
 | `alignment` | 操作グラフ列 → 頂点の全単射の列 | 非同型（型・クラス・既存／新規・辺の向き・フィールド・重複数のいずれかが保存されない） |
 | `template` | グラフと全単射 → 生成文、穴（型と実演ごとの出力）、書込み、返り値 | — |
 | `pbe_problem` | 記録と雛形 → 穴ごとのtask、`hole_checks` | 未対応の値や型（文字列、整数以外の数、複数クラス）と、種類の混在したfield（真偽値と数値・null など）。undefinedと不在のfieldはエラー値として符号化する。真偽値は#28（`af76b2e`）以降、`Bool` としてobjectのslotに直接持つ |

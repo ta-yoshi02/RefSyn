@@ -100,6 +100,9 @@ export function validateWholeMethod({ request, response, taskNames = [] }) {
       try {
         expected = build();
         actual = build();
+        // Objects this demonstration created, and the fields its edits have written.
+        const created = new Set();
+        const written = new Set();
         for (const op of call.operations) {
           switch (op.editType) {
             case "addNode": {
@@ -120,6 +123,7 @@ export function validateWholeMethod({ request, response, taskNames = [] }) {
                 const object = new constructor();
                 if ([...expected.objects.values()].includes(object)) unavailable("Constructor did not create a fresh object");
                 expected.objects.set(op.id, object);
+                created.add(op.id);
               }
               break;
             }
@@ -129,15 +133,19 @@ export function validateWholeMethod({ request, response, taskNames = [] }) {
               const object = expected.objects.get(op.from);
               if (!object || typeof op.label !== "string") unavailable("Unknown write source or field");
               const current = object[op.label];
+              const slot = JSON.stringify([op.from, op.label]);
               if (op.editType === "addEdge") {
-                // Kanon draws no edge for null, undefined or absent fields, so addEdge can only start from one of them.
-                if (current !== null && current !== undefined) unavailable("addEdge on a field that already has an edge");
+                // Kanon draws no edge for null, undefined or absent fields, nor any field of a created node,
+                // so addEdge starts from one of those or from an unwritten `new C()` default of a created object.
+                const unwrittenDefault = created.has(op.from) && !written.has(slot);
+                if (current !== null && current !== undefined && !unwrittenDefault) unavailable("addEdge on a field that already has an edge");
               } else {
                 const old = expected.resolve(op.editType === "deleteEdge" ? op.to : op.oldTo);
                 if (op.editType === "deleteEdge" && (old === null || typeof old !== "object")) unavailable("deleteEdge is supported only on object reference fields");
                 if (current !== old) unavailable("Recorded old target does not match the typed state");
               }
               object[op.label] = op.editType === "deleteEdge" ? null : expected.resolve(op.newTo ?? op.to);
+              written.add(slot);
               break;
             }
             case "addVariable":
