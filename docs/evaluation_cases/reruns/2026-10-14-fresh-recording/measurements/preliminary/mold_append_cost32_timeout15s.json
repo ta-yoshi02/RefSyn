@@ -1,0 +1,120 @@
+[
+  {
+    "task": "append_h0",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 5
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.305,
+      "median_ms": 0.53,
+      "max_ms": 3.063,
+      "mean_ms": 1.0086
+    },
+    "last_rendered": "append_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>]): Int =\n  @x",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 3.063,
+        "success": true,
+        "rendered": "append_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>]): Int =\n  @x",
+        "error": null,
+        "compiled_js": "append_h0(x, created0) { return x; }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.686,
+        "success": true,
+        "rendered": "append_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>]): Int =\n  @x",
+        "error": null,
+        "compiled_js": "append_h0(x, created0) { return x; }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.459,
+        "success": true,
+        "rendered": "append_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>]): Int =\n  @x",
+        "error": null,
+        "compiled_js": "append_h0(x, created0) { return x; }"
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 0.305,
+        "success": true,
+        "rendered": "append_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>]): Int =\n  @x",
+        "error": null,
+        "compiled_js": "append_h0(x, created0) { return x; }"
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 0.53,
+        "success": true,
+        "rendered": "append_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>]): Int =\n  @x",
+        "error": null,
+        "compiled_js": "append_h0(x, created0) { return x; }"
+      }
+    ]
+  },
+  {
+    "task": "append_h1",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "repetitions": 5
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.959,
+      "median_ms": 1.187,
+      "max_ms": 2.509,
+      "mean_ms": 1.4416
+    },
+    "last_rendered": "append_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>], @hole0: Int): Ref[Object<Node>] =\n  last_ptr(@thisRef, @nextHeap)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 2.509,
+        "success": true,
+        "rendered": "append_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>], @hole0: Int): Ref[Object<Node>] =\n  last_ptr(@thisRef, @nextHeap)",
+        "error": null,
+        "compiled_js": "append_h1(x, created0, hole0) { return (() => { let __refsynCur = this; const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError(\"refsyn: last_ptr met a cycle\"); } __refsynSeen.add(__refsynCur); const __refsynNext = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); if (__refsynNext === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })(); }"
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 1.552,
+        "success": true,
+        "rendered": "append_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>], @hole0: Int): Ref[Object<Node>] =\n  last_ptr(@thisRef, @nextHeap)",
+        "error": null,
+        "compiled_js": "append_h1(x, created0, hole0) { return (() => { let __refsynCur = this; const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError(\"refsyn: last_ptr met a cycle\"); } __refsynSeen.add(__refsynCur); const __refsynNext = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); if (__refsynNext === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })(); }"
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.959,
+        "success": true,
+        "rendered": "append_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>], @hole0: Int): Ref[Object<Node>] =\n  last_ptr(@thisRef, @nextHeap)",
+        "error": null,
+        "compiled_js": "append_h1(x, created0, hole0) { return (() => { let __refsynCur = this; const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError(\"refsyn: last_ptr met a cycle\"); } __refsynSeen.add(__refsynCur); const __refsynNext = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); if (__refsynNext === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })(); }"
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 1.187,
+        "success": true,
+        "rendered": "append_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>], @hole0: Int): Ref[Object<Node>] =\n  last_ptr(@thisRef, @nextHeap)",
+        "error": null,
+        "compiled_js": "append_h1(x, created0, hole0) { return (() => { let __refsynCur = this; const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError(\"refsyn: last_ptr met a cycle\"); } __refsynSeen.add(__refsynCur); const __refsynNext = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); if (__refsynNext === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })(); }"
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 1.001,
+        "success": true,
+        "rendered": "append_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>], @hole0: Int): Ref[Object<Node>] =\n  last_ptr(@thisRef, @nextHeap)",
+        "error": null,
+        "compiled_js": "append_h1(x, created0, hole0) { return (() => { let __refsynCur = this; const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError(\"refsyn: last_ptr met a cycle\"); } __refsynSeen.add(__refsynCur); const __refsynNext = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); if (__refsynNext === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })(); }"
+      }
+    ]
+  }
+]

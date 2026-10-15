@@ -1,0 +1,269 @@
+{
+  "side": "mold",
+  "method": "prepend",
+  "tasks": [
+    "prepend_h0",
+    "prepend_h1"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 10,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 10,
+  "method_total_ms": {
+    "median": 0.931,
+    "min": 0.395,
+    "max": 6.849
+  },
+  "method_search_ms": {
+    "median": 0.573,
+    "min": 0.211,
+    "max": 3.899
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": true,
+      "method_total_ms": 6.849,
+      "method_search_ms": 3.899,
+      "tasks": [
+        {
+          "task": "prepend_h0",
+          "prepare_ms": 2.64,
+          "search_ms": 3.283,
+          "total_ms": 5.923,
+          "success": true,
+          "term": "@x"
+        },
+        {
+          "task": "prepend_h1",
+          "prepare_ms": 0.309,
+          "search_ms": 0.616,
+          "total_ms": 0.926,
+          "success": true,
+          "term": "@thisRef"
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "all_solved": true,
+      "method_total_ms": 1.253,
+      "method_search_ms": 0.683,
+      "tasks": [
+        {
+          "task": "prepend_h0",
+          "prepare_ms": 0.158,
+          "search_ms": 0.505,
+          "total_ms": 0.663,
+          "success": true,
+          "term": "@x"
+        },
+        {
+          "task": "prepend_h1",
+          "prepare_ms": 0.412,
+          "search_ms": 0.178,
+          "total_ms": 0.59,
+          "success": true,
+          "term": "@thisRef"
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "all_solved": true,
+      "method_total_ms": 1.407,
+      "method_search_ms": 0.783,
+      "tasks": [
+        {
+          "task": "prepend_h0",
+          "prepare_ms": 0.366,
+          "search_ms": 0.453,
+          "total_ms": 0.819,
+          "success": true,
+          "term": "@x"
+        },
+        {
+          "task": "prepend_h1",
+          "prepare_ms": 0.258,
+          "search_ms": 0.33,
+          "total_ms": 0.588,
+          "success": true,
+          "term": "@thisRef"
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "all_solved": true,
+      "method_total_ms": 1.585,
+      "method_search_ms": 1.188,
+      "tasks": [
+        {
+          "task": "prepend_h0",
+          "prepare_ms": 0.287,
+          "search_ms": 0.914,
+          "total_ms": 1.201,
+          "success": true,
+          "term": "@x"
+        },
+        {
+          "task": "prepend_h1",
+          "prepare_ms": 0.11,
+          "search_ms": 0.274,
+          "total_ms": 0.384,
+          "success": true,
+          "term": "@thisRef"
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "all_solved": true,
+      "method_total_ms": 0.904,
+      "method_search_ms": 0.465,
+      "tasks": [
+        {
+          "task": "prepend_h0",
+          "prepare_ms": 0.333,
+          "search_ms": 0.343,
+          "total_ms": 0.676,
+          "success": true,
+          "term": "@x"
+        },
+        {
+          "task": "prepend_h1",
+          "prepare_ms": 0.105,
+          "search_ms": 0.122,
+          "total_ms": 0.228,
+          "success": true,
+          "term": "@thisRef"
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "all_solved": true,
+      "method_total_ms": 0.958,
+      "method_search_ms": 0.578,
+      "tasks": [
+        {
+          "task": "prepend_h0",
+          "prepare_ms": 0.229,
+          "search_ms": 0.47,
+          "total_ms": 0.699,
+          "success": true,
+          "term": "@x"
+        },
+        {
+          "task": "prepend_h1",
+          "prepare_ms": 0.151,
+          "search_ms": 0.108,
+          "total_ms": 0.259,
+          "success": true,
+          "term": "@thisRef"
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "all_solved": true,
+      "method_total_ms": 0.628,
+      "method_search_ms": 0.345,
+      "tasks": [
+        {
+          "task": "prepend_h0",
+          "prepare_ms": 0.075,
+          "search_ms": 0.093,
+          "total_ms": 0.168,
+          "success": true,
+          "term": "@x"
+        },
+        {
+          "task": "prepend_h1",
+          "prepare_ms": 0.208,
+          "search_ms": 0.252,
+          "total_ms": 0.46,
+          "success": true,
+          "term": "@thisRef"
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "all_solved": true,
+      "method_total_ms": 0.395,
+      "method_search_ms": 0.211,
+      "tasks": [
+        {
+          "task": "prepend_h0",
+          "prepare_ms": 0.096,
+          "search_ms": 0.112,
+          "total_ms": 0.208,
+          "success": true,
+          "term": "@x"
+        },
+        {
+          "task": "prepend_h1",
+          "prepare_ms": 0.088,
+          "search_ms": 0.099,
+          "total_ms": 0.187,
+          "success": true,
+          "term": "@thisRef"
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "all_solved": true,
+      "method_total_ms": 0.414,
+      "method_search_ms": 0.274,
+      "tasks": [
+        {
+          "task": "prepend_h0",
+          "prepare_ms": 0.073,
+          "search_ms": 0.084,
+          "total_ms": 0.157,
+          "success": true,
+          "term": "@x"
+        },
+        {
+          "task": "prepend_h1",
+          "prepare_ms": 0.067,
+          "search_ms": 0.19,
+          "total_ms": 0.257,
+          "success": true,
+          "term": "@thisRef"
+        }
+      ]
+    },
+    {
+      "repetition": 10,
+      "all_solved": true,
+      "method_total_ms": 0.82,
+      "method_search_ms": 0.569,
+      "tasks": [
+        {
+          "task": "prepend_h0",
+          "prepare_ms": 0.166,
+          "search_ms": 0.475,
+          "total_ms": 0.641,
+          "success": true,
+          "term": "@x"
+        },
+        {
+          "task": "prepend_h1",
+          "prepare_ms": 0.085,
+          "search_ms": 0.094,
+          "total_ms": 0.179,
+          "success": true,
+          "term": "@thisRef"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+demonstration 1: addEdge on __temp1.val, which already has an edge
+=== IMPROVED SYNTHESIS RESPONSE ===
+Common Pattern: None
+Holes: None
+List Environment Summary: demonstration 1: addEdge on __temp1.val, which already has an edge
+Synthesized code: none
+Escher results: none
+=====================================

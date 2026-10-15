@@ -1,0 +1,6 @@
+insert_general all_equal=true call1:args=true,pre=true,post=true call2:args=true,pre=true,post=true call3:args=true,pre=true,post=true
+append all_equal=false call1:args=true,pre=true,post=true call2:args=true,pre=true,post=true call3:args=true,pre=false,post=false
+popBack all_equal=false call1:args=true,pre=true,post=false call2:args=true,pre=true,post=true
+prepend all_equal=false call1:args=true,pre=true,post=true,ret=true call2:args=true,pre=true,post=true,ret=false
+setAt all_equal=true call1:args=true,pre=true,post=true call2:args=true,pre=true,post=true call3:args=true,pre=true,post=true
+exit=1
