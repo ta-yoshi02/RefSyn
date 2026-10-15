@@ -1,0 +1,28 @@
+started_utc=2026-10-14T06:02:48Z uptime: 15:02  up 8 days, 39 mins, 2 users, load averages: 2.34 2.56 2.57
+insert_h0: 5/5 median 0.556 ms 
+insert_h1: 5/5 median 8.086 ms 
+insert_h2: 5/5 median 2.927 ms 
+append_h0: 5/5 median 0.464 ms 
+append_h1: 5/5 median 1.128 ms 
+popBack_h0: 5/5 median 0.945 ms 
+prepend_h0: 5/5 median 0.52 ms 
+prepend_h1: 5/5 median 0.218 ms 
+setAt_h0: 5/5 median 3.924 ms 
+setAt_h1: 5/5 median 0.24 ms 
+setAt-fixed-fHeap: 5/5 median 268.764 ms 
+setAt-fixed-gHeap: 5/5 median 0.266 ms 
+setAt-fixed-env-pair: 5/5 median 3741.121 ms 
+append-fixed-fHeap: 5/5 median 1.721 ms 
+append-fixed-gHeap: 5/5 median 29.357 ms 
+append-fixed-env-pair: 0/5 median 15001.346 ms no program within the budget
+prepend-fixed-fHeap: 5/5 median 1.47 ms 
+prepend-fixed-gHeap: 5/5 median 1.798 ms 
+prepend-fixed-returnRef: 5/5 median 0.163 ms 
+prepend-fixed-env-pair: 5/5 median 272.667 ms 
+insert-fixed-fHeap: 5/5 median 1.847 ms 
+insert-fixed-gHeap: 0/5 median 15000.071 ms no program within the budget
+insert-fixed-env-pair: 0/5 median 15000.107 ms no program within the budget
+popBack-fixed-fHeap: 5/5 median 0.115 ms 
+popBack-fixed-gHeap: 5/5 median 616.584 ms 
+popBack-fixed-env-pair: 5/5 median 5923.046 ms 
+finished_utc=2026-10-14T06:07:28Z uptime: 15:07  up 8 days, 44 mins, 2 users, load averages: 2.51 2.58 2.57

@@ -1,0 +1,28 @@
+escher-ts synthesis completed (2 success / 0 failure)
+=== IMPROVED SYNTHESIS RESPONSE ===
+Common Pattern: Create(Create { vertex: 0, class: "Node" })
+BindHole(0, Hole { vertex: 1, ty: Number, examples: [Constant(Number(Number(53))), Constant(Number(Number(89)))] })
+BindHole(1, Hole { vertex: 2, ty: Object("Node"), examples: [Object("main-new1"), Object("__temp1")] })
+Write(Write { from: 0, field: "val", to: 1 })
+Write(Write { from: 0, field: "next", to: 2 })
+Return(0)
+Holes: {"prepend_h0": ["Number(Number(53))", "Number(Number(89))"], "prepend_h1": ["object main-new1", "object __temp1"]}
+List Environment Summary: escher-ts task JSON saved: target/escher/ts/prepend_1791957145_603330000_p4348_7.json
+Synthesized code:
+  [0] prepend_h0(x, created0) { return x; }
+  [1] prepend_h1(x, created0, hole0) { return this; }
+Composed method code:
+prepend(x) {
+    const created0 = new Node();
+    const hole0 = this.prepend_h0(x, created0);
+    const hole1 = this.prepend_h1(x, created0, hole0);
+    created0.val = hole0;
+    created0.next = hole1;
+    return created0;
+}
+Escher results:
+  [OK] prepend_h0 -> prepend_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>]): Int =
+  @x
+  [OK] prepend_h1 -> prepend_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @x: Int, @created0: Ref[Object<Node>], @hole0: Int): Ref[Object<Node>] =
+  @thisRef
+=====================================

@@ -1,0 +1,28 @@
+[
+  {
+    "callLabel": "call1",
+    "receiverObject": "main-new1",
+    "arguments": [],
+    "operations": [
+      {
+        "editType": "deleteEdge",
+        "from": "main-new3",
+        "to": "main-new4",
+        "label": "next"
+      }
+    ]
+  },
+  {
+    "callLabel": "call2",
+    "receiverObject": "main-new1",
+    "arguments": [],
+    "operations": [
+      {
+        "editType": "deleteEdge",
+        "from": "main-new2",
+        "to": "main-new3",
+        "label": "next"
+      }
+    ]
+  }
+]

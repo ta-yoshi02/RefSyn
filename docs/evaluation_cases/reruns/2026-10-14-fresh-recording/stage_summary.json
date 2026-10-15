@@ -1,0 +1,158 @@
+{
+  "summary": {
+    "recordings": 5,
+    "request_accepted": 5,
+    "synthesis_all_helpers": 5,
+    "translation_all_helpers": 5,
+    "validation_passed_all_demonstrations": 5,
+    "applied": 5,
+    "kanon_rerun_all_passed": 5,
+    "node_rerun_match": 5,
+    "note": "One recording per case; insert's first attempt (rejected before synthesis) is listed separately in insert_general/README.md and not counted here."
+  },
+  "rows": [
+    {
+      "case": "insert_general",
+      "demonstrations": 3,
+      "edits_per_demonstration": [
+        5,
+        5,
+        5
+      ],
+      "request_accepted": true,
+      "synthesis": {
+        "solved": 3,
+        "helpers": 3
+      },
+      "translation": {
+        "translated": 3,
+        "helpers": 3
+      },
+      "validation": {
+        "status": "passed",
+        "checked": 3,
+        "demonstrations": 3
+      },
+      "applied": true,
+      "kanon_rerun": {
+        "passed": 3,
+        "calls": 3
+      },
+      "node_rerun_match": true
+    },
+    {
+      "case": "append",
+      "demonstrations": 3,
+      "edits_per_demonstration": [
+        4,
+        4,
+        4
+      ],
+      "request_accepted": true,
+      "synthesis": {
+        "solved": 2,
+        "helpers": 2
+      },
+      "translation": {
+        "translated": 2,
+        "helpers": 2
+      },
+      "validation": {
+        "status": "passed",
+        "checked": 3,
+        "demonstrations": 3
+      },
+      "applied": true,
+      "kanon_rerun": {
+        "passed": 3,
+        "calls": 3
+      },
+      "node_rerun_match": true
+    },
+    {
+      "case": "popBack",
+      "demonstrations": 2,
+      "edits_per_demonstration": [
+        1,
+        1
+      ],
+      "request_accepted": true,
+      "synthesis": {
+        "solved": 1,
+        "helpers": 1
+      },
+      "translation": {
+        "translated": 1,
+        "helpers": 1
+      },
+      "validation": {
+        "status": "passed",
+        "checked": 2,
+        "demonstrations": 2
+      },
+      "applied": true,
+      "kanon_rerun": {
+        "passed": 2,
+        "calls": 2
+      },
+      "node_rerun_match": true
+    },
+    {
+      "case": "prepend",
+      "demonstrations": 2,
+      "edits_per_demonstration": [
+        5,
+        5
+      ],
+      "request_accepted": true,
+      "synthesis": {
+        "solved": 2,
+        "helpers": 2
+      },
+      "translation": {
+        "translated": 2,
+        "helpers": 2
+      },
+      "validation": {
+        "status": "passed",
+        "checked": 2,
+        "demonstrations": 2
+      },
+      "applied": true,
+      "kanon_rerun": {
+        "passed": 2,
+        "calls": 2
+      },
+      "node_rerun_match": true
+    },
+    {
+      "case": "setAt",
+      "demonstrations": 3,
+      "edits_per_demonstration": [
+        2,
+        2,
+        2
+      ],
+      "request_accepted": true,
+      "synthesis": {
+        "solved": 2,
+        "helpers": 2
+      },
+      "translation": {
+        "translated": 2,
+        "helpers": 2
+      },
+      "validation": {
+        "status": "passed",
+        "checked": 3,
+        "demonstrations": 3
+      },
+      "applied": true,
+      "kanon_rerun": {
+        "passed": 3,
+        "calls": 3
+      },
+      "node_rerun_match": true
+    }
+  ]
+}

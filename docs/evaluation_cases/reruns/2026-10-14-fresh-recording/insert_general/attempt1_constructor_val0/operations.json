@@ -1,0 +1,125 @@
+[
+  {
+    "callLabel": "call1",
+    "arguments": [
+      0,
+      89
+    ],
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "__temp1",
+        "label": "Node",
+        "isLiteral": false
+      },
+      {
+        "editType": "addNode",
+        "id": "__temp2",
+        "label": "89",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp1",
+        "to": "__temp2",
+        "label": "val"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp1",
+        "to": "main-new2",
+        "label": "next"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "main-new1",
+        "oldTo": "main-new2",
+        "newTo": "__temp1",
+        "label": "next"
+      }
+    ]
+  },
+  {
+    "callLabel": "call2",
+    "arguments": [
+      2,
+      46
+    ],
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "__temp4",
+        "label": "Node",
+        "isLiteral": false
+      },
+      {
+        "editType": "addNode",
+        "id": "__temp5",
+        "label": "46",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp4",
+        "to": "__temp5",
+        "label": "val"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp4",
+        "to": "main-new3",
+        "label": "next"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "main-new2",
+        "oldTo": "main-new3",
+        "newTo": "__temp4",
+        "label": "next"
+      }
+    ]
+  },
+  {
+    "callLabel": "call3",
+    "arguments": [
+      1,
+      71
+    ],
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "__temp6",
+        "label": "Node",
+        "isLiteral": false
+      },
+      {
+        "editType": "addNode",
+        "id": "__temp7",
+        "label": "71",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "__temp1",
+        "oldTo": "main-new2",
+        "newTo": "__temp6",
+        "label": "next"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp6",
+        "to": "__temp7",
+        "label": "val"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp6",
+        "to": "main-new2",
+        "label": "next"
+      }
+    ]
+  }
+]

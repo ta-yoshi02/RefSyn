@@ -1,0 +1,112 @@
+[
+  {
+    "task": "setAt_h0",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 3.492,
+      "median_ms": 3.924,
+      "max_ms": 9.424
+    },
+    "last_rendered": "setAt_h0 =\n  nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 9.424,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 3.728,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 4.019,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 3.492,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 3.924,
+        "success": true,
+        "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "error": null
+      }
+    ]
+  },
+  {
+    "task": "setAt_h1",
+    "config": {
+      "maxCost": 32,
+      "timeoutMs": 15000,
+      "searchSizeFactor": 3,
+      "repetitions": 5,
+      "compile": false
+    },
+    "success": true,
+    "summary": {
+      "min_ms": 0.177,
+      "median_ms": 0.24,
+      "max_ms": 0.451
+    },
+    "last_rendered": "setAt_h1 =\n  @b",
+    "last_error": null,
+    "runs": [
+      {
+        "iteration": 1,
+        "elapsed_ms": 0.24,
+        "success": true,
+        "term": "@b",
+        "error": null
+      },
+      {
+        "iteration": 2,
+        "elapsed_ms": 0.451,
+        "success": true,
+        "term": "@b",
+        "error": null
+      },
+      {
+        "iteration": 3,
+        "elapsed_ms": 0.178,
+        "success": true,
+        "term": "@b",
+        "error": null
+      },
+      {
+        "iteration": 4,
+        "elapsed_ms": 0.293,
+        "success": true,
+        "term": "@b",
+        "error": null
+      },
+      {
+        "iteration": 5,
+        "elapsed_ms": 0.177,
+        "success": true,
+        "term": "@b",
+        "error": null
+      }
+    ]
+  }
+]

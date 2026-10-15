@@ -1,0 +1,81 @@
+task,iteration,success,elapsed_ms,max_cost,timeout_ms,error
+setAt-fixed-fHeap,1,false,352.738,32,15000,refsynMeta is required for setAt-fixed-fHeap
+setAt-fixed-fHeap,2,false,286.346,32,15000,refsynMeta is required for setAt-fixed-fHeap
+setAt-fixed-fHeap,3,false,270.545,32,15000,refsynMeta is required for setAt-fixed-fHeap
+setAt-fixed-fHeap,4,false,259.418,32,15000,refsynMeta is required for setAt-fixed-fHeap
+setAt-fixed-fHeap,5,false,271.533,32,15000,refsynMeta is required for setAt-fixed-fHeap
+setAt-fixed-gHeap,1,false,0.29,32,15000,refsynMeta is required for setAt-fixed-gHeap
+setAt-fixed-gHeap,2,false,0.173,32,15000,refsynMeta is required for setAt-fixed-gHeap
+setAt-fixed-gHeap,3,false,0.156,32,15000,refsynMeta is required for setAt-fixed-gHeap
+setAt-fixed-gHeap,4,false,0.452,32,15000,refsynMeta is required for setAt-fixed-gHeap
+setAt-fixed-gHeap,5,false,0.237,32,15000,refsynMeta is required for setAt-fixed-gHeap
+setAt-fixed-env-pair,1,false,3634,32,15000,refsynMeta is required for setAt-fixed-env-pair
+setAt-fixed-env-pair,2,false,3716.402,32,15000,refsynMeta is required for setAt-fixed-env-pair
+setAt-fixed-env-pair,3,false,3942.458,32,15000,refsynMeta is required for setAt-fixed-env-pair
+setAt-fixed-env-pair,4,false,3690.609,32,15000,refsynMeta is required for setAt-fixed-env-pair
+setAt-fixed-env-pair,5,false,3861.778,32,15000,refsynMeta is required for setAt-fixed-env-pair
+append-fixed-fHeap,1,false,1.962,32,15000,refsynMeta is required for append-fixed-fHeap
+append-fixed-fHeap,2,false,2.794,32,15000,refsynMeta is required for append-fixed-fHeap
+append-fixed-fHeap,3,false,1.499,32,15000,refsynMeta is required for append-fixed-fHeap
+append-fixed-fHeap,4,false,2.421,32,15000,refsynMeta is required for append-fixed-fHeap
+append-fixed-fHeap,5,false,1.469,32,15000,refsynMeta is required for append-fixed-fHeap
+append-fixed-gHeap,1,false,36.871,32,15000,refsynMeta is required for append-fixed-gHeap
+append-fixed-gHeap,2,false,39.166,32,15000,refsynMeta is required for append-fixed-gHeap
+append-fixed-gHeap,3,false,29.396,32,15000,refsynMeta is required for append-fixed-gHeap
+append-fixed-gHeap,4,false,29.57,32,15000,refsynMeta is required for append-fixed-gHeap
+append-fixed-gHeap,5,false,29.462,32,15000,refsynMeta is required for append-fixed-gHeap
+append-fixed-env-pair,1,false,14999.635,32,15000,escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget
+append-fixed-env-pair,2,false,14999.89,32,15000,escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget
+append-fixed-env-pair,3,false,15000.991,32,15000,escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget
+append-fixed-env-pair,4,false,15000.002,32,15000,escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget
+append-fixed-env-pair,5,false,15001.359,32,15000,escher-ts could not synthesize 'append-fixed-env-pair' within the configured budget
+prepend-fixed-fHeap,1,false,1.634,32,15000,refsynMeta is required for prepend-fixed-fHeap
+prepend-fixed-fHeap,2,false,2.071,32,15000,refsynMeta is required for prepend-fixed-fHeap
+prepend-fixed-fHeap,3,false,1.323,32,15000,refsynMeta is required for prepend-fixed-fHeap
+prepend-fixed-fHeap,4,false,1.881,32,15000,refsynMeta is required for prepend-fixed-fHeap
+prepend-fixed-fHeap,5,false,1.312,32,15000,refsynMeta is required for prepend-fixed-fHeap
+prepend-fixed-gHeap,1,false,2.197,32,15000,refsynMeta is required for prepend-fixed-gHeap
+prepend-fixed-gHeap,2,false,1.347,32,15000,refsynMeta is required for prepend-fixed-gHeap
+prepend-fixed-gHeap,3,false,1.274,32,15000,refsynMeta is required for prepend-fixed-gHeap
+prepend-fixed-gHeap,4,false,1.914,32,15000,refsynMeta is required for prepend-fixed-gHeap
+prepend-fixed-gHeap,5,false,1.256,32,15000,refsynMeta is required for prepend-fixed-gHeap
+prepend-fixed-returnRef,1,false,0.181,32,15000,refsynMeta is required for prepend-fixed-returnRef
+prepend-fixed-returnRef,2,false,0.172,32,15000,refsynMeta is required for prepend-fixed-returnRef
+prepend-fixed-returnRef,3,false,0.192,32,15000,refsynMeta is required for prepend-fixed-returnRef
+prepend-fixed-returnRef,4,false,0.161,32,15000,refsynMeta is required for prepend-fixed-returnRef
+prepend-fixed-returnRef,5,false,0.159,32,15000,refsynMeta is required for prepend-fixed-returnRef
+prepend-fixed-env-pair,1,false,271.862,32,15000,refsynMeta is required for prepend-fixed-env-pair
+prepend-fixed-env-pair,2,false,273.854,32,15000,refsynMeta is required for prepend-fixed-env-pair
+prepend-fixed-env-pair,3,false,282.146,32,15000,refsynMeta is required for prepend-fixed-env-pair
+prepend-fixed-env-pair,4,false,251.675,32,15000,refsynMeta is required for prepend-fixed-env-pair
+prepend-fixed-env-pair,5,false,299.218,32,15000,refsynMeta is required for prepend-fixed-env-pair
+insert-fixed-fHeap,1,false,1.936,32,15000,refsynMeta is required for insert-fixed-fHeap
+insert-fixed-fHeap,2,false,2.433,32,15000,refsynMeta is required for insert-fixed-fHeap
+insert-fixed-fHeap,3,false,1.72,32,15000,refsynMeta is required for insert-fixed-fHeap
+insert-fixed-fHeap,4,false,2.309,32,15000,refsynMeta is required for insert-fixed-fHeap
+insert-fixed-fHeap,5,false,1.744,32,15000,refsynMeta is required for insert-fixed-fHeap
+insert-fixed-gHeap,1,false,14999.463,32,15000,escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget
+insert-fixed-gHeap,2,false,15000.165,32,15000,escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget
+insert-fixed-gHeap,3,false,14999.962,32,15000,escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget
+insert-fixed-gHeap,4,false,14999.956,32,15000,escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget
+insert-fixed-gHeap,5,false,15000.049,32,15000,escher-ts could not synthesize 'insert-fixed-gHeap' within the configured budget
+insert-fixed-env-pair,1,false,14999.98,32,15000,escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget
+insert-fixed-env-pair,2,false,15000.122,32,15000,escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget
+insert-fixed-env-pair,3,false,14999.906,32,15000,escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget
+insert-fixed-env-pair,4,false,15000.234,32,15000,escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget
+insert-fixed-env-pair,5,false,15000.152,32,15000,escher-ts could not synthesize 'insert-fixed-env-pair' within the configured budget
+popBack-fixed-fHeap,1,false,0.388,32,15000,refsynMeta is required for popBack-fixed-fHeap
+popBack-fixed-fHeap,2,false,0.155,32,15000,refsynMeta is required for popBack-fixed-fHeap
+popBack-fixed-fHeap,3,false,0.112,32,15000,refsynMeta is required for popBack-fixed-fHeap
+popBack-fixed-fHeap,4,false,0.106,32,15000,refsynMeta is required for popBack-fixed-fHeap
+popBack-fixed-fHeap,5,false,0.102,32,15000,refsynMeta is required for popBack-fixed-fHeap
+popBack-fixed-gHeap,1,false,597.453,32,15000,refsynMeta is required for popBack-fixed-gHeap
+popBack-fixed-gHeap,2,false,627.8,32,15000,refsynMeta is required for popBack-fixed-gHeap
+popBack-fixed-gHeap,3,false,709.786,32,15000,refsynMeta is required for popBack-fixed-gHeap
+popBack-fixed-gHeap,4,false,586.589,32,15000,refsynMeta is required for popBack-fixed-gHeap
+popBack-fixed-gHeap,5,false,661.112,32,15000,refsynMeta is required for popBack-fixed-gHeap
+popBack-fixed-env-pair,1,false,4951.603,32,15000,refsynMeta is required for popBack-fixed-env-pair
+popBack-fixed-env-pair,2,false,5063.153,32,15000,refsynMeta is required for popBack-fixed-env-pair
+popBack-fixed-env-pair,3,false,4996.66,32,15000,refsynMeta is required for popBack-fixed-env-pair
+popBack-fixed-env-pair,4,false,5279.501,32,15000,refsynMeta is required for popBack-fixed-env-pair
+popBack-fixed-env-pair,5,false,5231.646,32,15000,refsynMeta is required for popBack-fixed-env-pair

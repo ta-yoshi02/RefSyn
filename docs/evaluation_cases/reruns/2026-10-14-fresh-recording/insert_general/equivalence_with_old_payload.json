@@ -1,0 +1,93 @@
+{
+  "old": "docs/evaluation_cases/insert_general/mold_payload.json",
+  "new": "docs/evaluation_cases/reruns/2026-10-14-fresh-recording/insert_general/raw_request.json",
+  "calls_old": 3,
+  "calls_new": 3,
+  "rows": [
+    {
+      "call": 1,
+      "old": {
+        "args": [
+          0,
+          89
+        ],
+        "list": [
+          39,
+          27,
+          53
+        ]
+      },
+      "new": {
+        "args": [
+          0,
+          89
+        ],
+        "list": [
+          39,
+          27,
+          53
+        ]
+      },
+      "equal": true
+    },
+    {
+      "call": 2,
+      "old": {
+        "args": [
+          2,
+          46
+        ],
+        "list": [
+          39,
+          89,
+          27,
+          53
+        ]
+      },
+      "new": {
+        "args": [
+          2,
+          46
+        ],
+        "list": [
+          39,
+          89,
+          27,
+          53
+        ]
+      },
+      "equal": true
+    },
+    {
+      "call": 3,
+      "old": {
+        "args": [
+          1,
+          71
+        ],
+        "list": [
+          39,
+          89,
+          27,
+          46,
+          53
+        ]
+      },
+      "new": {
+        "args": [
+          1,
+          71
+        ],
+        "list": [
+          39,
+          89,
+          27,
+          46,
+          53
+        ]
+      },
+      "equal": true
+    }
+  ],
+  "all_equal": true
+}
