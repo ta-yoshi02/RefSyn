@@ -1,0 +1,54 @@
+collected_at_utc: 2026-10-15T06:13:03Z
+platform: Darwin 27.0.0 arm64
+
+## Revisions
+refsyn: 494d6d442163279ce9105a144ffec60518909f82
+refsyn_dirty_tracked_files: 0
+submodule:  60fa5c8e80d05a28dd12438ee1f4876a49bba79f Kanon (heads/master)
+submodule:  0e8280aa061a0dbefb32d277a05015baa7f3e7f2 Kanon/external/escodegen (1.8.0)
+submodule:  4e7c4bca45d98a0b5f2f76fd70486ed823c731f1 external/escher-ts (remotes/origin/fix/component-failure-semantics)
+
+## Tools
+rustc: rustc 1.93.0 (254b59607 2026-01-19)
+cargo: cargo 1.93.0 (083ac5135 2025-12-15)
+node: v22.17.0
+npm: 11.19.1
+pnpm: 12.9.1
+
+## Environment variables read by the native path
+(none set: ESCHER_TS_MAX_COST=20, ESCHER_TS_TIMEOUT_MS=2000, ESCHER_TS_SEARCH_SIZE_FACTOR=3 defaults in runtime/refsyn-escher-adapter.mjs)
+
+## Lockfiles
+16b2e2784cba844bae2e07472778d65066157d3065eb74cb8f02c501bcdd3684  Cargo.lock
+4f7e5c62af9da99dfa6a1125c954e64b4078990f25054a43523bec530eefeed2  web/package-lock.json
+31fc1f7a94732c51e7b30ced8672b818a3557ed8028819d5931b6eb25711a084  external/escher-ts/pnpm-lock.yaml
+3c5600838d512359177618201f9e3adcf2c1d47d79718f1b02e63536a9727c81  Kanon/package-lock.json
+
+## Native backend binary and the JS it runs
+a60349ea80841cf9aa9f2de3e386c02f64fa6b9e02d10a9e35828b3f2b9960e6  target/debug/refsyn
+66f65bce271c5d4473cd05749af0e2d96cbaa68f42d572aa0af63449f5612c29  scripts/run_escher.js
+231c91e64fd80a23e7a724a6fae8327f85e7f8a55c20ed95c77457de5f96abbd  runtime/refsyn-escher-adapter-booleans.test.mjs
+3edacb3920c2ebe16c582afc791abc43f79b4e891ecdb706b3384707fdb8938a  runtime/refsyn-escher-adapter-fields.test.mjs
+fcc07836c9411b5db793f24519474c547255389adc24975a2f2eb5500f361b15  runtime/refsyn-escher-adapter-names.test.mjs
+a2a46ab480241884971455c7a86ef18981f6030d88b874f186c4d9535858f2c7  runtime/refsyn-escher-adapter-semantics.test.mjs
+9540366bebec80143d99ec7bf119ec18f779bfea058bf6e70e2989a61e359193  runtime/refsyn-escher-adapter.mjs
+ec062fd616d4d790b85576ef1d6606f1ccd76ed879941eca0b1f019517a55ce3  runtime/refsyn-escher-adapter.test.mjs
+6f9ea58f8a6c1b3bfc3c774bfd31bf6e9a2eb0ab527cb834e8664b5e46aa6b41  runtime/whole-method-validation.mjs
+84f9fe5a43edb5ccd753c4bff70b6b039fc1f629ddfad0919e353ee2092471c7  runtime/whole-method-validation.test.mjs
+909d60420cde53d44672c453bc893991540058ad032d9e870822c41cb36a88ef  runtime/whole-method-validator-client.mjs
+4b65e0ba95d589d1fe8f71b0f25959a9d3c0b8b04a09f2f0633f320ccc606a34  runtime/whole-method-validator-worker.mjs
+
+## escher-ts dist (sorted file hashes, then their combined hash)
+files: 114
+combined: 50b69f3c3ada89d7ed3eaeee43260e0cfd52f4698aa146e07346d52bc1b9c4f6
+
+## WASM package (built by npm run test:rebuild; not used by the native path)
+2344105c0b7ecfa9efc35f5210ebfcbd52f44f4e536a38ce744d5011ebbf4b35  web/pkg/refsyn.d.ts
+2e761a34e8f51872dba9cf77faf2d6be437f3416e6765315ec197c43a8e293f6  web/pkg/refsyn.js
+0d6e6b9cfb1b33b5a9566611cc02c5b70d5a6943efeccb8c7b97583cdeb34be8  web/pkg/refsyn_bg.wasm
+8ae6682fb3e16dd032422bbb1f5a3332074a2811f4336a8ea150e569ca1b573b  web/pkg/refsyn_bg.wasm.d.ts
+
+## Kanon page sources served on :8001
+35fd81098739cace2cbec1c0a97a23da3451954e6c1448a0a766a60e2da1ed12  index.html
+c1a79f7797988fba86f236c14988bd21729ca39c132eb2421afa50a9caa7b17b  src/js/testize.js
+bd9cdaaee82468e32e8027cecfbf810c326708fdb1b8482c06819ba6a813d080  src/js/eventHandler.js

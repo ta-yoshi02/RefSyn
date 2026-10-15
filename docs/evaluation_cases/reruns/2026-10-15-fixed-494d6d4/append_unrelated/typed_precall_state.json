@@ -1,0 +1,143 @@
+{
+  "version": 3,
+  "classes": [
+    {
+      "name": "Cell",
+      "source": "class Cell {\n    constructor() {\n        this.link = null;\n    }\n\n    append(x) {\n    }\n}",
+      "instance": {
+        "link": null
+      }
+    }
+  ],
+  "cases": [
+    {
+      "callLabel": "call1",
+      "contextSensitiveID": "main",
+      "objects": [
+        {
+          "id": "main-new1",
+          "className": "Cell",
+          "fields": {
+            "link": {
+              "ref": "main-new2"
+            },
+            "key": 39
+          }
+        },
+        {
+          "id": "main-new2",
+          "className": "Cell",
+          "fields": {
+            "link": null,
+            "key": 27
+          }
+        }
+      ],
+      "values": {
+        "main-new2-link": null,
+        "main-new2-key": 27,
+        "main-new1-key": 39
+      },
+      "arguments": [
+        53
+      ]
+    },
+    {
+      "callLabel": "call2",
+      "contextSensitiveID": "main",
+      "objects": [
+        {
+          "id": "main-new1",
+          "className": "Cell",
+          "fields": {
+            "link": {
+              "ref": "main-new2"
+            },
+            "key": 39
+          }
+        },
+        {
+          "id": "main-new2",
+          "className": "Cell",
+          "fields": {
+            "link": {
+              "ref": "__temp1"
+            },
+            "key": 27
+          }
+        },
+        {
+          "id": "__temp1",
+          "className": "Cell",
+          "fields": {
+            "link": null,
+            "key": 53
+          }
+        }
+      ],
+      "values": {
+        "__temp1-link": null,
+        "__temp1-key": 53,
+        "main-new2-key": 27,
+        "main-new1-key": 39
+      },
+      "arguments": [
+        89
+      ]
+    },
+    {
+      "callLabel": "call3",
+      "contextSensitiveID": "main",
+      "objects": [
+        {
+          "id": "main-new1",
+          "className": "Cell",
+          "fields": {
+            "link": {
+              "ref": "main-new2"
+            },
+            "key": 39
+          }
+        },
+        {
+          "id": "main-new2",
+          "className": "Cell",
+          "fields": {
+            "link": {
+              "ref": "__temp1"
+            },
+            "key": 27
+          }
+        },
+        {
+          "id": "__temp1",
+          "className": "Cell",
+          "fields": {
+            "link": {
+              "ref": "__temp4"
+            },
+            "key": 53
+          }
+        },
+        {
+          "id": "__temp4",
+          "className": "Cell",
+          "fields": {
+            "link": null,
+            "key": 89
+          }
+        }
+      ],
+      "values": {
+        "__temp4-link": null,
+        "__temp4-key": 89,
+        "__temp1-key": 53,
+        "main-new2-key": 27,
+        "main-new1-key": 39
+      },
+      "arguments": [
+        46
+      ]
+    }
+  ]
+}

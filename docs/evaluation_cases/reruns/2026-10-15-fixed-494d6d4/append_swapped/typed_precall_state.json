@@ -1,0 +1,143 @@
+{
+  "version": 3,
+  "classes": [
+    {
+      "name": "Node",
+      "source": "class Node {\n    constructor() {\n        this.val = null;\n    }\n\n    append(x) {\n    }\n}",
+      "instance": {
+        "val": null
+      }
+    }
+  ],
+  "cases": [
+    {
+      "callLabel": "call1",
+      "contextSensitiveID": "main",
+      "objects": [
+        {
+          "id": "main-new1",
+          "className": "Node",
+          "fields": {
+            "val": {
+              "ref": "main-new2"
+            },
+            "next": 39
+          }
+        },
+        {
+          "id": "main-new2",
+          "className": "Node",
+          "fields": {
+            "val": null,
+            "next": 27
+          }
+        }
+      ],
+      "values": {
+        "main-new2-val": null,
+        "main-new2-next": 27,
+        "main-new1-next": 39
+      },
+      "arguments": [
+        53
+      ]
+    },
+    {
+      "callLabel": "call2",
+      "contextSensitiveID": "main",
+      "objects": [
+        {
+          "id": "main-new1",
+          "className": "Node",
+          "fields": {
+            "val": {
+              "ref": "main-new2"
+            },
+            "next": 39
+          }
+        },
+        {
+          "id": "main-new2",
+          "className": "Node",
+          "fields": {
+            "val": {
+              "ref": "__temp1"
+            },
+            "next": 27
+          }
+        },
+        {
+          "id": "__temp1",
+          "className": "Node",
+          "fields": {
+            "val": null,
+            "next": 53
+          }
+        }
+      ],
+      "values": {
+        "__temp1-val": null,
+        "__temp1-next": 53,
+        "main-new2-next": 27,
+        "main-new1-next": 39
+      },
+      "arguments": [
+        89
+      ]
+    },
+    {
+      "callLabel": "call3",
+      "contextSensitiveID": "main",
+      "objects": [
+        {
+          "id": "main-new1",
+          "className": "Node",
+          "fields": {
+            "val": {
+              "ref": "main-new2"
+            },
+            "next": 39
+          }
+        },
+        {
+          "id": "main-new2",
+          "className": "Node",
+          "fields": {
+            "val": {
+              "ref": "__temp1"
+            },
+            "next": 27
+          }
+        },
+        {
+          "id": "__temp1",
+          "className": "Node",
+          "fields": {
+            "val": {
+              "ref": "__temp4"
+            },
+            "next": 53
+          }
+        },
+        {
+          "id": "__temp4",
+          "className": "Node",
+          "fields": {
+            "val": null,
+            "next": 89
+          }
+        }
+      ],
+      "values": {
+        "__temp4-val": null,
+        "__temp4-next": 89,
+        "__temp1-next": 53,
+        "main-new2-next": 27,
+        "main-new1-next": 39
+      },
+      "arguments": [
+        46
+      ]
+    }
+  ]
+}

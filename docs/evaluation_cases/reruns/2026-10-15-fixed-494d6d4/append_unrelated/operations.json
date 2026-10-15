@@ -1,0 +1,104 @@
+[
+  {
+    "callLabel": "call1",
+    "receiverObject": "main-new1",
+    "arguments": [
+      53
+    ],
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "__temp1",
+        "label": "Cell",
+        "isLiteral": false
+      },
+      {
+        "editType": "addNode",
+        "id": "__temp2",
+        "label": "53",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp1",
+        "to": "__temp2",
+        "label": "key"
+      },
+      {
+        "editType": "addEdge",
+        "from": "main-new2",
+        "to": "__temp1",
+        "label": "link"
+      }
+    ]
+  },
+  {
+    "callLabel": "call2",
+    "receiverObject": "main-new1",
+    "arguments": [
+      89
+    ],
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "__temp3",
+        "label": "89",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "addNode",
+        "id": "__temp4",
+        "label": "Cell",
+        "isLiteral": false
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp1",
+        "to": "__temp4",
+        "label": "link"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp4",
+        "to": "__temp3",
+        "label": "key"
+      }
+    ]
+  },
+  {
+    "callLabel": "call3",
+    "receiverObject": "main-new1",
+    "arguments": [
+      46
+    ],
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "__temp5",
+        "label": "Cell",
+        "isLiteral": false
+      },
+      {
+        "editType": "addNode",
+        "id": "__temp6",
+        "label": "46",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp5",
+        "to": "__temp6",
+        "label": "key"
+      },
+      {
+        "editType": "addEdge",
+        "from": "__temp4",
+        "to": "__temp5",
+        "label": "link"
+      }
+    ]
+  }
+]

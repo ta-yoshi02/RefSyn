@@ -1,0 +1,23 @@
+{
+  "method": "node vm re-execution of source_after.js (independent of Kanon)",
+  "node": "v22.17.0",
+  "value_field": "key",
+  "pointer_field": "link",
+  "final_vals": [
+    39,
+    89,
+    71,
+    27,
+    46,
+    53
+  ],
+  "expected": [
+    39,
+    89,
+    71,
+    27,
+    46,
+    53
+  ],
+  "match": true
+}

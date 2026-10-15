@@ -1,0 +1,33 @@
+escher-ts synthesis completed (3 success / 0 failure)
+=== IMPROVED SYNTHESIS RESPONSE ===
+Common Pattern: Create(Create { vertex: 0, class: "Cell" })
+BindHole(0, Hole { vertex: 1, ty: Number, examples: [Constant(Number(Number(89))), Constant(Number(Number(46))), Constant(Number(Number(71)))] })
+BindHole(1, Hole { vertex: 2, ty: Object("Cell"), examples: [Object("main-new2"), Object("main-new3"), Object("main-new2")] })
+BindHole(2, Hole { vertex: 3, ty: Object("Cell"), examples: [Object("main-new1"), Object("main-new2"), Object("__temp1")] })
+Write(Write { from: 0, field: "key", to: 1 })
+Write(Write { from: 0, field: "link", to: 2 })
+Write(Write { from: 3, field: "link", to: 0 })
+Holes: {"insert_h0": ["Number(Number(89))", "Number(Number(46))", "Number(Number(71))"], "insert_h2": ["object main-new1", "object main-new2", "object __temp1"], "insert_h1": ["object main-new2", "object main-new3", "object main-new2"]}
+List Environment Summary: escher-ts task JSON saved: target/escher/ts/insert_1792044301_576862000_p75400_0.json
+Synthesized code:
+  [0] insert_h0(i, arg, created0) { return arg; }
+  [1] insert_h1(i, arg, created0, hole0) { return (() => { let __refsynCur = this; let __refsynSteps = (i + 1); if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError("refsyn: nthNextRef needs a non-negative step count"); } while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError("refsyn: read of an undefined field"); } return __refsynValue; })((__refsynCur).link); __refsynSteps -= 1; } return __refsynCur; })(); }
+  [2] insert_h2(i, arg, created0, hole0, hole1) { return (() => { let __refsynCur = this; let __refsynSteps = i; if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError("refsyn: nthNextRef needs a non-negative step count"); } while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError("refsyn: read of an undefined field"); } return __refsynValue; })((__refsynCur).link); __refsynSteps -= 1; } return __refsynCur; })(); }
+Composed method code:
+insert(i, arg) {
+    const created0 = new Cell();
+    const hole0 = this.insert_h0(i, arg, created0);
+    const hole1 = this.insert_h1(i, arg, created0, hole0);
+    const hole2 = this.insert_h2(i, arg, created0, hole0, hole1);
+    created0.key = hole0;
+    created0.link = hole1;
+    hole2.link = created0;
+}
+Escher results:
+  [OK] insert_h0 -> insert_h0(@thisRef: Ref[Object<Cell>], @nodeHeap: List[Object<Cell>], @keyHeap: List[Int], @linkHeap: List[Object<Cell>], @i: Int, @arg: Int, @created0: Ref[Object<Cell>]): Int =
+  @arg
+  [OK] insert_h1 -> insert_h1(@thisRef: Ref[Object<Cell>], @nodeHeap: List[Object<Cell>], @keyHeap: List[Int], @linkHeap: List[Object<Cell>], @i: Int, @arg: Int, @created0: Ref[Object<Cell>], @hole0: Int): Ref[Object<Cell>] =
+  nthNextRef(@thisRef, @nodeHeap, @linkHeap, inc(@i))
+  [OK] insert_h2 -> insert_h2(@thisRef: Ref[Object<Cell>], @nodeHeap: List[Object<Cell>], @keyHeap: List[Int], @linkHeap: List[Object<Cell>], @i: Int, @arg: Int, @created0: Ref[Object<Cell>], @hole0: Int, @hole1: Ref[Object<Cell>]): Ref[Object<Cell>] =
+  nthNextRef(@thisRef, @nodeHeap, @linkHeap, @i)
+=====================================
