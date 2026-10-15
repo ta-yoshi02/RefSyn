@@ -1,4 +1,4 @@
-use refsyn::alignment::{align, align_all};
+use refsyn::alignment::{align, align_all, align_consistently};
 use refsyn::demonstration::{self, Value};
 use refsyn::operation_graph::{self, Constant, Vertex};
 use refsyn::pbe_problem;
@@ -694,10 +694,8 @@ async fn non_isomorphic_demonstrations_are_not_synthesized() {
 fn plan_of(raw: Json) -> (Template, pbe_problem::Problems) {
     let recording = demonstration::read(&request(raw.clone())).unwrap();
     let graphs = graphs(raw).unwrap();
-    let mappings = align_all(&graphs).unwrap();
-    let template = Template::build(&graphs, &mappings).unwrap();
     let params = recording.demonstrations[0].param_names.clone();
-    let problems = pbe_problem::build(&recording, &graphs, &mappings, &template, &params).unwrap();
+    let (_, template, problems) = align_consistently(&recording, &graphs, &params).unwrap();
     (template, problems)
 }
 
@@ -774,4 +772,120 @@ fn holes_read_the_state_before_any_write_with_user_names_and_detached_objects() 
         tasks[0]["classes"][0]["fields"],
         json!({ "link": "Ref[Object[Item]]", "weight": "Ref[Int]" })
     );
+}
+
+#[test]
+fn edit_order_does_not_swap_symmetric_vertices_into_contradictory_examples() {
+    let mut heap = json!([
+        obj("A", 39, Some("B")),
+        obj("B", 27, Some("C")),
+        obj("C", 53, None)
+    ]);
+    for object in heap.as_array_mut().unwrap() {
+        object["fields"]["other"] = Json::Null;
+    }
+    let forward = json!([add_edge("A", "other", "C"), add_edge("B", "other", "C")]);
+    let backward = json!([add_edge("B", "other", "C"), add_edge("A", "other", "C")]);
+    let mut raw = insert_request();
+    raw["method_calls"] = json!([
+        call("c1", json!([0, 89]), forward),
+        call("c2", json!([0, 89]), backward)
+    ]);
+    raw["validation"]["cases"] = json!([
+        case("c1", heap.clone(), json!([0, 89])),
+        case("c2", heap, json!([0, 89]))
+    ]);
+    let recording = demonstration::read(&request(raw.clone())).unwrap();
+    let first = graphs(raw.clone()).unwrap();
+    let params = recording.demonstrations[0].param_names.clone();
+    // The first graph has an automorphism swapping A and B, but mu_1 stays the identity.
+    let (mappings, _, _) = align_consistently(&recording, &first, &params).unwrap();
+    assert_eq!(
+        mappings[0],
+        (0..first[0].vertices.len()).collect::<Vec<_>>()
+    );
+    let mut contradicting = raw.clone();
+    contradicting["method_calls"][1]["operations"] =
+        json!([add_edge("B", "other", "A"), add_edge("C", "other", "A")]);
+    let recording = demonstration::read(&request(contradicting.clone())).unwrap();
+    let error = align_consistently(&recording, &graphs(contradicting).unwrap(), &params)
+        .err()
+        .unwrap();
+    assert!(
+        error
+            .to_string()
+            .contains("same input with different outputs"),
+        "{error:#}"
+    );
+    let (_, problems) = plan_of(raw);
+    // Both demonstrations start from the same state, so every hole must give one output.
+    for task in serde_json::to_value(&problems.tasks)
+        .unwrap()
+        .as_array()
+        .unwrap()
+    {
+        let examples = task["examples"].as_array().unwrap();
+        for (a, b) in examples.iter().zip(examples.iter().skip(1)) {
+            if a[0] == b[0] {
+                assert_eq!(
+                    a[1], b[1],
+                    "{}: same input, different outputs",
+                    task["name"]
+                );
+            }
+        }
+    }
+}
+
+/// Eight objects write `other` to `target`, so the graph has 8! = 40320 automorphisms.
+fn eight_writers(second_target: &str) -> Json {
+    let ids: Vec<String> = (0..10).map(|i| format!("O{i}")).collect();
+    let heap: Vec<Json> = ids
+        .iter()
+        .enumerate()
+        .map(|(i, id)| {
+            let mut o = obj(id, i as i64, ids.get(i + 1).map(String::as_str));
+            o["fields"]["other"] = Json::Null;
+            o
+        })
+        .collect();
+    let writes = |target: &str| -> Json {
+        ids[..8]
+            .iter()
+            .map(|id| add_edge(id, "other", target))
+            .collect()
+    };
+    let mut raw = insert_request();
+    raw["method_calls"] = json!([
+        call("c1", json!([0, 89]), writes("O8")),
+        call("c2", json!([0, 89]), writes(second_target))
+    ]);
+    for call in raw["method_calls"].as_array_mut().unwrap() {
+        call["receiverObject"] = json!("O0");
+    }
+    raw["validation"]["cases"] = json!([
+        case("c1", json!(heap), json!([0, 89])),
+        case("c2", json!(heap), json!([0, 89]))
+    ]);
+    raw
+}
+
+fn align_request(raw: Json) -> anyhow::Result<Vec<refsyn::alignment::Mapping>> {
+    let recording = demonstration::read(&request(raw.clone()))?;
+    let params = recording.demonstrations[0].param_names.clone();
+    Ok(align_consistently(&recording, &graphs(raw)?, &params)?.0)
+}
+
+#[test]
+fn the_first_consistent_correspondence_is_taken_however_many_others_exist() {
+    let mappings = align_request(eight_writers("O8")).unwrap();
+    assert_eq!(mappings[1], mappings[0]);
+}
+
+#[test]
+fn running_out_of_search_steps_is_not_reported_as_a_contradiction() {
+    // Every correspondence maps the target hole to O8 and O9 on the same input.
+    let error = align_request(eight_writers("O9")).unwrap_err().to_string();
+    assert!(error.contains("10000 steps"), "{error}");
+    assert!(!error.contains("every correspondence"), "{error}");
 }

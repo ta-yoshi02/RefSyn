@@ -6,7 +6,7 @@ use anyhow::{ensure, Context, Result};
 use crate::escher_bridge::EscherTaskSpec;
 use crate::pbe_problem::HoleCheck;
 use crate::template::{Example, Template};
-use crate::{alignment, demonstration, operation_graph, pbe_problem, SynthesisRequest};
+use crate::{alignment, demonstration, operation_graph, SynthesisRequest};
 
 pub struct Plan {
     pub method: String,
@@ -29,8 +29,6 @@ pub fn plan(request: &SynthesisRequest) -> Result<Plan> {
                 .with_context(|| format!("demonstration {}", i + 1))
         })
         .collect::<Result<Vec<_>>>()?;
-    let mappings = alignment::align_all(&graphs)?;
-    let template = Template::build(&graphs, &mappings)?;
     let first = &recording.demonstrations[0];
     // Helper names extend the method name, so the definitions and the template's calls agree
     // only if it is an identifier; it is refused rather than renamed.
@@ -46,13 +44,8 @@ pub fn plan(request: &SynthesisRequest) -> Result<Plan> {
             .all(|d| d.param_names == first.param_names),
         "demonstrations disagree on the method's parameter names"
     );
-    let problems = pbe_problem::build(
-        &recording,
-        &graphs,
-        &mappings,
-        &template,
-        &first.param_names,
-    )?;
+    let (_, template, problems) =
+        alignment::align_consistently(&recording, &graphs, &first.param_names)?;
     let composed_method_code = template.render_method(&first.method, &first.param_names);
     let template_text = template
         .statements()
