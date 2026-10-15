@@ -1,0 +1,188 @@
+{
+  "side": "mold",
+  "method": "popBack",
+  "tasks": [
+    "popBack_h0"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 10,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 10,
+  "method_total_ms": {
+    "median": 0.842,
+    "min": 0.543,
+    "max": 4.453
+  },
+  "method_search_ms": {
+    "median": 0.666,
+    "min": 0.464,
+    "max": 3.362
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": true,
+      "method_total_ms": 4.453,
+      "method_search_ms": 3.362,
+      "tasks": [
+        {
+          "task": "popBack_h0",
+          "prepare_ms": 1.091,
+          "search_ms": 3.362,
+          "total_ms": 4.453,
+          "success": true,
+          "term": "penultimateRef(@thisRef, @nextHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "all_solved": true,
+      "method_total_ms": 1.479,
+      "method_search_ms": 1.263,
+      "tasks": [
+        {
+          "task": "popBack_h0",
+          "prepare_ms": 0.216,
+          "search_ms": 1.263,
+          "total_ms": 1.479,
+          "success": true,
+          "term": "penultimateRef(@thisRef, @nextHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "all_solved": true,
+      "method_total_ms": 0.9,
+      "method_search_ms": 0.747,
+      "tasks": [
+        {
+          "task": "popBack_h0",
+          "prepare_ms": 0.153,
+          "search_ms": 0.747,
+          "total_ms": 0.9,
+          "success": true,
+          "term": "penultimateRef(@thisRef, @nextHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "all_solved": true,
+      "method_total_ms": 0.901,
+      "method_search_ms": 0.717,
+      "tasks": [
+        {
+          "task": "popBack_h0",
+          "prepare_ms": 0.184,
+          "search_ms": 0.717,
+          "total_ms": 0.901,
+          "success": true,
+          "term": "penultimateRef(@thisRef, @nextHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "all_solved": true,
+      "method_total_ms": 0.864,
+      "method_search_ms": 0.663,
+      "tasks": [
+        {
+          "task": "popBack_h0",
+          "prepare_ms": 0.202,
+          "search_ms": 0.663,
+          "total_ms": 0.864,
+          "success": true,
+          "term": "penultimateRef(@thisRef, @nextHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "all_solved": true,
+      "method_total_ms": 0.707,
+      "method_search_ms": 0.512,
+      "tasks": [
+        {
+          "task": "popBack_h0",
+          "prepare_ms": 0.195,
+          "search_ms": 0.512,
+          "total_ms": 0.707,
+          "success": true,
+          "term": "penultimateRef(@thisRef, @nextHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "all_solved": true,
+      "method_total_ms": 0.814,
+      "method_search_ms": 0.527,
+      "tasks": [
+        {
+          "task": "popBack_h0",
+          "prepare_ms": 0.287,
+          "search_ms": 0.527,
+          "total_ms": 0.814,
+          "success": true,
+          "term": "penultimateRef(@thisRef, @nextHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "all_solved": true,
+      "method_total_ms": 0.558,
+      "method_search_ms": 0.471,
+      "tasks": [
+        {
+          "task": "popBack_h0",
+          "prepare_ms": 0.087,
+          "search_ms": 0.471,
+          "total_ms": 0.558,
+          "success": true,
+          "term": "penultimateRef(@thisRef, @nextHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "all_solved": true,
+      "method_total_ms": 0.82,
+      "method_search_ms": 0.669,
+      "tasks": [
+        {
+          "task": "popBack_h0",
+          "prepare_ms": 0.151,
+          "search_ms": 0.669,
+          "total_ms": 0.82,
+          "success": true,
+          "term": "penultimateRef(@thisRef, @nextHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 10,
+      "all_solved": true,
+      "method_total_ms": 0.543,
+      "method_search_ms": 0.464,
+      "tasks": [
+        {
+          "task": "popBack_h0",
+          "prepare_ms": 0.079,
+          "search_ms": 0.464,
+          "total_ms": 0.543,
+          "success": true,
+          "term": "penultimateRef(@thisRef, @nextHeap)"
+        }
+      ]
+    }
+  ]
+}

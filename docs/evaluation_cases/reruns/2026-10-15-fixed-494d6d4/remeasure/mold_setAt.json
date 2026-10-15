@@ -1,0 +1,269 @@
+{
+  "side": "mold",
+  "method": "setAt",
+  "tasks": [
+    "setAt_h0",
+    "setAt_h1"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 10,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 10,
+  "method_total_ms": {
+    "median": 4.141,
+    "min": 3.022,
+    "max": 9.14
+  },
+  "method_search_ms": {
+    "median": 3.749,
+    "min": 2.843,
+    "max": 7.756
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": true,
+      "method_total_ms": 9.14,
+      "method_search_ms": 7.756,
+      "tasks": [
+        {
+          "task": "setAt_h0",
+          "prepare_ms": 1.117,
+          "search_ms": 7.566,
+          "total_ms": 8.683,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)"
+        },
+        {
+          "task": "setAt_h1",
+          "prepare_ms": 0.267,
+          "search_ms": 0.19,
+          "total_ms": 0.457,
+          "success": true,
+          "term": "@b"
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "all_solved": true,
+      "method_total_ms": 4.292,
+      "method_search_ms": 3.784,
+      "tasks": [
+        {
+          "task": "setAt_h0",
+          "prepare_ms": 0.156,
+          "search_ms": 3.625,
+          "total_ms": 3.781,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)"
+        },
+        {
+          "task": "setAt_h1",
+          "prepare_ms": 0.352,
+          "search_ms": 0.159,
+          "total_ms": 0.511,
+          "success": true,
+          "term": "@b"
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "all_solved": true,
+      "method_total_ms": 3.789,
+      "method_search_ms": 3.462,
+      "tasks": [
+        {
+          "task": "setAt_h0",
+          "prepare_ms": 0.212,
+          "search_ms": 3.334,
+          "total_ms": 3.546,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)"
+        },
+        {
+          "task": "setAt_h1",
+          "prepare_ms": 0.116,
+          "search_ms": 0.128,
+          "total_ms": 0.243,
+          "success": true,
+          "term": "@b"
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "all_solved": true,
+      "method_total_ms": 4.623,
+      "method_search_ms": 4.182,
+      "tasks": [
+        {
+          "task": "setAt_h0",
+          "prepare_ms": 0.191,
+          "search_ms": 3.959,
+          "total_ms": 4.15,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)"
+        },
+        {
+          "task": "setAt_h1",
+          "prepare_ms": 0.25,
+          "search_ms": 0.223,
+          "total_ms": 0.473,
+          "success": true,
+          "term": "@b"
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "all_solved": true,
+      "method_total_ms": 4.273,
+      "method_search_ms": 3.822,
+      "tasks": [
+        {
+          "task": "setAt_h0",
+          "prepare_ms": 0.333,
+          "search_ms": 3.713,
+          "total_ms": 4.047,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)"
+        },
+        {
+          "task": "setAt_h1",
+          "prepare_ms": 0.117,
+          "search_ms": 0.109,
+          "total_ms": 0.226,
+          "success": true,
+          "term": "@b"
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "all_solved": true,
+      "method_total_ms": 3.022,
+      "method_search_ms": 2.843,
+      "tasks": [
+        {
+          "task": "setAt_h0",
+          "prepare_ms": 0.08,
+          "search_ms": 2.741,
+          "total_ms": 2.821,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)"
+        },
+        {
+          "task": "setAt_h1",
+          "prepare_ms": 0.099,
+          "search_ms": 0.102,
+          "total_ms": 0.201,
+          "success": true,
+          "term": "@b"
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "all_solved": true,
+      "method_total_ms": 5.244,
+      "method_search_ms": 4.837,
+      "tasks": [
+        {
+          "task": "setAt_h0",
+          "prepare_ms": 0.078,
+          "search_ms": 4.689,
+          "total_ms": 4.767,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)"
+        },
+        {
+          "task": "setAt_h1",
+          "prepare_ms": 0.329,
+          "search_ms": 0.148,
+          "total_ms": 0.477,
+          "success": true,
+          "term": "@b"
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "all_solved": true,
+      "method_total_ms": 3.446,
+      "method_search_ms": 3.188,
+      "tasks": [
+        {
+          "task": "setAt_h0",
+          "prepare_ms": 0.163,
+          "search_ms": 3.1,
+          "total_ms": 3.264,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)"
+        },
+        {
+          "task": "setAt_h1",
+          "prepare_ms": 0.094,
+          "search_ms": 0.088,
+          "total_ms": 0.182,
+          "success": true,
+          "term": "@b"
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "all_solved": true,
+      "method_total_ms": 3.245,
+      "method_search_ms": 2.971,
+      "tasks": [
+        {
+          "task": "setAt_h0",
+          "prepare_ms": 0.073,
+          "search_ms": 2.773,
+          "total_ms": 2.846,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)"
+        },
+        {
+          "task": "setAt_h1",
+          "prepare_ms": 0.201,
+          "search_ms": 0.198,
+          "total_ms": 0.399,
+          "success": true,
+          "term": "@b"
+        }
+      ]
+    },
+    {
+      "repetition": 10,
+      "all_solved": true,
+      "method_total_ms": 4.01,
+      "method_search_ms": 3.715,
+      "tasks": [
+        {
+          "task": "setAt_h0",
+          "prepare_ms": 0.2,
+          "search_ms": 2.999,
+          "total_ms": 3.199,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)"
+        },
+        {
+          "task": "setAt_h1",
+          "prepare_ms": 0.096,
+          "search_ms": 0.716,
+          "total_ms": 0.811,
+          "success": true,
+          "term": "@b"
+        }
+      ]
+    }
+  ]
+}

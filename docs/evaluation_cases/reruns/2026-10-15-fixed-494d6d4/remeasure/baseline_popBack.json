@@ -1,0 +1,188 @@
+{
+  "side": "baseline",
+  "method": "popBack",
+  "tasks": [
+    "popBack-fixed-env-pair"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 10,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 10,
+  "method_total_ms": {
+    "median": 5801.613,
+    "min": 5445.037,
+    "max": 6930.806
+  },
+  "method_search_ms": {
+    "median": 5801.459,
+    "min": 5443.612,
+    "max": 6930.642
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": true,
+      "method_total_ms": 5445.037,
+      "method_search_ms": 5443.612,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 1.425,
+          "search_ms": 5443.612,
+          "total_ms": 5445.037,
+          "success": true,
+          "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "all_solved": true,
+      "method_total_ms": 5571.419,
+      "method_search_ms": 5571.162,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.257,
+          "search_ms": 5571.162,
+          "total_ms": 5571.419,
+          "success": true,
+          "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "all_solved": true,
+      "method_total_ms": 5621.136,
+      "method_search_ms": 5620.859,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.278,
+          "search_ms": 5620.859,
+          "total_ms": 5621.136,
+          "success": true,
+          "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "all_solved": true,
+      "method_total_ms": 6549.324,
+      "method_search_ms": 6549.027,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.298,
+          "search_ms": 6549.027,
+          "total_ms": 6549.324,
+          "success": true,
+          "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "all_solved": true,
+      "method_total_ms": 6212.453,
+      "method_search_ms": 6212.205,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.248,
+          "search_ms": 6212.205,
+          "total_ms": 6212.453,
+          "success": true,
+          "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "all_solved": true,
+      "method_total_ms": 5954.695,
+      "method_search_ms": 5954.537,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.158,
+          "search_ms": 5954.537,
+          "total_ms": 5954.695,
+          "success": true,
+          "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "all_solved": true,
+      "method_total_ms": 6930.806,
+      "method_search_ms": 6930.642,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.163,
+          "search_ms": 6930.642,
+          "total_ms": 6930.806,
+          "success": true,
+          "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "all_solved": true,
+      "method_total_ms": 5648.531,
+      "method_search_ms": 5648.38,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.152,
+          "search_ms": 5648.38,
+          "total_ms": 5648.531,
+          "success": true,
+          "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "all_solved": true,
+      "method_total_ms": 5616.776,
+      "method_search_ms": 5616.38,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.396,
+          "search_ms": 5616.38,
+          "total_ms": 5616.776,
+          "success": true,
+          "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 10,
+      "all_solved": true,
+      "method_total_ms": 6124.721,
+      "method_search_ms": 6124.49,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.231,
+          "search_ms": 6124.49,
+          "total_ms": 6124.721,
+          "success": true,
+          "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    }
+  ]
+}

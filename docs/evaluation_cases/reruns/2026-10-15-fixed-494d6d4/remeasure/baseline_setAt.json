@@ -1,0 +1,188 @@
+{
+  "side": "baseline",
+  "method": "setAt",
+  "tasks": [
+    "setAt-fixed-env-pair"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 10,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 10,
+  "method_total_ms": {
+    "median": 3819.655,
+    "min": 3612.685,
+    "max": 4681.136
+  },
+  "method_search_ms": {
+    "median": 3819.428,
+    "min": 3612.411,
+    "max": 4680.954
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": true,
+      "method_total_ms": 3633.651,
+      "method_search_ms": 3632.395,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 1.257,
+          "search_ms": 3632.395,
+          "total_ms": 3633.651,
+          "success": true,
+          "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "all_solved": true,
+      "method_total_ms": 3612.685,
+      "method_search_ms": 3612.411,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.274,
+          "search_ms": 3612.411,
+          "total_ms": 3612.685,
+          "success": true,
+          "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "all_solved": true,
+      "method_total_ms": 3733.839,
+      "method_search_ms": 3733.54,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.299,
+          "search_ms": 3733.54,
+          "total_ms": 3733.839,
+          "success": true,
+          "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "all_solved": true,
+      "method_total_ms": 3651.567,
+      "method_search_ms": 3651.247,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.32,
+          "search_ms": 3651.247,
+          "total_ms": 3651.567,
+          "success": true,
+          "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "all_solved": true,
+      "method_total_ms": 3847.266,
+      "method_search_ms": 3847.079,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.188,
+          "search_ms": 3847.079,
+          "total_ms": 3847.266,
+          "success": true,
+          "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "all_solved": true,
+      "method_total_ms": 3792.044,
+      "method_search_ms": 3791.777,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.268,
+          "search_ms": 3791.777,
+          "total_ms": 3792.044,
+          "success": true,
+          "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "all_solved": true,
+      "method_total_ms": 4119.815,
+      "method_search_ms": 4119.072,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.743,
+          "search_ms": 4119.072,
+          "total_ms": 4119.815,
+          "success": true,
+          "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "all_solved": true,
+      "method_total_ms": 4681.136,
+      "method_search_ms": 4680.954,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.182,
+          "search_ms": 4680.954,
+          "total_ms": 4681.136,
+          "success": true,
+          "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "all_solved": true,
+      "method_total_ms": 3892.907,
+      "method_search_ms": 3892.514,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.393,
+          "search_ms": 3892.514,
+          "total_ms": 3892.907,
+          "success": true,
+          "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 10,
+      "all_solved": true,
+      "method_total_ms": 3886.93,
+      "method_search_ms": 3886.701,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.229,
+          "search_ms": 3886.701,
+          "total_ms": 3886.93,
+          "success": true,
+          "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)"
+        }
+      ]
+    }
+  ]
+}
