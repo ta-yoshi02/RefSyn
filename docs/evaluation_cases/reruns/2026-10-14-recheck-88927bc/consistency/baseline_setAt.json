@@ -1,0 +1,44 @@
+{
+  "side": "baseline",
+  "method": "setAt",
+  "tasks": [
+    "setAt-fixed-env-pair"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 1,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 1,
+  "method_total_ms": {
+    "median": 3688.554,
+    "min": 3688.554,
+    "max": 3688.554
+  },
+  "method_search_ms": {
+    "median": 3687.065,
+    "min": 3687.065,
+    "max": 3687.065
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": true,
+      "method_total_ms": 3688.554,
+      "method_search_ms": 3687.065,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 1.489,
+          "search_ms": 3687.065,
+          "total_ms": 3688.554,
+          "success": true,
+          "term": "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)"
+        }
+      ]
+    }
+  ]
+}

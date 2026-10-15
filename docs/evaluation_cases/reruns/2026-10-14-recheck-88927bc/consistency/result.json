@@ -1,0 +1,75 @@
+{
+  "note": "single-run consistency check on 88927bc; not a measurement",
+  "rows": [
+    {
+      "side": "mold",
+      "method": "insert_general",
+      "solved_now": "1/1",
+      "solved_main_measurement": "10/10",
+      "terms_equal_to_every_main_repetition": true
+    },
+    {
+      "side": "mold",
+      "method": "append",
+      "solved_now": "1/1",
+      "solved_main_measurement": "10/10",
+      "terms_equal_to_every_main_repetition": true
+    },
+    {
+      "side": "mold",
+      "method": "popBack",
+      "solved_now": "1/1",
+      "solved_main_measurement": "10/10",
+      "terms_equal_to_every_main_repetition": true
+    },
+    {
+      "side": "mold",
+      "method": "prepend",
+      "solved_now": "1/1",
+      "solved_main_measurement": "10/10",
+      "terms_equal_to_every_main_repetition": true
+    },
+    {
+      "side": "mold",
+      "method": "setAt",
+      "solved_now": "1/1",
+      "solved_main_measurement": "10/10",
+      "terms_equal_to_every_main_repetition": true
+    },
+    {
+      "side": "baseline",
+      "method": "insert",
+      "solved_now": "0/1",
+      "solved_main_measurement": "0/10",
+      "terms_equal_to_every_main_repetition": true
+    },
+    {
+      "side": "baseline",
+      "method": "append",
+      "solved_now": "0/1",
+      "solved_main_measurement": "0/10",
+      "terms_equal_to_every_main_repetition": true
+    },
+    {
+      "side": "baseline",
+      "method": "popBack",
+      "solved_now": "1/1",
+      "solved_main_measurement": "10/10",
+      "terms_equal_to_every_main_repetition": true
+    },
+    {
+      "side": "baseline",
+      "method": "prepend",
+      "solved_now": "1/1",
+      "solved_main_measurement": "10/10",
+      "terms_equal_to_every_main_repetition": true
+    },
+    {
+      "side": "baseline",
+      "method": "setAt",
+      "solved_now": "1/1",
+      "solved_main_measurement": "10/10",
+      "terms_equal_to_every_main_repetition": true
+    }
+  ]
+}

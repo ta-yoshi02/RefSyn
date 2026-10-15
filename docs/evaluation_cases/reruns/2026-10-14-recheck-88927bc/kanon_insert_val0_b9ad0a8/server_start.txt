@@ -1,0 +1,4 @@
+started_utc=2026-10-14T08:34:19Z
+head=b9ad0a820f2a1025a027597e3396c37b9ec1d56f
+binary_sha256=448b525c4681079ae2383563f5dbc5daa49fc5ab8b0b3feca23bda335133ed4c
+no ESCHER_TS_/REFSYN_ vars

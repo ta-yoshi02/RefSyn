@@ -1,233 +1,97 @@
-# 論文に合わせた修正の残作業
+# 論文との適合確認表
 
 確認日：2026-10-14。
-RefSynの基準コミット：`b42d9cafa08ea32ea2d79e622e58b25a233d2b02`（#29のマージ後）。
-初版のソース照合は `af76b2e` を対象とし、今回の更新では #29 のC1とC5の検査と保存記録を確認した。
-他の項目を新しい版で全件照合し直したわけではない。
-論文の基準コミット：`949ffd2cfffd63ea39c45e03fdefcdaa831c1f63`（`/Users/taku/workspace/paint2026-yoshio`）。
-本書は現ソースとの照合による作業表であり、全経路の再実行や形式的な適合証明ではない。
+RefSynの基準：main `88927bcc99003d4f4836f9e518056ae64871675c`（#32のマージ後）。固定するKanonは `60fa5c8`、escher-tsは `4e7c4bc`。
+論文の基準：`949ffd2cfffd63ea39c45e03fdefcdaa831c1f63`（`/Users/taku/workspace/paint2026-yoshio`）。
+本書は、論文の各規則について、実装、テスト、実操作の証拠、制限を対応付けた確認表である。形式的な適合証明ではない。
+論文本文の修正案は `docs/drafts/2026-10-14-paper-text-draft.md` にあり、本文は編集していない。
 
-## 仕様の参照範囲と、実際に読んだ範囲
+## 仕様の参照範囲
 
-**仕様の参照範囲**：`ja/main_ja.tex` が読み込む本文のうち、1〜5章を手法と実装説明の根拠とする。
-該当するのは `ja/sections/` の `introduction.tex`、`background.tex`、`method.tex`、`operation-graphs.tex`、`implementation.tex` である。
-`main_ja.tex` はappendixを読み込んでいない。
-コメントアウトされた旧説明と、6章（`evaluation.tex`）の評価結果は実装仕様の根拠に使わない。
+`ja/main_ja.tex` が読み込む本文のうち、1〜5章を手法と実装の仕様、6章（`evaluation.tex`）を評価条件の照合対象とする。
+`main_ja.tex` はappendixを読み込まない。コメントアウトされた旧説明は根拠にしない。
+今回読んだ範囲：`method.tex` 146〜260行、`operation-graphs.tex` の構文（19〜53行）と雛形・コード生成（130〜180行）、`implementation.tex` 150〜188行、`evaluation.tex` 全文。
 
-**実際に読んだ範囲**（参照範囲と同じではない）：
+## 証拠の所在
 
-| 時点 | 読んだ範囲 |
-| --- | --- |
-| 本書の初版（2026-10-14） | 有効な3〜5章、本番の主要モジュール、既存テストの検査内容、サブモジュールの固定版と手元の差 |
-| 2026-10-13の照合 | 1〜5章の全文（定義・構文・部品・翻訳・クラスと型の範囲を抜き出す目的） |
-| #28後の改訂 | `operation-graphs.tex` 14〜24行・72〜78行・122〜130行・164〜170行、`implementation.tex` 183〜188行、`method.tex` 136行・201行付近 |
-| #29後の更新 | `web/src/lib/binding-conditions.test.ts`、保存した型検査と負例のログ、固定版insertの要求、応答、再送と独立実行の記録 |
+| 証拠 | 場所 | 状態 |
+| --- | --- | --- |
+| 主要5ケースのKanonでの新規記録（`b42d9ca`）、予備実験と本測定、baselineとの問題同一性の検査 | ブランチ `eval/five-cases-b42d9ca`（commit `925917d`）の `docs/evaluation_cases/reruns/2026-10-14-fresh-recording/` | draft PR [#33](https://github.com/ta-yoshi02/RefSyn/pull/33)（未マージ） |
+| `88927bc` での再確認（task・部品・探索設定・backendの一致、5ケースでのC1・C5、`this.val = 0` のinsert再記録） | `docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/` | 本ブランチ `codex/eval-recheck-88927bc`（draft PR、未マージ） |
+| #29のC1・C5の検査ログ | `docs/evaluation_cases/reruns/2026-10-14-pr29-checks/` | main |
+| `af76b2e` のinsert記録 | `docs/evaluation_cases/reruns/2026-10-14-recording/` | main。`b42d9ca` 以降の結果ではない |
 
-1〜2章（導入と背景）を、本書のために全文照合し直したわけではない。
-上の範囲外の記述を根拠に、適合や不適合を判断しない。
+## 適合確認表
 
-## 既に本番へ接続されている処理
+### A. 論文の規則
 
-旧経路の置換を未着手として計画し直す必要はない。
-[pipeline](../src/pipeline.rs) は、型付き記録の読込み、操作グラフ構築、全体同型、雛形、PBE問題生成を本番の入口へ接続している。
+| # | 論文の規則（箇所） | 実装 | テスト | 実操作の証拠 | 制限・差 |
+| --- | --- | --- | --- | --- | --- |
+| A1 | 操作グラフ：頂点 `Node(C)`・`addNode(C)`・定数・`null`、書込み `editEdge(m.f,n)` の列（`operation-graphs.tex` 19〜38行） | `src/operation_graph.rs`、`src/demonstration.rs` | `edits_become_writes_in_order_with_duplicates`、`delete_edges_write_one_shared_null_vertex`、`inconsistent_or_unsupported_edits_fail`（`tests/paper_pipeline_tests.rs`） | 5ケースの新規記録：全呼出しの操作列が受理され、合成まで進んだ | Kanonの記録形式（`addEdge`、`editEdgeReference`、`deleteEdge`）を、旧参照先と呼出し前状態の整合を確かめてから `editEdge` に正規化する。この整合検査は論文の規則ではない（B2） |
+| A2 | 全体同型による対応付け。既存物・生成物・定数の型・`null` を区別し、辺の向き・field・重複を保つ（`operation-graphs.tex` 72〜81行） | `src/alignment.rs`、`Vertex::corresponds` | `insert_demonstrations_correspond_as_in_the_paper`、`correspondence_preserves_kind_class_direction_and_multiplicity` | 5ケース：異なる入力順の実演（insertの第3実演、appendの第2実演など）が対応した | 同型が複数あれば一つを採る（論文の記述どおり）。ユーザが選ぶ機構はない |
+| A3 | 頂点ごとの穴、同じ頂点の出現で共有（`operation-graphs.tex` 130〜145行） | `src/template.rs` | `insert_template_has_seven_statements_in_the_paper_order`、`creations_precede_holes_shared_vertices_bind_once_and_writes_keep_order_and_multiplicity` | 5ケースの生成メソッド（各 `response.json`） | 穴の束縛順は第1実演の辺列での初出順。論文の例の `<value>`、`<prev>`、`<next>` の順と同じになるのは辺列がその順のときだけ。今回のinsert記録では後続（`i+1`個先）が `hole1`、更新対象が `hole2` になった |
+| A4 | コード生成：生成文 → 穴の束縛文 → 代入文、各穴を1回評価（`operation-graphs.tex` 165〜180行） | `Template::statements`、`render_method` | A3と同じ | 5ケースの反映後ソース（`source_after.js`） | なし |
+| A5 | 後続の穴の入力に先行穴の結果を加える（`method.tex` 194〜201行） | `src/pbe_problem.rs` は先行穴の**出力例**を入力に加え、`src/pipeline.rs` は合成前に全taskを作る | C1〜C5（下の表） | 下の表 | 論文の文言（「評価結果」）と実装（「出力例」）が異なる。一致の条件と検査範囲を本文に書く案を作成済み |
+| A6 | 生成は `new C()`（`operation-graphs.tex` 171行） | 操作グラフ、雛形、Kanonの生成直後snapshot、全体検証 | `creating_a_class_outside_the_supported_constructors_fails`、#32の各テスト | `this.val = 0` を持つinsertのKanon再記録（`2026-10-14-recheck-88927bc/kanon_insert_val0_b9ad0a8/`）：passed 3/3、反映後の再実行で3呼出しとも `testPassed` | 対応するのは、引数なしの `new C()` が例外を出さず、基本型・`null`・`undefined` のデータプロパティだけを設定するクラス（B3） |
 
-| 論文の規則または実装上の採用条件 | 現ソースで確認できる処理 |
-| --- | --- |
-| 既存物と生成物、型とクラスを区別した全体同型 | [alignment](../src/alignment.rs) と [Vertex::corresponds](../src/operation_graph.rs)。辺の向き、field名、重複数を保存し、非同型を拒否する |
-| 既存物と定数を頂点ごとの穴にする | [template](../src/template.rs)。同じ頂点は一つの束縛を共有する |
-| 全生成、全穴束縛、全書込みの順。生成は宣言順、書込みは第1実演の辺列順 | `Template::statements` と `render_method` |
-| 生成を `new C()` とする | 操作グラフと雛形、Kanonの生成直後snapshot、全体検証 |
-| 誤った候補を適用しない追加条件 | [validation](../src/validation.rs)、[browser runner](../web/src/lib/browser-runner.ts)、[全体検証器](../runtime/whole-method-validation.mjs) |
+### B. 実装上の拡張・制限・採用条件（論文本文にないもの）
 
-これらの存在はソースで確認した。
-この表だけで、テストの成功や論文全体への適合を主張しない。
+| # | 内容 | 種類 | 実装 | テスト | 証拠・制限 |
+| --- | --- | --- | --- | --- | --- |
+| B1 | 返り値：特殊変数 `return` への参照設定を末尾の `return` 文にする | 拡張（論文は脚注で言及） | `OperationGraph::ret`、`Template` | `http_validates_demonstrated_return_values`（`tests/whole_method_validation_tests.rs`） | prependの新規記録で passed 2/2、再実行で `testPassed` |
+| B2 | 記録の整合検査：`addEdge` は空・`null`・`undefined` のfield、または**この実演で生成し、まだ書き込んでいないfield**（`new C()` の既定値を上書き）にだけ許す。`editEdgeReference`・`deleteEdge` は記録された旧参照先と状態の一致を要求 | 採用条件（記録の整合性） | `src/operation_graph.rs`（`unwritten_created`）、`runtime/whole-method-validation.mjs` | `add_edge_replaces_an_unwritten_constructor_default_of_a_created_object`、`creation_and_write_history_do_not_carry_over_to_the_next_demonstration`、検証器の同名テスト | #32で既定値の上書きを許可した。修正前は `this.val = 0` のクラスを合成前に拒否していた（`eval/five-cases-b42d9ca` の `insert_general/attempt1_constructor_val0/`）。同じ要求は `88927bc` で passed 3/3 |
+| B3 | `new C()` の条件：引数なしで実行し、データプロパティは基本型・`null`・`undefined` だけ | 実装制限 | Kanon `captureInstance`、`AddObject` | `creating_a_class_outside_the_supported_constructors_fails` | 仮引数の宣言は拒否理由にならない（引数なしの実行で `undefined` になる） |
+| B4 | 型：整数・真偽値・単一クラスの参照（`null` を含む）。文字列、整数以外の数、複数クラスは拒否 | 実装制限 | `field_kinds`、`task_type`（`src/pbe_problem.rs`） | `an_unrepresentable_or_mixed_kind_input_state_is_rejected_by_the_pbe_encoding`、`tests/boolean_values_tests.rs` | fieldの型は**呼出し前状態と `new C()` の状態だけ**から決め、書込み値の型は見ない。入力状態の型が揃っていれば、既定値と異なる型の書込みも通る（`false`→数値、`0`→真偽値、`0`→参照。#32のレビューで再現し、`88927bc` で再実行して passed 3/3）。入力状態での型の混在（例：呼出し前が数値で既定値が `false`）と、表現できない値（`""`、`0.5`）は拒否 |
+| B5 | 生成メソッドの採用前検査 | 採用条件（論文本文に未記載） | `runtime/whole-method-validation.mjs`、`src/validation.rs`、`web/src/lib/browser-runner.ts` | `runtime/whole-method-validation.test.mjs`（51件の一部）、`tests/whole_method_validation_tests.rs` | 5ケースとも passed（全実演）。範囲は C の表の「採用時」の行 |
+| B6 | Kanonの入力：引数は整数・`null`・参照だけ。リテラルは数値か文字列として記録 | 実装制限（Kanon） | `normalizeCallArgument`、`literalInputType`（Kanon `src/js/testize.js`） | — | 真偽値の引数や真偽値リテラルの実演は画面から記録できない。真偽値の対応を主張する場合は明記する |
 
-## 優先順位と完了条件
+### C. 出力例を束縛する方式の成立条件（A5）
 
-### 1. 再確認する構成を固定する
-
-mainが固定するKanonは `60fa5c8e80d05a28dd12438ee1f4876a49bba79f`、escher-tsは `4e7c4bca45d98a0b5f2f76fd70486ed823c731f1` である（#28のマージ前後で変わっていない）。
-手元のcheckoutは次のとおりで、固定構成とは一致しない。
-
-- 文書整理前のRefSynのHEADは `b42d9ca`（#29のマージ後）。今回のcommitには実装変更とサブモジュールの更新を含めない。
-- 手元のescher-tsは `dc13e6a`（escher-ts#3のマージコミット）を指す。固定版の `4e7c4bc` とツリーは同一（`9d17335`）で、内容の差はない。
-- Kanonは固定版と同じ `60fa5c8` だが、`.DS_Store` と生成済み `src/js/menubar.js` の変更がある。
-- 論文側には未コミットのappendix変更などがあるが、`main_ja.tex` はappendixを読み込んでいない。
-
-`af76b2e` の別checkoutによる [insertの記録](evaluation_cases/reruns/2026-10-14-recording/README.md) は保存済みである。
-この記録を `b42d9ca` の主要5ケースの評価結果に読み替えない。
-次の作業は、既存変更を保持したまま、評価対象の版を固定し、主要5ケースとbaselineの基準結果を揃えることである。
-escher-tsをビルドしてから、Rust、runtime、WASM、web、Kanonの記録と反映を確認する。
-検査の起動順は [CI](../.github/workflows/ci.yml) を参照し、論文で使う結果には実際のSHAとコマンドと出力を保存する。
-現在の手元状態で通った検査を、mainの固定構成の検査と呼ばない。
-
-完了条件：固定した3リポジトリのSHA、依存のlockfile、実行コマンド、成否、未確認項目を対応付けて保存できること。
-
-### 2. 出力例を束縛する方式の成立条件を明文化し、確認する
-
-逐次合成への書換えは行わない。
-現在の方式は、後続穴の入力へ、先行穴の **出力例**（実演から得た値）を束縛する。
-[pbe_problem::build](../src/pbe_problem.rs) は `earlier.examples[i]` を入力へ追加し、[pipeline::plan](../src/pipeline.rs) は合成の前に全taskを作る。
-
-論文 `ja/sections/method.tex` の「穴ごとの入出力例の構成」（201行付近）は、`<value>`、`<prev>`、`<next>` の順に合成し、**先行する合成式の評価結果** を次の入力環境へ加えると記述している。
-次の条件がすべて成り立てば、各実演において、各穴へ渡す入出力例は両者で一致する。
-入力の一致から言えるのはここまでであり、合成される式まで同じかどうかは、次の点に分けて扱う。
-
-- 探索条件：現実装は穴ごとに新しい `AscendRecSynthesizer` を、全穴で同じ設定（`maxCost`、`searchSizeFactor`、`timeoutMs`）で作る（`runtime/refsyn-escher-adapter.mjs` の `runRefsynTasks`）。論文の手順を実装する場合も、同じ設定と同じ部品列を使うことが前提になる。
-- 探索の決定性：AscendRecの探索に乱数は見当たらない（`synthesizer.ts` に `Math.random` はない）。同じtaskなら、時間内に終われば同じ式を返すと見込めるが、これを確かめたテストはない。
-- 時間制限：既定の `timeoutMs` は2000msの実時間である。限界付近の穴は、機械の負荷で成功と失敗が入れ替わり得る。これは両方式に共通するが、「同じ式が得られる」とは言えなくなる。評価では制限と実行環境を記録する。
-- 実行順：現実装は全taskを作ってから、taskを1つずつ順に合成する。論文の手順では、先行穴の合成に失敗した時点で後続穴へ進まない。現実装は残りの穴も合成し、1つでも失敗すれば採用しない。採用の可否は同じだが、合成時間と、失敗時に得られる診断は異なる。
-- 穴の順：現実装の穴順は第1実演の辺列に従う。論文の `<value>`、`<prev>`、`<next>` の順と同じになるのは、辺列がその順のときだけである（下の完了条件を参照）。
-
-| 条件 | 内容 | 現在の根拠 | 確認の状態 |
+| 条件 | 内容 | 根拠 | 確認の状態（`88927bc`） |
 | --- | --- | --- | --- |
-| C1 解は全例を再現する | escher-tsが返す式は、各実演の入力で出力例と等しい値（参照は同じ番号）を返す | AscendRecの `validateBody` と、#29の `web/src/lib/binding-conditions.test.ts`。WASMが生成したtaskに対し、返った式をescher-tsで評価する | paper_insertと真偽値の3fixtureで直接検査する。Int、Bool、Refを区別し、誤った式を検出する。式の読み戻しは `showTerm` の表示形式に依存し、汎用ではない |
-| C2 入力は先行穴までに限る | 穴kの入力は、呼出し前状態、引数、生成物（生成直後の状態）、先行穴の出力例だけで、自身と後続の穴、書込み後の状態を含まない | `pbe_problem::build`。テスト `hole_inputs_add_created_objects_and_earlier_holes_but_no_writes`（`tests/paper_pipeline_tests.rs`） | テストあり |
-| C3 生成JSも出力例を返す | 翻訳した補助メソッドが、実際の実行で出力例と同じ値（参照はidentity）を返す | 全体検証器が `hole_checks` で、各補助メソッドの実際の戻り値をちょうど1回、`Object.is` で照合する（`runtime/whole-method-validation.mjs` 221〜228行）。nativeは `validation.rs` から同じ検証器を使う | テストあり（`runtime/whole-method-validation.test.mjs` の `hole_checks` を使う各テスト） |
-| C4 実行順が符号化と同じ | 生成メソッドは、全 `new` → 穴を固定順に1回ずつ評価 → 書込み、の順に実行する。そのため実行時の穴の入力は符号化した入力と一致する | `Template::statements`。テスト `insert_template_has_seven_statements_in_the_paper_order`、`creations_precede_holes_shared_vertices_bind_once_and_writes_keep_order_and_multiplicity` | テストあり |
-| C5 補助メソッドは状態を変えない | 先行穴の評価が、後続穴の入力となる状態を変えない | #29の `web/src/lib/binding-conditions.test.ts` は、入力から到達できるobjectをProxyで包み、set、defineProperty、deleteProperty、setPrototypeOf、preventExtensionsを捕捉する | 4fixtureのhelperと、insertの入力上の部品別検査がある。通常入力ではescher-tsの値、参照番号、失敗と一致させる。環状入力では再訪を検出する3部品の失敗と、他の部品の結果を検査する。戻した書込みと後で上書きされる書込みも検出する。未観測入力や、大域、prototype、static、局所変数への書込みはこのProxy検査の範囲外 |
+| C1 | 解は各実演で出力例を返す | AscendRecの例検査。`web/src/lib/binding-conditions.test.ts` が、WASMの生成したtaskに対し返った式をescher-tsで評価する | CI：paper_insertと真偽値3fixture。主要5ケースでも1回確認（CI外、`2026-10-14-recheck-88927bc/consistency/c1_c5_five_cases.txt`） |
+| C2 | 穴kの入力は呼出し前状態、引数、生成直後の生成物、先行穴の出力例だけ | `pbe_problem::build` | `hole_inputs_add_created_objects_and_earlier_holes_but_no_writes`。生成物の既定値が入力に残ることは `hole_inputs_keep_the_constructor_default_of_a_created_object` |
+| C3 | 翻訳した補助関数も実際の実行で出力例を返す | 採用前検査が、各補助関数がちょうど1回呼ばれ、戻り値が出力例と `Object.is` で等しいことを照合する | 採用のたびに全実演で検査。5ケースとも passed |
+| C4 | 実行順が符号化と同じ（全生成 → 穴 → 書込み） | `Template::statements` | A3・A4のテスト |
+| C5 | 補助関数は後続の穴が読む状態を変えない | 下の三段階 | 下の三段階 |
 
-条件が成り立たない場合の扱い：
-- C1が破れる（例を再現しない式が返る）と、C3の照合で採用を拒否する。誤った式は採用されない。
-- C3が破れる（翻訳がescher-tsの評価と食い違う）と、全体検証で拒否する。翻訳と評価の一致は、別途 `runtime/refsyn-escher-adapter*.test.mjs` が、列挙した部品・式・入力の範囲で確かめている。
+C5（純粋性）の検査範囲：
 
-追加済みの検査と残る範囲：
-- C1とC5の動的検査は #29 で追加済みである。[保存したログ](evaluation_cases/reruns/2026-10-14-pr29-checks/README.md) では `edf6ac1` の対象ファイルが14件成功し、即座に例外を投げるhelperと、走査中の書込みを注入した負例で失敗している。今回、この負例を再実行したわけではない。
-- C5の静的検査として、翻訳が出力し得る全コードの形を部品一覧に対して自動検査する仕組みは追加されていない。動的検査の対象も、列挙した部品と入力に限る。
-- 未観測入力での純粋性や、escher-tsの全ての部品の純粋性は保証しない。論文で純粋性を主張する場合は、検査した範囲を書く。
-- 論文本文の修正案（本文は編集しない）：「後続穴の入力例には先行穴の出力例を用いる。PBEの解は全実演でこの値を返すため、先行式の評価結果と一致する。生成メソッドの採用前に、各補助メソッドの実際の結果がこれと一致することを確かめる。」
+| 段階 | 確かめること | 対象 | 範囲外 |
+| --- | --- | --- | --- |
+| 構成上 | 部品は読取り・判定・算術のみ。翻訳（`compileComponent`）はfield読取り、局所変数、算術・比較・条件式、自己再帰の固定された形だけを出力し、それ以外は翻訳エラーで採用しない | すべての合成結果 | 部品実装の純粋性の形式的証明はない |
+| 採用時 | 実行後の全オブジェクト・戻り値・生成物の一致、大域・標準プロトタイプ・クラスとプロトタイプの不変、C3 | 合成のたびに全実演 | 補助関数の呼出し間の状態は比べない。元に戻した書込みや、後で上書きされる書込みは検出しない。実演にない入力 |
+| テスト時 | Proxyで入力から到達できるobjectへのset・defineProperty・deleteProperty・setPrototypeOf・preventExtensionsを捕捉。元に戻した書込みと上書きされる書込みも検出 | CI：4fixture。主要5ケースは1回（CI外） | 実演にない入力。大域、プロトタイプ、static、局所変数 |
 
-完了条件：C1〜C5のそれぞれについて、根拠となるコードとテストを示し、C1・C5の追加テストが通ること。
-第1実演の辺列に基づく穴順と、生成コードの束縛順が同じであることも確かめる。
+### D. 評価（6章）
 
-### 3. 論文の型とクラスの範囲を、実装の対応範囲と照合する
+| 項目 | 論文（`evaluation.tex`） | 実装側の記録 | 状態 |
+| --- | --- | --- | --- |
+| 対象と実演数・操作数 | 5メソッド、実演数3/3/2/3/2、操作数2/4/5/5/1 | 新規記録で同じ（`eval/five-cases-b42d9ca` の `stage_summary.json`） | 一致 |
+| MOLDのコスト上限 | 14（48行） | 本測定は32 | **不一致**。両手法32・15秒に揃える本文案を作成済み |
+| baselineのコスト上限 | 32、15秒（68行） | 32、15秒 | 一致 |
+| 反復と成功の定義 | 記載なし | 10回、10回すべてで解けたものを成功 | 本文案で追記 |
+| 実装の版 | 「評価中は実装を固定」（50行）、SHAの記載なし | 測定は `b42d9ca`。`88927bc` でtask・部品・探索設定・escher-tsが同一 | 本文案でSHAを追記 |
+| 環境 | Darwin 25.6.0 | Darwin 27.0.0、Rust 1.93.0、Node 22.17.0 | 本文案で更新 |
+| 結果（○×） | baseline：setAt・prepend・popBackが○、append・insertが× / MOLD：全て○ | 本測定で同じ（10/10と0/10） | 一致 |
+| field名 | `Obj`・`f`・`g` を `Node`・`val`・`next` に読み替える注（86〜87行） | 新規記録は `Node`・`val`・`next`。baselineのtaskは旧記録の `f`/`g` で、問題の同一性を `check_baseline_spec.mjs` で確認 | 本文案で注を差し替え |
+| 測定区間 | 記載なし | escher-tsの処理（解析・準備・探索）。翻訳・RefSynの解析・全体検証を含まない | 時間を載せる場合に注記（本文案） |
 
-論文4章の構文は、型付きプリミティブ定数とクラス名を持つ（`operation-graphs.tex` 19・22行）。
-同じ型の定数どうしだけを対応させ（76行）、定数の頂点は穴になる（127行）。
-操作グラフと雛形は、数値・文字列・真偽値を区別する。
+## 残作業（優先順）
 
-| 範囲 | #28のマージ前（`2a49c25`まで） | #28のマージ後（`af76b2e`） |
-| --- | --- | --- |
-| 整数のfield・引数・穴 | 対応 | 対応 |
-| 単一クラスの参照（nullを含む） | 対応 | 対応 |
-| 真偽値のfield・引数・穴 | `field_kinds` と `task_type` が拒否 | 対応。fieldはescher-tsで `Bool` と型付けしてslotに直接持ち、heapを作らない。引数と穴も `Bool` |
-| 文字列 | 拒否 | 拒否（「string-valued holes cannot be encoded」。escher-tsに文字列の型と値がない） |
-| 複数クラス | 拒否 | 拒否（「PBE problems support a single class」） |
+1. **本文案の採否を決め、本文へ反映する**（`docs/drafts/2026-10-14-paper-text-draft.md`）。A5の一致条件、C5の三段階、B4・B6の対応範囲、D の評価条件を対象とする。
+2. **評価の証拠をmainへ取り込む**。`eval/five-cases-b42d9ca`（#33）と本ブランチはdraft PRで、mainには未マージである。論文が参照する前にマージを判断する。
+3. **Kanonの未解決の問題**（2026-10-14、Kanon `60fa5c8` で確認）：
+   - fallbackで、実演が付け替えた `const` 変数への代入が実行を止める（`eval(__variableName + ' = __object')`）。実演を拒否すべきである。
+   - overlayの7件のテストが失敗する（`inferMethodParamNamesForCall` の実装がどのcommitにもない）。Kanon#7のCIは除外している。完成させるか取り下げるかは未決定。
+   - 真偽値リテラルを入力できない（B6）。論文の例と評価対象には不要。
+4. **公開デモのブラウザバンドルでのUI確認**。公開デモを更新するときに行う。今回はネイティブ経路とローカルのWASM（webテスト）だけを確認した。
+5. （任意）主要5ケースのC1・C5検査をCIに加えるかどうか。今回は1回の確認だけである。
 
-#28のマージ後の真偽値の扱い：
-- 観測値が真偽値だけ（undefined・不在は可）のfieldだけをBoolとする。数値・null・文字列と混在すれば変換せずに拒否する。
-- 生成JSは、Boolのfieldを読むときに `typeof === "boolean"` を確かめる。undefined、null、`1`、`"true"` はfalseに補完せず、`TypeError` で失敗する。
-- 根拠となるテスト：`tests/boolean_values_tests.rs`（nativeの合成・検証と独立した実行）、`runtime/refsyn-escher-adapter-booleans.test.mjs`（escher-tsと生成JSの値・失敗の一致）、`web/src/lib/booleans.test.ts`（WASM経路）。
+## 今回の確認範囲（2026-10-14、`88927bc`）
 
-field種別は観測値から決め、nullしか現れないfieldは参照fieldとする。
-
-これは確認済みの対応範囲の差であり、全てのJavaScript型を追加する指示ではない。
-論文が実装として対応を主張する範囲と、評価で必要な範囲を先に確定し、その範囲の型とクラスを境界全体で保持する。
-整数の範囲、null、undefined、不在、生成物、外部aliasの符号化も同じ表で確認する。
-未対応入力を推測で別の型へ変換しない。
-
-完了条件：論文上の各対象型について、記録、雛形、task符号化、backend評価、JS翻訳、全体検証まで対応の有無が追えること。
-実装が狭い箇所は、必要な修正と実装制限を区別する。
-
-### 4. 本文にない拡張と実装の前提を切り分ける
-
-`OperationGraph::ret` とreturn頂点の対応は、論文4章のグラフ構文にはない拡張である。
-削除を先に決めず、論文の手法部分と返り値を扱う実装拡張を分けて検査する。
-constructorの引数なし実行、初期fieldがプリミティブだけであること、通常のdata propertyなどの条件も、本文の `new C()` 規則そのものとは区別する。
-現在の全体検証は有限の実演での採用条件であり、未知入力への正しさの証明ではない。
-
-同じfieldへの複数回書込みは、順序と重複を保持したままにする。
-今回の正しさの検討対象から外し、高々1回という入力制限は追加しない。
-複数の同型から一つを選ぶことは本文にあるため、全写像の列挙や穴の成功に基づく対応の探索を当然の残作業にはしない。
-
-完了条件：各条件が本文の規則、実装制限、拡張、採用検査のどれかを明示し、制限を論文由来の必須条件と取り違えないこと。
-
-### 5. 固定版で翻訳と実際のKanon操作を再確認する
-
-次の修正はマージ済みである。未修正の不具合として再実装しない。
-
-| リポジトリ | PR | 内容 |
-| --- | --- | --- |
-| RefSyn | #19〜#21 | fieldの欠落とnullの区別、演算子の優先順位、`loadInt` が読むヒープの選択 |
-| RefSyn | #22、#27 | 固定するKanonとescher-tsの更新 |
-| RefSyn | #23 | null読出し、循環、and/orの正格評価などで、backendと生成JSの値・失敗・停止を一致させる |
-| RefSyn | #24 | PRごとのCI |
-| RefSyn | #25 | 日本語などの仮引数名の衝突 |
-| RefSyn | #26 | Webのサンプルをv3形式に更新 |
-| RefSyn | #28 | 真偽値のfield・引数・穴 |
-| RefSyn | #29 | 先行穴の出力例を束縛する方式について、C1とC5を有限のfixtureと部品で直接検査する |
-| escher-ts | #2、#3 | `findByValueRef` の未定義値と循環、`strictFieldAccess`、整数fieldの判定 |
-| Kanon | #5 | Pagesのfixtureをv3にし、全体検証の `passed` を確かめる |
-| Kanon | #6 | fallback後の捕捉と、最新の実行と食い違う保存済み捕捉を合成に使わない |
-| Kanon | #7 | PRでjestを実行する（overlayの7件は除外） |
-| Kanon | #8 | 実行結果の照合で、リテラルを型と値で比べる |
-| Kanon | #9 | fallbackが、変化していない変数を再代入しない |
-
-固定版のbackend評価と翻訳後JSを比較し、値と参照だけでなく失敗時の結果も確認する。
-既存の比較検査は `runtime/refsyn-escher-adapter*.test.mjs` にある。
-
-Kanonでは、呼出し前snapshot、操作ID、実演保存、合成、検証、ソース反映、反映後の再実行を一続きで確認する。
-失敗時にエディタが変わらないこと、古い呼出しの記録が再利用されないことも対象とする。
-従来の表示グラフによる合否表示だけで型やpropertyの一致を判断しない。
-
-Kanonの未解決の問題（2026-10-14にKanon `60fa5c8` で再確認）：
-
-1. **fallbackで、実演が付け替えた `const` 変数への代入が実行を止める。**
-   - Kanon#9で、変化していない変数は返さなくなった。しかし、実演が別のオブジェクトへ付け替えた変数は、従来どおり `override` が返す（`src/js/testize.js` 2009行付近の条件）。
-   - 呼出しの計装コードは、返された変数ごとに `eval(__variableName + ' = __object')` を実行する（`src/js/code-instrumentation/ast-transforms.js` の912行付近でASTとして生成。266・328・537行のコメントに同じ形がある）。
-   - 再現の根拠：
-     - `npx jest src/js/test/testize-fallback-override.test.js` の「a variable the demonstration points elsewhere is still reassigned」が通る（`override` が付け替えた `p` を返す）。
-     - Nodeで `(() => { const p = {}; eval("p = __object"); })()` を実行すると、`TypeError: Assignment to constant variable.` になる。
-     - 2026-10-13の実ブラウザでも、同じ例外で実行が止まることを確認した。
-   - コードでは実現できない実演なので、実行を止めるのではなく、その実演を拒否すべきである。
-2. **overlayの7件のテストが、どの環境でも失敗する。**
-   - `npx jest src/js/test/testize-argument-overlay.test.js` を実行すると、7件とも `beforeEach` で「Property `inferMethodParamNamesForCall` does not exist in the provided object」となって失敗する。
-   - テストは20ea4a6で追加されたが、`inferMethodParamNamesForCall` などの実装は、Kanonのどのcommitにも存在しない（`git log --all -S inferMethodParamNamesForCall` は20ea4a6のテストだけを示す）。
-   - 実装は、手元のKanonリポジトリの未pushのstash（`stash@{0}`、`WIP on syn: db7ad45`）にだけある。
-   - Kanon#7のCIはこの7件を除外している。機能を完成させるか取り下げるかは未決定である。
-3. **真偽値のリテラルを入力できない。**
-   - `literalInputType` は数値と文字列の型しか付けないため、`"true"` と入力すると文字列として記録される。黙って真偽値には変えない。
-   - そのため、引数の真偽値をfieldへ書く実演は、Kanonの画面からは記録できない。真偽値のfieldをコピーする実演は記録できる（2026-10-13、#28のブランチで実画面確認）。
-   - 論文の例と評価対象には不要と判断し、対応しない。真偽値への対応を主張する場合は、この制約を明記する。
-
-完了条件：少なくとも論文のinsertを新規に記録し、型付き状態と送信payload、task、解、適用したソース、再実行結果が対応した証拠を保存する。
-`af76b2e` での [insertの新規記録](evaluation_cases/reruns/2026-10-14-recording/README.md) は、この成功経路の証拠として保存済みである。
-採用拒否の例も一つ通して確認する。
-主要5ケースの既存Rust検査は `precondGraph` から型付き状態を補っており（`tests/whole_method_validation_tests.rs` の `with_typed_pre_state`）、実際の記録経路の証拠に代用しない。
-
-### 6. 修正後の構成で論文の評価を取り直す
-
-保存済みの結果は旧経路の結果であり、現在の実装の実行時性能や成功率に読み替えない。
-新しいKanonで必要なsnapshotを含む実演を記録し、MOLDとbaselineの入力条件、部品集合、コストと時間制限を揃えて測定する。
-部品として与えた走査と、穴から合成された式を区別して報告する。
-手法の適合確認が終わる前に、本評価を先行させない。
-
-完了条件：各ケースのpayload、生成task、backend結果、翻訳結果、全体検証、時間、使用SHAを保存し、失敗段階を区別して評価表を作れること。
-本文のコード例、実装規模、公開デモがどの版に基づくかも最後に確認する。
-公開デモへの同期や公開操作は別作業である。
-
-## 今回の確認範囲
-
-**初版（2026-10-14）**：上記の「実際に読んだ範囲」を読み、実装、論文、サブモジュールは変更していない。ビルド、合成、UI操作、本評価は再実行していない。
-
-**今回の改訂**：
-- #28のマージ後のmain（`af76b2e`）とそのCIの成否を確認した。
-- escher-tsの固定版と手元版のツリーを比較した。
-- Kanon `60fa5c8` で、overlayのテストと `testize-fallback-override.test.js` を再実行した。
-- 上記のソース箇所を読んだ。
-- 実装、論文、サブモジュールは変更していない。合成、UI操作、本評価は再実行していない。
-
-**再改訂（2026-10-14、レビュー指摘への対応）**：
-- 手元のHEADが `af76b2e` になったことを確認し、作業表1番を更新した。
-- `runtime/refsyn-escher-adapter.mjs` の `runRefsynTasks` と翻訳の出力形、`synthesizer.ts` の時間制限を読み、作業表2番の「式も変わらない」という断定を、探索条件・決定性・時間制限・実行順・穴順に分けた。
-- C5の根拠と、最終状態の照合では見逃す変更、追加する検査の範囲を書いた。
-- テストは再実行していない。
-
-**#29後の文書整理（2026-10-14）**：
-- `b42d9ca` のC1とC5のテストを読み、追加済みの検査と残る範囲を更新した。
-- 保存済みの負例、型検査、insert記録を照合した。保存した型検査ログは35件の診断を含み、全体の型検査成功を示さない。
-- 固定版insertのサーバ終了と再起動失敗を記録のREADMEに反映し、チェックサムを更新した。
-- 保存ソースを実行する2つのNode replayを再実行し、どちらも9件のhole照合が成功し、保存結果と一致することを確認した。Rustのfmtとclippyも成功した。
-- 今回はビルド元を変更せず、合成要求の再送、負例の再実行、UI操作、本評価は行っていない。
-
-上の作業表は、残作業の優先順位と根拠を示すものであり、全不具合の網羅や現在の実行成功を主張しない。
+- 5ケースのtaskを `88927bc` で再生成し、測定時（`b42d9ca`）のtaskとバイト単位で一致することを確認した。baselineのtask、アダプタ、task生成のソース、escher-ts（SHAとdist）、Nodeも一致した。探索に影響する差分はないので再測定していない。
+- 1回の整合確認で、成否と得られた式が本測定の全10回と一致した。
+- 5ケースでC1・C5の検査を1回実行し、すべて成功した（CI外）。
+- #32の修正（`b9ad0a8`、`src` と `runtime` は `88927bc` と同一）で、`this.val = 0` のinsertをKanonで再記録し、passed 3/3、反映後の再実行も成功した。
+- 論文本文は読んだだけで編集していない。公開バンドルでのUI確認、Kanonの未解決の問題の修正は行っていない。

@@ -1,0 +1,98 @@
+--- RAW REQUEST PAYLOAD ---
+{"method_calls": [{"callLabel": "c0", "contextSensitiveID": "main", "receiverObject": "r", "receiverClassName": "Flag", "methodName": "link", "methodParamNames": ["b"], "arguments": [7], "operations": [{"editType": "addNode", "id": "n0", "label": "Flag", "isLiteral": false}, {"editType": "addNode", "id": "lit0", "label": "7", "isLiteral": true, "type": "number"}, {"editType": "addEdge", "from": "n0", "label": "on", "to": "lit0"}, {"editType": "addEdge", "from": "r", "label": "next", "to": "n0"}]}, {"callLabel": "c1", "contextSensitiveID": "main", "receiverObject": "r", "receiverClassName": "Flag", "methodName": "link", "methodParamNames": ["b"], "arguments": [8], "operations": [{"editType": "addNode", "id": "n1", "label": "Flag", "isLiteral": false}, {"editType": "addNode", "id": "lit1", "label": "8", "isLiteral": true, "type": "number"}, {"editType": "addEdge", "from": "n1", "label": "on", "to": "lit1"}, {"editType": "addEdge", "from": "r", "label": "next", "to": "n1"}]}, {"callLabel": "c2", "contextSensitiveID": "main", "receiverObject": "r", "receiverClassName": "Flag", "methodName": "link", "methodParamNames": ["b"], "arguments": [9], "operations": [{"editType": "addNode", "id": "n2", "label": "Flag", "isLiteral": false}, {"editType": "addNode", "id": "lit2", "label": "9", "isLiteral": true, "type": "number"}, {"editType": "addEdge", "from": "n2", "label": "on", "to": "lit2"}, {"editType": "addEdge", "from": "r", "label": "next", "to": "n2"}]}], "vis_graph": {"nodes": [], "edges": []}, "validation": {"version": 3, "classes": [{"name": "Flag", "source": "class Flag {\n    constructor() {\n        this.on = false;\n        this.next = null;\n    }\n\n    link(b) {\n    }\n\n    copy() {\n    }\n}", "instance": {"on": false, "next": null}}], "cases": [{"callLabel": "c0", "contextSensitiveID": "main", "objects": [{"id": "r", "className": "Flag", "fields": {"on": true, "next": null}}], "arguments": [7], "values": {"r-on": true, "r-next": null}}, {"callLabel": "c1", "contextSensitiveID": "main", "objects": [{"id": "r", "className": "Flag", "fields": {"on": false, "next": null}}], "arguments": [8], "values": {"r-on": false, "r-next": null}}, {"callLabel": "c2", "contextSensitiveID": "main", "objects": [{"id": "r", "className": "Flag", "fields": {"on": true, "next": null}}], "arguments": [9], "values": {"r-on": true, "r-next": null}}]}}
+---------------------------
+escher-ts synthesis completed (2 success / 0 failure)
+=== IMPROVED SYNTHESIS RESPONSE ===
+Common Pattern: Create(Create { vertex: 0, class: "Flag" })
+BindHole(0, Hole { vertex: 1, ty: Number, examples: [Constant(Number(Number(7))), Constant(Number(Number(8))), Constant(Number(Number(9)))] })
+BindHole(1, Hole { vertex: 2, ty: Object("Flag"), examples: [Object("r"), Object("r"), Object("r")] })
+Write(Write { from: 0, field: "on", to: 1 })
+Write(Write { from: 2, field: "next", to: 0 })
+Holes: {"link_h1": ["object r", "object r", "object r"], "link_h0": ["Number(Number(7))", "Number(Number(8))", "Number(Number(9))"]}
+List Environment Summary: escher-ts task JSON saved: target/escher/ts/link_1791970834_928219000_p47928_0.json
+Synthesized code:
+  [0] link_h0(b, created0) { return b; }
+  [1] link_h1(b, created0, hole0) { return this; }
+Composed method code:
+link(b) {
+    const created0 = new Flag();
+    const hole0 = this.link_h0(b, created0);
+    const hole1 = this.link_h1(b, created0, hole0);
+    created0.on = hole0;
+    hole1.next = created0;
+}
+Escher results:
+  [OK] link_h0 -> link_h0(@thisRef: Ref[Object<Flag>], @nodeHeap: List[Object<Flag>], @nextHeap: List[Object<Flag>], @b: Int, @created0: Ref[Object<Flag>]): Int =
+  @b
+  [OK] link_h1 -> link_h1(@thisRef: Ref[Object<Flag>], @nodeHeap: List[Object<Flag>], @nextHeap: List[Object<Flag>], @b: Int, @created0: Ref[Object<Flag>], @hole0: Int): Ref[Object<Flag>] =
+  @thisRef
+=====================================
+HTTP 200 OK
+{
+  "validation": {
+    "status": "passed",
+    "checked_demonstrations": 3,
+    "error": null
+  },
+  "hole_checks": [
+    {
+      "helper": "link_h0",
+      "expected": [
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "helper": "link_h1",
+      "expected": [
+        {
+          "ref": "r"
+        },
+        {
+          "ref": "r"
+        },
+        {
+          "ref": "r"
+        }
+      ]
+    }
+  ],
+  "common_pattern": "Create(Create { vertex: 0, class: \"Flag\" })\nBindHole(0, Hole { vertex: 1, ty: Number, examples: [Constant(Number(Number(7))), Constant(Number(Number(8))), Constant(Number(Number(9)))] })\nBindHole(1, Hole { vertex: 2, ty: Object(\"Flag\"), examples: [Object(\"r\"), Object(\"r\"), Object(\"r\")] })\nWrite(Write { from: 0, field: \"on\", to: 1 })\nWrite(Write { from: 2, field: \"next\", to: 0 })",
+  "hole_information": {
+    "link_h0": [
+      "Number(Number(7))",
+      "Number(Number(8))",
+      "Number(Number(9))"
+    ],
+    "link_h1": [
+      "object r",
+      "object r",
+      "object r"
+    ]
+  },
+  "code": [
+    "link_h0(b, created0) { return b; }",
+    "link_h1(b, created0, hole0) { return this; }"
+  ],
+  "composed_method_code": "link(b) {\n    const created0 = new Flag();\n    const hole0 = this.link_h0(b, created0);\n    const hole1 = this.link_h1(b, created0, hole0);\n    created0.on = hole0;\n    hole1.next = created0;\n}",
+  "individual_codes": [
+    "link_h0: link_h0(b, created0) { return b; }",
+    "link_h1: link_h1(b, created0, hole0) { return this; }"
+  ],
+  "list_environment_info": "escher-ts task JSON saved: target/escher/ts/link_1791970834_928219000_p47928_0.json",
+  "escher_results": [
+    {
+      "name": "link_h0",
+      "success": true,
+      "rendered": "link_h0(@thisRef: Ref[Object<Flag>], @nodeHeap: List[Object<Flag>], @nextHeap: List[Object<Flag>], @b: Int, @created0: Ref[Object<Flag>]): Int =\n  @b",
+      "error": null
+    },
+    {
+      "name": "link_h1",
+      "success": true,
+      "rendered": "link_h1(@thisRef: Ref[Object<Flag>], @nodeHeap: List[Object<Flag>], @nextHeap: List[Object<Flag>], @b: Int, @created0: Ref[Object<Flag>], @hole0: Int): Ref[Object<Flag>] =\n  @thisRef",
+      "error": null
+    }
+  ]
+}

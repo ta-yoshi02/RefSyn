@@ -1,0 +1,53 @@
+{
+  "side": "mold",
+  "method": "prepend",
+  "tasks": [
+    "prepend_h0",
+    "prepend_h1"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 1,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 1,
+  "method_total_ms": {
+    "median": 3.449,
+    "min": 3.449,
+    "max": 3.449
+  },
+  "method_search_ms": {
+    "median": 1.778,
+    "min": 1.778,
+    "max": 1.778
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": true,
+      "method_total_ms": 3.449,
+      "method_search_ms": 1.778,
+      "tasks": [
+        {
+          "task": "prepend_h0",
+          "prepare_ms": 1.202,
+          "search_ms": 1.571,
+          "total_ms": 2.773,
+          "success": true,
+          "term": "@x"
+        },
+        {
+          "task": "prepend_h1",
+          "prepare_ms": 0.468,
+          "search_ms": 0.207,
+          "total_ms": 0.676,
+          "success": true,
+          "term": "@thisRef"
+        }
+      ]
+    }
+  ]
+}

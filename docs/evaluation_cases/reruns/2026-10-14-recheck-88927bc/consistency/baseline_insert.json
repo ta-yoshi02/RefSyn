@@ -1,0 +1,44 @@
+{
+  "side": "baseline",
+  "method": "insert",
+  "tasks": [
+    "insert-fixed-env-pair"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 1,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 0,
+  "method_total_ms": {
+    "median": 15005.367,
+    "min": 15005.367,
+    "max": 15005.367
+  },
+  "method_search_ms": {
+    "median": 15003.938,
+    "min": 15003.938,
+    "max": 15003.938
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": false,
+      "method_total_ms": 15005.367,
+      "method_search_ms": 15003.938,
+      "tasks": [
+        {
+          "task": "insert-fixed-env-pair",
+          "prepare_ms": 1.429,
+          "search_ms": 15003.938,
+          "total_ms": 15005.367,
+          "success": false,
+          "term": null
+        }
+      ]
+    }
+  ]
+}

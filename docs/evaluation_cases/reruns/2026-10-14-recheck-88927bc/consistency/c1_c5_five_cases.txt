@@ -1,0 +1,116 @@
+
+ RUN  v4.1.4 /Users/taku/workspace/kenkyu/proj-ref/refsyn/.claude/worktrees/quizzical-engelbart-4df8c9/web
+
+ ✓ src/lib/zz-recheck-five-cases.test.ts > C1: the returned expression reproduces every output example > insert_general 31ms
+ ✓ src/lib/zz-recheck-five-cases.test.ts > C1: the returned expression reproduces every output example > append 3ms
+ ✓ src/lib/zz-recheck-five-cases.test.ts > C1: the returned expression reproduces every output example > popBack 2ms
+ ✓ src/lib/zz-recheck-five-cases.test.ts > C1: the returned expression reproduces every output example > prepend 4ms
+ ✓ src/lib/zz-recheck-five-cases.test.ts > C1: the returned expression reproduces every output example > setAt 5ms
+ × src/lib/zz-recheck-five-cases.test.ts > C1: the returned expression reproduces every output example > covers integers, booleans, references and a conditional 20ms
+   → expected [ 'Int', 'Ref' ] to deeply equal [ 'Bool', 'Int', 'Ref', 'if' ]
+ × src/lib/zz-recheck-five-cases.test.ts > C1: the returned expression reproduces every output example > detects expressions that miss an example 2ms
+   → ENOENT: no such file or directory, open '/Users/taku/workspace/kenkyu/proj-ref/refsyn/.claude/worktrees/quizzical-engelbart-4df8c9/docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/paper_insert/raw_request.json'
+ ✓ src/lib/zz-recheck-five-cases.test.ts > C1: the returned expression reproduces every output example > tells integers, booleans and references apart 0ms
+ ✓ src/lib/zz-recheck-five-cases.test.ts > C5: translated helpers leave the state the later holes read unchanged > insert_general 9ms
+ ✓ src/lib/zz-recheck-five-cases.test.ts > C5: translated helpers leave the state the later holes read unchanged > append 2ms
+ ✓ src/lib/zz-recheck-five-cases.test.ts > C5: translated helpers leave the state the later holes read unchanged > popBack 1ms
+ ✓ src/lib/zz-recheck-five-cases.test.ts > C5: translated helpers leave the state the later holes read unchanged > prepend 2ms
+ ✓ src/lib/zz-recheck-five-cases.test.ts > C5: translated helpers leave the state the later holes read unchanged > setAt 3ms
+ × src/lib/zz-recheck-five-cases.test.ts > C5: translated helpers leave the state the later holes read unchanged > translations of the traversal and field components give their outcome and write only their own locals 0ms
+   → ENOENT: no such file or directory, open '/Users/taku/workspace/kenkyu/proj-ref/refsyn/.claude/worktrees/quizzical-engelbart-4df8c9/docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/paper_insert/raw_request.json'
+ × src/lib/zz-recheck-five-cases.test.ts > C5: translated helpers leave the state the later holes read unchanged > detects a write that is undone before the helper returns 0ms
+   → ENOENT: no such file or directory, open '/Users/taku/workspace/kenkyu/proj-ref/refsyn/.claude/worktrees/quizzical-engelbart-4df8c9/docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/paper_insert/raw_request.json'
+ × src/lib/zz-recheck-five-cases.test.ts > C5: translated helpers leave the state the later holes read unchanged > detects a write that a later write of the method overwrites 1ms
+   → ENOENT: no such file or directory, open '/Users/taku/workspace/kenkyu/proj-ref/refsyn/.claude/worktrees/quizzical-engelbart-4df8c9/docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/paper_insert/raw_request.json'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/zz-recheck-five-cases.test.ts > C1: the returned expression reproduces every output example > covers integers, booleans, references and a conditional
+AssertionError: expected [ 'Int', 'Ref' ] to deeply equal [ 'Bool', 'Int', 'Ref', 'if' ]
+
+- Expected
++ Received
+
+  [
+-   "Bool",
+    "Int",
+    "Ref",
+-   "if",
+  ]
+
+ ❯ src/lib/zz-recheck-five-cases.test.ts:133:31
+    131|       }
+    132|     }
+    133|     expect([...kinds].sort()).toEqual(["Bool", "Int", "Ref", "if"]);
+       |                               ^
+    134|   });
+    135|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/lib/zz-recheck-five-cases.test.ts > C1: the returned expression reproduces every output example > detects expressions that miss an example
+Error: ENOENT: no such file or directory, open '/Users/taku/workspace/kenkyu/proj-ref/refsyn/.claude/worktrees/quizzical-engelbart-4df8c9/docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/paper_insert/raw_request.json'
+ ❯ tasksOf src/lib/zz-recheck-five-cases.test.ts:24:19
+     22|
+     23| const tasksOf = (fixture: string): RawTask[] => {
+     24|   const request = readFileSync(new URL(`../../../docs/evaluation_cases…
+       |                   ^
+     25|   const artifacts = JSON.parse(synthesize_browser(request, JSON.string…
+     26|   return JSON.parse(artifacts.task_json);
+ ❯ src/lib/zz-recheck-five-cases.test.ts:137:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/Users/taku/workspace/kenkyu/proj-ref/refsyn/.claude/worktrees/quizzical-engelbart-4df8c9/docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/paper_insert/raw_request.json' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/lib/zz-recheck-five-cases.test.ts > C5: translated helpers leave the state the later holes read unchanged > translations of the traversal and field components give their outcome and write only their own locals
+Error: ENOENT: no such file or directory, open '/Users/taku/workspace/kenkyu/proj-ref/refsyn/.claude/worktrees/quizzical-engelbart-4df8c9/docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/paper_insert/raw_request.json'
+ ❯ tasksOf src/lib/zz-recheck-five-cases.test.ts:24:19
+     22|
+     23| const tasksOf = (fixture: string): RawTask[] => {
+     24|   const request = readFileSync(new URL(`../../../docs/evaluation_cases…
+       |                   ^
+     25|   const artifacts = JSON.parse(synthesize_browser(request, JSON.string…
+     26|   return JSON.parse(artifacts.task_json);
+ ❯ src/lib/zz-recheck-five-cases.test.ts:262:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/Users/taku/workspace/kenkyu/proj-ref/refsyn/.claude/worktrees/quizzical-engelbart-4df8c9/docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/paper_insert/raw_request.json' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/lib/zz-recheck-five-cases.test.ts > C5: translated helpers leave the state the later holes read unchanged > detects a write that is undone before the helper returns
+Error: ENOENT: no such file or directory, open '/Users/taku/workspace/kenkyu/proj-ref/refsyn/.claude/worktrees/quizzical-engelbart-4df8c9/docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/paper_insert/raw_request.json'
+ ❯ tasksOf src/lib/zz-recheck-five-cases.test.ts:24:19
+     22|
+     23| const tasksOf = (fixture: string): RawTask[] => {
+     24|   const request = readFileSync(new URL(`../../../docs/evaluation_cases…
+       |                   ^
+     25|   const artifacts = JSON.parse(synthesize_browser(request, JSON.string…
+     26|   return JSON.parse(artifacts.task_json);
+ ❯ src/lib/zz-recheck-five-cases.test.ts:309:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/Users/taku/workspace/kenkyu/proj-ref/refsyn/.claude/worktrees/quizzical-engelbart-4df8c9/docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/paper_insert/raw_request.json' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/lib/zz-recheck-five-cases.test.ts > C5: translated helpers leave the state the later holes read unchanged > detects a write that a later write of the method overwrites
+Error: ENOENT: no such file or directory, open '/Users/taku/workspace/kenkyu/proj-ref/refsyn/.claude/worktrees/quizzical-engelbart-4df8c9/docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/paper_insert/raw_request.json'
+ ❯ tasksOf src/lib/zz-recheck-five-cases.test.ts:24:19
+     22|
+     23| const tasksOf = (fixture: string): RawTask[] => {
+     24|   const request = readFileSync(new URL(`../../../docs/evaluation_cases…
+       |                   ^
+     25|   const artifacts = JSON.parse(synthesize_browser(request, JSON.string…
+     26|   return JSON.parse(artifacts.task_json);
+ ❯ src/lib/zz-recheck-five-cases.test.ts:332:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/Users/taku/workspace/kenkyu/proj-ref/refsyn/.claude/worktrees/quizzical-engelbart-4df8c9/docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/paper_insert/raw_request.json' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 11 passed (16)
+   Start at  18:36:08
+   Duration  322ms (transform 126ms, setup 0ms, import 155ms, tests 88ms, environment 0ms)
+
