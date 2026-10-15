@@ -1,0 +1,43 @@
+{
+  "source": "Kanon editor session markers read in the browser after the edit was applied and the program re-ran (sha256 of the editor text: 4385b7f3e8170ac0154f990d4057ae7badfe64a48dc8a44e8ade72cd9a3cd9e7)",
+  "markers": [
+    {
+      "clazz": "testPassed",
+      "range": [
+        24,
+        10,
+        24,
+        14
+      ],
+      "call": "lst.append(53)"
+    },
+    {
+      "clazz": "testPassed",
+      "range": [
+        25,
+        10,
+        25,
+        14
+      ],
+      "call": "lst.append(89)"
+    },
+    {
+      "clazz": "testPassed",
+      "range": [
+        26,
+        10,
+        26,
+        14
+      ],
+      "call": "lst.append(46)"
+    }
+  ],
+  "annotations": [
+    {
+      "row": 9,
+      "column": 285,
+      "type": "warning",
+      "text": "Don't make functions within a loop."
+    }
+  ]
+}

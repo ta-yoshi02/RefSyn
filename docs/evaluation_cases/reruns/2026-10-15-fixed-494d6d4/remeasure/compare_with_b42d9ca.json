@@ -1,0 +1,200 @@
+[
+  {
+    "file": "mold_insert_general.json",
+    "solved": [
+      10,
+      10
+    ],
+    "same_terms": true,
+    "terms_494d6d4": {
+      "insert_h0": [
+        "@arg"
+      ],
+      "insert_h1": [
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))"
+      ],
+      "insert_h2": [
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+      ]
+    },
+    "median_ms": [
+      17.099,
+      6.809
+    ],
+    "ratio": 0.4
+  },
+  {
+    "file": "mold_append.json",
+    "solved": [
+      10,
+      10
+    ],
+    "same_terms": true,
+    "terms_494d6d4": {
+      "append_h0": [
+        "@x"
+      ],
+      "append_h1": [
+        "last_ptr(@thisRef, @nextHeap)"
+      ]
+    },
+    "median_ms": [
+      1.959,
+      1.092
+    ],
+    "ratio": 0.56
+  },
+  {
+    "file": "mold_popBack.json",
+    "solved": [
+      10,
+      10
+    ],
+    "same_terms": true,
+    "terms_494d6d4": {
+      "popBack_h0": [
+        "penultimateRef(@thisRef, @nextHeap)"
+      ]
+    },
+    "median_ms": [
+      1.236,
+      0.842
+    ],
+    "ratio": 0.68
+  },
+  {
+    "file": "mold_prepend.json",
+    "solved": [
+      10,
+      10
+    ],
+    "same_terms": true,
+    "terms_494d6d4": {
+      "prepend_h0": [
+        "@x"
+      ],
+      "prepend_h1": [
+        "@thisRef"
+      ]
+    },
+    "median_ms": [
+      0.931,
+      0.412
+    ],
+    "ratio": 0.44
+  },
+  {
+    "file": "mold_setAt.json",
+    "solved": [
+      10,
+      10
+    ],
+    "same_terms": true,
+    "terms_494d6d4": {
+      "setAt_h0": [
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)"
+      ],
+      "setAt_h1": [
+        "@b"
+      ]
+    },
+    "median_ms": [
+      4.895,
+      4.141
+    ],
+    "ratio": 0.85
+  },
+  {
+    "file": "baseline_insert.json",
+    "solved": [
+      0,
+      0
+    ],
+    "same_terms": true,
+    "terms_494d6d4": {
+      "insert-fixed-env-pair": [
+        null
+      ]
+    },
+    "median_ms": [
+      15000.089,
+      15000.078
+    ],
+    "ratio": 1
+  },
+  {
+    "file": "baseline_append.json",
+    "solved": [
+      0,
+      0
+    ],
+    "same_terms": true,
+    "terms_494d6d4": {
+      "append-fixed-env-pair": [
+        null
+      ]
+    },
+    "median_ms": [
+      15000.595,
+      15000.052
+    ],
+    "ratio": 1
+  },
+  {
+    "file": "baseline_popBack.json",
+    "solved": [
+      10,
+      10
+    ],
+    "same_terms": true,
+    "terms_494d6d4": {
+      "popBack-fixed-env-pair": [
+        "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))"
+      ]
+    },
+    "median_ms": [
+      5815.238,
+      5801.613
+    ],
+    "ratio": 1
+  },
+  {
+    "file": "baseline_prepend.json",
+    "solved": [
+      10,
+      10
+    ],
+    "same_terms": true,
+    "terms_494d6d4": {
+      "prepend-fixed-env-pair": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))"
+      ],
+      "prepend-fixed-returnRef": [
+        "freshRefFromHeap(@nodeHeap)"
+      ]
+    },
+    "median_ms": [
+      248.476,
+      271.016
+    ],
+    "ratio": 1.09
+  },
+  {
+    "file": "baseline_setAt.json",
+    "solved": [
+      10,
+      10
+    ],
+    "same_terms": true,
+    "terms_494d6d4": {
+      "setAt-fixed-env-pair": [
+        "if isZero(@arg0) then pairHeap(cons(@arg1, tail(@fHeap)), @gHeap) else if isZero(dec(dec(@arg0))) then pairHeap(storeAtRef(@fHeap, head(tail(@gHeap)), @arg1), @gHeap) else pairHeap(storeAtRef(@fHeap, freshRefFromHeap(tail(@nodeHeap)), @arg1), @gHeap)"
+      ]
+    },
+    "median_ms": [
+      2763.989,
+      3819.655
+    ],
+    "ratio": 1.38
+  }
+]

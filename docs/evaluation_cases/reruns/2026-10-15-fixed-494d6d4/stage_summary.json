@@ -1,0 +1,131 @@
+{
+  "summary": {
+    "recordings": 4,
+    "request_accepted": 4,
+    "synthesis_all_helpers": 4,
+    "translation_all_helpers": 4,
+    "validation_passed_all_demonstrations": 4,
+    "applied": 4,
+    "kanon_rerun_all_passed": 4,
+    "node_rerun_match": 4,
+    "note": "One recording per case."
+  },
+  "rows": [
+    {
+      "case": "insert_unrelated",
+      "demonstrations": 3,
+      "edits_per_demonstration": [
+        5,
+        5,
+        5
+      ],
+      "request_accepted": true,
+      "synthesis": {
+        "solved": 3,
+        "helpers": 3
+      },
+      "translation": {
+        "translated": 3,
+        "helpers": 3
+      },
+      "validation": {
+        "status": "passed",
+        "checked": 3,
+        "demonstrations": 3
+      },
+      "applied": true,
+      "kanon_rerun": {
+        "passed": 3,
+        "calls": 3
+      },
+      "node_rerun_match": true
+    },
+    {
+      "case": "insert_swapped",
+      "demonstrations": 3,
+      "edits_per_demonstration": [
+        5,
+        5,
+        5
+      ],
+      "request_accepted": true,
+      "synthesis": {
+        "solved": 3,
+        "helpers": 3
+      },
+      "translation": {
+        "translated": 3,
+        "helpers": 3
+      },
+      "validation": {
+        "status": "passed",
+        "checked": 3,
+        "demonstrations": 3
+      },
+      "applied": true,
+      "kanon_rerun": {
+        "passed": 3,
+        "calls": 3
+      },
+      "node_rerun_match": true
+    },
+    {
+      "case": "append_unrelated",
+      "demonstrations": 3,
+      "edits_per_demonstration": [
+        4,
+        4,
+        4
+      ],
+      "request_accepted": true,
+      "synthesis": {
+        "solved": 2,
+        "helpers": 2
+      },
+      "translation": {
+        "translated": 2,
+        "helpers": 2
+      },
+      "validation": {
+        "status": "passed",
+        "checked": 3,
+        "demonstrations": 3
+      },
+      "applied": true,
+      "kanon_rerun": {
+        "passed": 3,
+        "calls": 3
+      },
+      "node_rerun_match": true
+    },
+    {
+      "case": "append_swapped",
+      "demonstrations": 3,
+      "edits_per_demonstration": [
+        4,
+        4,
+        4
+      ],
+      "request_accepted": true,
+      "synthesis": {
+        "solved": 2,
+        "helpers": 2
+      },
+      "translation": {
+        "translated": 2,
+        "helpers": 2
+      },
+      "validation": {
+        "status": "passed",
+        "checked": 3,
+        "demonstrations": 3
+      },
+      "applied": true,
+      "kanon_rerun": {
+        "passed": 3,
+        "calls": 3
+      },
+      "node_rerun_match": true
+    }
+  ]
+}

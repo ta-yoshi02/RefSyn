@@ -1,0 +1,830 @@
+[
+  {
+    "name": "append_h0",
+    "category": "refsyn",
+    "classes": [
+      {
+        "name": "Cell",
+        "fields": {
+          "key": "Ref[Int]",
+          "link": "Ref[Object[Cell]]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "strictFieldAccess": true,
+    "signature": {
+      "returnType": "Int",
+      "args": [
+        {
+          "name": "x",
+          "type": "Int"
+        },
+        {
+          "name": "created0",
+          "type": "Ref[Object[Cell]]"
+        }
+      ],
+      "autoExpandClassSignature": {
+        "className": "Cell",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "key": "keyHeap",
+          "link": "linkHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 0
+                  },
+                  "link": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 1
+                  },
+                  "link": {
+                    "ref": -1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 2
+                  },
+                  "link": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            {
+              "error": true
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          53,
+          {
+            "ref": 2
+          }
+        ],
+        53
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 0
+                  },
+                  "link": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 1
+                  },
+                  "link": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 2
+                  },
+                  "link": {
+                    "ref": -1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 3
+                  },
+                  "link": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            {
+              "error": true
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          89,
+          {
+            "ref": 3
+          }
+        ],
+        89
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 0
+                  },
+                  "link": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 1
+                  },
+                  "link": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 2
+                  },
+                  "link": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 3
+                  },
+                  "link": {
+                    "ref": -1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 4
+                  },
+                  "link": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89,
+            {
+              "error": true
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          46,
+          {
+            "ref": 4
+          }
+        ],
+        46
+      ]
+    ],
+    "refsynMeta": {
+      "jsMethodName": "append_h0",
+      "className": "Cell",
+      "thisRefName": "thisRef",
+      "classHeapName": "nodeHeap",
+      "valueFields": [
+        "key"
+      ],
+      "pointerFields": [
+        "link"
+      ],
+      "boolFields": [],
+      "fieldHeapNames": {
+        "key": "keyHeap",
+        "link": "linkHeap"
+      },
+      "explicitArgs": [
+        {
+          "name": "x",
+          "legacyType": "Int",
+          "taskType": "Int"
+        },
+        {
+          "name": "created0",
+          "legacyType": "Ptr",
+          "taskType": "Ref[Object[Cell]]"
+        }
+      ]
+    }
+  },
+  {
+    "name": "append_h1",
+    "category": "refsyn",
+    "classes": [
+      {
+        "name": "Cell",
+        "fields": {
+          "key": "Ref[Int]",
+          "link": "Ref[Object[Cell]]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "strictFieldAccess": true,
+    "signature": {
+      "returnType": "Ref[Object[Cell]]",
+      "args": [
+        {
+          "name": "x",
+          "type": "Int"
+        },
+        {
+          "name": "created0",
+          "type": "Ref[Object[Cell]]"
+        },
+        {
+          "name": "hole0",
+          "type": "Int"
+        }
+      ],
+      "autoExpandClassSignature": {
+        "className": "Cell",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "key": "keyHeap",
+          "link": "linkHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 0
+                  },
+                  "link": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 1
+                  },
+                  "link": {
+                    "ref": -1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 2
+                  },
+                  "link": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            {
+              "error": true
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          53,
+          {
+            "ref": 2
+          },
+          53
+        ],
+        {
+          "ref": 1
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 0
+                  },
+                  "link": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 1
+                  },
+                  "link": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 2
+                  },
+                  "link": {
+                    "ref": -1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 3
+                  },
+                  "link": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            {
+              "error": true
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          89,
+          {
+            "ref": 3
+          },
+          89
+        ],
+        {
+          "ref": 2
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 0
+                  },
+                  "link": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 1
+                  },
+                  "link": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 2
+                  },
+                  "link": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 3
+                  },
+                  "link": {
+                    "ref": -1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Cell",
+                "fields": {
+                  "key": {
+                    "ref": 4
+                  },
+                  "link": {
+                    "ref": -1
+                  }
+                }
+              }
+            }
+          ],
+          [
+            39,
+            27,
+            53,
+            89,
+            {
+              "error": true
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          46,
+          {
+            "ref": 4
+          },
+          46
+        ],
+        {
+          "ref": 3
+        }
+      ]
+    ],
+    "refsynMeta": {
+      "jsMethodName": "append_h1",
+      "className": "Cell",
+      "thisRefName": "thisRef",
+      "classHeapName": "nodeHeap",
+      "valueFields": [
+        "key"
+      ],
+      "pointerFields": [
+        "link"
+      ],
+      "boolFields": [],
+      "fieldHeapNames": {
+        "key": "keyHeap",
+        "link": "linkHeap"
+      },
+      "explicitArgs": [
+        {
+          "name": "x",
+          "legacyType": "Int",
+          "taskType": "Int"
+        },
+        {
+          "name": "created0",
+          "legacyType": "Ptr",
+          "taskType": "Ref[Object[Cell]]"
+        },
+        {
+          "name": "hole0",
+          "legacyType": "Int",
+          "taskType": "Int"
+        }
+      ]
+    }
+  }
+]

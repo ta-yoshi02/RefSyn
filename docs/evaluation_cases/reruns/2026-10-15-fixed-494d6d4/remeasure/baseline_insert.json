@@ -1,0 +1,188 @@
+{
+  "side": "baseline",
+  "method": "insert",
+  "tasks": [
+    "insert-fixed-env-pair"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 10,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 0,
+  "method_total_ms": {
+    "median": 15000.078,
+    "min": 14999.71,
+    "max": 15007.54
+  },
+  "method_search_ms": {
+    "median": 14999.693,
+    "min": 14999.295,
+    "max": 15007.201
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": false,
+      "method_total_ms": 15000.956,
+      "method_search_ms": 14999.544,
+      "tasks": [
+        {
+          "task": "insert-fixed-env-pair",
+          "prepare_ms": 1.412,
+          "search_ms": 14999.544,
+          "total_ms": 15000.956,
+          "success": false,
+          "term": null
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "all_solved": false,
+      "method_total_ms": 14999.835,
+      "method_search_ms": 14999.497,
+      "tasks": [
+        {
+          "task": "insert-fixed-env-pair",
+          "prepare_ms": 0.338,
+          "search_ms": 14999.497,
+          "total_ms": 14999.835,
+          "success": false,
+          "term": null
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "all_solved": false,
+      "method_total_ms": 15007.54,
+      "method_search_ms": 15007.201,
+      "tasks": [
+        {
+          "task": "insert-fixed-env-pair",
+          "prepare_ms": 0.339,
+          "search_ms": 15007.201,
+          "total_ms": 15007.54,
+          "success": false,
+          "term": null
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "all_solved": false,
+      "method_total_ms": 15000.437,
+      "method_search_ms": 14999.949,
+      "tasks": [
+        {
+          "task": "insert-fixed-env-pair",
+          "prepare_ms": 0.488,
+          "search_ms": 14999.949,
+          "total_ms": 15000.437,
+          "success": false,
+          "term": null
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "all_solved": false,
+      "method_total_ms": 14999.783,
+      "method_search_ms": 14999.542,
+      "tasks": [
+        {
+          "task": "insert-fixed-env-pair",
+          "prepare_ms": 0.241,
+          "search_ms": 14999.542,
+          "total_ms": 14999.783,
+          "success": false,
+          "term": null
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "all_solved": false,
+      "method_total_ms": 15000.18,
+      "method_search_ms": 15000.008,
+      "tasks": [
+        {
+          "task": "insert-fixed-env-pair",
+          "prepare_ms": 0.172,
+          "search_ms": 15000.008,
+          "total_ms": 15000.18,
+          "success": false,
+          "term": null
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "all_solved": false,
+      "method_total_ms": 14999.833,
+      "method_search_ms": 14999.637,
+      "tasks": [
+        {
+          "task": "insert-fixed-env-pair",
+          "prepare_ms": 0.197,
+          "search_ms": 14999.637,
+          "total_ms": 14999.833,
+          "success": false,
+          "term": null
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "all_solved": false,
+      "method_total_ms": 15003.354,
+      "method_search_ms": 15003.196,
+      "tasks": [
+        {
+          "task": "insert-fixed-env-pair",
+          "prepare_ms": 0.158,
+          "search_ms": 15003.196,
+          "total_ms": 15003.354,
+          "success": false,
+          "term": null
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "all_solved": false,
+      "method_total_ms": 14999.71,
+      "method_search_ms": 14999.295,
+      "tasks": [
+        {
+          "task": "insert-fixed-env-pair",
+          "prepare_ms": 0.415,
+          "search_ms": 14999.295,
+          "total_ms": 14999.71,
+          "success": false,
+          "term": null
+        }
+      ]
+    },
+    {
+      "repetition": 10,
+      "all_solved": false,
+      "method_total_ms": 14999.976,
+      "method_search_ms": 14999.748,
+      "tasks": [
+        {
+          "task": "insert-fixed-env-pair",
+          "prepare_ms": 0.228,
+          "search_ms": 14999.748,
+          "total_ms": 14999.976,
+          "success": false,
+          "term": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+started_utc=2026-10-15T05:50:05Z
+uptime_before: 14:50  up 9 days, 26 mins, 1 user, load averages: 4.69 4.31 3.48
+mold insert_general: solved 10/10, total median 6.809 ms (search 6.401 ms)
+mold append: solved 10/10, total median 1.092 ms (search 0.892 ms)
+mold popBack: solved 10/10, total median 0.842 ms (search 0.666 ms)
+mold prepend: solved 10/10, total median 0.412 ms (search 0.221 ms)
+mold setAt: solved 10/10, total median 4.141 ms (search 3.749 ms)
+baseline insert: solved 0/10, total median 15000.078 ms (search 14999.693 ms)
+baseline append: solved 0/10, total median 15000.052 ms (search 14999.854 ms)
+baseline popBack: solved 10/10, total median 5801.613 ms (search 5801.459 ms)
+baseline setAt: solved 10/10, total median 3819.655 ms (search 3819.428 ms)
+baseline prepend: solved 10/10, total median 271.016 ms (search 270.649 ms)
+uptime_after: 14:56  up 9 days, 33 mins, 1 user, load averages: 3.63 4.09 3.70
+finished_utc=2026-10-15T05:56:47Z

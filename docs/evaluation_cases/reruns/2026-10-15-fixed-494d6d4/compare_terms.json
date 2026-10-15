@@ -1,0 +1,74 @@
+[
+  {
+    "case": "insert_unrelated",
+    "original_case": "insert_general",
+    "field_map": {
+      "val": "key",
+      "next": "link"
+    },
+    "renamed": {
+      "insert_h0": "@arg",
+      "insert_h1": "nthNextRef(@thisRef, @nodeHeap, @linkHeap, inc(@i))",
+      "insert_h2": "nthNextRef(@thisRef, @nodeHeap, @linkHeap, @i)"
+    },
+    "original": {
+      "insert_h0": "@arg",
+      "insert_h1": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+      "insert_h2": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+    },
+    "equal_after_mapping": true
+  },
+  {
+    "case": "insert_swapped",
+    "original_case": "insert_general",
+    "field_map": {
+      "val": "next",
+      "next": "val"
+    },
+    "renamed": {
+      "insert_h0": "@arg",
+      "insert_h1": "nthNextRef(@thisRef, @nodeHeap, @valHeap, inc(@i))",
+      "insert_h2": "nthNextRef(@thisRef, @nodeHeap, @valHeap, @i)"
+    },
+    "original": {
+      "insert_h0": "@arg",
+      "insert_h1": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+      "insert_h2": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+    },
+    "equal_after_mapping": true
+  },
+  {
+    "case": "append_unrelated",
+    "original_case": "append",
+    "field_map": {
+      "val": "key",
+      "next": "link"
+    },
+    "renamed": {
+      "append_h0": "@x",
+      "append_h1": "last_ptr(@thisRef, @linkHeap)"
+    },
+    "original": {
+      "append_h0": "@x",
+      "append_h1": "last_ptr(@thisRef, @nextHeap)"
+    },
+    "equal_after_mapping": true
+  },
+  {
+    "case": "append_swapped",
+    "original_case": "append",
+    "field_map": {
+      "val": "next",
+      "next": "val"
+    },
+    "renamed": {
+      "append_h0": "@x",
+      "append_h1": "last_ptr(@thisRef, @valHeap)"
+    },
+    "original": {
+      "append_h0": "@x",
+      "append_h1": "last_ptr(@thisRef, @nextHeap)"
+    },
+    "equal_after_mapping": true
+  }
+]

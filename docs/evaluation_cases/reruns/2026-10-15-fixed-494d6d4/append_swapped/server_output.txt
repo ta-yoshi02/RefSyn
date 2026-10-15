@@ -1,0 +1,26 @@
+escher-ts synthesis completed (2 success / 0 failure)
+=== IMPROVED SYNTHESIS RESPONSE ===
+Common Pattern: Create(Create { vertex: 0, class: "Node" })
+BindHole(0, Hole { vertex: 1, ty: Number, examples: [Constant(Number(Number(53))), Constant(Number(Number(89))), Constant(Number(Number(46)))] })
+BindHole(1, Hole { vertex: 2, ty: Object("Node"), examples: [Object("main-new2"), Object("__temp1"), Object("__temp4")] })
+Write(Write { from: 0, field: "next", to: 1 })
+Write(Write { from: 2, field: "val", to: 0 })
+Holes: {"append_h1": ["object main-new2", "object __temp1", "object __temp4"], "append_h0": ["Number(Number(53))", "Number(Number(89))", "Number(Number(46))"]}
+List Environment Summary: escher-ts task JSON saved: target/escher/ts/append_1792044938_645683000_p75400_6.json
+Synthesized code:
+  [0] append_h0(x, created0) { return x; }
+  [1] append_h1(x, created0, hole0) { return (() => { let __refsynCur = this; const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError("refsyn: last_ptr met a cycle"); } __refsynSeen.add(__refsynCur); const __refsynNext = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError("refsyn: read of an undefined field"); } return __refsynValue; })((__refsynCur).val); if (__refsynNext === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })(); }
+Composed method code:
+append(x) {
+    const created0 = new Node();
+    const hole0 = this.append_h0(x, created0);
+    const hole1 = this.append_h1(x, created0, hole0);
+    created0.next = hole0;
+    hole1.val = created0;
+}
+Escher results:
+  [OK] append_h0 -> append_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Int], @valHeap: List[Object<Node>], @x: Int, @created0: Ref[Object<Node>]): Int =
+  @x
+  [OK] append_h1 -> append_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Int], @valHeap: List[Object<Node>], @x: Int, @created0: Ref[Object<Node>], @hole0: Int): Ref[Object<Node>] =
+  last_ptr(@thisRef, @valHeap)
+=====================================

@@ -1,0 +1,4 @@
+{
+  "response_equal_except_task_path_and_key_order": true,
+  "task_json_identical": true
+}
