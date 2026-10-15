@@ -1,0 +1,2666 @@
+[
+  {
+    "name": "rotateRight_h0",
+    "category": "refsyn",
+    "classes": [
+      {
+        "name": "TreeNode",
+        "fields": {
+          "left": "Ref[Object[TreeNode]]",
+          "right": "Ref[Object[TreeNode]]",
+          "val": "Ref[Int]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "strictFieldAccess": true,
+    "signature": {
+      "returnType": "Ref[Object[TreeNode]]",
+      "autoExpandClassSignature": {
+        "className": "TreeNode",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "left": "leftHeap",
+          "right": "rightHeap",
+          "val": "valHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 1
+                  },
+                  "right": {
+                    "ref": 6
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 2
+                  },
+                  "right": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 4
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 5
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 7
+                  },
+                  "right": {
+                    "ref": 9
+                  },
+                  "val": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 8
+                  },
+                  "val": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 8
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 9
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 7
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": 6
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 5
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 9
+            },
+            {
+              "ref": 8
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            50,
+            30,
+            20,
+            40,
+            35,
+            37,
+            70,
+            60,
+            65,
+            80
+          ]
+        ],
+        {
+          "ref": 0
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 1
+                  },
+                  "right": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 5
+                  },
+                  "right": {
+                    "ref": 0
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 6
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 7
+                  },
+                  "val": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 9
+                  },
+                  "right": {
+                    "ref": 4
+                  },
+                  "val": {
+                    "ref": 8
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 9
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 5
+            },
+            {
+              "ref": 6
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 9
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 7
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            70,
+            60,
+            65,
+            80,
+            50,
+            40,
+            35,
+            37,
+            30,
+            20
+          ]
+        ],
+        {
+          "ref": 0
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 0
+                  },
+                  "right": {
+                    "ref": 4
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 5
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 6
+                  },
+                  "right": {
+                    "ref": 7
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 9
+                  },
+                  "right": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 8
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 9
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 6
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 9
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": -1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": 5
+            },
+            {
+              "ref": 7
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            40,
+            35,
+            37,
+            50,
+            60,
+            70,
+            65,
+            80,
+            30,
+            20
+          ]
+        ],
+        {
+          "ref": 0
+        }
+      ]
+    ],
+    "refsynMeta": {
+      "jsMethodName": "rotateRight_h0",
+      "className": "TreeNode",
+      "thisRefName": "thisRef",
+      "classHeapName": "nodeHeap",
+      "valueFields": [
+        "val"
+      ],
+      "pointerFields": [
+        "left",
+        "right"
+      ],
+      "boolFields": [],
+      "fieldHeapNames": {
+        "left": "leftHeap",
+        "right": "rightHeap",
+        "val": "valHeap"
+      },
+      "explicitArgs": []
+    }
+  },
+  {
+    "name": "rotateRight_h1",
+    "category": "refsyn",
+    "classes": [
+      {
+        "name": "TreeNode",
+        "fields": {
+          "left": "Ref[Object[TreeNode]]",
+          "right": "Ref[Object[TreeNode]]",
+          "val": "Ref[Int]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "strictFieldAccess": true,
+    "signature": {
+      "returnType": "Ref[Object[TreeNode]]",
+      "args": [
+        {
+          "name": "hole0",
+          "type": "Ref[Object[TreeNode]]"
+        }
+      ],
+      "autoExpandClassSignature": {
+        "className": "TreeNode",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "left": "leftHeap",
+          "right": "rightHeap",
+          "val": "valHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 1
+                  },
+                  "right": {
+                    "ref": 6
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 2
+                  },
+                  "right": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 4
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 5
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 7
+                  },
+                  "right": {
+                    "ref": 9
+                  },
+                  "val": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 8
+                  },
+                  "val": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 8
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 9
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 7
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": 6
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 5
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 9
+            },
+            {
+              "ref": 8
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            50,
+            30,
+            20,
+            40,
+            35,
+            37,
+            70,
+            60,
+            65,
+            80
+          ],
+          {
+            "ref": 0
+          }
+        ],
+        {
+          "ref": 3
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 1
+                  },
+                  "right": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 5
+                  },
+                  "right": {
+                    "ref": 0
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 6
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 7
+                  },
+                  "val": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 9
+                  },
+                  "right": {
+                    "ref": 4
+                  },
+                  "val": {
+                    "ref": 8
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 9
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 5
+            },
+            {
+              "ref": 6
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 9
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 7
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            70,
+            60,
+            65,
+            80,
+            50,
+            40,
+            35,
+            37,
+            30,
+            20
+          ],
+          {
+            "ref": 0
+          }
+        ],
+        {
+          "ref": 2
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 0
+                  },
+                  "right": {
+                    "ref": 4
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 5
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 6
+                  },
+                  "right": {
+                    "ref": 7
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 9
+                  },
+                  "right": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 8
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 9
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 6
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 9
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": -1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": 5
+            },
+            {
+              "ref": 7
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            40,
+            35,
+            37,
+            50,
+            60,
+            70,
+            65,
+            80,
+            30,
+            20
+          ],
+          {
+            "ref": 0
+          }
+        ],
+        {
+          "ref": 2
+        }
+      ]
+    ],
+    "refsynMeta": {
+      "jsMethodName": "rotateRight_h1",
+      "className": "TreeNode",
+      "thisRefName": "thisRef",
+      "classHeapName": "nodeHeap",
+      "valueFields": [
+        "val"
+      ],
+      "pointerFields": [
+        "left",
+        "right"
+      ],
+      "boolFields": [],
+      "fieldHeapNames": {
+        "left": "leftHeap",
+        "right": "rightHeap",
+        "val": "valHeap"
+      },
+      "explicitArgs": [
+        {
+          "name": "hole0",
+          "legacyType": "Ptr",
+          "taskType": "Ref[Object[TreeNode]]"
+        }
+      ]
+    }
+  },
+  {
+    "name": "rotateRight_h2",
+    "category": "refsyn",
+    "classes": [
+      {
+        "name": "TreeNode",
+        "fields": {
+          "left": "Ref[Object[TreeNode]]",
+          "right": "Ref[Object[TreeNode]]",
+          "val": "Ref[Int]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "strictFieldAccess": true,
+    "signature": {
+      "returnType": "Ref[Object[TreeNode]]",
+      "args": [
+        {
+          "name": "hole0",
+          "type": "Ref[Object[TreeNode]]"
+        },
+        {
+          "name": "hole1",
+          "type": "Ref[Object[TreeNode]]"
+        }
+      ],
+      "autoExpandClassSignature": {
+        "className": "TreeNode",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "left": "leftHeap",
+          "right": "rightHeap",
+          "val": "valHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 1
+                  },
+                  "right": {
+                    "ref": 6
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 2
+                  },
+                  "right": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 4
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 5
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 7
+                  },
+                  "right": {
+                    "ref": 9
+                  },
+                  "val": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 8
+                  },
+                  "val": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 8
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 9
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 7
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": 6
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 5
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 9
+            },
+            {
+              "ref": 8
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            50,
+            30,
+            20,
+            40,
+            35,
+            37,
+            70,
+            60,
+            65,
+            80
+          ],
+          {
+            "ref": 0
+          },
+          {
+            "ref": 3
+          }
+        ],
+        {
+          "ref": 1
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 1
+                  },
+                  "right": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 5
+                  },
+                  "right": {
+                    "ref": 0
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 6
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 7
+                  },
+                  "val": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 9
+                  },
+                  "right": {
+                    "ref": 4
+                  },
+                  "val": {
+                    "ref": 8
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 9
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 5
+            },
+            {
+              "ref": 6
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 9
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 7
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            70,
+            60,
+            65,
+            80,
+            50,
+            40,
+            35,
+            37,
+            30,
+            20
+          ],
+          {
+            "ref": 0
+          },
+          {
+            "ref": 2
+          }
+        ],
+        {
+          "ref": 1
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 0
+                  },
+                  "right": {
+                    "ref": 4
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": 5
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 6
+                  },
+                  "right": {
+                    "ref": 7
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": 9
+                  },
+                  "right": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 8
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "TreeNode",
+                "fields": {
+                  "left": {
+                    "ref": -1
+                  },
+                  "right": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 9
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 6
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 9
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": -1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": 5
+            },
+            {
+              "ref": 7
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            40,
+            35,
+            37,
+            50,
+            60,
+            70,
+            65,
+            80,
+            30,
+            20
+          ],
+          {
+            "ref": 0
+          },
+          {
+            "ref": 2
+          }
+        ],
+        {
+          "ref": 1
+        }
+      ]
+    ],
+    "refsynMeta": {
+      "jsMethodName": "rotateRight_h2",
+      "className": "TreeNode",
+      "thisRefName": "thisRef",
+      "classHeapName": "nodeHeap",
+      "valueFields": [
+        "val"
+      ],
+      "pointerFields": [
+        "left",
+        "right"
+      ],
+      "boolFields": [],
+      "fieldHeapNames": {
+        "left": "leftHeap",
+        "right": "rightHeap",
+        "val": "valHeap"
+      },
+      "explicitArgs": [
+        {
+          "name": "hole0",
+          "legacyType": "Ptr",
+          "taskType": "Ref[Object[TreeNode]]"
+        },
+        {
+          "name": "hole1",
+          "legacyType": "Ptr",
+          "taskType": "Ref[Object[TreeNode]]"
+        }
+      ]
+    }
+  }
+]
