@@ -1,0 +1,6 @@
+receiver on 127.0.0.1:8765, root /private/tmp/claude-501/-Users-taku-workspace-kenkyu-proj-ref-refsyn/0d9a5bec-4b96-46e0-9406-8bca254788eb/scratchpad/wt/eval-494d6d4/docs/evaluation_cases/reruns/2026-10-15-rotate-right-494d6d4
+2026-10-15T06:40:14.382Z saved rotateRight/source_before_editor.js 857 bytes
+2026-10-15T06:45:22.699Z saved rotateRight/http_status.txt 7 bytes
+2026-10-15T06:45:22.700Z saved rotateRight/response.json 4545 bytes
+2026-10-15T06:45:38.379Z saved rotateRight/source_after.js 2132 bytes
+2026-10-15T06:45:38.385Z saved rotateRight/kanon_rerun_markers.json 898 bytes

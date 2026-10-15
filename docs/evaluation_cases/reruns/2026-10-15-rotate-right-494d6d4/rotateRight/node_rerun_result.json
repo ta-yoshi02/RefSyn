@@ -1,0 +1,211 @@
+{
+  "method": "node vm re-execution of source_after.js (independent of Kanon)",
+  "node": "v22.17.0",
+  "demonstrated_calls": {
+    "steps": [
+      {
+        "call": "root = root.rotateRight()",
+        "receiver": 50,
+        "changed": [
+          "30.right",
+          "50.left"
+        ],
+        "checks": {
+          "returns_original_left": true,
+          "receiver_left_is_original_left_right": true,
+          "returned_right_is_receiver": true,
+          "only_expected_references_changed": true,
+          "same_objects_reachable": true
+        }
+      },
+      {
+        "call": "root.right.right = root.right.right.rotateRight()",
+        "receiver": 70,
+        "changed": [
+          "60.right",
+          "70.left"
+        ],
+        "checks": {
+          "returns_original_left": true,
+          "receiver_left_is_original_left_right": true,
+          "returned_right_is_receiver": true,
+          "only_expected_references_changed": true,
+          "same_objects_reachable": true
+        }
+      },
+      {
+        "call": "root.right.left = root.right.left.rotateRight()",
+        "receiver": 40,
+        "changed": [
+          "35.right",
+          "40.left"
+        ],
+        "checks": {
+          "returns_original_left": true,
+          "receiver_left_is_original_left_right": true,
+          "returned_right_is_receiver": true,
+          "only_expected_references_changed": true,
+          "same_objects_reachable": true
+        }
+      }
+    ],
+    "final": [
+      30,
+      [
+        20,
+        null,
+        null
+      ],
+      [
+        50,
+        [
+          35,
+          null,
+          [
+            40,
+            [
+              37,
+              null,
+              null
+            ],
+            null
+          ]
+        ],
+        [
+          60,
+          null,
+          [
+            70,
+            [
+              65,
+              null,
+              null
+            ],
+            [
+              80,
+              null,
+              null
+            ]
+          ]
+        ]
+      ]
+    ],
+    "expected_final": [
+      30,
+      [
+        20,
+        null,
+        null
+      ],
+      [
+        50,
+        [
+          35,
+          null,
+          [
+            40,
+            [
+              37,
+              null,
+              null
+            ],
+            null
+          ]
+        ],
+        [
+          60,
+          null,
+          [
+            70,
+            [
+              65,
+              null,
+              null
+            ],
+            [
+              80,
+              null,
+              null
+            ]
+          ]
+        ]
+      ]
+    ],
+    "final_matches": true,
+    "all_checks_pass": true
+  },
+  "outside_the_demonstrations": {
+    "input": [
+      50,
+      [
+        30,
+        [
+          20,
+          null,
+          null
+        ],
+        [
+          40,
+          null,
+          [
+            45,
+            null,
+            null
+          ]
+        ]
+      ],
+      [
+        70,
+        null,
+        null
+      ]
+    ],
+    "generated_result": [
+      30,
+      [
+        20,
+        null,
+        null
+      ],
+      [
+        50,
+        [
+          45,
+          null,
+          null
+        ],
+        [
+          70,
+          null,
+          null
+        ]
+      ]
+    ],
+    "reference_rotation": [
+      30,
+      [
+        20,
+        null,
+        null
+      ],
+      [
+        50,
+        [
+          40,
+          null,
+          [
+            45,
+            null,
+            null
+          ]
+        ],
+        [
+          70,
+          null,
+          null
+        ]
+      ]
+    ],
+    "agrees": false
+  }
+}

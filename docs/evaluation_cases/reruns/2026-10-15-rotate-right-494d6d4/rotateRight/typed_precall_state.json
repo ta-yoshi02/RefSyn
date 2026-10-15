@@ -1,0 +1,429 @@
+{
+  "version": 3,
+  "classes": [
+    {
+      "name": "TreeNode",
+      "source": "class TreeNode {\n    constructor() {\n        this.left = null;\n        this.right = null;\n    }\n\n    rotateRight() {\n    }\n}",
+      "instance": {
+        "left": null,
+        "right": null
+      }
+    }
+  ],
+  "cases": [
+    {
+      "callLabel": "call1",
+      "contextSensitiveID": "main",
+      "objects": [
+        {
+          "id": "main-new1",
+          "className": "TreeNode",
+          "fields": {
+            "left": {
+              "ref": "main-new2"
+            },
+            "right": {
+              "ref": "main-new7"
+            },
+            "val": 50
+          }
+        },
+        {
+          "id": "main-new2",
+          "className": "TreeNode",
+          "fields": {
+            "left": {
+              "ref": "main-new3"
+            },
+            "right": {
+              "ref": "main-new4"
+            },
+            "val": 30
+          }
+        },
+        {
+          "id": "main-new3",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": null,
+            "val": 20
+          }
+        },
+        {
+          "id": "main-new4",
+          "className": "TreeNode",
+          "fields": {
+            "left": {
+              "ref": "main-new5"
+            },
+            "right": null,
+            "val": 40
+          }
+        },
+        {
+          "id": "main-new5",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": {
+              "ref": "main-new6"
+            },
+            "val": 35
+          }
+        },
+        {
+          "id": "main-new6",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": null,
+            "val": 37
+          }
+        },
+        {
+          "id": "main-new7",
+          "className": "TreeNode",
+          "fields": {
+            "left": {
+              "ref": "main-new8"
+            },
+            "right": {
+              "ref": "main-new10"
+            },
+            "val": 70
+          }
+        },
+        {
+          "id": "main-new8",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": {
+              "ref": "main-new9"
+            },
+            "val": 60
+          }
+        },
+        {
+          "id": "main-new9",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": null,
+            "val": 65
+          }
+        },
+        {
+          "id": "main-new10",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": null,
+            "val": 80
+          }
+        }
+      ],
+      "values": {
+        "main-new3-left": null,
+        "main-new3-right": null,
+        "main-new3-val": 20,
+        "main-new5-left": null,
+        "main-new6-left": null,
+        "main-new6-right": null,
+        "main-new6-val": 37,
+        "main-new5-val": 35,
+        "main-new4-right": null,
+        "main-new4-val": 40,
+        "main-new2-val": 30,
+        "main-new8-left": null,
+        "main-new9-left": null,
+        "main-new9-right": null,
+        "main-new9-val": 65,
+        "main-new8-val": 60,
+        "main-new10-left": null,
+        "main-new10-right": null,
+        "main-new10-val": 80,
+        "main-new7-val": 70,
+        "main-new1-val": 50
+      },
+      "arguments": []
+    },
+    {
+      "callLabel": "call2",
+      "contextSensitiveID": "main",
+      "objects": [
+        {
+          "id": "main-new7",
+          "className": "TreeNode",
+          "fields": {
+            "left": {
+              "ref": "main-new8"
+            },
+            "right": {
+              "ref": "main-new10"
+            },
+            "val": 70
+          }
+        },
+        {
+          "id": "main-new8",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": {
+              "ref": "main-new9"
+            },
+            "val": 60
+          }
+        },
+        {
+          "id": "main-new9",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": null,
+            "val": 65
+          }
+        },
+        {
+          "id": "main-new10",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": null,
+            "val": 80
+          }
+        },
+        {
+          "id": "main-new1",
+          "className": "TreeNode",
+          "fields": {
+            "left": {
+              "ref": "main-new4"
+            },
+            "right": {
+              "ref": "main-new7"
+            },
+            "val": 50
+          }
+        },
+        {
+          "id": "main-new4",
+          "className": "TreeNode",
+          "fields": {
+            "left": {
+              "ref": "main-new5"
+            },
+            "right": null,
+            "val": 40
+          }
+        },
+        {
+          "id": "main-new5",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": {
+              "ref": "main-new6"
+            },
+            "val": 35
+          }
+        },
+        {
+          "id": "main-new6",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": null,
+            "val": 37
+          }
+        },
+        {
+          "id": "main-new2",
+          "className": "TreeNode",
+          "fields": {
+            "left": {
+              "ref": "main-new3"
+            },
+            "right": {
+              "ref": "main-new1"
+            },
+            "val": 30
+          }
+        },
+        {
+          "id": "main-new3",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": null,
+            "val": 20
+          }
+        }
+      ],
+      "values": {
+        "main-new8-left": null,
+        "main-new9-left": null,
+        "main-new9-right": null,
+        "main-new9-val": 65,
+        "main-new8-val": 60,
+        "main-new10-left": null,
+        "main-new10-right": null,
+        "main-new10-val": 80,
+        "main-new7-val": 70,
+        "main-new5-left": null,
+        "main-new6-left": null,
+        "main-new6-right": null,
+        "main-new6-val": 37,
+        "main-new5-val": 35,
+        "main-new4-right": null,
+        "main-new4-val": 40,
+        "main-new1-val": 50,
+        "main-new3-left": null,
+        "main-new3-right": null,
+        "main-new3-val": 20,
+        "main-new2-val": 30
+      },
+      "arguments": []
+    },
+    {
+      "callLabel": "call3",
+      "contextSensitiveID": "main",
+      "objects": [
+        {
+          "id": "main-new4",
+          "className": "TreeNode",
+          "fields": {
+            "left": {
+              "ref": "main-new5"
+            },
+            "right": null,
+            "val": 40
+          }
+        },
+        {
+          "id": "main-new5",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": {
+              "ref": "main-new6"
+            },
+            "val": 35
+          }
+        },
+        {
+          "id": "main-new6",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": null,
+            "val": 37
+          }
+        },
+        {
+          "id": "main-new1",
+          "className": "TreeNode",
+          "fields": {
+            "left": {
+              "ref": "main-new4"
+            },
+            "right": {
+              "ref": "main-new8"
+            },
+            "val": 50
+          }
+        },
+        {
+          "id": "main-new8",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": {
+              "ref": "main-new7"
+            },
+            "val": 60
+          }
+        },
+        {
+          "id": "main-new7",
+          "className": "TreeNode",
+          "fields": {
+            "left": {
+              "ref": "main-new9"
+            },
+            "right": {
+              "ref": "main-new10"
+            },
+            "val": 70
+          }
+        },
+        {
+          "id": "main-new9",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": null,
+            "val": 65
+          }
+        },
+        {
+          "id": "main-new10",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": null,
+            "val": 80
+          }
+        },
+        {
+          "id": "main-new2",
+          "className": "TreeNode",
+          "fields": {
+            "left": {
+              "ref": "main-new3"
+            },
+            "right": {
+              "ref": "main-new1"
+            },
+            "val": 30
+          }
+        },
+        {
+          "id": "main-new3",
+          "className": "TreeNode",
+          "fields": {
+            "left": null,
+            "right": null,
+            "val": 20
+          }
+        }
+      ],
+      "values": {
+        "main-new5-left": null,
+        "main-new6-left": null,
+        "main-new6-right": null,
+        "main-new6-val": 37,
+        "main-new5-val": 35,
+        "main-new4-right": null,
+        "main-new4-val": 40,
+        "main-new8-left": null,
+        "main-new9-left": null,
+        "main-new9-right": null,
+        "main-new9-val": 65,
+        "main-new10-left": null,
+        "main-new10-right": null,
+        "main-new10-val": 80,
+        "main-new7-val": 70,
+        "main-new8-val": 60,
+        "main-new1-val": 50,
+        "main-new3-left": null,
+        "main-new3-right": null,
+        "main-new3-val": 20,
+        "main-new2-val": 30
+      },
+      "arguments": []
+    }
+  ]
+}

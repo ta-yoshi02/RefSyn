@@ -1,0 +1,5 @@
+started_utc=2026-10-15T06:39:44Z
+command=./target/debug/refsyn (cwd /private/tmp/claude-501/-Users-taku-workspace-kenkyu-proj-ref-refsyn/0d9a5bec-4b96-46e0-9406-8bca254788eb/scratchpad/wt/eval-494d6d4, HEAD 494d6d442163279ce9105a144ffec60518909f82)
+ESCHER_TS_*/REFSYN_*: none set
+refsyn_pid=88279
+stopped_utc=2026-10-15T06:47:25Z

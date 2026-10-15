@@ -1,0 +1,80 @@
+[
+  {
+    "callLabel": "call1",
+    "receiverObject": "main-new1",
+    "arguments": [],
+    "operations": [
+      {
+        "editType": "editEdgeReference",
+        "from": "main-new1",
+        "oldTo": "main-new2",
+        "newTo": "main-new4",
+        "label": "left"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "main-new2",
+        "oldTo": "main-new4",
+        "newTo": "main-new1",
+        "label": "right"
+      },
+      {
+        "editType": "addVariable",
+        "to": "main-new2",
+        "label": "return"
+      }
+    ]
+  },
+  {
+    "callLabel": "call2",
+    "receiverObject": "main-new7",
+    "arguments": [],
+    "operations": [
+      {
+        "editType": "editEdgeReference",
+        "from": "main-new7",
+        "oldTo": "main-new8",
+        "newTo": "main-new9",
+        "label": "left"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "main-new8",
+        "oldTo": "main-new9",
+        "newTo": "main-new7",
+        "label": "right"
+      },
+      {
+        "editType": "addVariable",
+        "to": "main-new8",
+        "label": "return"
+      }
+    ]
+  },
+  {
+    "callLabel": "call3",
+    "receiverObject": "main-new4",
+    "arguments": [],
+    "operations": [
+      {
+        "editType": "editEdgeReference",
+        "from": "main-new4",
+        "oldTo": "main-new5",
+        "newTo": "main-new6",
+        "label": "left"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "main-new5",
+        "oldTo": "main-new6",
+        "newTo": "main-new4",
+        "label": "right"
+      },
+      {
+        "editType": "addVariable",
+        "to": "main-new5",
+        "label": "return"
+      }
+    ]
+  }
+]

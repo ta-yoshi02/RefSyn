@@ -1,0 +1,163 @@
+{
+  "task": "rotateRight_h1",
+  "inputs": [
+    "thisRef",
+    "nodeHeap",
+    "leftHeap",
+    "rightHeap",
+    "valHeap",
+    "hole0"
+  ],
+  "components": [
+    "and",
+    "dec",
+    "equal",
+    "falseConst",
+    "findByValueRef",
+    "hasLeft",
+    "hasRight",
+    "hasVal",
+    "inc",
+    "isNonNeg",
+    "isNull",
+    "isZero",
+    "last_ptr",
+    "leInt",
+    "leftOf",
+    "loadInt",
+    "not",
+    "nthNextRef",
+    "or",
+    "penultimateRef",
+    "rightOf",
+    "trueConst",
+    "valOf",
+    "zero"
+  ],
+  "candidates": [
+    {
+      "name": "found (4 demonstrations)",
+      "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then rightOf(last_ptr(@thisRef, @leftHeap), @nodeHeap, @nodeHeap) else last_ptr(penultimateRef(@thisRef, @leftHeap), @rightHeap)",
+      "satisfies_all_examples": true,
+      "perExample": [
+        {
+          "example": 1,
+          "expected": "{\"tag\":\"ref\",\"value\":3}",
+          "got": "{\"tag\":\"ref\",\"value\":3}",
+          "ok": true
+        },
+        {
+          "example": 2,
+          "expected": "{\"tag\":\"ref\",\"value\":2}",
+          "got": "{\"tag\":\"ref\",\"value\":2}",
+          "ok": true
+        },
+        {
+          "example": 3,
+          "expected": "{\"tag\":\"ref\",\"value\":2}",
+          "got": "{\"tag\":\"ref\",\"value\":2}",
+          "ok": true
+        },
+        {
+          "example": 4,
+          "expected": "{\"tag\":\"ref\",\"value\":2}",
+          "got": "{\"tag\":\"ref\",\"value\":2}",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "name": "found (3 demonstrations)",
+      "term": "last_ptr(leftOf(@thisRef, @nodeHeap, @nodeHeap), @rightHeap)",
+      "satisfies_all_examples": false,
+      "perExample": [
+        {
+          "example": 1,
+          "expected": "{\"tag\":\"ref\",\"value\":3}",
+          "got": "{\"tag\":\"ref\",\"value\":3}",
+          "ok": true
+        },
+        {
+          "example": 2,
+          "expected": "{\"tag\":\"ref\",\"value\":2}",
+          "got": "{\"tag\":\"ref\",\"value\":2}",
+          "ok": true
+        },
+        {
+          "example": 3,
+          "expected": "{\"tag\":\"ref\",\"value\":2}",
+          "got": "{\"tag\":\"ref\",\"value\":2}",
+          "ok": true
+        },
+        {
+          "example": 4,
+          "expected": "{\"tag\":\"ref\",\"value\":2}",
+          "got": "{\"tag\":\"ref\",\"value\":3}",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "name": "rightOf(leftOf(this)) with nodeHeap",
+      "term": "rightOf(leftOf(@thisRef, @nodeHeap, @nodeHeap), @nodeHeap, @nodeHeap)",
+      "satisfies_all_examples": true,
+      "perExample": [
+        {
+          "example": 1,
+          "expected": "{\"tag\":\"ref\",\"value\":3}",
+          "got": "{\"tag\":\"ref\",\"value\":3}",
+          "ok": true
+        },
+        {
+          "example": 2,
+          "expected": "{\"tag\":\"ref\",\"value\":2}",
+          "got": "{\"tag\":\"ref\",\"value\":2}",
+          "ok": true
+        },
+        {
+          "example": 3,
+          "expected": "{\"tag\":\"ref\",\"value\":2}",
+          "got": "{\"tag\":\"ref\",\"value\":2}",
+          "ok": true
+        },
+        {
+          "example": 4,
+          "expected": "{\"tag\":\"ref\",\"value\":2}",
+          "got": "{\"tag\":\"ref\",\"value\":2}",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "name": "rightOf(leftOf(this)) with field heaps",
+      "term": "rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @rightHeap)",
+      "satisfies_all_examples": true,
+      "perExample": [
+        {
+          "example": 1,
+          "expected": "{\"tag\":\"ref\",\"value\":3}",
+          "got": "{\"tag\":\"ref\",\"value\":3}",
+          "ok": true
+        },
+        {
+          "example": 2,
+          "expected": "{\"tag\":\"ref\",\"value\":2}",
+          "got": "{\"tag\":\"ref\",\"value\":2}",
+          "ok": true
+        },
+        {
+          "example": 3,
+          "expected": "{\"tag\":\"ref\",\"value\":2}",
+          "got": "{\"tag\":\"ref\",\"value\":2}",
+          "ok": true
+        },
+        {
+          "example": 4,
+          "expected": "{\"tag\":\"ref\",\"value\":2}",
+          "got": "{\"tag\":\"ref\",\"value\":2}",
+          "ok": true
+        }
+      ]
+    }
+  ]
+}
