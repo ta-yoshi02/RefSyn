@@ -16,10 +16,11 @@ RefSynの基準：main `88927bcc99003d4f4836f9e518056ae64871675c`（#32のマー
 
 | 証拠 | 場所 | 状態 |
 | --- | --- | --- |
-| 主要5ケースのKanonでの新規記録（`b42d9ca`）、予備実験と本測定、baselineとの問題同一性の検査 | ブランチ `eval/five-cases-b42d9ca`（commit `925917d`）の `docs/evaluation_cases/reruns/2026-10-14-fresh-recording/` | draft PR [#33](https://github.com/ta-yoshi02/RefSyn/pull/33)（未マージ） |
-| `88927bc` での再確認（task・部品・探索設定・backendの一致、5ケースでのC1・C5、`this.val = 0` のinsert再記録） | `docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/` | 本ブランチ `codex/eval-recheck-88927bc`（draft PR、未マージ） |
+| 主要5ケースのKanonでの新規記録（`b42d9ca`）、予備実験と本測定、baselineとの問題同一性の検査 | `docs/evaluation_cases/reruns/2026-10-14-fresh-recording/` | main（#33でマージ、`aaf69d9`） |
+| `88927bc` での再確認（task・部品・探索設定・backendの一致、5ケースでのC1・C5、`this.val = 0` のinsert再記録） | `docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/` | #34（本書と同じPR） |
 | #29のC1・C5の検査ログ | `docs/evaluation_cases/reruns/2026-10-14-pr29-checks/` | main |
-| `af76b2e` のinsert記録 | `docs/evaluation_cases/reruns/2026-10-14-recording/` | main。`b42d9ca` 以降の結果ではない |
+| `af76b2e` のinsert記録（別セッション） | `docs/evaluation_cases/reruns/2026-10-14-recording/` | main。`b42d9ca` 以降の結果ではない。記録中のサーバ（PID 90770）は、本表の記録を取ったセッションが利用者の承認を得て停止した（`2026-10-14-fresh-recording/logs/FOREIGN_REQUESTS.md`） |
+| ユーザーが実演したinsertの画面・terminalの取得と、その独立確認（別セッション、`af76b2e`） | `docs/evaluation_cases/reruns/2026-10-14-insert-live/`、`2026-10-14-insert-live-recheck/` | main。本表の根拠には使っていない |
 
 ## 適合確認表
 
@@ -39,10 +40,10 @@ RefSynの基準：main `88927bcc99003d4f4836f9e518056ae64871675c`（#32のマー
 | # | 内容 | 種類 | 実装 | テスト | 証拠・制限 |
 | --- | --- | --- | --- | --- | --- |
 | B1 | 返り値：特殊変数 `return` への参照設定を末尾の `return` 文にする | 拡張（論文は脚注で言及） | `OperationGraph::ret`、`Template` | `http_validates_demonstrated_return_values`（`tests/whole_method_validation_tests.rs`） | prependの新規記録で passed 2/2、再実行で `testPassed` |
-| B2 | 記録の整合検査：`addEdge` は空・`null`・`undefined` のfield、または**この実演で生成し、まだ書き込んでいないfield**（`new C()` の既定値を上書き）にだけ許す。`editEdgeReference`・`deleteEdge` は記録された旧参照先と状態の一致を要求 | 採用条件（記録の整合性） | `src/operation_graph.rs`（`unwritten_created`）、`runtime/whole-method-validation.mjs` | `add_edge_replaces_an_unwritten_constructor_default_of_a_created_object`、`creation_and_write_history_do_not_carry_over_to_the_next_demonstration`、検証器の同名テスト | #32で既定値の上書きを許可した。修正前は `this.val = 0` のクラスを合成前に拒否していた（`eval/five-cases-b42d9ca` の `insert_general/attempt1_constructor_val0/`）。同じ要求は `88927bc` で passed 3/3 |
+| B2 | 記録の整合検査：`addEdge` は空・`null`・`undefined` のfield、または**この実演で生成し、まだ書き込んでいないfield**（`new C()` の既定値を上書き）にだけ許す。`editEdgeReference`・`deleteEdge` は記録された旧参照先と状態の一致を要求 | 採用条件（記録の整合性） | `src/operation_graph.rs`（`unwritten_created`）、`runtime/whole-method-validation.mjs` | `add_edge_replaces_an_unwritten_constructor_default_of_a_created_object`、`creation_and_write_history_do_not_carry_over_to_the_next_demonstration`、検証器の同名テスト | #32で既定値の上書きを許可した。修正前は `this.val = 0` のクラスを合成前に拒否していた（`2026-10-14-fresh-recording/insert_general/attempt1_constructor_val0/`）。同じ要求は `88927bc` で passed 3/3 |
 | B3 | `new C()` の条件：引数なしで実行し、データプロパティは基本型・`null`・`undefined` だけ | 実装制限 | Kanon `captureInstance`、`AddObject` | `creating_a_class_outside_the_supported_constructors_fails` | 仮引数の宣言は拒否理由にならない（引数なしの実行で `undefined` になる） |
 | B4 | 型：整数・真偽値・単一クラスの参照（`null` を含む）。文字列、整数以外の数、複数クラスは拒否 | 実装制限 | `field_kinds`、`task_type`（`src/pbe_problem.rs`） | `an_unrepresentable_or_mixed_kind_input_state_is_rejected_by_the_pbe_encoding`、`tests/boolean_values_tests.rs` | fieldの型は**呼出し前状態と `new C()` の状態だけ**から決め、書込み値の型は見ない。入力状態の型が揃っていれば、既定値と異なる型の書込みも通る（`false`→数値、`0`→真偽値、`0`→参照。#32のレビューで再現し、`88927bc` で再実行して passed 3/3）。入力状態での型の混在（例：呼出し前が数値で既定値が `false`）と、表現できない値（`""`、`0.5`）は拒否 |
-| B5 | 生成メソッドの採用前検査 | 採用条件（論文本文に未記載） | `runtime/whole-method-validation.mjs`、`src/validation.rs`、`web/src/lib/browser-runner.ts` | `runtime/whole-method-validation.test.mjs`（51件の一部）、`tests/whole_method_validation_tests.rs` | 5ケースとも passed（全実演）。範囲は C の表の「採用時」の行 |
+| B5 | 生成メソッドの採用前検査 | 採用条件（論文本文に未記載） | `runtime/whole-method-validation.mjs`、`src/validation.rs`、`web/src/lib/browser-runner.ts` | `runtime/whole-method-validation.test.mjs`（35件）、`tests/whole_method_validation_tests.rs` | 5ケースとも passed（全実演）。範囲は C の表の「採用時」の行 |
 | B6 | Kanonの入力：引数は整数・`null`・参照だけ。リテラルは数値か文字列として記録 | 実装制限（Kanon） | `normalizeCallArgument`、`literalInputType`（Kanon `src/js/testize.js`） | — | 真偽値の引数や真偽値リテラルの実演は画面から記録できない。真偽値の対応を主張する場合は明記する |
 
 ### C. 出力例を束縛する方式の成立条件（A5）
@@ -67,7 +68,7 @@ C5（純粋性）の検査範囲：
 
 | 項目 | 論文（`evaluation.tex`） | 実装側の記録 | 状態 |
 | --- | --- | --- | --- |
-| 対象と実演数・操作数 | 5メソッド、実演数3/3/2/3/2、操作数2/4/5/5/1 | 新規記録で同じ（`eval/five-cases-b42d9ca` の `stage_summary.json`） | 一致 |
+| 対象と実演数・操作数 | 5メソッド、実演数3/3/2/3/2、操作数2/4/5/5/1 | 新規記録で同じ（`2026-10-14-fresh-recording/stage_summary.json`） | 一致 |
 | MOLDのコスト上限 | 14（48行） | 本測定は32 | **不一致**。両手法32・15秒に揃える本文案を作成済み |
 | baselineのコスト上限 | 32、15秒（68行） | 32、15秒 | 一致 |
 | 反復と成功の定義 | 記載なし | 10回、10回すべてで解けたものを成功 | 本文案で追記 |
@@ -80,7 +81,7 @@ C5（純粋性）の検査範囲：
 ## 残作業（優先順）
 
 1. **本文案の採否を決め、本文へ反映する**（`docs/drafts/2026-10-14-paper-text-draft.md`）。A5の一致条件、C5の三段階、B4・B6の対応範囲、D の評価条件を対象とする。
-2. **評価の証拠をmainへ取り込む**。`eval/five-cases-b42d9ca`（#33）と本ブランチはdraft PRで、mainには未マージである。論文が参照する前にマージを判断する。
+2. **#34（本書、再確認の証拠、本文案）のマージを判断する**。主要5ケースの記録と測定は#33でmainに入った。
 3. **Kanonの未解決の問題**（2026-10-14、Kanon `60fa5c8` で確認）：
    - fallbackで、実演が付け替えた `const` 変数への代入が実行を止める（`eval(__variableName + ' = __object')`）。実演を拒否すべきである。
    - overlayの7件のテストが失敗する（`inferMethodParamNamesForCall` の実装がどのcommitにもない）。Kanon#7のCIは除外している。完成させるか取り下げるかは未決定。

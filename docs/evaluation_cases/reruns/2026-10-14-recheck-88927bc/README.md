@@ -1,7 +1,7 @@
 # Recheck of the 2026-10-14 measurement against main 88927bc
 
-The main measurement of the five cases (`eval/five-cases-b42d9ca`, commit `925917d`,
-`docs/evaluation_cases/reruns/2026-10-14-fresh-recording/`) ran at RefSyn `b42d9ca`.
+The main measurement of the five cases (`../2026-10-14-fresh-recording/`, merged to main
+by #33) ran at RefSyn `b42d9ca`.
 main has since merged #32 (`88927bc`). This directory checks whether that measurement
 still describes main, without measuring again.
 

@@ -110,7 +110,7 @@
 載せる場合は、測定区間と、計算機が専用でないことを注に書く。○×だけで比較の主張が足りるなら載せない方が安全である。
 
 ### 根拠
-- `eval/five-cases-b42d9ca` の `docs/evaluation_cases/reruns/2026-10-14-fresh-recording/`：`conditions.md`（本測定の条件）、`measurements/summary.md`、`baseline_spec_check.json`、`stage_summary.json`。
+- `docs/evaluation_cases/reruns/2026-10-14-fresh-recording/`（main、#33）：`conditions.md`（本測定の条件）、`measurements/summary.md`、`baseline_spec_check.json`、`stage_summary.json`。
 - `88927bc` での同一性：`docs/evaluation_cases/reruns/2026-10-14-recheck-88927bc/README.md`。
 - 表の○×（全状態変換PBE：setAt・prepend・popBackが○、append・insertが×。\mold：全て○）は現行の表と同じである。
 - 手書きの式のコスト（setAt 10、append 28、prepend 11と返り値2、insert 32、popBack 13）は `nonseparated_general_components/README.md`。\mold の式のコストは、入力変数・定数・部品適用を各1として、`nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))` が6で最大（他は `@x` の1から `nthNextRef(..., @a)` の5）。
@@ -139,7 +139,7 @@
 ```latex
 \paragraph{試作実装の対応範囲}
 現在のPBEへの符号化は，整数，真偽値，単一クラスのオブジェクトへの参照（\texttt{null}を含む）を扱い，文字列，整数以外の数，および複数クラスを扱わない．
-フィールドの型は，呼出し前の状態とコンストラクタ実行直後の状態から定め，両者で型が混在するフィールドは扱わない．
+フィールドの型は，全実演の呼出し前の状態と，コンストラクタ実行直後の状態に現れる値から定め，それらの中で型が混在するフィールドは扱わない．
 書き込む値の型はこの判定に含めない．
 オブジェクトの生成は，引数なしで実行した\texttt{new C()}が，基本型の値，\texttt{null}または\texttt{undefined}だけをデータプロパティとして設定するクラスに限る．
 生成したオブジェクトのフィールドへの最初の書込みは，コンストラクタが設定した既定値の上書きとして扱う．
