@@ -1,0 +1,83 @@
+{
+  "source": "Kanon editor session markers read in the browser after the edit was applied and the program re-ran (sha256 of the editor text: 139f19d6118810bc54fd1cefec076699875b6fcdd32b8afe5bde0d78b5925b0a)",
+  "markers": [
+    {
+      "clazz": "testPassed",
+      "range": [
+        45,
+        23,
+        45,
+        25
+      ],
+      "call": "root = root.rotateRight()"
+    },
+    {
+      "clazz": "testPassed",
+      "range": [
+        46,
+        47,
+        46,
+        49
+      ],
+      "call": "root.right.right = root.right.right.rotateRight()"
+    },
+    {
+      "clazz": "testPassed",
+      "range": [
+        47,
+        45,
+        47,
+        47
+      ],
+      "call": "root.right.left = root.right.left.rotateRight()"
+    },
+    {
+      "clazz": "testPassed",
+      "range": [
+        52,
+        23,
+        52,
+        25
+      ],
+      "call": "root = root.rotateRight()"
+    }
+  ],
+  "annotations": [
+    {
+      "row": 10,
+      "column": 294,
+      "type": "warning",
+      "text": "Don't make functions within a loop."
+    },
+    {
+      "row": 10,
+      "column": 506,
+      "type": "warning",
+      "text": "Don't make functions within a loop."
+    },
+    {
+      "row": 10,
+      "column": 1142,
+      "type": "warning",
+      "text": "Don't make functions within a loop."
+    },
+    {
+      "row": 10,
+      "column": 1691,
+      "type": "warning",
+      "text": "Don't make functions within a loop."
+    },
+    {
+      "row": 10,
+      "column": 1903,
+      "type": "warning",
+      "text": "Don't make functions within a loop."
+    },
+    {
+      "row": 10,
+      "column": 2358,
+      "type": "warning",
+      "text": "Don't make functions within a loop."
+    }
+  ]
+}
