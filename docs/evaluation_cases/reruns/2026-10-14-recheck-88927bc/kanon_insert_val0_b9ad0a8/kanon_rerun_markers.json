@@ -1,0 +1,34 @@
+{
+  "markers": [
+    {
+      "clazz": "testPassed",
+      "range": [
+        33,
+        10,
+        33,
+        17
+      ],
+      "text": "lst.insert(0, 89);"
+    },
+    {
+      "clazz": "testPassed",
+      "range": [
+        34,
+        10,
+        34,
+        17
+      ],
+      "text": "lst.insert(2, 46);"
+    },
+    {
+      "clazz": "testPassed",
+      "range": [
+        35,
+        10,
+        35,
+        17
+      ],
+      "text": "lst.insert(1, 71);"
+    }
+  ]
+}

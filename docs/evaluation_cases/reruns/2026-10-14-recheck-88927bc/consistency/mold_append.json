@@ -1,0 +1,53 @@
+{
+  "side": "mold",
+  "method": "append",
+  "tasks": [
+    "append_h0",
+    "append_h1"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 1,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 1,
+  "method_total_ms": {
+    "median": 5.495,
+    "min": 5.495,
+    "max": 5.495
+  },
+  "method_search_ms": {
+    "median": 4.181,
+    "min": 4.181,
+    "max": 4.181
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": true,
+      "method_total_ms": 5.495,
+      "method_search_ms": 4.181,
+      "tasks": [
+        {
+          "task": "append_h0",
+          "prepare_ms": 1.122,
+          "search_ms": 1.584,
+          "total_ms": 2.707,
+          "success": true,
+          "term": "@x"
+        },
+        {
+          "task": "append_h1",
+          "prepare_ms": 0.191,
+          "search_ms": 2.597,
+          "total_ms": 2.788,
+          "success": true,
+          "term": "last_ptr(@thisRef, @nextHeap)"
+        }
+      ]
+    }
+  ]
+}

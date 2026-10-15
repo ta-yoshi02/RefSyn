@@ -1,0 +1,44 @@
+{
+  "side": "baseline",
+  "method": "popBack",
+  "tasks": [
+    "popBack-fixed-env-pair"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 1,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 1,
+  "method_total_ms": {
+    "median": 4163.659,
+    "min": 4163.659,
+    "max": 4163.659
+  },
+  "method_search_ms": {
+    "median": 4162.352,
+    "min": 4162.352,
+    "max": 4162.352
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": true,
+      "method_total_ms": 4163.659,
+      "method_search_ms": 4162.352,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 1.307,
+          "search_ms": 4162.352,
+          "total_ms": 4163.659,
+          "success": true,
+          "term": "if isNull(head(tail(tail(@gHeap)))) then pairHeap(@fHeap, storeAtRef(@gHeap, head(@gHeap), head(tail(tail(@gHeap))))) else pairHeap(@fHeap, storeAtRef(@gHeap, head(tail(@gHeap)), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    }
+  ]
+}

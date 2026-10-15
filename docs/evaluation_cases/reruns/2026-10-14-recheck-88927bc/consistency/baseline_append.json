@@ -1,0 +1,44 @@
+{
+  "side": "baseline",
+  "method": "append",
+  "tasks": [
+    "append-fixed-env-pair"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 1,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 0,
+  "method_total_ms": {
+    "median": 15000.908,
+    "min": 15000.908,
+    "max": 15000.908
+  },
+  "method_search_ms": {
+    "median": 14999.656,
+    "min": 14999.656,
+    "max": 14999.656
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": false,
+      "method_total_ms": 15000.908,
+      "method_search_ms": 14999.656,
+      "tasks": [
+        {
+          "task": "append-fixed-env-pair",
+          "prepare_ms": 1.253,
+          "search_ms": 14999.656,
+          "total_ms": 15000.908,
+          "success": false,
+          "term": null
+        }
+      ]
+    }
+  ]
+}

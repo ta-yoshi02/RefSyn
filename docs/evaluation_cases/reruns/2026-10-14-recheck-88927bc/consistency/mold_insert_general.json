@@ -1,0 +1,62 @@
+{
+  "side": "mold",
+  "method": "insert_general",
+  "tasks": [
+    "insert_h0",
+    "insert_h1",
+    "insert_h2"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 1,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 1,
+  "method_total_ms": {
+    "median": 16.925,
+    "min": 16.925,
+    "max": 16.925
+  },
+  "method_search_ms": {
+    "median": 15.269,
+    "min": 15.269,
+    "max": 15.269
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": true,
+      "method_total_ms": 16.925,
+      "method_search_ms": 15.269,
+      "tasks": [
+        {
+          "task": "insert_h0",
+          "prepare_ms": 1.202,
+          "search_ms": 1.847,
+          "total_ms": 3.049,
+          "success": true,
+          "term": "@arg"
+        },
+        {
+          "task": "insert_h1",
+          "prepare_ms": 0.241,
+          "search_ms": 9.132,
+          "total_ms": 9.373,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))"
+        },
+        {
+          "task": "insert_h2",
+          "prepare_ms": 0.213,
+          "search_ms": 4.29,
+          "total_ms": 4.503,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+        }
+      ]
+    }
+  ]
+}
