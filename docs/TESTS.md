@@ -51,6 +51,11 @@ Uses the paper's three `insert` demonstrations as the fixture.
   there.
 - The correspondence maps the demonstrations as in the paper, ignores edge order, and is
   rejected when kind, class, field, direction or multiplicity differ, or null meets non-null.
+- Among several isomorphisms, the first combination whose hole examples never give one input
+  two outputs is taken: reversing the edit order of two symmetric writes no longer swaps their
+  sources, mu_1 stays the identity, eight symmetric writers (8! isomorphisms) resolve at the
+  first one, and exhausting the 10,000-step search is reported apart from a contradiction in
+  every combination.
 - The template has one creation, three hole bindings and three writes in the paper's order,
   the paper's hole outputs, and renders the seven-statement method.
 - Hole inputs contain created objects with their constructor state and earlier holes, but no
