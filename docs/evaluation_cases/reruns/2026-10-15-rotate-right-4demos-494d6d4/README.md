@@ -56,16 +56,28 @@ the receiver: if `this.left.left` is null it takes `this.left.right`, otherwise 
 the `right` chain from the next-to-last node of the `left` chain. That equals
 `this.left.right` on the four demonstrations only.
 
-Part B of `node_rerun_result.json` (inputs that were not demonstrated, compared with a
-reference right rotation):
+Part B of `node_rerun_result.json` runs the applied method on inputs that were not
+demonstrated and compares it with a reference right rotation. The demonstrations all had
+`this.left` and `this.left.right` non-null; the inputs are split by that condition.
+
+**Within the demonstrated condition** (`this.left` and `this.left.right` non-null): one of
+four agrees.
 
 | Input | Generated method | Right rotation |
 | --- | --- | --- |
 | `50(30(20, 40(-, 45)), 70)` | **differs**: `30(20, 50(45, 70))`, node 40 lost | `30(20, 50(40(-, 45), 70))` |
 | `50(30(-, 40(-, 45)), 70)` | agrees | |
-| `50(30(20(10, -), 40), 70)` | **differs**: `50.left` becomes 20, which is also `30.left` | `30(20(10, -), 50(40, 70))` |
+| `50(30(20(10, -), 40), 70)` | **differs**: `50.left` becomes 20, which is also `30.left`; node 40 lost | `30(20(10, -), 50(40, 70))` |
 | `50(30(20, 40(35, 45(-, 47))), -)` | **differs**: `30(20, 50(47, -))`, 40, 35, 45 lost | `30(20, 50(40(35, 45(-, 47)), -))` |
-| `50(30(20, -), 70)` (`left.right` null; outside the demonstrated condition) | **differs**: `50.left` becomes 30, a cycle | `30(20, 50(-, 70))` |
+
+**Outside the demonstrated condition** (`this.left.right` null; no demonstration had this):
+
+| Input | Generated method | Right rotation |
+| --- | --- | --- |
+| `50(30(20, -), 70)` | **differs**: `50.left` becomes 30 while `30.right` is 50, a cycle | `30(20, 50(-, 70))` |
+
+The demonstrations do not determine the behaviour on this input; it is listed to show what
+the method does there, not as a failure against the demonstrated condition.
 
 ## Diagnosis (no search run, no change)
 
@@ -88,11 +100,12 @@ costs at most 6. A plausible reason is that AscendRec assembles a
 conditional from parts found at a lower cost level before it reaches level 7; the search was
 not traced, so this is not established.
 
-What this shows: adding a demonstration that separates the earlier term removed that term,
-and the result passes every check on the demonstrations; but the synthesized helper is
-still specific to the demonstrations and is wrong on four of five other inputs. The
-whole-method validation and Kanon's re-run check only the demonstrations and did not detect
-this.
+What this shows: adding the counterexample as a fourth demonstration removed the earlier
+term, and the method obtained reproduces all four demonstrations; but it is still specific
+to them and differs from a right rotation on three of four other inputs within the
+demonstrated condition. The whole-method validation and Kanon's re-run check only the
+demonstrations; passing them does not establish correctness on inputs that were not
+demonstrated.
 
 ## How it was recorded, and deviations
 
