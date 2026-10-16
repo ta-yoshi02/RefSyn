@@ -64,6 +64,18 @@ Uses the paper's three `insert` demonstrations as the fixture.
   methods and non-isomorphic demonstrations produce no code; the core hands the browser one
   task and one hole check per hole.
 
+## Randomized operation normalization (`tests/operation_graph_randomized_tests.rs`)
+
+- Seeds 1–64 generate 48 edits each, including object/literal creation, repeated writes,
+  reference deletion and return updates, starting with cycles, sharing, detached objects,
+  null, undefined and absent fields. The operation kind follows a fixed schedule; targets,
+  fields and values vary. A direct state model is compared with graph replay after every
+  prefix (3,072 comparisons), plus 64 empty prefixes. This checks reading and normalization,
+  without invoking PBE or executing generated JavaScript.
+- Corrupting a recorded old target in each sequence must be rejected (64 cases).
+- See [the Japanese verification guide](RANDOMIZED_TESTING.md) for the independent oracles,
+  sequence comparisons, deliberate faults, reproducible commands and scope limits.
+
 ## Fields and names (`tests/fields_and_names_tests.rs`)
 
 - A class without a constructor: updating existing objects needs no absent fields; a created
@@ -80,9 +92,55 @@ Uses the paper's three `insert` demonstrations as the fixture.
 
 ## Whole-method adoption
 
-- `tests/whole_method_validation_tests.rs` checks native adoption and rejection through HTTP,
+- `tests/whole_method_validation_tests.rs` checks native adoption and rejection through the handler,
   including the five saved evaluation cases with typed pre-states built from their recorded
-  `precondGraph`, and runs the adopted code on inputs that were never demonstrated.
+  `precondGraph`, and runs the adopted code on inputs that were never demonstrated. Each of the
+  five `adopted_*_matches_the_reference_on_unseen_inputs` tests synthesizes its method afresh,
+  then `tests/js/list-method-differential.cjs` compares it with the independent method in that
+  case's `target_program.js`, using identical initial states and arguments:
+
+  | Method | Compared calls |
+  | --- | ---: |
+  | `setAt` | 5,160 |
+  | `insert` | 5,160 |
+  | `append` | 531 |
+  | `prepend` | 531 |
+  | `popBack` | 72 |
+
+  Receiver-list lengths are 1, 2, 3, 5, 8, 16 and 32 (`popBack`: 2 and above). Values are distinct
+  positive integers, zeros, repeated mixed-sign integers, or pseudorandom integers with a fixed
+  seed. Assigned/inserted values vary independently over -10001, -1, 0, 1, 10007 and the list's
+  endpoint values, deduplicated. Every valid index is checked for `setAt` and `insert`; `insert`
+  means insertion **after** that index, including the tail. Empty receivers, invalid indices
+  and singleton `popBack` are outside this suite's domain.
+
+  Each input is tested at the head, with a shared suffix and detached objects, and with a receiver
+  inside a larger list. The shared layout also reverses the allocation order of the list nodes.
+  The comparison retains IDs for all existing objects (including removed/detached nodes), tracks
+  constructor allocations including unreachable ones, and compares every own field, property
+  presence/attributes, references and aliases, class, and return value/identity. It does not
+  monitor ambient globals/prototypes or exercise Kanon's capture/editor UI. Existing small
+  follow-up checks, including sequential calls, are retained. These finite input checks are not
+  a proof on all lists or all integers, and do not reuse the historical 49-input saved-code run.
+
+  Run just these five tests with:
+
+  ```sh
+  cargo test --locked --test whole_method_validation_tests matches_the_reference_on_unseen_inputs
+  ```
+
+  Add `-- --nocapture` to see the per-method comparison counts alongside the synthesis diagnostics.
+- `adopted_methods_match_the_reference_after_each_seeded_random_call` freshly synthesizes
+  the five methods and mixes them in 288 persistent-state sequences of 50 calls (14,400
+  calls). Every call is compared, using seeds 1–24, initial lengths 1, 2, 8 and 32, and the
+  three layouts above. Receivers and valid arguments change with the current reference
+  state. Returned heads from `prepend` at offset zero become the next root receiver;
+  original aliases and all allocated objects remain observable.
+- `reference_comparator_accepts_correct_methods_and_rejects_faulty_candidates` runs
+  `node --test tests/js/list-method-differential.test.cjs` as part of `cargo test`.
+  Its 15 Node tests include correct controls and nine deliberately faulty candidates,
+  including a candidate that only corrupts the second `setAt` call. Failures must be
+  comparison assertions, not syntax errors or process startup failures.
 - `node --test runtime/whole-method-validation.test.mjs` checks the demonstrated heap
   (values, presence, identity, allocations by structure), return values, helper results
   against their output examples, side effects on globals, built-in and class prototypes and
@@ -99,6 +157,31 @@ Uses the paper's three `insert` demonstrations as the fixture.
   to the actual validator, editor mutation guards, application of exactly the validated change
   and re-execution of the applied class. Its jest setup requires `escodegen`, which Kanon ships
   as the `external/escodegen` submodule rather than an npm dependency.
+
+## Recorded requests by stage (`tests/recorded_stage_tests.rs`)
+
+- Reads every directory of `tests/recordings/` (a request recorded from Kanon, the values
+  expected of `read`, `graphs`, `template`, `problems`, `validation` and `comparison`, and an
+  optional reference); a new directory is a new case. See
+  [the module map](MODULE_TESTS.md) and `tests/recordings/README.md`.
+- On Kanon's recording of the paper's insert, the stages give the paper's arguments, write
+  lists, vertices of two graphs, correspondence, hole outputs and PBE expected outputs; PBE
+  inputs are left to `paper_pipeline_tests`. Unmet values are reported with their paths; a
+  rejected recording stops at that stage without synthesis, and a directory missing a required
+  file fails the test.
+- The 2026-10-14 recordings of insert, setAt, append, prepend and popBack are adopted and
+  agree with their references on 15, 15, 15, 15 and 12 inputs. The four-demonstration
+  rotateRight recording passes validation and differs from a right rotation on 8 of 12
+  inputs, the known result of that rerun; passing means those differences were found again.
+- `tests/js/compare-with-reference.test.mjs` checks that the comparison accepts an equivalent
+  method that creates objects in another order, rejects seven faulty ones, stops a call that
+  does not finish (2 s) as a mismatch and treats a reference that does not finish as an error.
+  The whole comparison process is stopped after 120 s; that path is tested with a 1 s limit.
+  Only states Kanon's `captureValidationState` can record are compared (instances of the
+  classes with ordinary string-keyed data fields holding undefined, null, strings, booleans,
+  finite numbers other than -0 or such instances), and objects must stay extensible. The
+  conditions apply to the input and to every object observed after the call, detached ones
+  included; a state outside them is an error or a mismatch, never agreement.
 
 ## Bridge helpers
 
