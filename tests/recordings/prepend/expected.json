@@ -1,0 +1,4 @@
+{
+  "validation": {"status": "passed", "checked_demonstrations": 2},
+  "comparison": {"cases": 15, "mismatches": []}
+}

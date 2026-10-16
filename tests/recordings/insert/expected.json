@@ -1,0 +1,233 @@
+{
+  "read": {
+    "demonstrations": [
+      {
+        "method": "insert",
+        "params": [
+          "i",
+          "arg"
+        ],
+        "receiver": "main-new1",
+        "arguments": [
+          0,
+          89
+        ]
+      },
+      {
+        "arguments": [
+          2,
+          46
+        ]
+      },
+      {
+        "arguments": [
+          1,
+          71
+        ]
+      }
+    ]
+  },
+  "graphs": [
+    {
+      "writes": [
+        [
+          0,
+          "val",
+          1
+        ],
+        [
+          0,
+          "next",
+          2
+        ],
+        [
+          3,
+          "next",
+          0
+        ]
+      ],
+      "return": null,
+      "vertices": [
+        {
+          "created": "__temp1",
+          "class": "Node"
+        },
+        {
+          "constant": 89
+        },
+        {
+          "existing": "main-new2",
+          "class": "Node"
+        },
+        {
+          "existing": "main-new1",
+          "class": "Node"
+        }
+      ]
+    },
+    {
+      "writes": [
+        [
+          0,
+          "val",
+          1
+        ],
+        [
+          0,
+          "next",
+          2
+        ],
+        [
+          3,
+          "next",
+          0
+        ]
+      ]
+    },
+    {
+      "writes": [
+        [
+          1,
+          "next",
+          0
+        ],
+        [
+          0,
+          "val",
+          2
+        ],
+        [
+          0,
+          "next",
+          3
+        ]
+      ],
+      "vertices": [
+        {
+          "created": "__temp5",
+          "class": "Node"
+        },
+        {
+          "existing": "__temp1",
+          "class": "Node"
+        },
+        {
+          "constant": 71
+        },
+        {
+          "existing": "main-new2",
+          "class": "Node"
+        }
+      ]
+    }
+  ],
+  "template": {
+    "holes": [
+      {
+        "helper": "insert_h0",
+        "type": "number",
+        "outputs": [
+          89,
+          46,
+          71
+        ]
+      },
+      {
+        "helper": "insert_h1",
+        "outputs": [
+          {
+            "ref": "main-new2"
+          },
+          {
+            "ref": "main-new3"
+          },
+          {
+            "ref": "main-new2"
+          }
+        ]
+      },
+      {
+        "helper": "insert_h2",
+        "outputs": [
+          {
+            "ref": "main-new1"
+          },
+          {
+            "ref": "main-new2"
+          },
+          {
+            "ref": "__temp1"
+          }
+        ]
+      }
+    ],
+    "mappings": [
+      [
+        0,
+        1,
+        2,
+        3
+      ],
+      [
+        0,
+        1,
+        2,
+        3
+      ],
+      [
+        0,
+        2,
+        3,
+        1
+      ]
+    ]
+  },
+  "problems": {
+    "checks": [
+      {
+        "helper": "insert_h0",
+        "expected": [
+          89,
+          46,
+          71
+        ]
+      },
+      {
+        "helper": "insert_h1",
+        "expected": [
+          {
+            "ref": "main-new2"
+          },
+          {
+            "ref": "main-new3"
+          },
+          {
+            "ref": "main-new2"
+          }
+        ]
+      },
+      {
+        "helper": "insert_h2",
+        "expected": [
+          {
+            "ref": "main-new1"
+          },
+          {
+            "ref": "main-new2"
+          },
+          {
+            "ref": "__temp1"
+          }
+        ]
+      }
+    ]
+  },
+  "validation": {
+    "status": "passed",
+    "checked_demonstrations": 3
+  },
+  "comparison": {
+    "cases": 15,
+    "mismatches": []
+  }
+}

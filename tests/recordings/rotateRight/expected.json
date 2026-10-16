@@ -1,0 +1,13 @@
+{
+  "validation": {"status": "passed", "checked_demonstrations": 4},
+  "comparison": {"cases": 12, "mismatches": [
+    {"case": "root 50(30(20, 40(-, 45)), 70)"},
+    {"case": "left child of 90 in 90(50(30(20, 40(-, 45)), 70), -)"},
+    {"case": "root 50(30(20(10, -), 40), 70)"},
+    {"case": "left child of 90 in 90(50(30(20(10, -), 40), 70), -)"},
+    {"case": "root 50(30(20, 40(35, 45(-, 47))), -)"},
+    {"case": "left child of 90 in 90(50(30(20, 40(35, 45(-, 47))), -), -)"},
+    {"case": "root 50(30(20(10, 25), 40(35, -)), 70)"},
+    {"case": "left child of 90 in 90(50(30(20(10, 25), 40(35, -)), 70), -)"}
+  ]}
+}
