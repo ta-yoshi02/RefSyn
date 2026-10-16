@@ -326,10 +326,100 @@ const snapshot = head => {{
     );
 }
 
+fn compare_with_reference(case: &str, response: &SynthesisResponse) {
+    let method = if case == "insert_general" {
+        "insert"
+    } else {
+        case
+    };
+    let payload = json!({
+        "method": method,
+        "classSource": obj_class_source(case),
+        "helpers": response.code,
+        "composedMethod": response.composed_method_code.as_deref().unwrap(),
+    });
+    let report = run_reference_comparison(&payload);
+    assert!(report["cases"].as_u64().unwrap() >= 20, "{report}");
+    println!("reference comparison: {report}");
+}
+
+fn run_reference_comparison(payload: &Value) -> Value {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+
+    let mut child = Command::new("node")
+        .arg(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/tests/js/list-method-differential.cjs"
+        ))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(&serde_json::to_vec(payload).unwrap())
+        .unwrap();
+    let output = child.wait_with_output().unwrap();
+    assert!(
+        output.status.success(),
+        "{}\npayload: {payload}",
+        String::from_utf8_lossy(&output.stderr),
+    );
+    serde_json::from_slice(&output.stdout).unwrap()
+}
+
+#[tokio::test]
+async fn adopted_methods_match_the_reference_after_each_seeded_random_call() {
+    let mut candidates = Vec::new();
+    for case in ["setAt", "insert_general", "append", "prepend", "popBack"] {
+        let response = adopted(case).await;
+        candidates.push(json!({
+            "method": if case == "insert_general" { "insert" } else { case },
+            "classSource": obj_class_source(case),
+            "helpers": response.code,
+            "composedMethod": response.composed_method_code.unwrap(),
+        }));
+    }
+    let report = run_reference_comparison(&json!({
+        "classSource": obj_class_source("setAt"),
+        "candidates": candidates,
+        "sequences": true,
+    }));
+    assert_eq!(report["sequences"], 288);
+    assert_eq!(report["calls"], 14_400);
+    println!("random sequence comparison: {report}");
+}
+
+#[test]
+fn reference_comparator_accepts_correct_methods_and_rejects_faulty_candidates() {
+    let output = std::process::Command::new("node")
+        .args([
+            "--test",
+            concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/tests/js/list-method-differential.test.cjs"
+            ),
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
 #[tokio::test]
 async fn adopted_set_at_matches_the_reference_on_unseen_inputs() {
+    let response = adopted("setAt").await;
+    compare_with_reference("setAt", &response);
     run_on_unseen_inputs(
-        &adopted("setAt").await,
+        &response,
         r#"
 let head = list([3, 7, 11, 19, 23]);
 head.setAt(1, 101);
@@ -342,8 +432,10 @@ assert.deepEqual(snapshot(head), [3, 101, 11, 19, -8]);
 
 #[tokio::test]
 async fn adopted_append_matches_the_reference_on_unseen_inputs() {
+    let response = adopted("append").await;
+    compare_with_reference("append", &response);
     run_on_unseen_inputs(
-        &adopted("append").await,
+        &response,
         r#"
 let one = list([4]);
 one.append(91);
@@ -357,8 +449,10 @@ assert.deepEqual(snapshot(many), [2, 5, 8, 13, 21, -6]);
 
 #[tokio::test]
 async fn adopted_prepend_matches_the_reference_on_unseen_inputs() {
+    let response = adopted("prepend").await;
+    compare_with_reference("prepend", &response);
     run_on_unseen_inputs(
-        &adopted("prepend").await,
+        &response,
         r#"
 let head = list([7, 12, 18]);
 head = head.prepend(44);
@@ -373,6 +467,7 @@ assert.deepEqual(snapshot(head), [-3, 44, 7, 12, 18]);
 async fn adopted_insert_matches_the_reference_on_unseen_inputs() {
     let response = adopted("insert_general").await;
     assert_eq!(response.hole_information.as_ref().unwrap().len(), 3);
+    compare_with_reference("insert_general", &response);
     run_on_unseen_inputs(
         &response,
         r#"
@@ -387,8 +482,10 @@ assert.deepEqual(snapshot(head), [5, 7, 10, 20, 40, 55, 80]);
 
 #[tokio::test]
 async fn adopted_pop_back_matches_the_reference_on_unseen_inputs() {
+    let response = adopted("popBack").await;
+    compare_with_reference("popBack", &response);
     run_on_unseen_inputs(
-        &adopted("popBack").await,
+        &response,
         r#"
 let two = list([6, 9]);
 two.popBack();
