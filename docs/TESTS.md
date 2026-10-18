@@ -64,6 +64,34 @@ Uses the paper's three `insert` demonstrations as the fixture.
   methods and non-isomorphic demonstrations produce no code; the core hands the browser one
   task and one hole check per hole.
 
+## Operation order (`tests/operation_order_tests.rs`)
+
+Demonstrations that make the same edits in another order, written as small `Cell` heaps. The
+expected correspondence, hole types and outputs, PBE inputs (receiver, pre-call heap, arguments,
+created objects, earlier holes, output) and the state after running the template are derived
+from the edits and compared by the objects and values each vertex stands for, not by vertex or
+hole numbers.
+
+- Independent writes: two symmetric writes reversed, and every pair of orders of three writes
+  to different fields (36 pairs).
+- Creation order: `pushTwo(x, y)` with both creation orders times all 120 write orders.
+- Order that matters: repeated writes to one field keep order and multiplicity; `set(a, b)` is
+  synthesized and ends with `b` on new arguments; two demonstrations that give one input two
+  results are aligned and every hole is synthesized, then the whole-method validation
+  reproduces the first and fails on the second at `A.value` (checked exactly, so a refusal for
+  another reason does not pass).
+- Invalid reorderings (use before creation, stale old targets) are rejected by graph building.
+- With different states, reversing two symmetric writes changes which cells the search pairs
+  (the receiver is not part of the correspondence). Either pairing must reproduce both
+  demonstrations. The methods adopted for the two orders are compared with each other (not
+  with a reference) on 30 given lists where the receiver has a successor, two of them the
+  demonstrated states: both finish and leave the same `value`, `next` and `other` in every
+  existing cell. Return values are not compared, and receivers without a successor are left
+  out of this check, which does not make them out of scope. This is recorded as
+  order-dependent selection, not as a defect (see [the module map](MODULE_TESTS.md)).
+- `run_template` runs the template in the test with each hole bound to its expected output; only
+  `set` and the `point` comparison execute synthesized JavaScript.
+
 ## Randomized operation normalization (`tests/operation_graph_randomized_tests.rs`)
 
 - Seeds 1–64 generate 48 edits each, including object/literal creation, repeated writes,
