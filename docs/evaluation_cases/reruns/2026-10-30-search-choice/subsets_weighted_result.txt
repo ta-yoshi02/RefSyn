@@ -1,0 +1,44 @@
+unlink_h0 calls {1}: c4 prevOf(@thisRef, @nodeHeap, @nodeHeap)
+unlink_h0 calls {2}: c4 prevOf(@thisRef, @nodeHeap, @nodeHeap)
+unlink_h0 calls {1,2}: c4 prevOf(@thisRef, @nodeHeap, @nodeHeap)
+unlink_h0 calls {3}: c4 prevOf(@thisRef, @nodeHeap, @nodeHeap)
+unlink_h0 calls {1,3}: c4 prevOf(@thisRef, @nodeHeap, @nodeHeap)
+unlink_h0 calls {2,3}: c4 prevOf(@thisRef, @nodeHeap, @nodeHeap)
+unlink_h0 calls {1,2,3}: c4 prevOf(@thisRef, @nodeHeap, @nodeHeap)
+unlink_h1 calls {1}: c4 nextOf(@thisRef, @nodeHeap, @nodeHeap)
+unlink_h1 calls {2}: c4 nextOf(@thisRef, @nodeHeap, @nodeHeap)
+unlink_h1 calls {1,2}: c4 nextOf(@thisRef, @nodeHeap, @nodeHeap)
+unlink_h1 calls {3}: c4 nextOf(@thisRef, @nodeHeap, @nodeHeap)
+unlink_h1 calls {1,3}: c4 nextOf(@thisRef, @nodeHeap, @nodeHeap)
+unlink_h1 calls {2,3}: c4 nextOf(@thisRef, @nodeHeap, @nodeHeap)
+unlink_h1 calls {1,2,3}: c4 nextOf(@thisRef, @nodeHeap, @nodeHeap)
+union_h0 calls {1}: c1 @other
+union_h0 calls {2}: c1 @thisRef
+union_h0 calls {1,2}: c10 if isZero(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))) then @thisRef else @other
+union_h0 calls {3}: c1 @other
+union_h0 calls {1,3}: c1 @other
+union_h0 calls {2,3}: c10 if isZero(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))) then @thisRef else @other
+union_h0 calls {1,2,3}: c10 if isZero(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))) then @thisRef else @other
+union_h0 calls {4}: c1 @thisRef
+union_h0 calls {1,4}: c10 if isZero(loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @other else @thisRef
+union_h0 calls {2,4}: c1 @thisRef
+union_h0 calls {1,2,4}: c10 if isZero(loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @other else @thisRef
+union_h0 calls {3,4}: c11 if isZero(dec(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)))) then @thisRef else @other
+union_h0 calls {1,3,4}: c12 if isZero(dec(dec(loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))))) then @thisRef else @other
+union_h0 calls {2,3,4}: c12 if isZero(dec(dec(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))))) then @other else @thisRef
+union_h0 calls {1,2,3,4}: c16 if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other
+union_h1 calls {1}: c1 @thisRef
+union_h1 calls {2}: c1 @other
+union_h1 calls {1,2}: c6 if equal(@thisRef, @hole0) then @other else @thisRef
+union_h1 calls {3}: c1 @thisRef
+union_h1 calls {1,3}: c1 @thisRef
+union_h1 calls {2,3}: c6 if equal(@thisRef, @hole0) then @other else @thisRef
+union_h1 calls {1,2,3}: c6 if equal(@thisRef, @hole0) then @other else @thisRef
+union_h1 calls {4}: c1 @other
+union_h1 calls {1,4}: c6 if equal(@thisRef, @hole0) then @other else @thisRef
+union_h1 calls {2,4}: c1 @other
+union_h1 calls {1,2,4}: c6 if equal(@thisRef, @hole0) then @other else @thisRef
+union_h1 calls {3,4}: c6 if equal(@thisRef, @hole0) then @other else @thisRef
+union_h1 calls {1,3,4}: c6 if equal(@thisRef, @hole0) then @other else @thisRef
+union_h1 calls {2,3,4}: c6 if equal(@thisRef, @hole0) then @other else @thisRef
+union_h1 calls {1,2,3,4}: c6 if equal(@thisRef, @hole0) then @other else @thisRef
