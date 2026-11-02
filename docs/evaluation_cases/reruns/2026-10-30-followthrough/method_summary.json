@@ -1,0 +1,128 @@
+{
+  "rotateRight3": {
+    "terms": [
+      {
+        "helper": "rotateRight_h0",
+        "term": "@thisRef",
+        "ms": 2.9887919999999966
+      },
+      {
+        "helper": "rotateRight_h1",
+        "term": "rightOf(leftOf(@thisRef, @nodeHeap, @nodeHeap), @nodeHeap, @nodeHeap)",
+        "ms": 8.257165999999998
+      },
+      {
+        "helper": "rotateRight_h2",
+        "term": "leftOf(@thisRef, @nodeHeap, @nodeHeap)",
+        "ms": 1.9582499999999996
+      }
+    ],
+    "summary": {
+      "current": {
+        "trees": {
+          "agree": 64,
+          "total": 257
+        },
+        "graphs": {
+          "agree": 384,
+          "total": 3072
+        }
+      },
+      "candidate": {
+        "trees": {
+          "agree": 257,
+          "total": 257
+        },
+        "graphs": {
+          "agree": 3072,
+          "total": 3072
+        }
+      }
+    }
+  },
+  "rotateRight4": {
+    "terms": [
+      {
+        "helper": "rotateRight_h0",
+        "term": "@thisRef",
+        "ms": 0.8817500000000109
+      },
+      {
+        "helper": "rotateRight_h1",
+        "term": "rightOf(leftOf(@thisRef, @nodeHeap, @nodeHeap), @nodeHeap, @nodeHeap)",
+        "ms": 8.258499999999998
+      },
+      {
+        "helper": "rotateRight_h2",
+        "term": "leftOf(@thisRef, @nodeHeap, @nodeHeap)",
+        "ms": 3.3277920000000165
+      }
+    ],
+    "summary": {
+      "current": {
+        "trees": {
+          "agree": 97,
+          "total": 257
+        },
+        "graphs": {
+          "agree": 528,
+          "total": 3072
+        }
+      },
+      "candidate": {
+        "trees": {
+          "agree": 257,
+          "total": 257
+        },
+        "graphs": {
+          "agree": 3072,
+          "total": 3072
+        }
+      }
+    }
+  },
+  "union": {
+    "terms": [
+      {
+        "helper": "union_h0",
+        "term": "if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other",
+        "ms": 1480.3988330000002
+      },
+      {
+        "helper": "union_h1",
+        "term": "if equal(@thisRef, @hole0) then @other else @thisRef",
+        "ms": 1.4177500000000691
+      }
+    ],
+    "summary": {
+      "current": {
+        "equal_rank_outside_contract": {
+          "agree": 0,
+          "total": 25
+        },
+        "distinct_rank": {
+          "agree": 138,
+          "total": 288
+        },
+        "reachable_rank_trees": {
+          "agree": 24,
+          "total": 42
+        }
+      },
+      "candidate": {
+        "equal_rank_outside_contract": {
+          "agree": 0,
+          "total": 25
+        },
+        "distinct_rank": {
+          "agree": 288,
+          "total": 288
+        },
+        "reachable_rank_trees": {
+          "agree": 42,
+          "total": 42
+        }
+      }
+    }
+  }
+}

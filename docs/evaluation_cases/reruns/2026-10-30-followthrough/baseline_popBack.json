@@ -1,0 +1,188 @@
+{
+  "side": "baseline",
+  "method": "popBack",
+  "tasks": [
+    "popBack-fixed-env-pair"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 10,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 10,
+  "method_total_ms": {
+    "median": 6425.676,
+    "min": 6152.71,
+    "max": 6896.104
+  },
+  "method_search_ms": {
+    "median": 6424.841,
+    "min": 6152.358,
+    "max": 6895.931
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": true,
+      "method_total_ms": 6452.762,
+      "method_search_ms": 6451.388,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 1.374,
+          "search_ms": 6451.388,
+          "total_ms": 6452.762,
+          "success": true,
+          "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "all_solved": true,
+      "method_total_ms": 6615.965,
+      "method_search_ms": 6615.622,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.343,
+          "search_ms": 6615.622,
+          "total_ms": 6615.965,
+          "success": true,
+          "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "all_solved": true,
+      "method_total_ms": 6535.874,
+      "method_search_ms": 6535.586,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.288,
+          "search_ms": 6535.586,
+          "total_ms": 6535.874,
+          "success": true,
+          "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "all_solved": true,
+      "method_total_ms": 6398.591,
+      "method_search_ms": 6398.293,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.298,
+          "search_ms": 6398.293,
+          "total_ms": 6398.591,
+          "success": true,
+          "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "all_solved": true,
+      "method_total_ms": 6292.528,
+      "method_search_ms": 6292.274,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.254,
+          "search_ms": 6292.274,
+          "total_ms": 6292.528,
+          "success": true,
+          "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "all_solved": true,
+      "method_total_ms": 6153.667,
+      "method_search_ms": 6153.49,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.177,
+          "search_ms": 6153.49,
+          "total_ms": 6153.667,
+          "success": true,
+          "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "all_solved": true,
+      "method_total_ms": 6271.998,
+      "method_search_ms": 6271.82,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.178,
+          "search_ms": 6271.82,
+          "total_ms": 6271.998,
+          "success": true,
+          "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "all_solved": true,
+      "method_total_ms": 6896.104,
+      "method_search_ms": 6895.931,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.173,
+          "search_ms": 6895.931,
+          "total_ms": 6896.104,
+          "success": true,
+          "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "all_solved": true,
+      "method_total_ms": 6152.71,
+      "method_search_ms": 6152.358,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.352,
+          "search_ms": 6152.358,
+          "total_ms": 6152.71,
+          "success": true,
+          "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    },
+    {
+      "repetition": 10,
+      "all_solved": true,
+      "method_total_ms": 6746.359,
+      "method_search_ms": 6746.123,
+      "tasks": [
+        {
+          "task": "popBack-fixed-env-pair",
+          "prepare_ms": 0.235,
+          "search_ms": 6746.123,
+          "total_ms": 6746.359,
+          "success": true,
+          "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), head(tail(tail(tail(@gHeap))))))"
+        }
+      ]
+    }
+  ]
+}
