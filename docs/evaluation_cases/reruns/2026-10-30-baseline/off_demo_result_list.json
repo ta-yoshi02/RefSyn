@@ -1,0 +1,530 @@
+[
+  {
+    "task": "rotateRight3-whole-leftHeap+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then storeAtRef(@leftHeap, @thisRef, last_ptr(last_ptr(@thisRef, @leftHeap), @rightHeap)) else storeAtRef(@leftHeap, @thisRef, last_ptr(penultimateRef(@thisRef, @leftHeap), @rightHeap))",
+    "agree": 18,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-leftHeap+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then storeAtRef(@leftHeap, @thisRef, last_ptr(last_ptr(@thisRef, @leftHeap), @rightHeap)) else storeAtRef(@leftHeap, @thisRef, last_ptr(penultimateRef(@thisRef, @leftHeap), @rightHeap))",
+    "agree": 18,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-leftHeap+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-leftHeap+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-rightHeap+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then storeAtRef(@rightHeap, last_ptr(@thisRef, @leftHeap), @thisRef) else storeAtRef(@rightHeap, penultimateRef(@thisRef, @leftHeap), @thisRef)",
+    "agree": 54,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-rightHeap+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then storeAtRef(@rightHeap, last_ptr(@thisRef, @leftHeap), @thisRef) else storeAtRef(@rightHeap, penultimateRef(@thisRef, @leftHeap), @thisRef)",
+    "agree": 54,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-rightHeap+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-rightHeap+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-returnRef+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-returnRef+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-returnRef+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-returnRef+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-pair+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then pairHeap(storeAtRef(@leftHeap, @thisRef, last_ptr(last_ptr(@thisRef, @leftHeap), @rightHeap)), storeAtRef(@rightHeap, last_ptr(@thisRef, @leftHeap), @thisRef)) else pairHeap(storeAtRef(@leftHeap, @thisRef, last_ptr(penultimateRef(@thisRef, @leftHeap), @rightHeap)), storeAtRef(@rightHeap, penultimateRef(@thisRef, @leftHeap), @thisRef))",
+    "agree": 18,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-pair+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-pair+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-leftHeap+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then storeAtRef(@leftHeap, @thisRef, rightOf(last_ptr(@thisRef, @leftHeap), @nodeHeap, @leftHeap)) else storeAtRef(@leftHeap, @thisRef, last_ptr(penultimateRef(@thisRef, @leftHeap), @rightHeap))",
+    "agree": 36,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-leftHeap+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then storeAtRef(@leftHeap, @thisRef, rightOf(last_ptr(@thisRef, @leftHeap), @nodeHeap, @leftHeap)) else storeAtRef(@leftHeap, @thisRef, last_ptr(penultimateRef(@thisRef, @leftHeap), @rightHeap))",
+    "agree": 36,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-leftHeap+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-leftHeap+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-rightHeap+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then storeAtRef(@rightHeap, last_ptr(@thisRef, @leftHeap), @thisRef) else storeAtRef(@rightHeap, penultimateRef(@thisRef, @leftHeap), @thisRef)",
+    "agree": 54,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-rightHeap+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then storeAtRef(@rightHeap, last_ptr(@thisRef, @leftHeap), @thisRef) else storeAtRef(@rightHeap, penultimateRef(@thisRef, @leftHeap), @thisRef)",
+    "agree": 54,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-rightHeap+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-rightHeap+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-returnRef+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-returnRef+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-returnRef+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-returnRef+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-pair+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "unlink-whole-nextHeap+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @prevHeap)) then storeAtRef(@nextHeap, last_ptr(@thisRef, @prevHeap), nextOf(@thisRef, @nodeHeap, @nextHeap)) else storeAtRef(@nextHeap, penultimateRef(@thisRef, @prevHeap), nextOf(@thisRef, @nodeHeap, @nextHeap))",
+    "agree": 9,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-nextHeap+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @prevHeap)) then storeAtRef(@nextHeap, last_ptr(@thisRef, @prevHeap), nextOf(@thisRef, @nodeHeap, @nextHeap)) else storeAtRef(@nextHeap, penultimateRef(@thisRef, @prevHeap), nextOf(@thisRef, @nodeHeap, @nextHeap))",
+    "agree": 9,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-nextHeap+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@nextHeap, prevOf(@thisRef, @nodeHeap, @nextHeap), nextOf(@thisRef, @nodeHeap, @nextHeap))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-nextHeap+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@nextHeap, prevOf(@thisRef, @nodeHeap, @nextHeap), nextOf(@thisRef, @nodeHeap, @nextHeap))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-prevHeap+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @prevHeap)) then storeAtRef(@prevHeap, nextOf(@thisRef, @nodeHeap, @nextHeap), last_ptr(@thisRef, @prevHeap)) else storeAtRef(@prevHeap, nextOf(@thisRef, @nodeHeap, @nextHeap), penultimateRef(@thisRef, @prevHeap))",
+    "agree": 9,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-prevHeap+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @prevHeap)) then storeAtRef(@prevHeap, nextOf(@thisRef, @nodeHeap, @nextHeap), last_ptr(@thisRef, @prevHeap)) else storeAtRef(@prevHeap, nextOf(@thisRef, @nodeHeap, @nextHeap), penultimateRef(@thisRef, @prevHeap))",
+    "agree": 9,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-prevHeap+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@prevHeap, nextOf(@thisRef, @nodeHeap, @nextHeap), prevOf(@thisRef, @nodeHeap, @nextHeap))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-prevHeap+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@prevHeap, nextOf(@thisRef, @nodeHeap, @nextHeap), prevOf(@thisRef, @nodeHeap, @nextHeap))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-pair+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@nextHeap, prevOf(@thisRef, @nodeHeap, @nextHeap), nextOf(@thisRef, @nodeHeap, @nextHeap)), storeAtRef(@prevHeap, nextOf(@thisRef, @nodeHeap, @nextHeap), prevOf(@thisRef, @nodeHeap, @nextHeap)))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "union-whole-parentHeap+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "if equal(@rankHeap, storeAtRef(@rankHeap, @thisRef, zero())) then storeAtRef(@parentHeap, @thisRef, @other) else if equal(@rankHeap, storeAtRef(@rankHeap, @other, inc(inc(zero())))) then storeAtRef(@parentHeap, @thisRef, @other) else storeAtRef(@parentHeap, @other, @thisRef)",
+    "agree": 9,
+    "total": 12
+  },
+  {
+    "task": "union-whole-parentHeap+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "if equal(@rankHeap, storeAtRef(@rankHeap, @thisRef, zero())) then storeAtRef(@parentHeap, @thisRef, @other) else if equal(@rankHeap, storeAtRef(@rankHeap, @other, inc(inc(zero())))) then storeAtRef(@parentHeap, @thisRef, @other) else storeAtRef(@parentHeap, @other, @thisRef)",
+    "agree": 9,
+    "total": 12
+  },
+  {
+    "task": "swapChildren-whole-leftHeap+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-leftHeap+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-leftHeap+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-leftHeap+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-rightHeap+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then storeAtRef(@rightHeap, @thisRef, last_ptr(@thisRef, @leftHeap)) else storeAtRef(@rightHeap, @thisRef, penultimateRef(@thisRef, @leftHeap))",
+    "agree": 10,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-rightHeap+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then storeAtRef(@rightHeap, @thisRef, last_ptr(@thisRef, @leftHeap)) else storeAtRef(@rightHeap, @thisRef, penultimateRef(@thisRef, @leftHeap))",
+    "agree": 10,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-rightHeap+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@rightHeap, @thisRef, leftOf(@thisRef, @nodeHeap, @leftHeap))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-rightHeap+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@rightHeap, @thisRef, leftOf(@thisRef, @nodeHeap, @leftHeap))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-pair+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, @thisRef, last_ptr(@thisRef, @leftHeap))) else pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, @thisRef, penultimateRef(@thisRef, @leftHeap)))",
+    "agree": 10,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-pair+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, @thisRef, last_ptr(@thisRef, @leftHeap))) else pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, @thisRef, penultimateRef(@thisRef, @leftHeap)))",
+    "agree": 10,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-pair+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, @thisRef, leftOf(@thisRef, @nodeHeap, @leftHeap)))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-pair+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, @thisRef, leftOf(@thisRef, @nodeHeap, @leftHeap)))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "rotateLeft-whole-leftHeap+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "if isNull(penultimateRef(@thisRef, @leftHeap)) then storeAtRef(@leftHeap, last_ptr(@thisRef, @rightHeap), @thisRef) else storeAtRef(@leftHeap, penultimateRef(@thisRef, @rightHeap), @thisRef)",
+    "agree": 27,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-leftHeap+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "if isNull(penultimateRef(@thisRef, @leftHeap)) then storeAtRef(@leftHeap, last_ptr(@thisRef, @rightHeap), @thisRef) else storeAtRef(@leftHeap, penultimateRef(@thisRef, @rightHeap), @thisRef)",
+    "agree": 27,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-leftHeap+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@leftHeap, rightOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-leftHeap+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@leftHeap, rightOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-rightHeap+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "if isNull(penultimateRef(@thisRef, @leftHeap)) then storeAtRef(@rightHeap, @thisRef, last_ptr(last_ptr(@thisRef, @rightHeap), @leftHeap)) else storeAtRef(@rightHeap, @thisRef, leftOf(penultimateRef(@thisRef, @rightHeap), @nodeHeap, @leftHeap))",
+    "agree": 21,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-rightHeap+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "if isNull(penultimateRef(@thisRef, @leftHeap)) then storeAtRef(@rightHeap, @thisRef, last_ptr(last_ptr(@thisRef, @rightHeap), @leftHeap)) else storeAtRef(@rightHeap, @thisRef, leftOf(penultimateRef(@thisRef, @rightHeap), @nodeHeap, @leftHeap))",
+    "agree": 21,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-rightHeap+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@rightHeap, @thisRef, leftOf(rightOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-rightHeap+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@rightHeap, @thisRef, leftOf(rightOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-returnRef+list",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "rightOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-returnRef+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "rightOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-returnRef+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "rightOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-returnRef+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "rightOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-pair+list",
+    "setting": "current",
+    "limits": "paper",
+    "term": "if isNull(penultimateRef(@thisRef, @leftHeap)) then pairHeap(storeAtRef(@leftHeap, last_ptr(@thisRef, @rightHeap), @thisRef), storeAtRef(@rightHeap, @thisRef, last_ptr(last_ptr(@thisRef, @rightHeap), @leftHeap))) else pairHeap(storeAtRef(@leftHeap, penultimateRef(@thisRef, @rightHeap), @thisRef), storeAtRef(@rightHeap, @thisRef, leftOf(penultimateRef(@thisRef, @rightHeap), @nodeHeap, @leftHeap)))",
+    "agree": 21,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-pair+list",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "pairHeap(storeAtRef(@leftHeap, rightOf(@thisRef, @nodeHeap, @leftHeap), @thisRef), storeAtRef(@rightHeap, @thisRef, leftOf(rightOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-pair+list",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@leftHeap, rightOf(@thisRef, @nodeHeap, @leftHeap), @thisRef), storeAtRef(@rightHeap, @thisRef, leftOf(rightOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)))",
+    "agree": 81,
+    "total": 81
+  }
+]
