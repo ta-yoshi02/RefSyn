@@ -1,0 +1,204 @@
+[
+  {
+    "task": "setAt-fixed-fHeap",
+    "witness": "storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1)",
+    "well_typed": false,
+    "errors": [
+      "nthNextRef argument 3: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)"
+    ],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "setAt-fixed-gHeap",
+    "witness": "@gHeap",
+    "well_typed": true,
+    "errors": [],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "setAt-fixed-env-pair",
+    "witness": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)",
+    "well_typed": false,
+    "errors": [
+      "nthNextRef argument 3: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)"
+    ],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "append-fixed-fHeap",
+    "witness": "insert(@fHeap, length(@fHeap), @arg0)",
+    "well_typed": true,
+    "errors": [],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "append-fixed-gHeap",
+    "witness": "insert(storeAtRef(@gHeap, last_ptr(@thisRef, @gHeap), freshRefFromHeap(@nodeHeap)), length(storeAtRef(@gHeap, last_ptr(@thisRef, @gHeap), freshRefFromHeap(@nodeHeap))), nthNextRef(@thisRef, @nodeHeap, @gHeap, length(@nodeHeap)))",
+    "well_typed": false,
+    "errors": [
+      "last_ptr argument 2: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)",
+      "last_ptr argument 2: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)",
+      "nthNextRef argument 3: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)"
+    ],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "append-fixed-env-pair",
+    "witness": "pairHeap(insert(@fHeap, length(@fHeap), @arg0), insert(storeAtRef(@gHeap, last_ptr(@thisRef, @gHeap), freshRefFromHeap(@nodeHeap)), length(storeAtRef(@gHeap, last_ptr(@thisRef, @gHeap), freshRefFromHeap(@nodeHeap))), nthNextRef(@thisRef, @nodeHeap, @gHeap, length(@nodeHeap))))",
+    "well_typed": false,
+    "errors": [
+      "last_ptr argument 2: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)",
+      "last_ptr argument 2: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)",
+      "nthNextRef argument 3: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)"
+    ],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "prepend-fixed-fHeap",
+    "witness": "insert(@fHeap, length(@fHeap), @arg0)",
+    "well_typed": true,
+    "errors": [],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "prepend-fixed-gHeap",
+    "witness": "insert(@gHeap, length(@gHeap), @thisRef)",
+    "well_typed": true,
+    "errors": [],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "prepend-fixed-returnRef",
+    "witness": "freshRefFromHeap(@nodeHeap)",
+    "well_typed": true,
+    "errors": [],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "prepend-fixed-env-pair",
+    "witness": "pairHeap(insert(@fHeap, length(@fHeap), @arg0), insert(@gHeap, length(@gHeap), @thisRef))",
+    "well_typed": true,
+    "errors": [],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "insert-fixed-fHeap",
+    "witness": "insert(@fHeap, length(@fHeap), @arg1)",
+    "well_typed": true,
+    "errors": [],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "insert-fixed-gHeap",
+    "witness": "insert(storeAtRef(@gHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), freshRefFromHeap(@nodeHeap)), length(storeAtRef(@gHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), freshRefFromHeap(@nodeHeap))), nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(@arg0)))",
+    "well_typed": false,
+    "errors": [
+      "nthNextRef argument 3: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)",
+      "nthNextRef argument 3: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)",
+      "nthNextRef argument 3: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)"
+    ],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "insert-fixed-env-pair",
+    "witness": "pairHeap(insert(@fHeap, length(@fHeap), @arg1), insert(storeAtRef(@gHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), freshRefFromHeap(@nodeHeap)), length(storeAtRef(@gHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), freshRefFromHeap(@nodeHeap))), nthNextRef(@thisRef, @nodeHeap, @gHeap, inc(@arg0))))",
+    "well_typed": false,
+    "errors": [
+      "nthNextRef argument 3: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)",
+      "nthNextRef argument 3: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)",
+      "nthNextRef argument 3: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)"
+    ],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "popBack-fixed-fHeap",
+    "witness": "@fHeap",
+    "well_typed": true,
+    "errors": [],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "popBack-fixed-gHeap",
+    "witness": "storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), nthNextRef(@thisRef, @nodeHeap, @gHeap, length(@nodeHeap)))",
+    "well_typed": false,
+    "errors": [
+      "penultimateRef argument 2: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)",
+      "nthNextRef argument 3: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)"
+    ],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  },
+  {
+    "task": "popBack-fixed-env-pair",
+    "witness": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), nthNextRef(@thisRef, @nodeHeap, @gHeap, length(@nodeHeap))))",
+    "well_typed": false,
+    "errors": [
+      "penultimateRef argument 2: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)",
+      "nthNextRef argument 3: expected List[Object<Obj>], got List[Ref[Object<Obj>]] (@gHeap)"
+    ],
+    "probes": {
+      "last_ptr(thisRef, gHeap)": false,
+      "penultimateRef(thisRef, gHeap)": false,
+      "nthNextRef(thisRef, nodeHeap, gHeap, length(nodeHeap))": false
+    }
+  }
+]
