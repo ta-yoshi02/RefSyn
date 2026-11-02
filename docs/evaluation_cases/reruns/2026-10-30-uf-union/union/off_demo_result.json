@@ -1,0 +1,306 @@
+{
+  "total": 12,
+  "agree": 9,
+  "cases": [
+    {
+      "thisRank": 0,
+      "otherRank": 1,
+      "agrees": true,
+      "generated": {
+        "this": {
+          "parent": "other",
+          "rank": 0
+        },
+        "other": {
+          "parent": null,
+          "rank": 1
+        }
+      },
+      "expected": {
+        "this": {
+          "parent": "other",
+          "rank": 0
+        },
+        "other": {
+          "parent": null,
+          "rank": 1
+        }
+      }
+    },
+    {
+      "thisRank": 0,
+      "otherRank": 2,
+      "agrees": true,
+      "generated": {
+        "this": {
+          "parent": "other",
+          "rank": 0
+        },
+        "other": {
+          "parent": null,
+          "rank": 2
+        }
+      },
+      "expected": {
+        "this": {
+          "parent": "other",
+          "rank": 0
+        },
+        "other": {
+          "parent": null,
+          "rank": 2
+        }
+      }
+    },
+    {
+      "thisRank": 0,
+      "otherRank": 3,
+      "agrees": true,
+      "generated": {
+        "this": {
+          "parent": "other",
+          "rank": 0
+        },
+        "other": {
+          "parent": null,
+          "rank": 3
+        }
+      },
+      "expected": {
+        "this": {
+          "parent": "other",
+          "rank": 0
+        },
+        "other": {
+          "parent": null,
+          "rank": 3
+        }
+      }
+    },
+    {
+      "thisRank": 1,
+      "otherRank": 0,
+      "agrees": true,
+      "generated": {
+        "this": {
+          "parent": null,
+          "rank": 1
+        },
+        "other": {
+          "parent": "this",
+          "rank": 0
+        }
+      },
+      "expected": {
+        "this": {
+          "parent": null,
+          "rank": 1
+        },
+        "other": {
+          "parent": "this",
+          "rank": 0
+        }
+      }
+    },
+    {
+      "thisRank": 1,
+      "otherRank": 2,
+      "agrees": true,
+      "generated": {
+        "this": {
+          "parent": "other",
+          "rank": 1
+        },
+        "other": {
+          "parent": null,
+          "rank": 2
+        }
+      },
+      "expected": {
+        "this": {
+          "parent": "other",
+          "rank": 1
+        },
+        "other": {
+          "parent": null,
+          "rank": 2
+        }
+      }
+    },
+    {
+      "thisRank": 1,
+      "otherRank": 3,
+      "agrees": false,
+      "generated": {
+        "this": {
+          "parent": null,
+          "rank": 1
+        },
+        "other": {
+          "parent": "this",
+          "rank": 3
+        }
+      },
+      "expected": {
+        "this": {
+          "parent": "other",
+          "rank": 1
+        },
+        "other": {
+          "parent": null,
+          "rank": 3
+        }
+      }
+    },
+    {
+      "thisRank": 2,
+      "otherRank": 0,
+      "agrees": true,
+      "generated": {
+        "this": {
+          "parent": null,
+          "rank": 2
+        },
+        "other": {
+          "parent": "this",
+          "rank": 0
+        }
+      },
+      "expected": {
+        "this": {
+          "parent": null,
+          "rank": 2
+        },
+        "other": {
+          "parent": "this",
+          "rank": 0
+        }
+      }
+    },
+    {
+      "thisRank": 2,
+      "otherRank": 1,
+      "agrees": true,
+      "generated": {
+        "this": {
+          "parent": null,
+          "rank": 2
+        },
+        "other": {
+          "parent": "this",
+          "rank": 1
+        }
+      },
+      "expected": {
+        "this": {
+          "parent": null,
+          "rank": 2
+        },
+        "other": {
+          "parent": "this",
+          "rank": 1
+        }
+      }
+    },
+    {
+      "thisRank": 2,
+      "otherRank": 3,
+      "agrees": false,
+      "generated": {
+        "this": {
+          "parent": null,
+          "rank": 2
+        },
+        "other": {
+          "parent": "this",
+          "rank": 3
+        }
+      },
+      "expected": {
+        "this": {
+          "parent": "other",
+          "rank": 2
+        },
+        "other": {
+          "parent": null,
+          "rank": 3
+        }
+      }
+    },
+    {
+      "thisRank": 3,
+      "otherRank": 0,
+      "agrees": true,
+      "generated": {
+        "this": {
+          "parent": null,
+          "rank": 3
+        },
+        "other": {
+          "parent": "this",
+          "rank": 0
+        }
+      },
+      "expected": {
+        "this": {
+          "parent": null,
+          "rank": 3
+        },
+        "other": {
+          "parent": "this",
+          "rank": 0
+        }
+      }
+    },
+    {
+      "thisRank": 3,
+      "otherRank": 1,
+      "agrees": true,
+      "generated": {
+        "this": {
+          "parent": null,
+          "rank": 3
+        },
+        "other": {
+          "parent": "this",
+          "rank": 1
+        }
+      },
+      "expected": {
+        "this": {
+          "parent": null,
+          "rank": 3
+        },
+        "other": {
+          "parent": "this",
+          "rank": 1
+        }
+      }
+    },
+    {
+      "thisRank": 3,
+      "otherRank": 2,
+      "agrees": false,
+      "generated": {
+        "this": {
+          "parent": "other",
+          "rank": 3
+        },
+        "other": {
+          "parent": null,
+          "rank": 2
+        }
+      },
+      "expected": {
+        "this": {
+          "parent": null,
+          "rank": 3
+        },
+        "other": {
+          "parent": "this",
+          "rank": 2
+        }
+      }
+    }
+  ]
+}

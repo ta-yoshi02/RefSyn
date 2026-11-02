@@ -1,0 +1,1210 @@
+{
+  "inCondition": {
+    "total": 15,
+    "agree": 15
+  },
+  "outsideCondition": [
+    {
+      "length": 3,
+      "position": 0,
+      "result": "TypeError: Cannot set properties of null (setting 'next')"
+    },
+    {
+      "length": 3,
+      "position": 2,
+      "result": "TypeError: Cannot set properties of null (setting 'prev')"
+    },
+    {
+      "length": 4,
+      "position": 0,
+      "result": "TypeError: Cannot set properties of null (setting 'next')"
+    },
+    {
+      "length": 4,
+      "position": 3,
+      "result": "TypeError: Cannot set properties of null (setting 'prev')"
+    },
+    {
+      "length": 5,
+      "position": 0,
+      "result": "TypeError: Cannot set properties of null (setting 'next')"
+    },
+    {
+      "length": 5,
+      "position": 4,
+      "result": "TypeError: Cannot set properties of null (setting 'prev')"
+    },
+    {
+      "length": 6,
+      "position": 0,
+      "result": "TypeError: Cannot set properties of null (setting 'next')"
+    },
+    {
+      "length": 6,
+      "position": 5,
+      "result": "TypeError: Cannot set properties of null (setting 'prev')"
+    },
+    {
+      "length": 7,
+      "position": 0,
+      "result": "TypeError: Cannot set properties of null (setting 'next')"
+    },
+    {
+      "length": 7,
+      "position": 6,
+      "result": "TypeError: Cannot set properties of null (setting 'prev')"
+    }
+  ],
+  "cases": [
+    {
+      "length": 3,
+      "position": 0,
+      "inDemonstratedCondition": false,
+      "agrees": null,
+      "generated": {
+        "error": "TypeError: Cannot set properties of null (setting 'next')"
+      }
+    },
+    {
+      "length": 3,
+      "position": 1,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 2
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 0,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 2
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 0,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 3,
+      "position": 2,
+      "inDemonstratedCondition": false,
+      "agrees": null,
+      "generated": {
+        "error": "TypeError: Cannot set properties of null (setting 'prev')"
+      }
+    },
+    {
+      "length": 4,
+      "position": 0,
+      "inDemonstratedCondition": false,
+      "agrees": null,
+      "generated": {
+        "error": "TypeError: Cannot set properties of null (setting 'next')"
+      }
+    },
+    {
+      "length": 4,
+      "position": 1,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 2
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 2
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 4,
+      "position": 2,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 1,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 1,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 4,
+      "position": 3,
+      "inDemonstratedCondition": false,
+      "agrees": null,
+      "generated": {
+        "error": "TypeError: Cannot set properties of null (setting 'prev')"
+      }
+    },
+    {
+      "length": 5,
+      "position": 0,
+      "inDemonstratedCondition": false,
+      "agrees": null,
+      "generated": {
+        "error": "TypeError: Cannot set properties of null (setting 'next')"
+      }
+    },
+    {
+      "length": 5,
+      "position": 1,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 2
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 2
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 5,
+      "position": 2,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 1,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 1,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 5,
+      "position": 3,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 4
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 2,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 4
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 2,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 5,
+      "position": 4,
+      "inDemonstratedCondition": false,
+      "agrees": null,
+      "generated": {
+        "error": "TypeError: Cannot set properties of null (setting 'prev')"
+      }
+    },
+    {
+      "length": 6,
+      "position": 0,
+      "inDemonstratedCondition": false,
+      "agrees": null,
+      "generated": {
+        "error": "TypeError: Cannot set properties of null (setting 'next')"
+      }
+    },
+    {
+      "length": 6,
+      "position": 1,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 2
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 4,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 2
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 4,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 6,
+      "position": 2,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 1,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 4,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 1,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 4,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 6,
+      "position": 3,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 4
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 2,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 4,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 4
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 2,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 4,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 6,
+      "position": 4,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 5
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 3,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 5
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 3,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 6,
+      "position": 5,
+      "inDemonstratedCondition": false,
+      "agrees": null,
+      "generated": {
+        "error": "TypeError: Cannot set properties of null (setting 'prev')"
+      }
+    },
+    {
+      "length": 7,
+      "position": 0,
+      "inDemonstratedCondition": false,
+      "agrees": null,
+      "generated": {
+        "error": "TypeError: Cannot set properties of null (setting 'next')"
+      }
+    },
+    {
+      "length": 7,
+      "position": 1,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 2
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 4,
+            "next": 6
+          },
+          {
+            "val": 70,
+            "prev": 5,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 2
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 4,
+            "next": 6
+          },
+          {
+            "val": 70,
+            "prev": 5,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 7,
+      "position": 2,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 1,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 4,
+            "next": 6
+          },
+          {
+            "val": 70,
+            "prev": 5,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 3
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 1,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 4,
+            "next": 6
+          },
+          {
+            "val": 70,
+            "prev": 5,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 7,
+      "position": 3,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 4
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 2,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 4,
+            "next": 6
+          },
+          {
+            "val": 70,
+            "prev": 5,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 4
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 2,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 4,
+            "next": 6
+          },
+          {
+            "val": 70,
+            "prev": 5,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 7,
+      "position": 4,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 5
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 3,
+            "next": 6
+          },
+          {
+            "val": 70,
+            "prev": 5,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 5
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": 5
+          },
+          {
+            "val": 60,
+            "prev": 3,
+            "next": 6
+          },
+          {
+            "val": 70,
+            "prev": 5,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 7,
+      "position": 5,
+      "inDemonstratedCondition": true,
+      "agrees": true,
+      "generated": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": 6
+          },
+          {
+            "val": 60,
+            "prev": 4,
+            "next": 6
+          },
+          {
+            "val": 70,
+            "prev": 4,
+            "next": null
+          }
+        ]
+      },
+      "expected": {
+        "state": [
+          {
+            "val": 10,
+            "prev": null,
+            "next": 1
+          },
+          {
+            "val": 20,
+            "prev": 0,
+            "next": 2
+          },
+          {
+            "val": 30,
+            "prev": 1,
+            "next": 3
+          },
+          {
+            "val": 40,
+            "prev": 2,
+            "next": 4
+          },
+          {
+            "val": 50,
+            "prev": 3,
+            "next": 6
+          },
+          {
+            "val": 60,
+            "prev": 4,
+            "next": 6
+          },
+          {
+            "val": 70,
+            "prev": 4,
+            "next": null
+          }
+        ]
+      }
+    },
+    {
+      "length": 7,
+      "position": 6,
+      "inDemonstratedCondition": false,
+      "agrees": null,
+      "generated": {
+        "error": "TypeError: Cannot set properties of null (setting 'prev')"
+      }
+    }
+  ]
+}
