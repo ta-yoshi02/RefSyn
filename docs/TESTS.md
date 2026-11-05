@@ -118,7 +118,9 @@ each demonstration's PBE input before the earlier holes.
   two sources sharing a target; a two-cell cycle with `return`; two created cells; a value write
   with two reference writes; a five-write doubly linked insertion.
 - Two writes to one field admit two isomorphisms, and only the one that keeps the last write last
-  reproduces the second demonstration; the search takes it because of declaration order. The
+  reproduces the second demonstration. Here the search meets it first in declaration order;
+  with that order reversed (the operation-order case above) it is still taken, because
+  combinations that keep each field's last write are tried first. The
   shared-target case admits two pairings and both reproduce.
 - Rejected: a stale old target (while normalizing); deletion against replacement; created against
   existing target; another field; another shape with the same counts; return in only one
