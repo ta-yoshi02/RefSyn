@@ -1,0 +1,5 @@
+terms plain exit 0
+terms list exit 0
+insertAfter exit 0
+tampered terms exit 1 (rotateRight-whole-leftHeap current adapter: search did not repeat)
+tampered insertAfter exit 1 (insertAfter-whole-nextHeap+append current adapter: search did not repeat)

@@ -1,0 +1,192 @@
+[
+  {
+    "task": "insertAfter-whole-nextHeap+append",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(insert(@nextHeap, length(@nodeHeap), nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-nextHeap+append",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@nextHeap, length(@nodeHeap), nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-nextHeap+append",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(insert(@nextHeap, length(@nodeHeap), nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-nextHeap+append",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@nextHeap, length(@nodeHeap), nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+append",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(insert(@prevHeap, length(@nodeHeap), @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+append",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@prevHeap, length(@nodeHeap), @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+append",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(insert(@prevHeap, length(@nodeHeap), @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+append",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@prevHeap, length(@nodeHeap), @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+append",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "insert(@valHeap, length(@nodeHeap), @x)",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+append",
+    "setting": "current",
+    "limits": "paper",
+    "term": "insert(@valHeap, length(@nodeHeap), @x)",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+append",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "insert(@valHeap, length(@nodeHeap), @x)",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+append",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "insert(@valHeap, length(@nodeHeap), @x)",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-nextHeap+list+append",
+    "setting": "current",
+    "limits": "adapter",
+    "term": null,
+    "status": "timeout"
+  },
+  {
+    "task": "insertAfter-whole-nextHeap+list+append",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@nextHeap, length(@nodeHeap), nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-nextHeap+list+append",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(insert(@nextHeap, length(@nodeHeap), nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-nextHeap+list+append",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@nextHeap, length(@nodeHeap), nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+list+append",
+    "setting": "current",
+    "limits": "adapter",
+    "term": null,
+    "status": "timeout"
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+list+append",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@prevHeap, length(@nodeHeap), @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+list+append",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(insert(@prevHeap, length(@nodeHeap), @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+list+append",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@prevHeap, length(@nodeHeap), @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+list+append",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "insert(@valHeap, length(@nodeHeap), @x)",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+list+append",
+    "setting": "current",
+    "limits": "paper",
+    "term": "insert(@valHeap, length(@nodeHeap), @x)",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+list+append",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "insert(@valHeap, length(@nodeHeap), @x)",
+    "agree": 105,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+list+append",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "insert(@valHeap, length(@nodeHeap), @x)",
+    "agree": 105,
+    "total": 105
+  }
+]
