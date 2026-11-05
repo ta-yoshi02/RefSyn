@@ -104,6 +104,20 @@ MOLD's own list terms (`../2026-10-30-followthrough/mold_*.json`) use only `nthN
 `findByValueRef` port. The witnesses stay well-typed (`typecheck_witnesses_fields.json`, 16/16). Same
 runs as `../2026-10-30-baseline-recheck/` (32 / 15 s, current and candidate, once each):
 
+- **Encoding fix (2026-11-05).** The first version of `tasks_fields.json` kept the paper's state
+  encoding, in which the accessors did not read the state: the class declared `f: Int` while every
+  `nodeHeap` object stored its slot in `fHeap` (so `fOf` returned a reference typed as `Int`), and the
+  insert tasks left the `nodeHeap` objects empty (so `fOf` and `gOf` were errors). `make_field_tasks.mjs`
+  now aligns the encoding with MOLD's: `f: Ref[Int]` (as MOLD's `val`, read with `loadInt`) and every
+  object holding `{ f: its slot, g: its gHeap entry }`. `check_field_reads.mjs` → `field_reads.json`
+  checks every read on every example input: 0 failures in all 32 tasks (and in MOLD's popBack and insert
+  tasks, checked the same way). All results below were rerun with the aligned encoding; they are
+  identical to those of the first version, terms and off-demo agreement alike.
+- Machine load: the first rerun with the aligned encoding ran at load averages up to 37 (other
+  applications on the same machine) and gave two extra timeouts, one recorded at 934 s against the 15 s
+  limit; both cases were solved again at load 2–7 (`run_conditions.txt`). Timeouts and times in this
+  directory are therefore only as reliable as the load at the time.
+
 - **All 32 terms and timeouts are identical** to those without the added components
   (`rerun_fields.json`); no found term uses one. Off-demo agreement is therefore identical too
   (`offdemo_fields.json`): setAt 42/42; prepend 24/60; popBack 1/10; append and insert pairs time out.
@@ -143,8 +157,21 @@ s, once each); "before" = `rerun_fields.json` / `offdemo_fields.json`.
   the last index. 16/60. prepend's state is the same kind of fit. Both come from `insert` taking an index;
   the witnesses only ever insert at `length(heap)`.
 - insert still times out in every configuration.
-- Times: the baseline's successful pairs now take 14–136 ms (current), against MOLD's 1–5 ms in the
-  followthrough measurement. The earlier gap of seconds was largely the extra components.
+- Times (`run_measurements_minimal.sh` → `minimal_baseline_*.json`, `minimal_mold_*.json`,
+  `measurement_minimal.log`): both sides measured in the same run with the followthrough's script and
+  settings (10 repetitions, preparation + search, 32 / 15 s, current setting, load 3–5). Medians:
+
+  | Method | Baseline (minimal) | MOLD |
+  | --- | --- | --- |
+  | setAt | 117 ms | 3.3 ms |
+  | append | 316 ms (overfit term) | 1.1 ms |
+  | prepend | 17.5 ms (overfit term) | 0.47 ms |
+  | insert | timeout, 10/10 | 6.3 ms |
+  | popBack | 51 ms | 0.84 ms |
+
+  Removing the generic list components shrinks the gap from seconds to tens or hundreds of
+  milliseconds, but MOLD stays 35–280 times faster on the methods both sides solve. (The single-run
+  times in the table above are search only and are not comparable with these.)
 
 Not run: replacing `insert`/`length` by a single "append at the end" component, which is all the
 fixed-ID encoding needs to add the created object and would remove the value-as-index fits.
@@ -184,9 +211,11 @@ output (reference method for the baseline; the candidate setting's verified term
 
 - **Yes, the demonstrations are insufficient**, for both methods: the overfit terms agree with every
   demonstration, and adding a few discriminating examples turns most of them into the intended term.
-- **No, it is not only the demonstrations**: the baseline's append and insert stay out of reach (timeout)
-  however the specification is strengthened, while MOLD solves them from the original demonstrations.
-  That is the part of the comparison that survives.
+- **Not only the demonstrations, as far as was tried**: with the added examples tried here and these
+  limits (32 / 15 s), the baseline did not solve append (timeout after 3 added examples) or insert
+  (timeout before any example was added), while MOLD solves both from the original demonstrations. This
+  does not show that no specification would make them reachable: only these examples and limits were
+  tried. That is the part of the comparison that survives, with that scope.
 - For MOLD the list cases need nothing extra; the trees need 2–4 more demonstrations of other shapes
   under the current setting (none under the candidate one). union's checked domain (ranks 0–3, two roots)
   is too small to force `leInt`: the loop stops at a term that is right there and wrong for larger ranks.

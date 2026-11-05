@@ -6,7 +6,7 @@
       {
         "name": "Obj",
         "fields": {
-          "f": "Int",
+          "f": "Ref[Int]",
           "g": "Ref[Object[Obj]]"
         }
       }
@@ -473,7 +473,7 @@
       {
         "name": "Obj",
         "fields": {
-          "f": "Int",
+          "f": "Ref[Int]",
           "g": "Ref[Object[Obj]]"
         }
       }
@@ -964,7 +964,7 @@
       {
         "name": "Obj",
         "fields": {
-          "f": "Int",
+          "f": "Ref[Int]",
           "g": "Ref[Object[Obj]]"
         }
       }
@@ -1499,7 +1499,7 @@
       {
         "name": "Obj",
         "fields": {
-          "f": "Int",
+          "f": "Ref[Int]",
           "g": "Ref[Object[Obj]]"
         }
       }
@@ -1910,7 +1910,7 @@
       {
         "name": "Obj",
         "fields": {
-          "f": "Int",
+          "f": "Ref[Int]",
           "g": "Ref[Object[Obj]]"
         }
       }
@@ -2345,7 +2345,7 @@
       {
         "name": "Obj",
         "fields": {
-          "f": "Int",
+          "f": "Ref[Int]",
           "g": "Ref[Object[Obj]]"
         }
       }
@@ -2824,7 +2824,7 @@
       {
         "name": "Obj",
         "fields": {
-          "f": "Int",
+          "f": "Ref[Int]",
           "g": "Ref[Object[Obj]]"
         }
       }
@@ -3146,7 +3146,7 @@
       {
         "name": "Obj",
         "fields": {
-          "f": "Int",
+          "f": "Ref[Int]",
           "g": "Ref[Object[Obj]]"
         }
       }
@@ -3482,7 +3482,7 @@
       {
         "name": "Obj",
         "fields": {
-          "f": "Int",
+          "f": "Ref[Int]",
           "g": "Ref[Object[Obj]]"
         }
       }
@@ -3799,7 +3799,7 @@
       {
         "name": "Obj",
         "fields": {
-          "f": "Int",
+          "f": "Ref[Int]",
           "g": "Ref[Object[Obj]]"
         }
       }
@@ -4365,19 +4365,40 @@
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
               }
             }
           ],
@@ -4416,25 +4437,53 @@
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
               }
             }
           ],
@@ -4478,31 +4527,66 @@
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 4
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 4
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
               }
             }
           ],
@@ -4751,19 +4835,40 @@
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
               }
             }
           ],
@@ -4810,25 +4915,53 @@
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
               }
             }
           ],
@@ -4882,31 +5015,66 @@
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 4
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 4
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
               }
             }
           ],
@@ -5181,19 +5349,40 @@
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
               }
             }
           ],
@@ -5250,25 +5439,53 @@
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
               }
             }
           ],
@@ -5333,31 +5550,66 @@
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 0
+                  },
+                  "g": {
+                    "ref": 3
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 1
+                  },
+                  "g": {
+                    "ref": 4
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 2
+                  },
+                  "g": {
+                    "ref": -1
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 3
+                  },
+                  "g": {
+                    "ref": 1
+                  }
+                }
               }
             },
             {
               "object": {
                 "className": "Obj",
-                "fields": {}
+                "fields": {
+                  "f": {
+                    "ref": 4
+                  },
+                  "g": {
+                    "ref": 2
+                  }
+                }
               }
             }
           ],
@@ -5433,7 +5685,7 @@
       {
         "name": "Obj",
         "fields": {
-          "f": "Int",
+          "f": "Ref[Int]",
           "g": "Ref[Object[Obj]]"
         }
       }
@@ -5803,7 +6055,7 @@
       {
         "name": "Obj",
         "fields": {
-          "f": "Int",
+          "f": "Ref[Int]",
           "g": "Ref[Object[Obj]]"
         }
       }
@@ -6189,7 +6441,7 @@
       {
         "name": "Obj",
         "fields": {
-          "f": "Int",
+          "f": "Ref[Int]",
           "g": "Ref[Object[Obj]]"
         }
       }

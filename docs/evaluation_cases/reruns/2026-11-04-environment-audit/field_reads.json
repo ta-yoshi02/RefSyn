@@ -1,0 +1,398 @@
+[
+  {
+    "variant": "fields",
+    "task": "setAt-fixed-fHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 24,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "setAt-fixed-gHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 24,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "setAt-fixed-env-pair",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 24,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "append-fixed-fHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 18,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "append-fixed-gHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 18,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "append-fixed-env-pair",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 18,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "prepend-fixed-fHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 10,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "prepend-fixed-gHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 10,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "prepend-fixed-returnRef",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 10,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "prepend-fixed-env-pair",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 10,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "insert-fixed-fHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 24,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "insert-fixed-gHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 24,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "insert-fixed-env-pair",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 24,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "popBack-fixed-fHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 16,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "popBack-fixed-gHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 16,
+    "failures": []
+  },
+  {
+    "variant": "fields",
+    "task": "popBack-fixed-env-pair",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 16,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "setAt-fixed-fHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 24,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "setAt-fixed-gHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 24,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "setAt-fixed-env-pair",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 24,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "append-fixed-fHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 18,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "append-fixed-gHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 18,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "append-fixed-env-pair",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 18,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "prepend-fixed-fHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 10,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "prepend-fixed-gHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 10,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "prepend-fixed-returnRef",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 10,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "prepend-fixed-env-pair",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 10,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "insert-fixed-fHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 24,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "insert-fixed-gHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 24,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "insert-fixed-env-pair",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 24,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "popBack-fixed-fHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 16,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "popBack-fixed-gHeap",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 16,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "popBack-fixed-env-pair",
+    "types": {
+      "fOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Int] → Ref[Int]",
+      "gOf": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 16,
+    "failures": []
+  },
+  {
+    "variant": "MOLD",
+    "task": "popBack_h0",
+    "types": {
+      "valOf": "Ref[Object<Node>] × List[Object<Node>] × List[Int] → Ref[Int]",
+      "nextOf": "Ref[Object<Node>] × List[Object<Node>] × List[Object<Node>] → Ref[Object<Node>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 16,
+    "failures": []
+  },
+  {
+    "variant": "MOLD",
+    "task": "insert_h0",
+    "types": {
+      "valOf": "Ref[Object<Node>] × List[Object<Node>] × List[Int] → Ref[Int]",
+      "nextOf": "Ref[Object<Node>] × List[Object<Node>] × List[Object<Node>] → Ref[Object<Node>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 30,
+    "failures": []
+  },
+  {
+    "variant": "MOLD",
+    "task": "insert_h1",
+    "types": {
+      "valOf": "Ref[Object<Node>] × List[Object<Node>] × List[Int] → Ref[Int]",
+      "nextOf": "Ref[Object<Node>] × List[Object<Node>] × List[Object<Node>] → Ref[Object<Node>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 30,
+    "failures": []
+  },
+  {
+    "variant": "MOLD",
+    "task": "insert_h2",
+    "types": {
+      "valOf": "Ref[Object<Node>] × List[Object<Node>] × List[Int] → Ref[Int]",
+      "nextOf": "Ref[Object<Node>] × List[Object<Node>] × List[Object<Node>] → Ref[Object<Node>]",
+      "loadInt": "List[Int] × Ref[Int] → Int"
+    },
+    "reads": 30,
+    "failures": []
+  }
+]

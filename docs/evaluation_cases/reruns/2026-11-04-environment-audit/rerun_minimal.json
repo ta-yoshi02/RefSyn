@@ -3,7 +3,7 @@
     "variant": "minimal",
     "task": "setAt-fixed-fHeap",
     "setting": "current",
-    "ms": 71,
+    "ms": 56,
     "status": "success",
     "cost": 8,
     "term": "storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1)"
@@ -12,7 +12,7 @@
     "variant": "minimal",
     "task": "setAt-fixed-fHeap",
     "setting": "candidate",
-    "ms": 361,
+    "ms": 294,
     "status": "success",
     "cost": 10,
     "term": "storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1)"
@@ -21,7 +21,7 @@
     "variant": "minimal",
     "task": "setAt-fixed-gHeap",
     "setting": "current",
-    "ms": 0,
+    "ms": 1,
     "status": "success",
     "cost": 1,
     "term": "@gHeap"
@@ -30,7 +30,7 @@
     "variant": "minimal",
     "task": "setAt-fixed-gHeap",
     "setting": "candidate",
-    "ms": 2,
+    "ms": 0,
     "status": "success",
     "cost": 1,
     "term": "@gHeap"
@@ -39,7 +39,7 @@
     "variant": "minimal",
     "task": "setAt-fixed-env-pair",
     "setting": "current",
-    "ms": 136,
+    "ms": 145,
     "status": "success",
     "cost": 10,
     "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
@@ -48,7 +48,7 @@
     "variant": "minimal",
     "task": "setAt-fixed-env-pair",
     "setting": "candidate",
-    "ms": 2249,
+    "ms": 1474,
     "status": "success",
     "cost": 12,
     "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
@@ -57,7 +57,7 @@
     "variant": "minimal",
     "task": "append-fixed-fHeap",
     "setting": "current",
-    "ms": 3,
+    "ms": 1,
     "status": "success",
     "cost": 4,
     "term": "insert(@fHeap, @arg0, @arg0)"
@@ -75,7 +75,7 @@
     "variant": "minimal",
     "task": "append-fixed-gHeap",
     "setting": "current",
-    "ms": 7,
+    "ms": 8,
     "status": "success",
     "cost": 7,
     "term": "insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))"
@@ -84,7 +84,7 @@
     "variant": "minimal",
     "task": "append-fixed-gHeap",
     "setting": "candidate",
-    "ms": 5,
+    "ms": 4,
     "status": "success",
     "cost": 7,
     "term": "insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))"
@@ -93,7 +93,7 @@
     "variant": "minimal",
     "task": "append-fixed-env-pair",
     "setting": "current",
-    "ms": 269,
+    "ms": 310,
     "status": "success",
     "cost": 12,
     "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
@@ -102,7 +102,7 @@
     "variant": "minimal",
     "task": "append-fixed-env-pair",
     "setting": "candidate",
-    "ms": 188,
+    "ms": 165,
     "status": "success",
     "cost": 12,
     "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
@@ -129,7 +129,7 @@
     "variant": "minimal",
     "task": "prepend-fixed-gHeap",
     "setting": "current",
-    "ms": 1,
+    "ms": 2,
     "status": "success",
     "cost": 4,
     "term": "insert(@gHeap, @arg0, @thisRef)"
@@ -165,7 +165,7 @@
     "variant": "minimal",
     "task": "prepend-fixed-env-pair",
     "setting": "current",
-    "ms": 16,
+    "ms": 17,
     "status": "success",
     "cost": 9,
     "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))"
@@ -183,7 +183,7 @@
     "variant": "minimal",
     "task": "insert-fixed-fHeap",
     "setting": "current",
-    "ms": 5,
+    "ms": 1,
     "status": "success",
     "cost": 4,
     "term": "insert(@fHeap, @arg1, @arg1)"
@@ -192,7 +192,7 @@
     "variant": "minimal",
     "task": "insert-fixed-fHeap",
     "setting": "candidate",
-    "ms": 1,
+    "ms": 0,
     "status": "success",
     "cost": 4,
     "term": "insert(@fHeap, @arg1, @arg1)"
@@ -237,7 +237,7 @@
     "variant": "minimal",
     "task": "popBack-fixed-fHeap",
     "setting": "current",
-    "ms": 0,
+    "ms": 2,
     "status": "success",
     "cost": 1,
     "term": "@fHeap"
@@ -255,7 +255,7 @@
     "variant": "minimal",
     "task": "popBack-fixed-gHeap",
     "setting": "current",
-    "ms": 13,
+    "ms": 20,
     "status": "success",
     "cost": 10,
     "term": "storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap))"
@@ -264,7 +264,7 @@
     "variant": "minimal",
     "task": "popBack-fixed-gHeap",
     "setting": "candidate",
-    "ms": 344,
+    "ms": 234,
     "status": "success",
     "cost": 15,
     "term": "storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), nthNextRef(@thisRef, @nodeHeap, @gHeap, length(@nodeHeap)))"
@@ -273,7 +273,7 @@
     "variant": "minimal",
     "task": "popBack-fixed-env-pair",
     "setting": "current",
-    "ms": 54,
+    "ms": 57,
     "status": "success",
     "cost": 12,
     "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap)))"
@@ -282,7 +282,7 @@
     "variant": "minimal",
     "task": "popBack-fixed-env-pair",
     "setting": "candidate",
-    "ms": 5421,
+    "ms": 2744,
     "status": "success",
     "cost": 17,
     "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), nthNextRef(@thisRef, @nodeHeap, @gHeap, length(@nodeHeap))))"
