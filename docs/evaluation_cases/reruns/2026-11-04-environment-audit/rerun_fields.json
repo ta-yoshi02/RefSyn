@@ -3,7 +3,7 @@
     "variant": "fields",
     "task": "setAt-fixed-fHeap",
     "setting": "current",
-    "ms": 291,
+    "ms": 342,
     "status": "success",
     "cost": 8,
     "term": "storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1)"
@@ -12,7 +12,7 @@
     "variant": "fields",
     "task": "setAt-fixed-fHeap",
     "setting": "candidate",
-    "ms": 7030,
+    "ms": 11617,
     "status": "success",
     "cost": 10,
     "term": "storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1)"
@@ -39,7 +39,7 @@
     "variant": "fields",
     "task": "setAt-fixed-env-pair",
     "setting": "current",
-    "ms": 2989,
+    "ms": 2185,
     "status": "success",
     "cost": 10,
     "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
@@ -57,7 +57,7 @@
     "variant": "fields",
     "task": "append-fixed-fHeap",
     "setting": "current",
-    "ms": 3,
+    "ms": 2,
     "status": "success",
     "cost": 4,
     "term": "insert(@fHeap, @arg0, @arg0)"
@@ -66,7 +66,7 @@
     "variant": "fields",
     "task": "append-fixed-fHeap",
     "setting": "candidate",
-    "ms": 5,
+    "ms": 3,
     "status": "success",
     "cost": 4,
     "term": "insert(@fHeap, @arg0, @arg0)"
@@ -75,7 +75,7 @@
     "variant": "fields",
     "task": "append-fixed-gHeap",
     "setting": "current",
-    "ms": 66,
+    "ms": 33,
     "status": "success",
     "cost": 7,
     "term": "insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))"
@@ -84,7 +84,7 @@
     "variant": "fields",
     "task": "append-fixed-gHeap",
     "setting": "candidate",
-    "ms": 45,
+    "ms": 31,
     "status": "success",
     "cost": 7,
     "term": "insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))"
@@ -93,7 +93,7 @@
     "variant": "fields",
     "task": "append-fixed-env-pair",
     "setting": "current",
-    "ms": 15000,
+    "ms": 15001,
     "status": "timeout",
     "cost": null,
     "term": null
@@ -102,7 +102,7 @@
     "variant": "fields",
     "task": "append-fixed-env-pair",
     "setting": "candidate",
-    "ms": 15003,
+    "ms": 15000,
     "status": "timeout",
     "cost": null,
     "term": null
@@ -111,7 +111,7 @@
     "variant": "fields",
     "task": "prepend-fixed-fHeap",
     "setting": "current",
-    "ms": 4,
+    "ms": 2,
     "status": "success",
     "cost": 4,
     "term": "insert(@fHeap, @arg0, @arg0)"
@@ -129,7 +129,7 @@
     "variant": "fields",
     "task": "prepend-fixed-gHeap",
     "setting": "current",
-    "ms": 3,
+    "ms": 2,
     "status": "success",
     "cost": 4,
     "term": "insert(@gHeap, @arg0, @thisRef)"
@@ -147,7 +147,7 @@
     "variant": "fields",
     "task": "prepend-fixed-returnRef",
     "setting": "current",
-    "ms": 0,
+    "ms": 1,
     "status": "success",
     "cost": 2,
     "term": "freshRefFromHeap(@nodeHeap)"
@@ -165,7 +165,7 @@
     "variant": "fields",
     "task": "prepend-fixed-env-pair",
     "setting": "current",
-    "ms": 307,
+    "ms": 231,
     "status": "success",
     "cost": 9,
     "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))"
@@ -174,7 +174,7 @@
     "variant": "fields",
     "task": "prepend-fixed-env-pair",
     "setting": "candidate",
-    "ms": 225,
+    "ms": 248,
     "status": "success",
     "cost": 9,
     "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))"
@@ -183,7 +183,7 @@
     "variant": "fields",
     "task": "insert-fixed-fHeap",
     "setting": "current",
-    "ms": 2,
+    "ms": 4,
     "status": "success",
     "cost": 4,
     "term": "insert(@fHeap, @arg1, @arg1)"
@@ -192,7 +192,7 @@
     "variant": "fields",
     "task": "insert-fixed-fHeap",
     "setting": "candidate",
-    "ms": 4,
+    "ms": 2,
     "status": "success",
     "cost": 4,
     "term": "insert(@fHeap, @arg1, @arg1)"
@@ -201,7 +201,7 @@
     "variant": "fields",
     "task": "insert-fixed-gHeap",
     "setting": "current",
-    "ms": 15003,
+    "ms": 15005,
     "status": "timeout",
     "cost": null,
     "term": null
@@ -210,7 +210,7 @@
     "variant": "fields",
     "task": "insert-fixed-gHeap",
     "setting": "candidate",
-    "ms": 15019,
+    "ms": 15000,
     "status": "timeout",
     "cost": null,
     "term": null
@@ -237,7 +237,7 @@
     "variant": "fields",
     "task": "popBack-fixed-fHeap",
     "setting": "current",
-    "ms": 3,
+    "ms": 9,
     "status": "success",
     "cost": 1,
     "term": "@fHeap"
@@ -246,7 +246,7 @@
     "variant": "fields",
     "task": "popBack-fixed-fHeap",
     "setting": "candidate",
-    "ms": 1,
+    "ms": 0,
     "status": "success",
     "cost": 1,
     "term": "@fHeap"
@@ -255,7 +255,7 @@
     "variant": "fields",
     "task": "popBack-fixed-gHeap",
     "setting": "current",
-    "ms": 629,
+    "ms": 680,
     "status": "success",
     "cost": 10,
     "term": "storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), head(tail(tail(tail(@gHeap)))))"
@@ -264,7 +264,7 @@
     "variant": "fields",
     "task": "popBack-fixed-gHeap",
     "setting": "candidate",
-    "ms": 7335,
+    "ms": 7714,
     "status": "success",
     "cost": 12,
     "term": "storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), head(tail(tail(tail(@gHeap)))))"
@@ -273,7 +273,7 @@
     "variant": "fields",
     "task": "popBack-fixed-env-pair",
     "setting": "current",
-    "ms": 6646,
+    "ms": 4257,
     "status": "success",
     "cost": 12,
     "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), head(tail(tail(tail(@gHeap))))))"
@@ -282,7 +282,7 @@
     "variant": "fields",
     "task": "popBack-fixed-env-pair",
     "setting": "candidate",
-    "ms": 15000,
+    "ms": 15001,
     "status": "timeout",
     "cost": null,
     "term": null

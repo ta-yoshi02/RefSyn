@@ -113,15 +113,23 @@ runs as `../2026-10-30-baseline-recheck/` (32 / 15 s, current and candidate, onc
   checks every read on every example input: 0 failures in all 32 tasks (and in MOLD's popBack and insert
   tasks, checked the same way). All results below were rerun with the aligned encoding; they are
   identical to those of the first version, terms and off-demo agreement alike.
-- Machine load: the first rerun with the aligned encoding ran at load averages up to 37 (other
-  applications on the same machine) and gave two extra timeouts, one recorded at 934 s against the 15 s
-  limit; both cases were solved again at load 2–7 (`run_conditions.txt`). Timeouts and times in this
-  directory are therefore only as reliable as the load at the time.
+- Runs and their conditions. The first rerun with the aligned encoding ran while the machine was
+  asleep (lid closed, on battery; `pmset_sleep_wake.txt`) and gave two extra timeouts, recorded at
+  87 742 ms and 934 208 ms against the 15 s limit. They coincide with sleeps of 86 s and 933 s: the
+  synthesizer checks its limit with `Date.now()` inside the search, and that clock advances during sleep.
+  This is what the logs are consistent with, not a measured suspension of the process. The surviving
+  logs of that run are in `runs/20261105-first-rerun-recovered/`; its other outputs were overwritten. A
+  second rerun, started 12 s after the machine woke (load average 37), timed out on one fields task
+  (setAt fHeap, candidate), for a reason not determined; a third, awake at load 2–7, matched the first
+  version again (`run_conditions.txt`). From then on, `run_all.sh` runs everything under `caffeinate -i`,
+  keeps every run in `runs/<UTC time>/` with its exit codes and load, and the off-demo checks exit with
+  code 1 when a row cannot be checked (they used to record "search did not repeat" and exit 0).
 
 - **All 32 terms and timeouts are identical** to those without the added components
-  (`rerun_fields.json`); no found term uses one. Off-demo agreement is therefore identical too
+  (`rerun_fields.json`); no term found in these runs uses one. That shows they did not change these
+  searches, not that the baseline never needs them. Off-demo agreement is therefore identical too
   (`offdemo_fields.json`): setAt 42/42; prepend 24/60; popBack 1/10; append and insert pairs time out.
-- The added components change nothing within these limits. The missing field reads therefore do not
+- The added components change nothing in these searches, within these limits. The missing field reads therefore do not
   explain the baseline's results. The differences that can matter are the generic list components
   (`head`/`tail`/`insert`/…), which only the baseline has: its overfitting terms are built from them
   (`head(tail(tail(tail(@gHeap))))` for null is cost 5, cheaper than `gOf(last_ptr(@thisRef, @gHeap),
@@ -157,20 +165,43 @@ s, once each); "before" = `rerun_fields.json` / `offdemo_fields.json`.
   the last index. 16/60. prepend's state is the same kind of fit. Both come from `insert` taking an index;
   the witnesses only ever insert at `length(heap)`.
 - insert still times out in every configuration.
-- Times (`run_measurements_minimal.sh` → `minimal_baseline_*.json`, `minimal_mold_*.json`,
-  `measurement_minimal.log`): both sides measured in the same run with the followthrough's script and
-  settings (10 repetitions, preparation + search, 32 / 15 s, current setting, load 3–5). Medians:
+- Times. Two measurements, both with `measure_method_level.mjs` of the followthrough (preparation +
+  search, 32 / 15 s, current setting):
+  - `measure_alternating.mjs` → `timing_alternating.json` (run by `run_all.sh`, machine awake, load
+    2.0–2.8). Each trial runs as its own process (a cold start on both sides) and is killed after 60 s.
+    Ten rounds: the method order rotates each round and the side that goes first alternates. All 100
+    trials produced a result and none was killed. Every side gave the same term in all 10 trials.
+  - `run_measurements_minimal.sh` → `minimal_*.json` (10 repetitions in one process, so warm after the
+    first). Its order is all of MOLD, then the baseline, so the two sides ran at different moments. It
+    uses the same procedure but does not control for load. Kept for comparison with the followthrough
+    numbers.
 
-  | Method | Baseline (minimal) | MOLD |
+  Time to a term that fits the demonstrations (medians; ratio = baseline / MOLD):
+
+  | Method | Baseline, alternating (cold) | MOLD, alternating (cold) | Ratio | Baseline, warm | MOLD, warm |
+  | --- | --- | --- | --- | --- | --- |
+  | setAt | 187 ms | 9.4 ms | 19.9 | 117 ms | 3.3 ms |
+  | append | 363 ms | 5.5 ms | 65.5 | 316 ms | 1.1 ms |
+  | prepend | 54 ms | 3.4 ms | 15.9 | 17.5 ms | 0.47 ms |
+  | insert | no term in 10/10 (15 s limit) | 18.3 ms | — | no term | 6.3 ms |
+  | popBack | 108 ms | 4.6 ms | 23.6 | 51 ms | 0.84 ms |
+
+  Whether that term is the method (`offdemo_minimal.json`, finite checked inputs):
+
+  | Method | Baseline | MOLD |
   | --- | --- | --- |
-  | setAt | 117 ms | 3.3 ms |
-  | append | 316 ms (overfit term) | 1.1 ms |
-  | prepend | 17.5 ms (overfit term) | 0.47 ms |
-  | insert | timeout, 10/10 | 6.3 ms |
-  | popBack | 51 ms | 0.84 ms |
+  | setAt | agrees on all 42 | agrees |
+  | append | **overfit**, 16/60 | agrees |
+  | prepend | **overfit**, 24/60 | agrees |
+  | insert | no term | agrees |
+  | popBack | agrees on all 10 | agrees |
 
   Removing the generic list components shrinks the gap from seconds to tens or hundreds of
-  milliseconds, but MOLD stays 35–280 times faster on the methods both sides solve. (The single-run
+  milliseconds, but the gap remains. The ratios measure the time to a term that fits the
+  demonstrations. Where both sides' terms agree on every checked input (setAt and popBack), MOLD is
+  about 20 and 24 times faster cold (35 and 61 times warm). append and prepend ratios compare MOLD's
+  method with the baseline's overfit term. insert has no ratio. The cold and warm ratios differ, so
+  the factor depends on how one measures; only the order of magnitude is stable here. (The single-run
   times in the table above are search only and are not comparable with these.)
 
 Not run: replacing `insert`/`length` by a single "append at the end" component, which is all the

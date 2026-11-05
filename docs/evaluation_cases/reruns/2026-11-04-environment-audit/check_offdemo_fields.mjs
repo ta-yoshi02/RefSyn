@@ -54,6 +54,9 @@ const encodeOutput = (task, t, ret) => {
   return { pair: [t.f, t.g.map((r) => ({ ref: r }))] };
 };
 
+// The term is recovered by searching again; only the saved term string is timed. The limit here is
+// 120 s so that a slow machine does not truncate the search, and the recovered term must equal the saved
+// one. A row that cannot be checked is kept with its error and makes the script exit with code 1.
 const out = [];
 for (const row of results.filter((r) => r.term !== null)) {
   const task = variants[row.variant].find((t) => t.name === row.task);
@@ -61,7 +64,7 @@ for (const row of results.filter((r) => r.term !== null)) {
   const L = libs[row.setting];
   globalThis.__refsynCompCost = costs[row.setting];
   const job = L.prepareJsonSynthesisJob(L.parseJsonSynthesisSpec(JSON.stringify(spec)));
-  const r = new L.AscendRecSynthesizer({ maxCost: 32, timeoutMs: 15000, searchSizeFactor: factor[row.setting], useReductionRules: true, onlyForwardSearch: false, argListCompare: L.anyArgSmaller })
+  const r = new L.AscendRecSynthesizer({ maxCost: 32, timeoutMs: 120000, searchSizeFactor: factor[row.setting], useReductionRules: true, onlyForwardSearch: false, argListCompare: L.anyArgSmaller })
     .synthesize(job.functionName, job.inputTypes, job.inputNames, job.returnType, job.env, job.examples);
   if (!r || L.showTerm(r.program.body) !== row.term) { out.push({ ...row, error: "search did not repeat" }); continue; }
   const mine = cases.filter((c) => c.method === method);
@@ -79,3 +82,8 @@ for (const row of results.filter((r) => r.term !== null)) {
   out.push({ variant: row.variant, task: row.task, setting: row.setting, term: row.term, agree, total: mine.length, failures });
 }
 console.log(JSON.stringify(out, null, 2));
+const unchecked = out.filter((r) => r.error);
+if (unchecked.length > 0) {
+  console.error(`${unchecked.length} row(s) not checked: ${unchecked.map((r) => `${r.task} ${r.setting}`).join(", ")}`);
+  process.exitCode = 1;
+}
