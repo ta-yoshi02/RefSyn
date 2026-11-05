@@ -1,0 +1,578 @@
+[
+  {
+    "task": "rotateRight3-whole-leftHeap",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-leftHeap",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-leftHeap",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-leftHeap",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-rightHeap",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-rightHeap",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-rightHeap",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-rightHeap",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-returnRef",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-returnRef",
+    "setting": "current",
+    "limits": "paper",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-returnRef",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-returnRef",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-pair",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-pair",
+    "setting": "current",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-pair",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight3-whole-pair",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-leftHeap",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-leftHeap",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-leftHeap",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-leftHeap",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-rightHeap",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-rightHeap",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-rightHeap",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-rightHeap",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-returnRef",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-returnRef",
+    "setting": "current",
+    "limits": "paper",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-returnRef",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-returnRef",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-pair",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-pair",
+    "setting": "current",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-pair",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateRight4-whole-pair",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(leftOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, leftOf(@thisRef, @nodeHeap, @leftHeap), @thisRef))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "unlink-whole-nextHeap",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(@nextHeap, prevOf(@thisRef, @nodeHeap, @nextHeap), nextOf(@thisRef, @nodeHeap, @nextHeap))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-nextHeap",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(@nextHeap, prevOf(@thisRef, @nodeHeap, @nextHeap), nextOf(@thisRef, @nodeHeap, @nextHeap))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-nextHeap",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@nextHeap, prevOf(@thisRef, @nodeHeap, @nextHeap), nextOf(@thisRef, @nodeHeap, @nextHeap))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-nextHeap",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@nextHeap, prevOf(@thisRef, @nodeHeap, @nextHeap), nextOf(@thisRef, @nodeHeap, @nextHeap))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-prevHeap",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(@prevHeap, nextOf(@thisRef, @nodeHeap, @nextHeap), prevOf(@thisRef, @nodeHeap, @nextHeap))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-prevHeap",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(@prevHeap, nextOf(@thisRef, @nodeHeap, @nextHeap), prevOf(@thisRef, @nodeHeap, @nextHeap))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-prevHeap",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@prevHeap, nextOf(@thisRef, @nodeHeap, @nextHeap), prevOf(@thisRef, @nodeHeap, @nextHeap))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-prevHeap",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@prevHeap, nextOf(@thisRef, @nodeHeap, @nextHeap), prevOf(@thisRef, @nodeHeap, @nextHeap))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-pair",
+    "setting": "current",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@nextHeap, prevOf(@thisRef, @nodeHeap, @nextHeap), nextOf(@thisRef, @nodeHeap, @nextHeap)), storeAtRef(@prevHeap, nextOf(@thisRef, @nodeHeap, @nextHeap), prevOf(@thisRef, @nodeHeap, @nextHeap)))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "unlink-whole-pair",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@nextHeap, prevOf(@thisRef, @nodeHeap, @nextHeap), nextOf(@thisRef, @nodeHeap, @nextHeap)), storeAtRef(@prevHeap, nextOf(@thisRef, @nodeHeap, @nextHeap), prevOf(@thisRef, @nodeHeap, @nextHeap)))",
+    "agree": 15,
+    "total": 15
+  },
+  {
+    "task": "union-whole-parentHeap",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "if equal(@rankHeap, storeAtRef(@rankHeap, @thisRef, zero())) then storeAtRef(@parentHeap, @thisRef, @other) else if equal(@rankHeap, storeAtRef(@rankHeap, @other, inc(inc(zero())))) then storeAtRef(@parentHeap, @thisRef, @other) else storeAtRef(@parentHeap, @other, @thisRef)",
+    "agree": 9,
+    "total": 12
+  },
+  {
+    "task": "union-whole-parentHeap",
+    "setting": "current",
+    "limits": "paper",
+    "term": "if equal(@rankHeap, storeAtRef(@rankHeap, @thisRef, zero())) then storeAtRef(@parentHeap, @thisRef, @other) else if equal(@rankHeap, storeAtRef(@rankHeap, @other, inc(inc(zero())))) then storeAtRef(@parentHeap, @thisRef, @other) else storeAtRef(@parentHeap, @other, @thisRef)",
+    "agree": 9,
+    "total": 12
+  },
+  {
+    "task": "swapChildren-whole-leftHeap",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-leftHeap",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-leftHeap",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-leftHeap",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-rightHeap",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(@rightHeap, @thisRef, leftOf(@thisRef, @nodeHeap, @leftHeap))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-rightHeap",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(@rightHeap, @thisRef, leftOf(@thisRef, @nodeHeap, @leftHeap))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-rightHeap",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@rightHeap, @thisRef, leftOf(@thisRef, @nodeHeap, @leftHeap))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-rightHeap",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@rightHeap, @thisRef, leftOf(@thisRef, @nodeHeap, @leftHeap))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-pair",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, @thisRef, leftOf(@thisRef, @nodeHeap, @leftHeap)))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-pair",
+    "setting": "current",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, @thisRef, leftOf(@thisRef, @nodeHeap, @leftHeap)))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-pair",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, @thisRef, leftOf(@thisRef, @nodeHeap, @leftHeap)))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "swapChildren-whole-pair",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@leftHeap, @thisRef, rightOf(@thisRef, @nodeHeap, @leftHeap)), storeAtRef(@rightHeap, @thisRef, leftOf(@thisRef, @nodeHeap, @leftHeap)))",
+    "agree": 11,
+    "total": 11
+  },
+  {
+    "task": "rotateLeft-whole-leftHeap",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(@leftHeap, rightOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-leftHeap",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(@leftHeap, rightOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-leftHeap",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@leftHeap, rightOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-leftHeap",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@leftHeap, rightOf(@thisRef, @nodeHeap, @leftHeap), @thisRef)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-rightHeap",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(@rightHeap, @thisRef, leftOf(rightOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-rightHeap",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(@rightHeap, @thisRef, leftOf(rightOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-rightHeap",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(@rightHeap, @thisRef, leftOf(rightOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-rightHeap",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(@rightHeap, @thisRef, leftOf(rightOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-returnRef",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "rightOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-returnRef",
+    "setting": "current",
+    "limits": "paper",
+    "term": "rightOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-returnRef",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "rightOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-returnRef",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "rightOf(@thisRef, @nodeHeap, @leftHeap)",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-pair",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "pairHeap(storeAtRef(@leftHeap, rightOf(@thisRef, @nodeHeap, @leftHeap), @thisRef), storeAtRef(@rightHeap, @thisRef, leftOf(rightOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-pair",
+    "setting": "current",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@leftHeap, rightOf(@thisRef, @nodeHeap, @leftHeap), @thisRef), storeAtRef(@rightHeap, @thisRef, leftOf(rightOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-pair",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "pairHeap(storeAtRef(@leftHeap, rightOf(@thisRef, @nodeHeap, @leftHeap), @thisRef), storeAtRef(@rightHeap, @thisRef, leftOf(rightOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)))",
+    "agree": 81,
+    "total": 81
+  },
+  {
+    "task": "rotateLeft-whole-pair",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "pairHeap(storeAtRef(@leftHeap, rightOf(@thisRef, @nodeHeap, @leftHeap), @thisRef), storeAtRef(@rightHeap, @thisRef, leftOf(rightOf(@thisRef, @nodeHeap, @leftHeap), @nodeHeap, @leftHeap)))",
+    "agree": 81,
+    "total": 81
+  }
+]

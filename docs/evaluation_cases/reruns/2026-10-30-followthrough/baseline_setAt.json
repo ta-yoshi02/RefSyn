@@ -1,0 +1,188 @@
+{
+  "side": "baseline",
+  "method": "setAt",
+  "tasks": [
+    "setAt-fixed-env-pair"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 10,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 10,
+  "method_total_ms": {
+    "median": 3083.092,
+    "min": 3006.973,
+    "max": 3318.812
+  },
+  "method_search_ms": {
+    "median": 3082.905,
+    "min": 3006.786,
+    "max": 3318.64
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": true,
+      "method_total_ms": 3070.578,
+      "method_search_ms": 3069.208,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 1.37,
+          "search_ms": 3069.208,
+          "total_ms": 3070.578,
+          "success": true,
+          "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "all_solved": true,
+      "method_total_ms": 3064.893,
+      "method_search_ms": 3064.525,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.368,
+          "search_ms": 3064.525,
+          "total_ms": 3064.893,
+          "success": true,
+          "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "all_solved": true,
+      "method_total_ms": 3149.22,
+      "method_search_ms": 3148.941,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.279,
+          "search_ms": 3148.941,
+          "total_ms": 3149.22,
+          "success": true,
+          "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "all_solved": true,
+      "method_total_ms": 3239.776,
+      "method_search_ms": 3239.419,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.357,
+          "search_ms": 3239.419,
+          "total_ms": 3239.776,
+          "success": true,
+          "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "all_solved": true,
+      "method_total_ms": 3071.621,
+      "method_search_ms": 3071.42,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.201,
+          "search_ms": 3071.42,
+          "total_ms": 3071.621,
+          "success": true,
+          "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "all_solved": true,
+      "method_total_ms": 3006.973,
+      "method_search_ms": 3006.786,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.187,
+          "search_ms": 3006.786,
+          "total_ms": 3006.973,
+          "success": true,
+          "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "all_solved": true,
+      "method_total_ms": 3094.563,
+      "method_search_ms": 3094.389,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.174,
+          "search_ms": 3094.389,
+          "total_ms": 3094.563,
+          "success": true,
+          "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "all_solved": true,
+      "method_total_ms": 3318.812,
+      "method_search_ms": 3318.64,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.172,
+          "search_ms": 3318.64,
+          "total_ms": 3318.812,
+          "success": true,
+          "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "all_solved": true,
+      "method_total_ms": 3039.086,
+      "method_search_ms": 3038.71,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.376,
+          "search_ms": 3038.71,
+          "total_ms": 3039.086,
+          "success": true,
+          "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+        }
+      ]
+    },
+    {
+      "repetition": 10,
+      "all_solved": true,
+      "method_total_ms": 3153.637,
+      "method_search_ms": 3153.401,
+      "tasks": [
+        {
+          "task": "setAt-fixed-env-pair",
+          "prepare_ms": 0.237,
+          "search_ms": 3153.401,
+          "total_ms": 3153.637,
+          "success": true,
+          "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,568 @@
+[
+  {
+    "variant": "minimal",
+    "task": "setAt-fixed-fHeap",
+    "setting": "current",
+    "term": "storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1)",
+    "agree": 42,
+    "total": 42,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "setAt-fixed-fHeap",
+    "setting": "candidate",
+    "term": "storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1)",
+    "agree": 42,
+    "total": 42,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "setAt-fixed-gHeap",
+    "setting": "current",
+    "term": "@gHeap",
+    "agree": 42,
+    "total": 42,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "setAt-fixed-gHeap",
+    "setting": "candidate",
+    "term": "@gHeap",
+    "agree": 42,
+    "total": 42,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "setAt-fixed-env-pair",
+    "setting": "current",
+    "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)",
+    "agree": 42,
+    "total": 42,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "setAt-fixed-env-pair",
+    "setting": "candidate",
+    "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)",
+    "agree": 42,
+    "total": 42,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "append-fixed-fHeap",
+    "setting": "current",
+    "term": "insert(@fHeap, @arg0, @arg0)",
+    "agree": 24,
+    "total": 60,
+    "failures": [
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 2,
+        "head": 0,
+        "args": [
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "minimal",
+    "task": "append-fixed-fHeap",
+    "setting": "candidate",
+    "term": "insert(@fHeap, @arg0, @arg0)",
+    "agree": 24,
+    "total": 60,
+    "failures": [
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 2,
+        "head": 0,
+        "args": [
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "minimal",
+    "task": "append-fixed-gHeap",
+    "setting": "current",
+    "term": "insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))",
+    "agree": 35,
+    "total": 60,
+    "failures": [
+      {
+        "n": 2,
+        "head": 1,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 2,
+        "head": 1,
+        "args": [
+          1
+        ]
+      },
+      {
+        "n": 2,
+        "head": 1,
+        "args": [
+          2
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "minimal",
+    "task": "append-fixed-gHeap",
+    "setting": "candidate",
+    "term": "insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))",
+    "agree": 35,
+    "total": 60,
+    "failures": [
+      {
+        "n": 2,
+        "head": 1,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 2,
+        "head": 1,
+        "args": [
+          1
+        ]
+      },
+      {
+        "n": 2,
+        "head": 1,
+        "args": [
+          2
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "minimal",
+    "task": "append-fixed-env-pair",
+    "setting": "current",
+    "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))",
+    "agree": 16,
+    "total": 60,
+    "failures": [
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 2,
+        "head": 0,
+        "args": [
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "minimal",
+    "task": "append-fixed-env-pair",
+    "setting": "candidate",
+    "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))",
+    "agree": 16,
+    "total": 60,
+    "failures": [
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 2,
+        "head": 0,
+        "args": [
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "minimal",
+    "task": "prepend-fixed-fHeap",
+    "setting": "current",
+    "term": "insert(@fHeap, @arg0, @arg0)",
+    "agree": 24,
+    "total": 60,
+    "failures": [
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 2,
+        "head": 0,
+        "args": [
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "minimal",
+    "task": "prepend-fixed-fHeap",
+    "setting": "candidate",
+    "term": "insert(@fHeap, @arg0, @arg0)",
+    "agree": 24,
+    "total": 60,
+    "failures": [
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 2,
+        "head": 0,
+        "args": [
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "minimal",
+    "task": "prepend-fixed-gHeap",
+    "setting": "current",
+    "term": "insert(@gHeap, @arg0, @thisRef)",
+    "agree": 24,
+    "total": 60,
+    "failures": [
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 2,
+        "head": 0,
+        "args": [
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "minimal",
+    "task": "prepend-fixed-gHeap",
+    "setting": "candidate",
+    "term": "insert(@gHeap, @arg0, @thisRef)",
+    "agree": 24,
+    "total": 60,
+    "failures": [
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 2,
+        "head": 0,
+        "args": [
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "minimal",
+    "task": "prepend-fixed-returnRef",
+    "setting": "current",
+    "term": "freshRefFromHeap(@nodeHeap)",
+    "agree": 60,
+    "total": 60,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "prepend-fixed-returnRef",
+    "setting": "candidate",
+    "term": "freshRefFromHeap(@nodeHeap)",
+    "agree": 60,
+    "total": 60,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "prepend-fixed-env-pair",
+    "setting": "current",
+    "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+    "agree": 24,
+    "total": 60,
+    "failures": [
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 2,
+        "head": 0,
+        "args": [
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "minimal",
+    "task": "prepend-fixed-env-pair",
+    "setting": "candidate",
+    "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+    "agree": 24,
+    "total": 60,
+    "failures": [
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0
+        ]
+      },
+      {
+        "n": 2,
+        "head": 0,
+        "args": [
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "minimal",
+    "task": "insert-fixed-fHeap",
+    "setting": "current",
+    "term": "insert(@fHeap, @arg1, @arg1)",
+    "agree": 62,
+    "total": 210,
+    "failures": [
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0,
+          0
+        ]
+      },
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0,
+          0
+        ]
+      },
+      {
+        "n": 2,
+        "head": 0,
+        "args": [
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "minimal",
+    "task": "insert-fixed-fHeap",
+    "setting": "candidate",
+    "term": "insert(@fHeap, @arg1, @arg1)",
+    "agree": 62,
+    "total": 210,
+    "failures": [
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0,
+          0
+        ]
+      },
+      {
+        "n": 1,
+        "head": 0,
+        "args": [
+          0,
+          0
+        ]
+      },
+      {
+        "n": 2,
+        "head": 0,
+        "args": [
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "variant": "minimal",
+    "task": "popBack-fixed-fHeap",
+    "setting": "current",
+    "term": "@fHeap",
+    "agree": 10,
+    "total": 10,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "popBack-fixed-fHeap",
+    "setting": "candidate",
+    "term": "@fHeap",
+    "agree": 10,
+    "total": 10,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "popBack-fixed-gHeap",
+    "setting": "current",
+    "term": "storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap))",
+    "agree": 10,
+    "total": 10,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "popBack-fixed-gHeap",
+    "setting": "candidate",
+    "term": "storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), nthNextRef(@thisRef, @nodeHeap, @gHeap, length(@nodeHeap)))",
+    "agree": 10,
+    "total": 10,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "popBack-fixed-env-pair",
+    "setting": "current",
+    "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap)))",
+    "agree": 10,
+    "total": 10,
+    "failures": []
+  },
+  {
+    "variant": "minimal",
+    "task": "popBack-fixed-env-pair",
+    "setting": "candidate",
+    "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), nthNextRef(@thisRef, @nodeHeap, @gHeap, length(@nodeHeap))))",
+    "agree": 10,
+    "total": 10,
+    "failures": []
+  }
+]

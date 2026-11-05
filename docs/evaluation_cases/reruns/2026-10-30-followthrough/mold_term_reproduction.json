@@ -1,0 +1,22 @@
+[
+  {
+    "method": "prepend",
+    "all_ten_terms_match_previous": true
+  },
+  {
+    "method": "setAt",
+    "all_ten_terms_match_previous": true
+  },
+  {
+    "method": "append",
+    "all_ten_terms_match_previous": true
+  },
+  {
+    "method": "popBack",
+    "all_ten_terms_match_previous": true
+  },
+  {
+    "method": "insert_general",
+    "all_ten_terms_match_previous": true
+  }
+]

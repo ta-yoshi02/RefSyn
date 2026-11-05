@@ -1,0 +1,188 @@
+{
+  "side": "baseline",
+  "method": "append",
+  "tasks": [
+    "append-fixed-env-pair"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 10,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 10,
+  "method_total_ms": {
+    "median": 315.671,
+    "min": 289.158,
+    "max": 486.233
+  },
+  "method_search_ms": {
+    "median": 315.404,
+    "min": 288.847,
+    "max": 485.874
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": true,
+      "method_total_ms": 453.044,
+      "method_search_ms": 451.439,
+      "tasks": [
+        {
+          "task": "append-fixed-env-pair",
+          "prepare_ms": 1.605,
+          "search_ms": 451.439,
+          "total_ms": 453.044,
+          "success": true,
+          "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "all_solved": true,
+      "method_total_ms": 371.407,
+      "method_search_ms": 370.999,
+      "tasks": [
+        {
+          "task": "append-fixed-env-pair",
+          "prepare_ms": 0.407,
+          "search_ms": 370.999,
+          "total_ms": 371.407,
+          "success": true,
+          "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "all_solved": true,
+      "method_total_ms": 392.154,
+      "method_search_ms": 391.615,
+      "tasks": [
+        {
+          "task": "append-fixed-env-pair",
+          "prepare_ms": 0.539,
+          "search_ms": 391.615,
+          "total_ms": 392.154,
+          "success": true,
+          "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "all_solved": true,
+      "method_total_ms": 486.233,
+      "method_search_ms": 485.874,
+      "tasks": [
+        {
+          "task": "append-fixed-env-pair",
+          "prepare_ms": 0.359,
+          "search_ms": 485.874,
+          "total_ms": 486.233,
+          "success": true,
+          "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "all_solved": true,
+      "method_total_ms": 323.715,
+      "method_search_ms": 323.492,
+      "tasks": [
+        {
+          "task": "append-fixed-env-pair",
+          "prepare_ms": 0.224,
+          "search_ms": 323.492,
+          "total_ms": 323.715,
+          "success": true,
+          "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "all_solved": true,
+      "method_total_ms": 294.596,
+      "method_search_ms": 294.386,
+      "tasks": [
+        {
+          "task": "append-fixed-env-pair",
+          "prepare_ms": 0.21,
+          "search_ms": 294.386,
+          "total_ms": 294.596,
+          "success": true,
+          "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "all_solved": true,
+      "method_total_ms": 307.628,
+      "method_search_ms": 307.315,
+      "tasks": [
+        {
+          "task": "append-fixed-env-pair",
+          "prepare_ms": 0.313,
+          "search_ms": 307.315,
+          "total_ms": 307.628,
+          "success": true,
+          "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "all_solved": true,
+      "method_total_ms": 289.913,
+      "method_search_ms": 289.72,
+      "tasks": [
+        {
+          "task": "append-fixed-env-pair",
+          "prepare_ms": 0.193,
+          "search_ms": 289.72,
+          "total_ms": 289.913,
+          "success": true,
+          "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "all_solved": true,
+      "method_total_ms": 289.158,
+      "method_search_ms": 288.847,
+      "tasks": [
+        {
+          "task": "append-fixed-env-pair",
+          "prepare_ms": 0.311,
+          "search_ms": 288.847,
+          "total_ms": 289.158,
+          "success": true,
+          "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+        }
+      ]
+    },
+    {
+      "repetition": 10,
+      "all_solved": true,
+      "method_total_ms": 294.653,
+      "method_search_ms": 294.362,
+      "tasks": [
+        {
+          "task": "append-fixed-env-pair",
+          "prepare_ms": 0.291,
+          "search_ms": 294.362,
+          "total_ms": 294.653,
+          "success": true,
+          "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+        }
+      ]
+    }
+  ]
+}

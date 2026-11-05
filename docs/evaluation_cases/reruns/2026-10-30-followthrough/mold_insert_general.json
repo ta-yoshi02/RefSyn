@@ -1,0 +1,350 @@
+{
+  "side": "mold",
+  "method": "insert_general",
+  "tasks": [
+    "insert_h0",
+    "insert_h1",
+    "insert_h2"
+  ],
+  "config": {
+    "maxCost": 32,
+    "timeoutMs": 15000,
+    "searchSizeFactor": 3,
+    "repetitions": 10,
+    "translation": false
+  },
+  "node": "v22.17.0",
+  "solved_repetitions": 10,
+  "method_total_ms": {
+    "median": 6.485,
+    "min": 4.954,
+    "max": 18.324
+  },
+  "method_search_ms": {
+    "median": 6.147,
+    "min": 4.641,
+    "max": 16.501
+  },
+  "repetitions": [
+    {
+      "repetition": 1,
+      "all_solved": true,
+      "method_total_ms": 18.324,
+      "method_search_ms": 16.501,
+      "tasks": [
+        {
+          "task": "insert_h0",
+          "prepare_ms": 1.148,
+          "search_ms": 1.595,
+          "total_ms": 2.743,
+          "success": true,
+          "term": "@arg"
+        },
+        {
+          "task": "insert_h1",
+          "prepare_ms": 0.459,
+          "search_ms": 9.069,
+          "total_ms": 9.527,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))"
+        },
+        {
+          "task": "insert_h2",
+          "prepare_ms": 0.217,
+          "search_ms": 5.837,
+          "total_ms": 6.054,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "all_solved": true,
+      "method_total_ms": 9.754,
+      "method_search_ms": 8.871,
+      "tasks": [
+        {
+          "task": "insert_h0",
+          "prepare_ms": 0.384,
+          "search_ms": 0.16,
+          "total_ms": 0.545,
+          "success": true,
+          "term": "@arg"
+        },
+        {
+          "task": "insert_h1",
+          "prepare_ms": 0.224,
+          "search_ms": 5.239,
+          "total_ms": 5.462,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))"
+        },
+        {
+          "task": "insert_h2",
+          "prepare_ms": 0.275,
+          "search_ms": 3.472,
+          "total_ms": 3.747,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "all_solved": true,
+      "method_total_ms": 9.306,
+      "method_search_ms": 8.819,
+      "tasks": [
+        {
+          "task": "insert_h0",
+          "prepare_ms": 0.194,
+          "search_ms": 0.122,
+          "total_ms": 0.316,
+          "success": true,
+          "term": "@arg"
+        },
+        {
+          "task": "insert_h1",
+          "prepare_ms": 0.102,
+          "search_ms": 5.23,
+          "total_ms": 5.332,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))"
+        },
+        {
+          "task": "insert_h2",
+          "prepare_ms": 0.191,
+          "search_ms": 3.467,
+          "total_ms": 3.658,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "all_solved": true,
+      "method_total_ms": 9.027,
+      "method_search_ms": 8.558,
+      "tasks": [
+        {
+          "task": "insert_h0",
+          "prepare_ms": 0.121,
+          "search_ms": 0.127,
+          "total_ms": 0.248,
+          "success": true,
+          "term": "@arg"
+        },
+        {
+          "task": "insert_h1",
+          "prepare_ms": 0.233,
+          "search_ms": 5.228,
+          "total_ms": 5.461,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))"
+        },
+        {
+          "task": "insert_h2",
+          "prepare_ms": 0.115,
+          "search_ms": 3.203,
+          "total_ms": 3.318,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "all_solved": true,
+      "method_total_ms": 7.127,
+      "method_search_ms": 6.752,
+      "tasks": [
+        {
+          "task": "insert_h0",
+          "prepare_ms": 0.102,
+          "search_ms": 0.093,
+          "total_ms": 0.195,
+          "success": true,
+          "term": "@arg"
+        },
+        {
+          "task": "insert_h1",
+          "prepare_ms": 0.085,
+          "search_ms": 4.584,
+          "total_ms": 4.669,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))"
+        },
+        {
+          "task": "insert_h2",
+          "prepare_ms": 0.188,
+          "search_ms": 2.075,
+          "total_ms": 2.263,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "all_solved": true,
+      "method_total_ms": 5.525,
+      "method_search_ms": 5.242,
+      "tasks": [
+        {
+          "task": "insert_h0",
+          "prepare_ms": 0.095,
+          "search_ms": 0.085,
+          "total_ms": 0.18,
+          "success": true,
+          "term": "@arg"
+        },
+        {
+          "task": "insert_h1",
+          "prepare_ms": 0.082,
+          "search_ms": 3.172,
+          "total_ms": 3.254,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))"
+        },
+        {
+          "task": "insert_h2",
+          "prepare_ms": 0.106,
+          "search_ms": 1.985,
+          "total_ms": 2.091,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "all_solved": true,
+      "method_total_ms": 5.843,
+      "method_search_ms": 5.543,
+      "tasks": [
+        {
+          "task": "insert_h0",
+          "prepare_ms": 0.103,
+          "search_ms": 0.101,
+          "total_ms": 0.204,
+          "success": true,
+          "term": "@arg"
+        },
+        {
+          "task": "insert_h1",
+          "prepare_ms": 0.089,
+          "search_ms": 3.261,
+          "total_ms": 3.35,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))"
+        },
+        {
+          "task": "insert_h2",
+          "prepare_ms": 0.108,
+          "search_ms": 2.181,
+          "total_ms": 2.289,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "all_solved": true,
+      "method_total_ms": 5.43,
+      "method_search_ms": 5.142,
+      "tasks": [
+        {
+          "task": "insert_h0",
+          "prepare_ms": 0.096,
+          "search_ms": 0.085,
+          "total_ms": 0.181,
+          "success": true,
+          "term": "@arg"
+        },
+        {
+          "task": "insert_h1",
+          "prepare_ms": 0.084,
+          "search_ms": 3.026,
+          "total_ms": 3.11,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))"
+        },
+        {
+          "task": "insert_h2",
+          "prepare_ms": 0.108,
+          "search_ms": 2.031,
+          "total_ms": 2.139,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "all_solved": true,
+      "method_total_ms": 4.954,
+      "method_search_ms": 4.641,
+      "tasks": [
+        {
+          "task": "insert_h0",
+          "prepare_ms": 0.121,
+          "search_ms": 0.085,
+          "total_ms": 0.206,
+          "success": true,
+          "term": "@arg"
+        },
+        {
+          "task": "insert_h1",
+          "prepare_ms": 0.087,
+          "search_ms": 2.849,
+          "total_ms": 2.937,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))"
+        },
+        {
+          "task": "insert_h2",
+          "prepare_ms": 0.104,
+          "search_ms": 1.707,
+          "total_ms": 1.811,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+        }
+      ]
+    },
+    {
+      "repetition": 10,
+      "all_solved": true,
+      "method_total_ms": 5.043,
+      "method_search_ms": 4.762,
+      "tasks": [
+        {
+          "task": "insert_h0",
+          "prepare_ms": 0.092,
+          "search_ms": 0.081,
+          "total_ms": 0.173,
+          "success": true,
+          "term": "@arg"
+        },
+        {
+          "task": "insert_h1",
+          "prepare_ms": 0.082,
+          "search_ms": 2.943,
+          "total_ms": 3.025,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))"
+        },
+        {
+          "task": "insert_h2",
+          "prepare_ms": 0.107,
+          "search_ms": 1.738,
+          "total_ms": 1.845,
+          "success": true,
+          "term": "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+        }
+      ]
+    }
+  ]
+}

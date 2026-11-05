@@ -1,0 +1,158 @@
+[
+  {
+    "case": "rotateRight3",
+    "helper": "rotateRight_h1",
+    "intended": "rightOf(leftOf(@thisRef, @nodeHeap, @nodeHeap), @nodeHeap, @nodeHeap)",
+    "rounds": [
+      {
+        "examples": 3,
+        "ms": 9,
+        "term": "last_ptr(leftOf(@thisRef, @nodeHeap, @nodeHeap), @rightHeap)",
+        "agree_with_intended": 27,
+        "total": 81,
+        "added_objects": 4
+      },
+      {
+        "examples": 4,
+        "ms": 6,
+        "term": "if isNull(penultimateRef(@thisRef, @rightHeap)) then rightOf(last_ptr(@thisRef, @leftHeap), @nodeHeap, @nodeHeap) else last_ptr(leftOf(@thisRef, @nodeHeap, @nodeHeap), @rightHeap)",
+        "agree_with_intended": 27,
+        "total": 81,
+        "added_objects": 4
+      },
+      {
+        "examples": 5,
+        "ms": 5,
+        "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then rightOf(last_ptr(@thisRef, @leftHeap), @nodeHeap, @nodeHeap) else last_ptr(penultimateRef(@thisRef, @leftHeap), @rightHeap)",
+        "agree_with_intended": 36,
+        "total": 81,
+        "added_objects": 5
+      },
+      {
+        "examples": 6,
+        "ms": 4,
+        "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then rightOf(last_ptr(@thisRef, @leftHeap), @nodeHeap, @nodeHeap) else rightOf(penultimateRef(@thisRef, @leftHeap), @nodeHeap, @nodeHeap)",
+        "agree_with_intended": 54,
+        "total": 81,
+        "added_objects": 5
+      },
+      {
+        "examples": 7,
+        "ms": 9,
+        "term": "rightOf(leftOf(@thisRef, @nodeHeap, @nodeHeap), @nodeHeap, @nodeHeap)",
+        "agree_with_intended": 81,
+        "total": 81,
+        "added_objects": null
+      }
+    ]
+  },
+  {
+    "case": "rotateRight4",
+    "helper": "rotateRight_h1",
+    "intended": "rightOf(leftOf(@thisRef, @nodeHeap, @nodeHeap), @nodeHeap, @nodeHeap)",
+    "rounds": [
+      {
+        "examples": 4,
+        "ms": 5,
+        "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then rightOf(last_ptr(@thisRef, @leftHeap), @nodeHeap, @nodeHeap) else last_ptr(penultimateRef(@thisRef, @leftHeap), @rightHeap)",
+        "agree_with_intended": 36,
+        "total": 81,
+        "added_objects": 5
+      },
+      {
+        "examples": 5,
+        "ms": 4,
+        "term": "if equal(@thisRef, penultimateRef(@thisRef, @leftHeap)) then rightOf(last_ptr(@thisRef, @leftHeap), @nodeHeap, @nodeHeap) else rightOf(penultimateRef(@thisRef, @leftHeap), @nodeHeap, @nodeHeap)",
+        "agree_with_intended": 54,
+        "total": 81,
+        "added_objects": 5
+      },
+      {
+        "examples": 6,
+        "ms": 6,
+        "term": "rightOf(leftOf(@thisRef, @nodeHeap, @nodeHeap), @nodeHeap, @nodeHeap)",
+        "agree_with_intended": 81,
+        "total": 81,
+        "added_objects": null
+      }
+    ]
+  },
+  {
+    "case": "rotateLeft",
+    "helper": "rotateLeft_h1",
+    "intended": "leftOf(rightOf(@thisRef, @nodeHeap, @nodeHeap), @nodeHeap, @nodeHeap)",
+    "rounds": [
+      {
+        "examples": 3,
+        "ms": 2,
+        "term": "if isNull(penultimateRef(@thisRef, @leftHeap)) then last_ptr(last_ptr(@thisRef, @rightHeap), @leftHeap) else leftOf(penultimateRef(@thisRef, @rightHeap), @nodeHeap, @nodeHeap)",
+        "agree_with_intended": 21,
+        "total": 81,
+        "added_objects": 4
+      },
+      {
+        "examples": 4,
+        "ms": 2,
+        "term": "if isNull(penultimateRef(@thisRef, @leftHeap)) then leftOf(last_ptr(@thisRef, @rightHeap), @nodeHeap, @nodeHeap) else leftOf(penultimateRef(@thisRef, @rightHeap), @nodeHeap, @nodeHeap)",
+        "agree_with_intended": 27,
+        "total": 81,
+        "added_objects": 4
+      },
+      {
+        "examples": 5,
+        "ms": 3,
+        "term": "if equal(@thisRef, penultimateRef(@thisRef, @rightHeap)) then leftOf(last_ptr(@thisRef, @rightHeap), @nodeHeap, @nodeHeap) else leftOf(penultimateRef(@thisRef, @rightHeap), @nodeHeap, @nodeHeap)",
+        "agree_with_intended": 54,
+        "total": 81,
+        "added_objects": 5
+      },
+      {
+        "examples": 6,
+        "ms": 7,
+        "term": "leftOf(rightOf(@thisRef, @nodeHeap, @nodeHeap), @nodeHeap, @nodeHeap)",
+        "agree_with_intended": 81,
+        "total": 81,
+        "added_objects": null
+      }
+    ]
+  },
+  {
+    "case": "union",
+    "helper": "union_h0",
+    "intended": "if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other",
+    "rounds": [
+      {
+        "examples": 4,
+        "ms": 23,
+        "term": "if isZero(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))) then @thisRef else if isNull(findByValueRef(@other, @nodeHeap, @parentHeap, @rankHeap, inc(inc(zero())))) then @other else @thisRef",
+        "agree_with_intended": 9,
+        "total": 12,
+        "added_objects": 2
+      },
+      {
+        "examples": 5,
+        "ms": 19,
+        "term": "if isZero(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))) then @thisRef else if isNonNeg(dec(dec(loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))))) then @thisRef else @other",
+        "agree_with_intended": 11,
+        "total": 12,
+        "added_objects": 2
+      },
+      {
+        "examples": 6,
+        "ms": 25,
+        "term": "if isZero(loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @other else if isNonNeg(dec(dec(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))))) then @other else @thisRef",
+        "agree_with_intended": 11,
+        "total": 12,
+        "added_objects": 2
+      },
+      {
+        "examples": 7,
+        "ms": 462,
+        "term": "if isZero(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))) then @thisRef else if leInt(loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap)), inc(zero())) then @other else if isNull(findByValueRef(@thisRef, @nodeHeap, @parentHeap, @rankHeap, inc(inc(inc(zero()))))) then @thisRef else @other",
+        "agree_with_intended": 12,
+        "total": 12,
+        "added_objects": null
+      }
+    ]
+  }
+]

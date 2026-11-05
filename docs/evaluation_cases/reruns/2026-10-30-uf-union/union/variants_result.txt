@@ -1,0 +1,30 @@
+f3 A adapter union_h0: level 9 cost 21 38ms
+    if isZero(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))) then @thisRef else if isNull(findByValueRef(@other, @nodeHeap, @parentHeap, @rankHeap, inc(inc(zero())))) then @other else @thisRef
+f3 A adapter union_h1: level 3 cost 6 1ms
+    if equal(@thisRef, @hole0) then @other else @thisRef
+f3 A paper union_h0: level 9 cost 21 30ms
+    if isZero(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))) then @thisRef else if isNull(findByValueRef(@other, @nodeHeap, @parentHeap, @rankHeap, inc(inc(zero())))) then @other else @thisRef
+f3 A paper union_h1: level 3 cost 6 1ms
+    if equal(@thisRef, @hole0) then @other else @thisRef
+f3 B adapter union_h0: level 9 cost 21 23ms
+    if isZero(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))) then @thisRef else if isNull(findByValueRef(@other, @nodeHeap, @parentHeap, @rankHeap, inc(inc(zero())))) then @other else @thisRef
+f3 B adapter union_h1: level 3 cost 6 1ms
+    if equal(@thisRef, @hole0) then @other else @thisRef
+f3 B paper union_h0: level 9 cost 21 28ms
+    if isZero(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))) then @thisRef else if isNull(findByValueRef(@other, @nodeHeap, @parentHeap, @rankHeap, inc(inc(zero())))) then @other else @thisRef
+f3 B paper union_h1: level 3 cost 6 1ms
+    if equal(@thisRef, @hole0) then @other else @thisRef
+f1 A adapter union_h0: timeout 2000ms
+f1 A adapter union_h1: level 6 cost 6 1ms
+    if equal(@thisRef, @hole0) then @other else @thisRef
+f1 A paper union_h0: level 16 cost 16 4393ms
+    if isNull(findByValueRef(@thisRef, @nodeHeap, @parentHeap, @rankHeap, inc(loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))))) then @thisRef else @other
+f1 A paper union_h1: level 6 cost 6 1ms
+    if equal(@thisRef, @hole0) then @other else @thisRef
+f1 B adapter union_h0: timeout 2000ms
+f1 B adapter union_h1: level 6 cost 6 1ms
+    if equal(@thisRef, @hole0) then @other else @thisRef
+f1 B paper union_h0: level 16 cost 16 4654ms
+    if isNull(findByValueRef(@thisRef, @nodeHeap, @parentHeap, @rankHeap, inc(loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))))) then @thisRef else @other
+f1 B paper union_h1: level 6 cost 6 2ms
+    if equal(@thisRef, @hole0) then @other else @thisRef

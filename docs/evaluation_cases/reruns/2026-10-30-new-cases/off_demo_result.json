@@ -1,0 +1,829 @@
+{
+  "current": {
+    "summary": {
+      "swapChildren": "14/14",
+      "insertAfter": "21/21",
+      "rotateLeft": "21/81"
+    },
+    "cases": {
+      "swapChildren": [
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        }
+      ],
+      "insertAfter": [
+        {
+          "len": 2,
+          "at": 0,
+          "agrees": true
+        },
+        {
+          "len": 3,
+          "at": 0,
+          "agrees": true
+        },
+        {
+          "len": 3,
+          "at": 1,
+          "agrees": true
+        },
+        {
+          "len": 4,
+          "at": 0,
+          "agrees": true
+        },
+        {
+          "len": 4,
+          "at": 1,
+          "agrees": true
+        },
+        {
+          "len": 4,
+          "at": 2,
+          "agrees": true
+        },
+        {
+          "len": 5,
+          "at": 0,
+          "agrees": true
+        },
+        {
+          "len": 5,
+          "at": 1,
+          "agrees": true
+        },
+        {
+          "len": 5,
+          "at": 2,
+          "agrees": true
+        },
+        {
+          "len": 5,
+          "at": 3,
+          "agrees": true
+        },
+        {
+          "len": 6,
+          "at": 0,
+          "agrees": true
+        },
+        {
+          "len": 6,
+          "at": 1,
+          "agrees": true
+        },
+        {
+          "len": 6,
+          "at": 2,
+          "agrees": true
+        },
+        {
+          "len": 6,
+          "at": 3,
+          "agrees": true
+        },
+        {
+          "len": 6,
+          "at": 4,
+          "agrees": true
+        },
+        {
+          "len": 7,
+          "at": 0,
+          "agrees": true
+        },
+        {
+          "len": 7,
+          "at": 1,
+          "agrees": true
+        },
+        {
+          "len": 7,
+          "at": 2,
+          "agrees": true
+        },
+        {
+          "len": 7,
+          "at": 3,
+          "agrees": true
+        },
+        {
+          "len": 7,
+          "at": 4,
+          "agrees": true
+        },
+        {
+          "len": 7,
+          "at": 5,
+          "agrees": true
+        }
+      ],
+      "rotateLeft": [
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        },
+        {
+          "agrees": false
+        }
+      ]
+    }
+  },
+  "candidate": {
+    "terms": {
+      "swapChildren": {
+        "swapChildren_h0": "@thisRef",
+        "swapChildren_h1": "rightOf(@thisRef, @nodeHeap, @nodeHeap)",
+        "swapChildren_h2": "leftOf(@thisRef, @nodeHeap, @nodeHeap)"
+      },
+      "insertAfter": {
+        "insertAfter_h0": "@x",
+        "insertAfter_h1": "@thisRef",
+        "insertAfter_h2": "nextOf(@thisRef, @nodeHeap, @nodeHeap)"
+      },
+      "rotateLeft": {
+        "rotateLeft_h0": "@thisRef",
+        "rotateLeft_h1": "leftOf(rightOf(@thisRef, @nodeHeap, @nodeHeap), @nodeHeap, @nodeHeap)",
+        "rotateLeft_h2": "rightOf(@thisRef, @nodeHeap, @nodeHeap)"
+      }
+    },
+    "summary": {
+      "swapChildren": "14/14",
+      "insertAfter": "21/21",
+      "rotateLeft": "81/81"
+    },
+    "cases": {
+      "swapChildren": [
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        }
+      ],
+      "insertAfter": [
+        {
+          "len": 2,
+          "at": 0,
+          "agrees": true
+        },
+        {
+          "len": 3,
+          "at": 0,
+          "agrees": true
+        },
+        {
+          "len": 3,
+          "at": 1,
+          "agrees": true
+        },
+        {
+          "len": 4,
+          "at": 0,
+          "agrees": true
+        },
+        {
+          "len": 4,
+          "at": 1,
+          "agrees": true
+        },
+        {
+          "len": 4,
+          "at": 2,
+          "agrees": true
+        },
+        {
+          "len": 5,
+          "at": 0,
+          "agrees": true
+        },
+        {
+          "len": 5,
+          "at": 1,
+          "agrees": true
+        },
+        {
+          "len": 5,
+          "at": 2,
+          "agrees": true
+        },
+        {
+          "len": 5,
+          "at": 3,
+          "agrees": true
+        },
+        {
+          "len": 6,
+          "at": 0,
+          "agrees": true
+        },
+        {
+          "len": 6,
+          "at": 1,
+          "agrees": true
+        },
+        {
+          "len": 6,
+          "at": 2,
+          "agrees": true
+        },
+        {
+          "len": 6,
+          "at": 3,
+          "agrees": true
+        },
+        {
+          "len": 6,
+          "at": 4,
+          "agrees": true
+        },
+        {
+          "len": 7,
+          "at": 0,
+          "agrees": true
+        },
+        {
+          "len": 7,
+          "at": 1,
+          "agrees": true
+        },
+        {
+          "len": 7,
+          "at": 2,
+          "agrees": true
+        },
+        {
+          "len": 7,
+          "at": 3,
+          "agrees": true
+        },
+        {
+          "len": 7,
+          "at": 4,
+          "agrees": true
+        },
+        {
+          "len": 7,
+          "at": 5,
+          "agrees": true
+        }
+      ],
+      "rotateLeft": [
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        },
+        {
+          "agrees": true
+        }
+      ]
+    }
+  }
+}

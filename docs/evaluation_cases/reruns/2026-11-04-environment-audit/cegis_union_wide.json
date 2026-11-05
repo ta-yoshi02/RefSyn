@@ -1,0 +1,54 @@
+[
+  {
+    "case": "union",
+    "helper": "union_h0",
+    "intended": "if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other",
+    "rounds": [
+      {
+        "examples": 4,
+        "ms": 32,
+        "term": "if isZero(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))) then @thisRef else if isNull(findByValueRef(@other, @nodeHeap, @parentHeap, @rankHeap, inc(inc(zero())))) then @other else @thisRef",
+        "agree_with_intended": 31,
+        "total": 56,
+        "added_objects": 2
+      },
+      {
+        "examples": 5,
+        "ms": 24,
+        "term": "if isZero(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))) then @thisRef else if isNonNeg(dec(dec(loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))))) then @thisRef else @other",
+        "agree_with_intended": 41,
+        "total": 56,
+        "added_objects": 2
+      },
+      {
+        "examples": 6,
+        "ms": 46,
+        "term": "if isZero(loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @other else if isNonNeg(dec(dec(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))))) then @other else @thisRef",
+        "agree_with_intended": 41,
+        "total": 56,
+        "added_objects": 2
+      },
+      {
+        "examples": 7,
+        "ms": 462,
+        "term": "if isZero(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))) then @thisRef else if leInt(loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap)), inc(zero())) then @other else if isNull(findByValueRef(@thisRef, @nodeHeap, @parentHeap, @rankHeap, inc(inc(inc(zero()))))) then @thisRef else @other",
+        "agree_with_intended": 38,
+        "total": 56,
+        "added_objects": 2
+      },
+      {
+        "examples": 8,
+        "ms": 520,
+        "term": "if isZero(loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @other else if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), inc(zero())) then @thisRef else if isNonNeg(dec(dec(dec(loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap)))))) then @thisRef else @other",
+        "agree_with_intended": 46,
+        "total": 56,
+        "added_objects": 2
+      },
+      {
+        "examples": 9,
+        "ms": 2000,
+        "term": null
+      }
+    ]
+  }
+]

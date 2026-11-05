@@ -1,0 +1,172 @@
+[
+  {
+    "repetition": 1,
+    "helpers": [
+      {
+        "helper": "union_h0",
+        "search_ms": 1442.767708,
+        "status": "success",
+        "term": "if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other"
+      },
+      {
+        "helper": "union_h1",
+        "search_ms": 1.424541999999974,
+        "status": "success",
+        "term": "if equal(@thisRef, @hole0) then @other else @thisRef"
+      }
+    ]
+  },
+  {
+    "repetition": 2,
+    "helpers": [
+      {
+        "helper": "union_h0",
+        "search_ms": 1410.0264589999997,
+        "status": "success",
+        "term": "if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other"
+      },
+      {
+        "helper": "union_h1",
+        "search_ms": 1.0354170000000522,
+        "status": "success",
+        "term": "if equal(@thisRef, @hole0) then @other else @thisRef"
+      }
+    ]
+  },
+  {
+    "repetition": 3,
+    "helpers": [
+      {
+        "helper": "union_h0",
+        "search_ms": 1626.7317090000006,
+        "status": "success",
+        "term": "if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other"
+      },
+      {
+        "helper": "union_h1",
+        "search_ms": 0.9431250000006912,
+        "status": "success",
+        "term": "if equal(@thisRef, @hole0) then @other else @thisRef"
+      }
+    ]
+  },
+  {
+    "repetition": 4,
+    "helpers": [
+      {
+        "helper": "union_h0",
+        "search_ms": 1361.897,
+        "status": "success",
+        "term": "if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other"
+      },
+      {
+        "helper": "union_h1",
+        "search_ms": 0.9062920000005761,
+        "status": "success",
+        "term": "if equal(@thisRef, @hole0) then @other else @thisRef"
+      }
+    ]
+  },
+  {
+    "repetition": 5,
+    "helpers": [
+      {
+        "helper": "union_h0",
+        "search_ms": 1392.7945,
+        "status": "success",
+        "term": "if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other"
+      },
+      {
+        "helper": "union_h1",
+        "search_ms": 0.9444579999999405,
+        "status": "success",
+        "term": "if equal(@thisRef, @hole0) then @other else @thisRef"
+      }
+    ]
+  },
+  {
+    "repetition": 6,
+    "helpers": [
+      {
+        "helper": "union_h0",
+        "search_ms": 1719.8201660000004,
+        "status": "success",
+        "term": "if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other"
+      },
+      {
+        "helper": "union_h1",
+        "search_ms": 0.9084170000005543,
+        "status": "success",
+        "term": "if equal(@thisRef, @hole0) then @other else @thisRef"
+      }
+    ]
+  },
+  {
+    "repetition": 7,
+    "helpers": [
+      {
+        "helper": "union_h0",
+        "search_ms": 1373.2632919999996,
+        "status": "success",
+        "term": "if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other"
+      },
+      {
+        "helper": "union_h1",
+        "search_ms": 0.9586670000007871,
+        "status": "success",
+        "term": "if equal(@thisRef, @hole0) then @other else @thisRef"
+      }
+    ]
+  },
+  {
+    "repetition": 8,
+    "helpers": [
+      {
+        "helper": "union_h0",
+        "search_ms": 1383.858875,
+        "status": "success",
+        "term": "if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other"
+      },
+      {
+        "helper": "union_h1",
+        "search_ms": 0.9032499999993888,
+        "status": "success",
+        "term": "if equal(@thisRef, @hole0) then @other else @thisRef"
+      }
+    ]
+  },
+  {
+    "repetition": 9,
+    "helpers": [
+      {
+        "helper": "union_h0",
+        "search_ms": 1407.1317500000005,
+        "status": "success",
+        "term": "if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other"
+      },
+      {
+        "helper": "union_h1",
+        "search_ms": 0.9282080000011774,
+        "status": "success",
+        "term": "if equal(@thisRef, @hole0) then @other else @thisRef"
+      }
+    ]
+  },
+  {
+    "repetition": 10,
+    "helpers": [
+      {
+        "helper": "union_h0",
+        "search_ms": 1565.0665829999998,
+        "status": "success",
+        "term": "if leInt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other"
+      },
+      {
+        "helper": "union_h1",
+        "search_ms": 0.9738340000003518,
+        "status": "success",
+        "term": "if equal(@thisRef, @hole0) then @other else @thisRef"
+      }
+    ]
+  }
+]

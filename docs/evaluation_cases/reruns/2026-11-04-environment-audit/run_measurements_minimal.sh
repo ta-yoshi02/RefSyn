@@ -1,0 +1,20 @@
+#!/bin/sh
+# ../2026-10-30-followthrough/run_measurements.sh on tasks_minimal.json: the same script, limits and
+# repetitions as MOLD's measurement there (maxCost 32, 15 s, 10 repetitions, preparation + search). MOLD
+# is measured again in the same run so that both sides share the machine's conditions. Usage (from the repository root): sh <this> > measurement_minimal.log
+set -eu
+D=docs/evaluation_cases/reruns/2026-11-04-environment-audit
+M=docs/evaluation_cases/reruns/2026-10-15-fixed-494d6d4/remeasure/measure_method_level.mjs
+B=$D/tasks_minimal.json
+C="--maxCost 32 --timeoutMs 15000 --repetitions 10"
+date -u
+uptime
+for m in insert_general append popBack prepend setAt; do
+ node "$M" --side mold --method "$m" --tasks "docs/evaluation_cases/reruns/2026-10-14-fresh-recording/$m/mold_escher_tasks.json" $C --out "$D/minimal_mold_$m.json"
+done
+for m in insert append popBack setAt; do
+ node "$M" --side baseline --method "$m" --tasks "$B" --names "$m-fixed-env-pair" $C --out "$D/minimal_baseline_$m.json"
+done
+node "$M" --side baseline --method prepend --tasks "$B" --names prepend-fixed-env-pair,prepend-fixed-returnRef $C --out "$D/minimal_baseline_prepend.json"
+uptime
+date -u

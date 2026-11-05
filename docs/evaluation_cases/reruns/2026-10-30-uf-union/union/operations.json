@@ -1,0 +1,62 @@
+[
+  {
+    "callLabel": "call1",
+    "receiverObject": "main-new1",
+    "arguments": [
+      "main-new3"
+    ],
+    "operations": [
+      {
+        "editType": "addEdge",
+        "from": "main-new3",
+        "to": "main-new1",
+        "label": "parent"
+      }
+    ]
+  },
+  {
+    "callLabel": "call2",
+    "receiverObject": "main-new7",
+    "arguments": [
+      "main-new8"
+    ],
+    "operations": [
+      {
+        "editType": "addEdge",
+        "from": "main-new7",
+        "to": "main-new8",
+        "label": "parent"
+      }
+    ]
+  },
+  {
+    "callLabel": "call3",
+    "receiverObject": "main-new4",
+    "arguments": [
+      "main-new1"
+    ],
+    "operations": [
+      {
+        "editType": "addEdge",
+        "from": "main-new1",
+        "to": "main-new4",
+        "label": "parent"
+      }
+    ]
+  },
+  {
+    "callLabel": "call4",
+    "receiverObject": "main-new8",
+    "arguments": [
+      "main-new4"
+    ],
+    "operations": [
+      {
+        "editType": "addEdge",
+        "from": "main-new8",
+        "to": "main-new4",
+        "label": "parent"
+      }
+    ]
+  }
+]

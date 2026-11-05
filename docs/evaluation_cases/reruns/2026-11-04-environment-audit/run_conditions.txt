@@ -1,0 +1,14 @@
+rerun after aligning the field encoding
+Thu Nov  5 03:51:20 UTC 2026
+12:51  up 17 days,  5:57, 1 user, load averages: 37.37 14.93 8.63
+12:54  up 17 days, 6 hrs, 2 users, load averages: 6.70 10.62 7.93
+12:54  up 17 days, 6 hrs, 2 users, load averages: 6.11 10.29 7.86
+12:55  up 17 days,  6:02, 2 users, load averages: 3.76 8.81 7.48
+12:55  up 17 days,  6:02, 2 users, load averages: 3.87 8.67 7.44
+12:56  up 17 days,  6:02, 2 users, load averages: 3.02 7.93 7.22
+Thu Nov  5 03:56:06 UTC 2026
+rerun_fields and check_offdemo_fields again (the first rerun_fields task ran at load 37)
+Thu Nov  5 03:56:25 UTC 2026
+12:56  up 17 days,  6:03, 2 users, load averages: 2.37 7.46 7.07
+12:59  up 17 days,  6:05, 1 user, load averages: 5.23 6.29 6.63
+Thu Nov  5 03:59:19 UTC 2026

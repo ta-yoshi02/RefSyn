@@ -1,0 +1,1931 @@
+[
+  {
+    "name": "insertAfter_h0",
+    "category": "refsyn",
+    "classes": [
+      {
+        "name": "Node",
+        "fields": {
+          "next": "Ref[Object[Node]]",
+          "prev": "Ref[Object[Node]]",
+          "val": "Ref[Int]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "strictFieldAccess": true,
+    "signature": {
+      "returnType": "Int",
+      "args": [
+        {
+          "name": "x",
+          "type": "Int"
+        },
+        {
+          "name": "created0",
+          "type": "Ref[Object[Node]]"
+        }
+      ],
+      "autoExpandClassSignature": {
+        "className": "Node",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "next": "nextHeap",
+          "prev": "prevHeap",
+          "val": "valHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 2
+                  },
+                  "prev": {
+                    "ref": 0
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 3
+                  },
+                  "prev": {
+                    "ref": 1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            10,
+            20,
+            30,
+            40,
+            {
+              "error": true
+            }
+          ],
+          15,
+          {
+            "ref": 4
+          }
+        ],
+        15
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 3
+                  },
+                  "prev": {
+                    "ref": 1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 0
+                  },
+                  "prev": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 4
+                  },
+                  "prev": {
+                    "ref": 0
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            20,
+            15,
+            10,
+            30,
+            40,
+            {
+              "error": true
+            }
+          ],
+          25,
+          {
+            "ref": 5
+          }
+        ],
+        25
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 5
+                  },
+                  "prev": {
+                    "ref": 1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 0
+                  },
+                  "prev": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 1
+                  },
+                  "prev": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 2
+                  },
+                  "prev": {
+                    "ref": 4
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 3
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": 0
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 6
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 5
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            30,
+            25,
+            20,
+            15,
+            10,
+            40,
+            {
+              "error": true
+            }
+          ],
+          35,
+          {
+            "ref": 6
+          }
+        ],
+        35
+      ]
+    ],
+    "refsynMeta": {
+      "jsMethodName": "insertAfter_h0",
+      "className": "Node",
+      "thisRefName": "thisRef",
+      "classHeapName": "nodeHeap",
+      "valueFields": [
+        "val"
+      ],
+      "pointerFields": [
+        "next",
+        "prev"
+      ],
+      "boolFields": [],
+      "fieldHeapNames": {
+        "next": "nextHeap",
+        "prev": "prevHeap",
+        "val": "valHeap"
+      },
+      "explicitArgs": [
+        {
+          "name": "x",
+          "legacyType": "Int",
+          "taskType": "Int"
+        },
+        {
+          "name": "created0",
+          "legacyType": "Ptr",
+          "taskType": "Ref[Object[Node]]"
+        }
+      ]
+    }
+  },
+  {
+    "name": "insertAfter_h1",
+    "category": "refsyn",
+    "classes": [
+      {
+        "name": "Node",
+        "fields": {
+          "next": "Ref[Object[Node]]",
+          "prev": "Ref[Object[Node]]",
+          "val": "Ref[Int]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "strictFieldAccess": true,
+    "signature": {
+      "returnType": "Ref[Object[Node]]",
+      "args": [
+        {
+          "name": "x",
+          "type": "Int"
+        },
+        {
+          "name": "created0",
+          "type": "Ref[Object[Node]]"
+        },
+        {
+          "name": "hole0",
+          "type": "Int"
+        }
+      ],
+      "autoExpandClassSignature": {
+        "className": "Node",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "next": "nextHeap",
+          "prev": "prevHeap",
+          "val": "valHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 2
+                  },
+                  "prev": {
+                    "ref": 0
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 3
+                  },
+                  "prev": {
+                    "ref": 1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            10,
+            20,
+            30,
+            40,
+            {
+              "error": true
+            }
+          ],
+          15,
+          {
+            "ref": 4
+          },
+          15
+        ],
+        {
+          "ref": 0
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 3
+                  },
+                  "prev": {
+                    "ref": 1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 0
+                  },
+                  "prev": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 4
+                  },
+                  "prev": {
+                    "ref": 0
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            20,
+            15,
+            10,
+            30,
+            40,
+            {
+              "error": true
+            }
+          ],
+          25,
+          {
+            "ref": 5
+          },
+          25
+        ],
+        {
+          "ref": 0
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 5
+                  },
+                  "prev": {
+                    "ref": 1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 0
+                  },
+                  "prev": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 1
+                  },
+                  "prev": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 2
+                  },
+                  "prev": {
+                    "ref": 4
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 3
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": 0
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 6
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 5
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            30,
+            25,
+            20,
+            15,
+            10,
+            40,
+            {
+              "error": true
+            }
+          ],
+          35,
+          {
+            "ref": 6
+          },
+          35
+        ],
+        {
+          "ref": 0
+        }
+      ]
+    ],
+    "refsynMeta": {
+      "jsMethodName": "insertAfter_h1",
+      "className": "Node",
+      "thisRefName": "thisRef",
+      "classHeapName": "nodeHeap",
+      "valueFields": [
+        "val"
+      ],
+      "pointerFields": [
+        "next",
+        "prev"
+      ],
+      "boolFields": [],
+      "fieldHeapNames": {
+        "next": "nextHeap",
+        "prev": "prevHeap",
+        "val": "valHeap"
+      },
+      "explicitArgs": [
+        {
+          "name": "x",
+          "legacyType": "Int",
+          "taskType": "Int"
+        },
+        {
+          "name": "created0",
+          "legacyType": "Ptr",
+          "taskType": "Ref[Object[Node]]"
+        },
+        {
+          "name": "hole0",
+          "legacyType": "Int",
+          "taskType": "Int"
+        }
+      ]
+    }
+  },
+  {
+    "name": "insertAfter_h2",
+    "category": "refsyn",
+    "classes": [
+      {
+        "name": "Node",
+        "fields": {
+          "next": "Ref[Object[Node]]",
+          "prev": "Ref[Object[Node]]",
+          "val": "Ref[Int]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "strictFieldAccess": true,
+    "signature": {
+      "returnType": "Ref[Object[Node]]",
+      "args": [
+        {
+          "name": "x",
+          "type": "Int"
+        },
+        {
+          "name": "created0",
+          "type": "Ref[Object[Node]]"
+        },
+        {
+          "name": "hole0",
+          "type": "Int"
+        },
+        {
+          "name": "hole1",
+          "type": "Ref[Object[Node]]"
+        }
+      ],
+      "autoExpandClassSignature": {
+        "className": "Node",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "next": "nextHeap",
+          "prev": "prevHeap",
+          "val": "valHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 2
+                  },
+                  "prev": {
+                    "ref": 0
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 3
+                  },
+                  "prev": {
+                    "ref": 1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            10,
+            20,
+            30,
+            40,
+            {
+              "error": true
+            }
+          ],
+          15,
+          {
+            "ref": 4
+          },
+          15,
+          {
+            "ref": 0
+          }
+        ],
+        {
+          "ref": 1
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 3
+                  },
+                  "prev": {
+                    "ref": 1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 0
+                  },
+                  "prev": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 4
+                  },
+                  "prev": {
+                    "ref": 0
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 3
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            20,
+            15,
+            10,
+            30,
+            40,
+            {
+              "error": true
+            }
+          ],
+          25,
+          {
+            "ref": 5
+          },
+          25,
+          {
+            "ref": 0
+          }
+        ],
+        {
+          "ref": 3
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 5
+                  },
+                  "prev": {
+                    "ref": 1
+                  },
+                  "val": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 0
+                  },
+                  "prev": {
+                    "ref": 2
+                  },
+                  "val": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 1
+                  },
+                  "prev": {
+                    "ref": 3
+                  },
+                  "val": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 2
+                  },
+                  "prev": {
+                    "ref": 4
+                  },
+                  "val": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": 3
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": 0
+                  },
+                  "val": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "Node",
+                "fields": {
+                  "next": {
+                    "ref": -1
+                  },
+                  "prev": {
+                    "ref": -1
+                  },
+                  "val": {
+                    "ref": 6
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": 5
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": -1
+            }
+          ],
+          [
+            30,
+            25,
+            20,
+            15,
+            10,
+            40,
+            {
+              "error": true
+            }
+          ],
+          35,
+          {
+            "ref": 6
+          },
+          35,
+          {
+            "ref": 0
+          }
+        ],
+        {
+          "ref": 5
+        }
+      ]
+    ],
+    "refsynMeta": {
+      "jsMethodName": "insertAfter_h2",
+      "className": "Node",
+      "thisRefName": "thisRef",
+      "classHeapName": "nodeHeap",
+      "valueFields": [
+        "val"
+      ],
+      "pointerFields": [
+        "next",
+        "prev"
+      ],
+      "boolFields": [],
+      "fieldHeapNames": {
+        "next": "nextHeap",
+        "prev": "prevHeap",
+        "val": "valHeap"
+      },
+      "explicitArgs": [
+        {
+          "name": "x",
+          "legacyType": "Int",
+          "taskType": "Int"
+        },
+        {
+          "name": "created0",
+          "legacyType": "Ptr",
+          "taskType": "Ref[Object[Node]]"
+        },
+        {
+          "name": "hole0",
+          "legacyType": "Int",
+          "taskType": "Int"
+        },
+        {
+          "name": "hole1",
+          "legacyType": "Ptr",
+          "taskType": "Ref[Object[Node]]"
+        }
+      ]
+    }
+  }
+]
