@@ -4,9 +4,10 @@
 //!
 //! The stages treat order differently, and the tests follow that split:
 //! - `operation_graph::build` keeps the writes in order, duplicates included.
-//! - `alignment::align_consistently` ignores write order: it maps the first graph onto each
-//!   other graph by structure, and of several such maps takes the first whose hole examples do
-//!   not give one input two outputs.
+//! - `alignment::align_consistently` ignores write order when deciding isomorphism: it maps the
+//!   first graph onto each other graph by structure, and of several such maps takes the first
+//!   whose hole examples do not give one input two outputs, trying first those that take each
+//!   field's last write to the other graph's last write to the corresponding field.
 //! - `Template::build` keeps the first demonstration's write order.
 //! - `pbe_problem::build` gives each hole the pre-call state, the arguments, the created objects
 //!   in the template's creation order and the earlier holes' outputs, with no write applied.
@@ -926,7 +927,8 @@ fn the_template_keeps_the_last_write_last_so_each_demonstration_ends_with_its_ow
 }
 
 /// The same two orders with no arguments: one input, two different results. No method can do
-/// both, and alignment, which only compares structure, does not object. The template gives one
+/// both, and alignment does not object: the pairing that keeps the last writes gives one hole
+/// two outputs on one input, so it falls back to the other isomorphism. The template gives one
 /// result for both demonstrations, and the whole-method validation refuses it.
 fn contradicting_request() -> SynthesisRequest {
     request(
@@ -1155,4 +1157,83 @@ fn an_independent_write_moved_between_repeated_writes_keeps_their_pairing() {
     };
     assert_eq!(planned.run_template(0), after(2, 5));
     assert_eq!(planned.run_template(1), after(4, 7));
+}
+
+// ---------------------------------------------------------------------------------------------
+// 4. Isomorphisms that differ only in which write to a field comes last.
+
+/// First demonstration (receiver A on A, B, C): A.next = B, then A.next = C, B.other = A,
+/// C.other = A. Second (receiver X on W, X, Z): Z.other = X, W.other = X, X.next = W, then
+/// X.next = Z. All fields start null. Structure alone allows B -> W, C -> Z and B -> Z, C -> W;
+/// only the first leaves the template's last write to A.next where the second demonstration
+/// leaves X.next.
+fn last_write_request() -> SynthesisRequest {
+    let demo = |receiver, ids: [&str; 3], edits| Demo {
+        receiver,
+        args: json!([]),
+        objects: json!(ids.map(|id| cell(id, 0, &[]))),
+        values: json!({}),
+        edits,
+    };
+    request(
+        "relink",
+        &[],
+        &[
+            demo(
+                "A",
+                ["A", "B", "C"],
+                vec![
+                    add_edge("A", "next", "B"),
+                    edit_edge("A", "next", "B", "C"),
+                    add_edge("B", "other", "A"),
+                    add_edge("C", "other", "A"),
+                ],
+            ),
+            demo(
+                "X",
+                ["W", "X", "Z"],
+                vec![
+                    add_edge("Z", "other", "X"),
+                    add_edge("W", "other", "X"),
+                    add_edge("X", "next", "W"),
+                    edit_edge("X", "next", "W", "Z"),
+                ],
+            ),
+        ],
+    )
+}
+
+#[test]
+fn of_two_isomorphisms_the_one_that_keeps_each_fields_last_write_is_taken() {
+    let (_, graphs) = read_and_build(&last_write_request()).unwrap();
+    // The first isomorphism in declaration order is the one that does not reproduce.
+    let first = refsyn::alignment::align(&graphs[0], &graphs[1]).unwrap();
+    let image = |v: usize| denotes(&graphs[1].vertices[first[v]]);
+    assert_eq!([1, 2].map(image), [json!("Z"), json!("W")]);
+
+    let planned = plan(&last_write_request()).unwrap();
+    let roles = |i: usize, v: &Json| match (i, v.as_str()) {
+        (1, Some(id)) => json!(
+            [("A", "X"), ("B", "W"), ("C", "Z")]
+                .iter()
+                .find(|(a, _)| *a == id)
+                .unwrap()
+                .1
+        ),
+        _ => v.clone(),
+    };
+    let cell_type = HoleType::Object("Cell".into());
+    planned.assert_roles(
+        &roles,
+        &["A", "B", "C"].map(|o| (json!(o), cell_type.clone())),
+    );
+    let after = |[r, b, c]: [&str; 3]| {
+        BTreeMap::from([
+            (r.to_string(), fields(0, Some(c), None)),
+            (b.to_string(), fields(0, None, Some(r))),
+            (c.to_string(), fields(0, None, Some(r))),
+        ])
+    };
+    assert_eq!(planned.run_template(0), after(["A", "B", "C"]));
+    assert_eq!(planned.run_template(1), after(["X", "W", "Z"]));
 }

@@ -55,7 +55,10 @@ Uses the paper's three `insert` demonstrations as the fixture.
   two outputs is taken: reversing the edit order of two symmetric writes no longer swaps their
   sources, mu_1 stays the identity, eight symmetric writers (8! isomorphisms) resolve at the
   first one, and exhausting the 10,000-step search is reported apart from a contradiction in
-  every combination.
+  every combination. Combinations that take each field's last write in the first graph to
+  the last write to the corresponding field are tried first, since only they let the template,
+  which keeps the first demonstration's write order, end every field as each demonstration
+  does; the others are tried only if none of those is consistent.
 - The template has one creation, three hole bindings and three writes in the paper's order,
   the paper's hole outputs, and renders the seven-statement method.
 - Hole inputs contain created objects with their constructor state and earlier holes, but no
@@ -89,6 +92,10 @@ hole numbers.
   existing cell. Return values are not compared, and receivers without a successor are left
   out of this check, which does not make them out of scope. This is recorded as
   order-dependent selection, not as a defect (see [the module map](MODULE_TESTS.md)).
+- Two isomorphisms that differ only in which write to `next` comes last: the one that leaves
+  the template's last write where the second demonstration leaves it is taken, although the
+  search meets the other first in declaration order. Synthesis is not run here: the written
+  cells are unreachable from the pre-call state, so no hole beyond the receiver can be found.
 - `run_template` runs the template in the test with each hole bound to its expected output; only
   `set` and the `point` comparison execute synthesized JavaScript.
 
