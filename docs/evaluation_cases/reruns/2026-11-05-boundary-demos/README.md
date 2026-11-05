@@ -1,11 +1,16 @@
-# 2026-11-05: boundary demonstrations recorded in Kanon
+# 2026-11-05: demonstrations added from counterexamples, recorded in Kanon
 
 The cases where a method overfitted its recorded demonstrations, re-recorded by hand in Kanon with the
 added demonstrations the counterexample-guided runs of `../2026-11-04-environment-audit/` had pointed
-to (`plan.md`, written before recording, with an addendum before the last recording). These recordings
-replace the old ones as the reference for MOLD and for the non-separated baseline (both use the same
-demonstrations). Out of scope (`plan.md`): union (the current setting's search order decides the term),
-the full union with equal ranks (not isomorphic), the baseline's append/insert timeouts.
+to (`plan.md`, written before recording, with an addendum before the last recording). MOLD and the
+non-separated baseline are run on the same new recordings.
+
+This is an evaluation of **adding demonstrations chosen from counterexamples**, reported next to the
+old results; it does not replace them. The old recordings and their failures under the current setting
+(`../2026-10-30-new-cases/`, `../2026-10-15-rotate-right-*`, `../2026-10-30-baseline/`,
+`../2026-11-04-environment-audit/`) stay part of the evaluation. Out of scope (`plan.md`): union (the
+current setting's search order decides the term), the full union with equal ranks (not isomorphic),
+the baseline's append/insert timeouts.
 
 Set-up: RefSyn worktree at `53c6d1a` (adapter sha256 `9540366b…`, the same as every earlier recording;
 the shared checkout's modified adapter was not used), native server built there, Kanon `93e6ba7` served
@@ -37,7 +42,12 @@ on separate copies against a reference; same input sets as before.
 | --- | --- | --- | --- | --- | --- | --- |
 | agree | 81/81 | 81/81 | 30/30 | 30/30 | 30/30 | 105/105 |
 
-The checker reproduces the old results on the old classes (rotateLeft 21/81, rotateRight 36/81).
+The checker reproduces the old results on the old classes (rotateLeft 21/81, rotateRight 36/81). It
+keeps `null`, `undefined` and non-object values apart and exits with 1 on any disagreeing row
+(`mutation_check.sh` → `mutation_log.txt`: append with an added `return null`, and with the stored
+value replaced by -999, each give append 0/30 and exit 1). The first version of the checker (commit
+`f5440d1`) treated `null` and `undefined` as equal and always exited with 0; the results above are
+from the corrected one and did not change.
 
 Non-separated baseline, built from the same recordings with the earlier scripts unchanged except for
 paths (`make_baseline_tasks.mjs`, `run_baseline_*.mjs`, `check_baseline_*.mjs`, from
@@ -57,11 +67,21 @@ the first calls reproduce the old tasks' examples exactly):
 (Without the list components the tree baselines were already right with the old demonstrations; they
 stay 81/81.)
 
+The rechecks repeat each saved search and stop counting a row whose term differs: `check_baseline_terms.mjs`
+needs `RESULTS` (no default) and `check_baseline_insert_after_append.mjs` compares the repeated term with
+the saved one; either exits with 1 on a mismatch. `recheck_log.txt`: the three rechecks exit 0 with no
+mismatch, and results files with one term changed make both exit 1. In `f5440d1` the default `RESULTS`
+named a file that does not exist here, a mismatch was recorded but exited 0, and the insertAfter recheck
+did not compare terms; the outputs did not change after the fix.
+
 ## What this shows
 
-- The overfitting of rotateLeft and rotateRight (MOLD, current setting) and of the baseline's
-  insertAfter and prepend is a property of the demonstrations: with the added demonstrations, recorded
-  in Kanon, both methods give terms that agree on every checked input.
+- The overfitting of rotateLeft and rotateRight (MOLD) and of the baseline's insertAfter and prepend
+  comes from the combination of demonstrations, components, costs and search order. With the setting
+  kept fixed (current, 20 / 2 s for MOLD), adding demonstrations chosen from counterexamples and
+  recorded in Kanon was enough for both methods to give terms that agree on every input checked here.
+  This is not an independent generalisation test: the added demonstrations were chosen from failures on
+  the same input families that are checked.
 - The baseline's append needed a different kind of demonstration, not a different argument: while every
   appended tail is the most recently created object, "the last object" equals "the tail". With a
   demonstration on an older tail the baseline's next-heap and whole-state tasks no longer finish within
@@ -69,9 +89,8 @@ stay 81/81.)
   witness of `../2026-11-04-environment-audit/typecheck_witnesses_minimal.json` (size about 20) satisfies
   all 6 examples of this recording (`check_append_witness.mjs` → `append_witness.json`), so this is the
   "expressible, not reached" case, not an inexpressible one.
-- These are the reference recordings from now on: rotateLeft, rotateRight, prepend, append
-  (`append_older_tail`) and insertAfter. The other recordings (setAt, insert, popBack, swapChildren,
-  unlink, union) are unchanged.
+- Whether these recordings become the standard evaluation is a separate decision; until then they are
+  reported as a second condition ("demonstrations added from counterexamples") beside the old ones.
 
 Does not show: that a user would choose these demonstrations unprompted; they were chosen from the
 counterexamples of the offline runs. The added tree demonstrations are separate trees in the same

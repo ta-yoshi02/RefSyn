@@ -7,7 +7,8 @@
 // every node with two children of complete trees of height 1-3; rotateLeft at the root of trees where
 // this.right.left exists, the four other subtrees each absent, a leaf, or a node with a right child, and
 // rotateRight on their mirror images; union on two childless roots with ranks 0-3, r1 != r2.
-// Usage (from the repository root): WEIGHTED_DIST=<patched dist> [RESULTS=results_list.json] node <this> > <out.json>
+// A search that does not repeat the saved term is reported on stderr and makes the script exit with 1.
+// Usage (from the repository root): WEIGHTED_DIST=<patched dist> RESULTS=<baseline_results.json | baseline_results_list.json> node <this> > <out.json>
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import path from "node:path";
@@ -23,7 +24,8 @@ const costs = { current: undefined, candidate: { last_ptr: 3, penultimateRef: 3,
 const factor = { current: 3, candidate: 1 };
 const limits = { adapter: { maxCost: 20, timeoutMs: 2000 }, paper: { maxCost: 32, timeoutMs: 15000 } };
 const tasks = JSON.parse(readFileSync(`${D}/baseline_tasks.json`, "utf8"));
-const results = JSON.parse(readFileSync(`${D}/${process.env.RESULTS ?? "results.json"}`, "utf8"));
+if (!process.env.RESULTS) throw new Error("set RESULTS to baseline_results.json or baseline_results_list.json");
+const results = JSON.parse(readFileSync(`${D}/${process.env.RESULTS}`, "utf8"));
 
 const isPtr = (cls, f) => cls.fields[f].startsWith("Ref[Object");
 const heapOf = (cls, objs, f) => objs.map((o) => (isPtr(cls, f) ? { ref: o[f] ?? -1 } : o[f] ?? { error: true }));
@@ -66,7 +68,7 @@ for (const row of results.filter((r) => r.term !== null)) {
   const job = L.prepareJsonSynthesisJob(L.parseJsonSynthesisSpec(JSON.stringify(spec)));
   const r = new L.AscendRecSynthesizer({ ...limits[row.limits], searchSizeFactor: factor[row.setting], useReductionRules: true, onlyForwardSearch: false, argListCompare: L.anyArgSmaller })
     .synthesize(job.functionName, job.inputTypes, job.inputNames, job.returnType, job.env, job.examples);
-  if (!r || L.showTerm(r.program.body) !== row.term) { out.push({ task: row.task, setting: row.setting, limits: row.limits, error: "search did not repeat" }); continue; }
+  if (!r || L.showTerm(r.program.body) !== row.term) { out.push({ task: row.task, setting: row.setting, limits: row.limits, error: "search did not repeat" }); process.exitCode = 1; console.error(`${row.task} ${row.setting} ${row.limits}: search did not repeat`); continue; }
   const cls = task.classes[0];
   let agree = 0;
   for (const [objs, recv, args, reference] of inputs[row.case]) {

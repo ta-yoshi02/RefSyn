@@ -3,6 +3,7 @@
 // Evaluates the terms of results_insert_after_append.json against the hand-written witnesses on lists of
 // length 2-7, every non-tail position, x in {0, 1, 2, 3, 99} (x < length makes `insert(heap, x, ...)`
 // insert in the middle instead of appending).
+// A search that does not repeat the saved term is reported on stderr and makes the script exit with 1.
 // Usage (from the repository root): WEIGHTED_DIST=<patched dist> node <this> > <out.json>
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
@@ -36,6 +37,12 @@ for (const row of results) {
   const job = L.prepareJsonSynthesisJob(L.parseJsonSynthesisSpec(JSON.stringify(spec)));
   const r = new L.AscendRecSynthesizer({ ...limits[row.limits], searchSizeFactor: factor[row.setting], useReductionRules: true, onlyForwardSearch: false, argListCompare: L.anyArgSmaller })
     .synthesize(job.functionName, job.inputTypes, job.inputNames, job.returnType, job.env, job.examples);
+  if (!r || L.showTerm(r.program.body) !== row.term) {
+    out.push({ task: row.task, setting: row.setting, limits: row.limits, error: "search did not repeat" });
+    process.exitCode = 1;
+    console.error(`${row.task} ${row.setting} ${row.limits}: search did not repeat`);
+    continue;
+  }
   const { componentTerm: c, varTerm: v } = L;
   const app = (h, x) => c("insert", [v(h), c("length", [v(h)]), x]);
   const nt = c("nextOf", [v("thisRef"), v("nodeHeap"), v("nextHeap")]);

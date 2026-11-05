@@ -1,0 +1,2 @@
+return_null: exit 1 {"rotateLeft":"81/81","rotateRight":"81/81","prepend":"30/30","append":"0/30","append_older_tail":"30/30","insertAfter":"105/105"}
+val_minus_999: exit 1 {"rotateLeft":"81/81","rotateRight":"81/81","prepend":"30/30","append":"0/30","append_older_tail":"30/30","insertAfter":"105/105"}

@@ -5,10 +5,13 @@
 // node with a right child (81), rotateRight on their mirror images (81); prepend and append on lists
 // of length 1-6 (30 with x in {0, 1, 2, 3, 99}; append for both append recordings); insertAfter at every non-tail position of lists of
 // length 2-7 with the same five x (105).
-// Usage (from the repository root): node <this> > methods.json
+// null, undefined and non-object values are kept apart in the comparison, and the script exits with 1
+// (listing the failing rows on stderr) if any row disagrees. CHECK_DIR points it at another directory
+// with the same <recording>/source_after.js layout (used for the mutation runs in mutation_log.txt).
+// Usage (from the repository root): [CHECK_DIR=<dir>] node <this> > methods.json
 import { readFileSync } from "node:fs";
 
-const D = "docs/evaluation_cases/reruns/2026-11-05-boundary-demos";
+const D = process.env.CHECK_DIR ?? "docs/evaluation_cases/reruns/2026-11-05-boundary-demos";
 const classOf = (name, className) => {
   const src = readFileSync(`${D}/${name}/source_after.js`, "utf8");
   return new Function(`${src.slice(0, src.search(/\nlet /))}\nreturn ${className};`)();
@@ -25,8 +28,9 @@ const runCase = (Cls, build, call, reference) => {
     const add = (n) => { if (n && !all.includes(n)) { all.push(n); for (const f of ["left", "right", "prev", "next"]) add(n[f]); } };
     for (const n of s.nodes) for (const f of ["left", "right", "prev", "next"]) add(n[f]);
     add(r);
-    const id = (n) => (n === null || n === undefined ? null : all.indexOf(n));
-    return { fields: all.map((n) => ({ val: n.val, left: id(n.left), right: id(n.right), prev: id(n.prev), next: id(n.next) })), ret: id(r) };
+    const id = (n) => (n === undefined ? "undefined" : n === null ? "null" : typeof n === "object" && all.includes(n) ? all.indexOf(n) : { value: String(n), type: typeof n });
+    const val = (v) => (v === undefined ? "undefined" : v);
+    return { fields: all.map((n) => ({ val: val(n.val), left: id(n.left), right: id(n.right), prev: id(n.prev), next: id(n.next) })), ret: id(r) };
   };
   if (error) return { agrees: false, error };
   return { agrees: JSON.stringify(snap(a, ret)) === JSON.stringify(snap(b, expectedRet)) };
@@ -63,4 +67,9 @@ out.append_older_tail = [1, 2, 3, 4, 5, 6].flatMap((len) => XS.map((x) => ({ len
 const I = classOf("insertAfter", "Node");
 out.insertAfter = [2, 3, 4, 5, 6, 7].flatMap((len) => [...Array(len - 1).keys()].flatMap((at) => XS.map((x) => ({ len, at, x, ...runCase(I, buildList(len, true), (s) => s.nodes[at].insertAfter(x), (s, C) => { const t = s.nodes[at], n = new C(); n.val = x; n.prev = t; n.next = t.next; t.next.prev = n; t.next = n; }) }))));
 
+const failing = Object.entries(out).flatMap(([k, v]) => v.filter((r) => !r.agrees).map((r) => ({ method: k, ...r })));
+if (failing.length > 0) {
+  process.exitCode = 1;
+  console.error(`${failing.length} disagreeing rows:\n${failing.map((r) => JSON.stringify(r)).join("\n")}`);
+}
 console.log(JSON.stringify({ summary: Object.fromEntries(Object.entries(out).map(([k, v]) => [k, `${v.filter((r) => r.agrees).length}/${v.length}`])), cases: out }, null, 2));
