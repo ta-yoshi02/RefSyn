@@ -1,0 +1,153 @@
+[
+  {
+    "task": "setAt-fixed-env-pair",
+    "rounds": [
+      {
+        "examples": 3,
+        "ms": 181,
+        "term": "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)",
+        "cost": 10,
+        "agree": 42,
+        "total": 42,
+        "added": null
+      }
+    ]
+  },
+  {
+    "task": "append-fixed-env-pair",
+    "rounds": [
+      {
+        "examples": 3,
+        "ms": 303,
+        "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))",
+        "cost": 12,
+        "agree": 16,
+        "total": 60,
+        "added": {
+          "n": 1,
+          "head": 0,
+          "args": [
+            0
+          ]
+        }
+      },
+      {
+        "examples": 4,
+        "ms": 743,
+        "term": "if isZero(@arg0) then pairHeap(insert(@fHeap, inc(@arg0), @arg0), insert(@gHeap, @arg0, freshRefFromHeap(@nodeHeap))) else pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))",
+        "cost": 26,
+        "agree": 18,
+        "total": 60,
+        "added": {
+          "n": 2,
+          "head": 0,
+          "args": [
+            0
+          ]
+        }
+      },
+      {
+        "examples": 5,
+        "ms": 5049,
+        "term": "pairHeap(insert(@fHeap, length(@nodeHeap), @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))",
+        "cost": 13,
+        "agree": 35,
+        "total": 60,
+        "added": {
+          "n": 2,
+          "head": 1,
+          "args": [
+            0
+          ]
+        }
+      },
+      {
+        "examples": 6,
+        "ms": 15003,
+        "term": null
+      }
+    ]
+  },
+  {
+    "task": "prepend-fixed-env-pair",
+    "rounds": [
+      {
+        "examples": 2,
+        "ms": 20,
+        "term": "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "cost": 9,
+        "agree": 24,
+        "total": 60,
+        "added": {
+          "n": 1,
+          "head": 0,
+          "args": [
+            0
+          ]
+        }
+      },
+      {
+        "examples": 3,
+        "ms": 167,
+        "term": "pairHeap(insert(@fHeap, inc(@arg0), @arg0), insert(@gHeap, inc(@arg0), @thisRef))",
+        "cost": 11,
+        "agree": 32,
+        "total": 60,
+        "added": {
+          "n": 2,
+          "head": 0,
+          "args": [
+            0
+          ]
+        }
+      },
+      {
+        "examples": 4,
+        "ms": 268,
+        "term": "pairHeap(insert(@fHeap, length(@nodeHeap), @arg0), insert(@gHeap, length(@nodeHeap), @thisRef))",
+        "cost": 11,
+        "agree": 60,
+        "total": 60,
+        "added": null
+      }
+    ]
+  },
+  {
+    "task": "prepend-fixed-returnRef",
+    "rounds": [
+      {
+        "examples": 2,
+        "ms": 0,
+        "term": "freshRefFromHeap(@nodeHeap)",
+        "cost": 2,
+        "agree": 60,
+        "total": 60,
+        "added": null
+      }
+    ]
+  },
+  {
+    "task": "insert-fixed-env-pair",
+    "rounds": [
+      {
+        "examples": 3,
+        "ms": 15000,
+        "term": null
+      }
+    ]
+  },
+  {
+    "task": "popBack-fixed-env-pair",
+    "rounds": [
+      {
+        "examples": 2,
+        "ms": 57,
+        "term": "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap)))",
+        "cost": 12,
+        "agree": 10,
+        "total": 10,
+        "added": null
+      }
+    ]
+  }
+]
