@@ -250,6 +250,12 @@ output (reference method for the baseline; the candidate setting's verified term
 - For MOLD the list cases need nothing extra; the trees need 2–4 more demonstrations of other shapes
   under the current setting (none under the candidate one). union's checked domain (ranks 0–3, two roots)
   is too small to force `leInt`: the loop stops at a term that is right there and wrong for larger ranks.
+- union with a wider domain (`cegis_union_wide.mjs` → `cegis_union_wide.json`; distinct ranks 0–7, 56
+  pairs; current setting, 20 / 2 s): each added example is answered with one more threshold on a rank
+  constant (31 → 41 → 41 → 38 → 46 of 56). After 5 added examples the search times out at 2 s. It never
+  reaches `leInt(rank this, rank other)` (cost 16), which the candidate setting returns from the
+  original 4 demonstrations. Adding wider demonstrations makes the overfit conditionals longer; it does
+  not move the current setting to the comparison.
 - The added examples are generated from reference implementations, not recorded in Kanon. For MOLD they
   correspond to demonstrations of trees of other shapes, which give isomorphic operation graphs, so they
   could be recorded; this was not done.
