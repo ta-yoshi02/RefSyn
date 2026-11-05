@@ -99,6 +99,32 @@ hole numbers.
 - `run_template` runs the template in the test with each hole bound to its expected output; only
   `set` and the `point` comparison execute synthesized JavaScript.
 
+## Edit kinds (`tests/edit_kind_alignment_tests.rs`)
+
+Pairs of demonstrations whose edits are of different Kanon kinds (`addEdge`,
+`editEdgeReference`, `deleteEdge`, `return`) but mean the same update, on small `Cell` heaps.
+Each case states the pre-call states and edits, the expected writes of both graphs, every
+allowed correspondence (by the objects and values the vertices stand for), the hole types and
+each demonstration's PBE input before the earlier holes.
+
+- An oracle tries every bijection between the vertex sets and keeps those that preserve vertex
+  kind, class, constant type, field, direction, multiplicity and the return value. It uses
+  neither `alignment`'s search nor `Vertex::corresponds`. Its set must equal the expected set;
+  `align`'s first isomorphism and `align_consistently`'s choice must be in it.
+- The template under the chosen correspondence must reproduce both demonstrations as replayed
+  directly from their edits (hole outputs bound, not synthesized).
+- Accepted: `addEdge` onto `editEdgeReference` (one write); `deleteEdge` onto `deleteEdge`
+  through the shared null; two independent writes to different fields; two writes to one field;
+  two sources sharing a target; a two-cell cycle with `return`; two created cells; a value write
+  with two reference writes; a five-write doubly linked insertion.
+- Two writes to one field admit two isomorphisms, and only the one that keeps the last write last
+  reproduces the second demonstration; the search takes it because of declaration order. The
+  shared-target case admits two pairings and both reproduce.
+- Rejected: a stale old target (while normalizing); deletion against replacement; created against
+  existing target; another field; another shape with the same counts; return in only one
+  demonstration; union by rank with one and two writes (a limit of the one-to-one specification,
+  not a supported case).
+
 ## Randomized operation normalization (`tests/operation_graph_randomized_tests.rs`)
 
 - Seeds 1–64 generate 48 edits each, including object/literal creation, repeated writes,
