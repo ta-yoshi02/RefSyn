@@ -1237,3 +1237,46 @@ fn of_two_isomorphisms_the_one_that_keeps_each_fields_last_write_is_taken() {
     assert_eq!(planned.run_template(0), after(["A", "B", "C"]));
     assert_eq!(planned.run_template(1), after(["X", "W", "Z"]));
 }
+
+/// Two literal nodes `p` and `q` both hold 1. O0.value receives p, q, p in the first
+/// demonstration and p, p, q in the second, so no isomorphism takes the last write to the last
+/// write; yet every write leaves 1, so the template reproduces both. Eight cells O0..O7 also
+/// write `other` to O8, giving 8! isomorphisms that keep none of the last writes.
+fn equal_values_request() -> SynthesisRequest {
+    let ids: Vec<String> = (0..9).map(|i| format!("O{i}")).collect();
+    let demo = |order: [&str; 3]| {
+        let mut edits = vec![number("p", 1), number("q", 1)];
+        let mut previous = "O0-value";
+        for next in order {
+            edits.push(edit_edge("O0", "value", previous, next));
+            previous = next;
+        }
+        edits.extend(ids[..8].iter().map(|id| add_edge(id, "other", "O8")));
+        Demo {
+            receiver: "O0",
+            args: json!([]),
+            objects: Json::Array(ids.iter().map(|id| cell(id, 0, &[])).collect()),
+            values: json!({ "O0-value": 0 }),
+            edits,
+        }
+    };
+    request("mark", &[], &[demo(["p", "q", "p"]), demo(["p", "p", "q"])])
+}
+
+#[test]
+fn trying_last_writes_first_does_not_lose_a_correspondence_found_within_the_step_limit() {
+    let planned = plan(&equal_values_request()).unwrap();
+    // One state and no arguments: every vertex stands for itself in both demonstrations.
+    let same = |_: usize, v: &Json| v.clone();
+    for (first, image) in planned.correspondence(1) {
+        let first: Json = serde_json::from_str(&first).unwrap();
+        assert_eq!(image, same(1, &first), "image of {first}");
+    }
+    let mut after: BTreeMap<String, BTreeMap<String, Value>> = (0..8)
+        .map(|i| (format!("O{i}"), fields(0, None, Some("O8"))))
+        .collect();
+    after.insert("O0".to_string(), fields(1, None, Some("O8")));
+    after.insert("O8".to_string(), fields(0, None, None));
+    assert_eq!(planned.run_template(0), after);
+    assert_eq!(planned.run_template(1), after);
+}

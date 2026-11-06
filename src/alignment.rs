@@ -55,10 +55,11 @@ pub type Aligned = (Vec<Mapping>, Template, Problems);
 /// different outputs; such a PBE problem has no solution. mu_1 is the identity.
 ///
 /// The template keeps the first demonstration's write order, so it leaves each field with the
-/// value of the first graph's last write to it. Combinations under which that is the image of
-/// each other demonstration's last write to the corresponding field are tried first; the rest
-/// only if none of those is consistent, since the whole-method validation refuses them anyway.
-/// Both passes share the step limit.
+/// value of the first graph's last write to it. So the search goes on past a consistent
+/// combination under which that is not the image of some other demonstration's last write to
+/// the corresponding field, and takes the first consistent one under which it always is. If the
+/// search ends or runs out of steps without one, it takes the first consistent combination it
+/// met, as it did before the preference: written values can agree although the vertices differ.
 pub fn align_consistently(
     recording: &Recording,
     graphs: &[OperationGraph],
@@ -67,33 +68,33 @@ pub fn align_consistently(
     let Some(first) = graphs.first() else {
         bail!("no operation graphs to align");
     };
-    let steps = Cell::new(SEARCH_STEP_LIMIT);
-    for keep_last_writes in [true, false] {
-        let mut chooser = Chooser {
-            recording,
-            graphs,
-            params,
-            keep_last_writes,
-            mappings: vec![(0..first.vertices.len()).collect()],
-            chosen: None,
-        };
-        let _ = chooser.extend(&steps)?;
-        if let Some(chosen) = chooser.chosen {
-            return Ok(chosen);
-        }
+    let mut chooser = Chooser {
+        recording,
+        graphs,
+        params,
+        mappings: vec![(0..first.vertices.len()).collect()],
+        chosen: None,
+        fallback: None,
+    };
+    match chooser.extend(&Cell::new(SEARCH_STEP_LIMIT)) {
+        Err(err) if !(err.is::<OutOfSteps>() && chooser.fallback.is_some()) => return Err(err),
+        _ => {}
     }
-    bail!(
-        "every correspondence between the demonstrations gives some hole the same input with different outputs"
-    )
+    chooser.chosen.or(chooser.fallback).ok_or_else(|| {
+        anyhow::anyhow!(
+            "every correspondence between the demonstrations gives some hole the same input with different outputs"
+        )
+    })
 }
 
 struct Chooser<'a> {
     recording: &'a Recording,
     graphs: &'a [OperationGraph],
     params: &'a [String],
-    keep_last_writes: bool,
     mappings: Vec<Mapping>,
     chosen: Option<Aligned>,
+    /// The first consistent combination, kept while one that keeps the last writes is sought.
+    fallback: Option<Aligned>,
 }
 
 impl Chooser<'_> {
@@ -108,10 +109,6 @@ impl Chooser<'_> {
             .map_err(|err| err.context(format!("demonstration {}", index + 1)))?
             .run(&mut |mapping| {
                 any = true;
-                if self.keep_last_writes && !keeps_last_writes(&graphs[0], &graphs[index], mapping)
-                {
-                    return Ok(ControlFlow::Continue(()));
-                }
                 self.mappings.push(mapping.clone());
                 let flow = self.extend(steps);
                 self.mappings.pop();
@@ -142,16 +139,38 @@ impl Chooser<'_> {
         if contradictory(&problems) {
             return Ok(ControlFlow::Continue(()));
         }
-        self.chosen = Some((self.mappings.clone(), template, problems));
-        Ok(ControlFlow::Break(()))
+        let aligned = (self.mappings.clone(), template, problems);
+        let graphs = self.graphs;
+        if graphs
+            .iter()
+            .zip(&self.mappings)
+            .all(|(graph, mapping)| keeps_last_writes(&graphs[0], graph, mapping))
+        {
+            self.chosen = Some(aligned);
+            return Ok(ControlFlow::Break(()));
+        }
+        self.fallback.get_or_insert(aligned);
+        Ok(ControlFlow::Continue(()))
     }
 }
 
+#[derive(Debug)]
+struct OutOfSteps;
+
+impl std::fmt::Display for OutOfSteps {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "the correspondence search took {SEARCH_STEP_LIMIT} steps (vertex candidates tried plus combinations checked) without finding one whose hole examples agree"
+        )
+    }
+}
+
+impl std::error::Error for OutOfSteps {}
+
 fn take_step(steps: &Cell<usize>) -> Result<()> {
     let Some(left) = steps.get().checked_sub(1) else {
-        bail!(
-            "the correspondence search took {SEARCH_STEP_LIMIT} steps (vertex candidates tried plus combinations checked) without finding one whose hole examples agree"
-        );
+        return Err(OutOfSteps.into());
     };
     steps.set(left);
     Ok(())

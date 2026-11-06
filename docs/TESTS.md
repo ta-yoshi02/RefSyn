@@ -58,7 +58,9 @@ Uses the paper's three `insert` demonstrations as the fixture.
   every combination. Combinations that take each field's last write in the first graph to
   the last write to the corresponding field are tried first, since only they let the template,
   which keeps the first demonstration's write order, end every field as each demonstration
-  does; the others are tried only if none of those is consistent.
+  does. The search goes on past consistent combinations that do not, and if it ends or runs
+  out of steps without one that does, takes the first consistent one it met, so the preference
+  never loses a correspondence the plain search found within the limit.
 - The template has one creation, three hole bindings and three writes in the paper's order,
   the paper's hole outputs, and renders the seven-statement method.
 - Hole inputs contain created objects with their constructor state and earlier holes, but no
@@ -96,6 +98,9 @@ hole numbers.
   the template's last write where the second demonstration leaves it is taken, although the
   search meets the other first in declaration order. Synthesis is not run here: the written
   cells are unreachable from the pre-call state, so no hole beyond the receiver can be found.
+- Equal values from distinct literal nodes (p, q, p against p, p, q, both 1) alongside eight
+  symmetric writers: no isomorphism keeps the last writes, yet the first consistent one is
+  still taken although searching for a better one uses up the step limit.
 - `run_template` runs the template in the test with each hole bound to its expected output; only
   `set` and the `point` comparison execute synthesized JavaScript.
 
