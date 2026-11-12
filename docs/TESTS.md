@@ -94,6 +94,10 @@ hole numbers.
   existing cell. Return values are not compared, and receivers without a successor are left
   out of this check, which does not make them out of scope. This is recorded as
   order-dependent selection, not as a defect (see [the module map](MODULE_TESTS.md)).
+  Both methods are also compared with an independent reference (`tests/data/point/reference.mjs`)
+  on 18 inputs where the receiver is followed by exactly two cells, the only inputs on which the
+  readings the demonstrations allow agree; both match on every field, alias and return value.
+  On longer lists the demonstrations do not decide the intent, and no reference is asserted.
 - Two isomorphisms that differ only in which write to `next` comes last: the one that leaves
   the template's last write where the second demonstration leaves it is taken, although the
   search meets the other first in declaration order. Synthesis is not run here: the written

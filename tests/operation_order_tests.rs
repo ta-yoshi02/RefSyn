@@ -1045,6 +1045,60 @@ fn a_refusal_before_validation_is_not_taken_for_a_refusal_by_validation() {
 /// two of these are the demonstrated states. Agreement here is between the two methods, not
 /// with a reference: a mistake both share passes. Receivers without a successor, which the
 /// demonstrations did not have, are left out of this comparison.
+/// Both write orders against `tests/data/point/reference.mjs`, an independent `point` written
+/// before running this, on 18 inputs where the receiver is followed by exactly two cells: the
+/// only inputs on which the readings the demonstrations allow agree. The comparison covers
+/// every field of every object, aliases, a prefix before the receiver, cells pointing into the
+/// list, a detached cell and the return value. Outside that domain no reference is asserted.
+#[tokio::test]
+async fn both_write_orders_adopt_methods_that_match_a_reference_where_the_demonstrations_decide() {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+
+    for second in [["P", "Q"], ["Q", "P"]] {
+        let body = synthesize(&distinct_lists(second)).await;
+        assert_eq!(body["validation"]["status"], "passed", "{body:#}");
+        let mut child = Command::new("node")
+            .arg(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/scripts/compare_with_reference.mjs"
+            ))
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        child
+            .stdin
+            .take()
+            .unwrap()
+            .write_all(
+                &serde_json::to_vec(&json!({
+                    "reference": concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/point/reference.mjs"),
+                    "className": "Cell",
+                    "method": "point",
+                    "helpers": body["code"],
+                    "composedMethod": body["composed_method_code"],
+                }))
+                .unwrap(),
+            )
+            .unwrap();
+        let output = child.wait_with_output().unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let comparison: Json = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(
+            comparison,
+            json!({"cases": 18, "mismatches": []}),
+            "second demonstration writes {second:?}"
+        );
+    }
+}
+
+/// The two adopted methods compared with each other, not with a reference.
 #[tokio::test]
 async fn both_write_orders_adopt_methods_that_agree_where_the_receiver_has_a_successor() {
     let mut methods = Vec::new();
