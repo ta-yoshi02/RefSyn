@@ -657,6 +657,16 @@ fn push_two(
 /// First demonstration: A(1) -> B(2), pushTwo(10, 20) creating X then Y.
 /// Second: P(5) -> Q(6), pushTwo(30, 40) creating U (first) and V (second) in `creation` order.
 fn push_two_request(creation: [&str; 2], writes: &[&str]) -> SynthesisRequest {
+    push_two_requests(["first", "second"], &PUSH_WRITES, creation, writes)
+}
+
+/// As `push_two_request`, with the first demonstration's creation and write orders given too.
+fn push_two_requests(
+    first_creation: [&str; 2],
+    first_writes: &[&str],
+    creation: [&str; 2],
+    writes: &[&str],
+) -> SynthesisRequest {
     request(
         "pushTwo",
         &["x", "y"],
@@ -665,8 +675,8 @@ fn push_two_request(creation: [&str; 2], writes: &[&str]) -> SynthesisRequest {
                 ["A", "B", "X", "Y"],
                 [1, 2],
                 [10, 20],
-                ["first", "second"],
-                &PUSH_WRITES,
+                first_creation,
+                first_writes,
             ),
             push_two(["P", "Q", "U", "V"], [5, 6], [30, 40], creation, writes),
         ],
@@ -683,6 +693,11 @@ fn push_roles(i: usize, v: &Json) -> Json {
 }
 
 fn assert_push_two(planned: &Planned) {
+    assert_push_two_created_in(planned, ["first", "second"]);
+}
+
+/// `first_creation` is the first demonstration's creation order, which the template keeps.
+fn assert_push_two_created_in(planned: &Planned, first_creation: [&str; 2]) {
     let cell_type = HoleType::Object("Cell".into());
     // The created cells are not holes; the values and the two existing cells are.
     planned.assert_roles(
@@ -694,18 +709,25 @@ fn assert_push_two(planned: &Planned) {
             (json!(20), HoleType::Number),
         ],
     );
-    // Pre-call objects first, then the created cells in the template's creation order (first,
-    // second), each still `new Cell()`; created0/created1 are those two entries in both
-    // demonstrations whatever order the second one created them in.
+    // Pre-call objects first, then the created cells in the template's creation order, which
+    // is the first demonstration's, each still `new Cell()`. So created0/created1 are entries 2
+    // and 3, and stand for the same roles in both demonstrations whatever order the second one
+    // created them in.
     let slots = [(1, -1), (-1, -1), (-1, -1), (-1, -1)];
+    let (first, second): (&'static [&'static str], &'static [&'static str]) =
+        if first_creation == ["first", "second"] {
+            (&["A", "B", "X", "Y"], &["P", "Q", "U", "V"])
+        } else {
+            (&["A", "B", "Y", "X"], &["P", "Q", "V", "U"])
+        };
     let demonstrations = [
         (
             pre(0, &slots, &[1, 2, 0, 0], json!([10, 20]), &[2, 3]),
-            &["A", "B", "X", "Y"],
+            first,
         ),
         (
             pre(0, &slots, &[5, 6, 0, 0], json!([30, 40]), &[2, 3]),
-            &["P", "Q", "U", "V"],
+            second,
         ),
     ];
     for (i, (before, order)) in demonstrations.into_iter().enumerate() {
@@ -760,6 +782,66 @@ fn every_creation_and_write_order_of_push_two_gives_the_same_roles_inputs_and_re
         }
     }
     assert_eq!(checked, 240);
+}
+
+/// Plans `pushTwo` with the first demonstration in `first_creation`/`first_order` and the
+/// second in each of `seconds`, checking each as `assert_push_two` does; returns how many.
+fn check_push_two_orders(
+    firsts: &[([&'static str; 2], Vec<&'static str>)],
+    seconds: &[([&'static str; 2], Vec<&'static str>)],
+) -> usize {
+    let mut checked = 0;
+    for (first_creation, first_order) in firsts {
+        for (creation, order) in seconds {
+            let planned = plan(&push_two_requests(
+                *first_creation,
+                first_order,
+                *creation,
+                order,
+            ))
+            .unwrap_or_else(|e| {
+                panic!("{first_creation:?} {first_order:?} / {creation:?} {order:?}: {e:#}")
+            });
+            assert_push_two_created_in(&planned, *first_creation);
+            checked += 1;
+        }
+    }
+    checked
+}
+
+fn all_push_two_orders() -> Vec<([&'static str; 2], Vec<&'static str>)> {
+    let mut all = Vec::new();
+    for creation in [["first", "second"], ["second", "first"]] {
+        for order in permutations(&PUSH_WRITES) {
+            all.push((creation, order));
+        }
+    }
+    all
+}
+
+/// The first demonstration in all 240 creation and write orders. It fixes the template's
+/// creation, hole and write order. The second is in the recorded order and in the reverse of
+/// both orders.
+#[test]
+fn every_creation_and_write_order_of_the_first_push_two_demonstration_gives_the_same_roles_inputs_and_result(
+) {
+    let mut reversed = PUSH_WRITES.to_vec();
+    reversed.reverse();
+    let seconds = [
+        (["first", "second"], PUSH_WRITES.to_vec()),
+        (["second", "first"], reversed),
+    ];
+    assert_eq!(check_push_two_orders(&all_push_two_orders(), &seconds), 480);
+}
+
+/// Every order of the first demonstration against every order of the second: 57,600 plans,
+/// about two minutes in a debug build, so it is not run by `cargo test`. Run it with
+/// `cargo test --test operation_order_tests every_order_of_both -- --ignored`.
+#[test]
+#[ignore = "57,600 plans; run with --ignored"]
+fn every_order_of_both_push_two_demonstrations_gives_the_same_roles_inputs_and_result() {
+    let all = all_push_two_orders();
+    assert_eq!(check_push_two_orders(&all, &all), 240 * 240);
 }
 
 /// Orders that are not the same edits rearranged: they use a node before it exists, or name an

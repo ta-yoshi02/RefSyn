@@ -79,7 +79,12 @@ hole numbers.
 
 - Independent writes: two symmetric writes reversed, and every pair of orders of three writes
   to different fields (36 pairs).
-- Creation order: `pushTwo(x, y)` with both creation orders times all 120 write orders.
+- Creation order: `pushTwo(x, y)` with both creation orders times all 120 write orders of the
+  second demonstration (240), and of the first demonstration against two orders of the second
+  (480). The first demonstration fixes the template's creation, hole and write order; the
+  created cells are heap entries 2 and 3 in that order, so what entry 2 denotes changes with it.
+  All 240 × 240 = 57,600 pairs pass but take about two minutes in a debug build and are not run
+  by `cargo test`: `cargo test --test operation_order_tests every_order_of_both -- --ignored`.
 - Order that matters: repeated writes to one field keep order and multiplicity; `set(a, b)` is
   synthesized and ends with `b` on new arguments; two demonstrations that give one input two
   results are aligned and every hole is synthesized, then the whole-method validation
@@ -237,6 +242,14 @@ each demonstration's PBE input before the earlier holes.
   inputs are left to `paper_pipeline_tests`. Unmet values are reported with their paths; a
   rejected recording stops at that stage without synthesis, and a directory missing a required
   file fails the test.
+- The recorded insert in all six orders of its three demonstrations: the third writes
+  `next` first, so two orders give a different template write order and hole numbering. In
+  each, the hole outputs are the inserted value, the node inserted after and its old successor
+  read from each pre-state (whichever hole number holds which), escher-ts synthesizes every
+  hole, whole-method validation passes on all three demonstrations and the adopted method
+  agrees with `reference.mjs` on its 15 inputs. The recorded append (its second
+  demonstration writes `next` before `val`) is run the same way, without the hole check.
+  About 1 s for both.
 - The 2026-10-14 recordings of insert, setAt, append, prepend and popBack are adopted and
   agree with their references on 15, 15, 15, 15 and 12 inputs. The four-demonstration
   rotateRight recording passes validation and differs from a right rotation on 8 of 12

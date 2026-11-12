@@ -480,3 +480,164 @@ fn a_comparison_that_does_not_finish_is_stopped_and_reported() {
         json!({"error": "the comparison did not finish within 1s"})
     );
 }
+
+/// What each recorded insert demonstration means, read from its pre-state rather than from
+/// any stage: the inserted value, the node it goes after (`i` steps from the receiver), and
+/// that node's old successor.
+fn insert_roles(request: &Json, k: usize) -> [Json; 3] {
+    let call = &request["method_calls"][k];
+    let case = &request["validation"]["cases"][k];
+    let next = |id: &str| -> String {
+        let object = case["objects"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|object| object["id"] == id)
+            .unwrap();
+        object["fields"]["next"]["ref"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    };
+    let mut predecessor = call["receiverObject"].as_str().unwrap().to_string();
+    for _ in 0..case["arguments"][0].as_u64().unwrap() {
+        predecessor = next(&predecessor);
+    }
+    let successor = next(&predecessor);
+    [
+        case["arguments"][1].clone(),
+        json!({"ref": predecessor}),
+        json!({"ref": successor}),
+    ]
+}
+
+/// The recorded insert in every order of its three demonstrations, through synthesis with
+/// escher-ts, whole-method validation and comparison with `reference.mjs`. The first
+/// demonstration fixes the template's write order, and the third writes `next` first, so the
+/// orders give different templates, hole numbering and PBE inputs.
+#[tokio::test]
+async fn every_order_of_the_insert_demonstrations_adopts_a_method_that_matches_the_reference() {
+    let dir = Path::new(ROOT).join("tests/recordings/insert");
+    let original: Json =
+        serde_json::from_slice(&std::fs::read(dir.join("request.json")).unwrap()).unwrap();
+    let roles: Vec<[Json; 3]> = (0..3).map(|k| insert_roles(&original, k)).collect();
+    let orders = [
+        [0, 1, 2],
+        [0, 2, 1],
+        [1, 0, 2],
+        [1, 2, 0],
+        [2, 0, 1],
+        [2, 1, 0],
+    ];
+    let mut first_write_orders = std::collections::BTreeSet::new();
+    let mut failures = Vec::new();
+    for order in orders {
+        let mut request = original.clone();
+        for key in ["method_calls", "validation/cases"] {
+            let pointer = format!("/{key}");
+            let items = original.pointer(&pointer).unwrap().as_array().unwrap();
+            *request.pointer_mut(&pointer).unwrap() =
+                Json::Array(order.iter().map(|&k| items[k].clone()).collect());
+        }
+        let body = serde_json::to_vec(&request).unwrap();
+        let parsed: SynthesisRequest = serde_json::from_slice(&body).unwrap();
+        let stages = stages_before_synthesis(&parsed);
+        let fields: Vec<Json> = stages["graphs"][0]["writes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|write| write[1].clone())
+            .collect();
+        first_write_orders.insert(format!("{fields:?}"));
+
+        // Each hole's outputs, in demonstration order, must be one of the three roles; which
+        // hole number gets which role is the template's choice and is not fixed here.
+        let mut outputs: Vec<Json> = stages["template"]["holes"]
+            .as_array()
+            .unwrap_or_else(|| panic!("{order:?}: {}", stages["template"]))
+            .iter()
+            .map(|hole| hole["outputs"].clone())
+            .collect();
+        let mut expected: Vec<Json> = (0..3)
+            .map(|role| Json::Array(order.iter().map(|&k| roles[k][role].clone()).collect()))
+            .collect();
+        outputs.sort_by_key(|o| o.to_string());
+        expected.sort_by_key(|o| o.to_string());
+        if outputs != expected {
+            failures.push(format!(
+                "{order:?} hole outputs: {outputs:?}, expected {expected:?}"
+            ));
+        }
+
+        let response = synthesize(&body).await;
+        let validation = json!(response.validation);
+        if validation["status"] != "passed" || validation["checked_demonstrations"] != 3 {
+            failures.push(format!("{order:?} validation: {validation}"));
+            continue;
+        }
+        let comparison = compare(
+            &parsed,
+            &response,
+            &dir.join("reference.mjs"),
+            COMPARISON_TIMEOUT,
+        );
+        println!(
+            "order {order:?}: writes {fields:?}, comparison {comparison}\n{}",
+            response.composed_method_code.as_deref().unwrap_or("")
+        );
+        if comparison["cases"] != 15 || comparison["mismatches"] != json!([]) {
+            failures.push(format!("{order:?} comparison: {comparison}"));
+        }
+    }
+    // The orders really differ in the first demonstration's write order.
+    assert_eq!(first_write_orders.len(), 2, "{first_write_orders:?}");
+    assert!(failures.is_empty(), "{failures:#?}");
+}
+
+/// The recorded append, whose second demonstration writes `next` before `val`, in every order of
+/// its three demonstrations: synthesized, validated on all three and compared with
+/// `reference.mjs`. Hole meanings are checked for insert above, not here.
+#[tokio::test]
+async fn every_order_of_the_append_demonstrations_adopts_a_method_that_matches_the_reference() {
+    let dir = Path::new(ROOT).join("tests/recordings/append");
+    let original: Json =
+        serde_json::from_slice(&std::fs::read(dir.join("request.json")).unwrap()).unwrap();
+    let mut first_write_orders = std::collections::BTreeSet::new();
+    let mut failures = Vec::new();
+    for order in [
+        [0, 1, 2],
+        [0, 2, 1],
+        [1, 0, 2],
+        [1, 2, 0],
+        [2, 0, 1],
+        [2, 1, 0],
+    ] {
+        let mut request = original.clone();
+        for pointer in ["/method_calls", "/validation/cases"] {
+            let items = original.pointer(pointer).unwrap().as_array().unwrap();
+            *request.pointer_mut(pointer).unwrap() =
+                Json::Array(order.iter().map(|&k| items[k].clone()).collect());
+        }
+        let body = serde_json::to_vec(&request).unwrap();
+        let parsed: SynthesisRequest = serde_json::from_slice(&body).unwrap();
+        let stages = stages_before_synthesis(&parsed);
+        first_write_orders.insert(stages["graphs"][0]["writes"].to_string());
+        let response = synthesize(&body).await;
+        let validation = json!(response.validation);
+        if validation["status"] != "passed" || validation["checked_demonstrations"] != 3 {
+            failures.push(format!("{order:?} validation: {validation}"));
+            continue;
+        }
+        let comparison = compare(
+            &parsed,
+            &response,
+            &dir.join("reference.mjs"),
+            COMPARISON_TIMEOUT,
+        );
+        if comparison["cases"] != 15 || comparison["mismatches"] != json!([]) {
+            failures.push(format!("{order:?} comparison: {comparison}"));
+        }
+    }
+    assert_eq!(first_write_orders.len(), 2, "{first_write_orders:?}");
+    assert!(failures.is_empty(), "{failures:#?}");
+}
