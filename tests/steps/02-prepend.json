@@ -1,0 +1,64 @@
+{
+  "method_calls": [
+    {
+      "callLabel": "c1",
+      "contextSensitiveID": "main",
+      "receiverObject": "A",
+      "receiverClassName": "Node",
+      "methodName": "prepend",
+      "methodParamNames": ["arg"],
+      "arguments": [89],
+      "operations": [
+        { "editType": "addNode", "id": "N", "label": "Node", "isLiteral": false },
+        { "editType": "addNode", "id": "n89", "label": "89", "isLiteral": true, "type": "number" },
+        { "editType": "addEdge", "from": "N", "label": "val", "to": "n89" },
+        { "editType": "addEdge", "from": "N", "label": "next", "to": "A" },
+        { "editType": "addVariable", "label": "return", "to": "N" }
+      ]
+    },
+    {
+      "callLabel": "c2",
+      "contextSensitiveID": "main",
+      "receiverObject": "A",
+      "receiverClassName": "Node",
+      "methodName": "prepend",
+      "methodParamNames": ["arg"],
+      "arguments": [7],
+      "operations": [
+        { "editType": "addNode", "id": "N", "label": "Node", "isLiteral": false },
+        { "editType": "addNode", "id": "n7", "label": "7", "isLiteral": true, "type": "number" },
+        { "editType": "addEdge", "from": "N", "label": "val", "to": "n7" },
+        { "editType": "addEdge", "from": "N", "label": "next", "to": "A" },
+        { "editType": "addVariable", "label": "return", "to": "N" }
+      ]
+    }
+  ],
+  "vis_graph": { "nodes": [], "edges": [] },
+  "validation": {
+    "version": 3,
+    "classes": [
+      { "name": "Node", "source": "class Node {}", "instance": { "val": { "undefined": true }, "next": null } }
+    ],
+    "cases": [
+      {
+        "callLabel": "c1",
+        "contextSensitiveID": "main",
+        "objects": [
+          { "id": "A", "className": "Node", "fields": { "val": 39, "next": null } }
+        ],
+        "arguments": [89],
+        "values": { "A-val": 39, "A-next": null }
+      },
+      {
+        "callLabel": "c2",
+        "contextSensitiveID": "main",
+        "objects": [
+          { "id": "A", "className": "Node", "fields": { "val": 5, "next": { "ref": "B" } } },
+          { "id": "B", "className": "Node", "fields": { "val": 6, "next": null } }
+        ],
+        "arguments": [7],
+        "values": { "A-val": 5, "B-val": 6, "B-next": null }
+      }
+    ]
+  }
+}
