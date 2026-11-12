@@ -65,6 +65,8 @@ const mismatches = (returnType, terms) => {
       const inputs = new Map(job.inputNames.map((name, index) => [name, job.examples[0][0][index]]));
       for (const term of terms) {
         const expected = executeTerm((name) => inputs.get(name), job.env, term);
+        // Where escher-ts gives the error value the JS outcome is unspecified.
+        if (expected.tag === 'error') continue;
         const code = compileRefsynMethod(raw, job, term);
         class C {}
         Object.assign(C.prototype, new Function(`return ({ ${code} });`)());

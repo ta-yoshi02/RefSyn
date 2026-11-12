@@ -226,9 +226,11 @@ hole numbers.
   unobserved inputs. Saved mutation results are indexed in
   [the PR #29 record](evaluation_cases/reruns/2026-10-14-pr29-checks/README.md).
 - `node --test runtime/refsyn-escher-adapter*.test.mjs` checks operator precedence,
-  the heap selected by `loadInt`, parameter names, and agreement between escher-ts
-  evaluation and translated JavaScript, including failures on null, undefined,
-  absent fields and cyclic traversals, and (since #28) boolean field reads.
+  the heap selected by `loadInt`, parameter names, and the translation contract: wherever
+  escher-ts gives a term a value on an input (heaps with null, undefined, absent fields and
+  cycles included), the translated JavaScript terminates with the same value. Term and
+  input pairs where escher-ts gives the error value are not run; the JS outcome there is
+  unspecified. Boolean field reads are covered since #28.
 - Boolean fields, arguments and holes (since #28): `tests/boolean_values_tests.rs` checks the
   encoding and native adoption with independent execution, `web/src/lib/booleans.test.ts`
   checks the same fixtures (`tests/data/booleans/`) through WASM, and

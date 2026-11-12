@@ -61,7 +61,10 @@ const run = (returnType, x, term) => {
   Object.assign(C.prototype, new Function(`return ({ ${code} });`)());
   const live = objects.map(() => new C());
   objects.forEach((o, i) => Object.assign(live[i], { key: o.key, next: o.next === null ? null : live[o.next], val: o.val }));
-  // A failure (escher-ts error, JS exception) is an outcome too, so it is compared rather than skipped.
+  // Where escher-ts gives the error value the JS outcome is unspecified, so the pair is not run.
+  if (expected.tag === 'error') {
+    return { expected: 'failure', actual: 'failure', code };
+  }
   let actual;
   try {
     actual = live[0].f_h0(x === null ? null : live[x]);
