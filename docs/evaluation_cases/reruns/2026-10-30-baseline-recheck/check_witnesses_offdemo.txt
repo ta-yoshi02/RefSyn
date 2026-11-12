@@ -1,0 +1,16 @@
+setAt-fixed-fHeap 42/42
+setAt-fixed-gHeap 42/42
+setAt-fixed-env-pair 42/42
+append-fixed-fHeap 60/60
+append-fixed-gHeap 60/60
+append-fixed-env-pair 60/60
+prepend-fixed-fHeap 60/60
+prepend-fixed-gHeap 60/60
+prepend-fixed-returnRef 60/60
+prepend-fixed-env-pair 60/60
+insert-fixed-fHeap 210/210
+insert-fixed-gHeap 210/210
+insert-fixed-env-pair 210/210
+popBack-fixed-fHeap 10/10
+popBack-fixed-gHeap 10/10
+popBack-fixed-env-pair 10/10

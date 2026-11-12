@@ -1,0 +1,194 @@
+[
+  {
+    "task": "insertAfter-whole-nextHeap+append",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(insert(@nextHeap, @x, nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-nextHeap+append",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@nextHeap, @x, nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-nextHeap+append",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(insert(@nextHeap, @x, nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-nextHeap+append",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@nextHeap, @x, nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+append",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(insert(@prevHeap, @x, @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 28,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+append",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@prevHeap, @x, @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 28,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+append",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(insert(@prevHeap, @x, @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 28,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+append",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@prevHeap, @x, @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 28,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+append",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "insert(@valHeap, @x, @x)",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+append",
+    "setting": "current",
+    "limits": "paper",
+    "term": "insert(@valHeap, @x, @x)",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+append",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "insert(@valHeap, @x, @x)",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+append",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "insert(@valHeap, @x, @x)",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-nextHeap+list+append",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(insert(@nextHeap, @x, nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-nextHeap+list+append",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@nextHeap, @x, nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-nextHeap+list+append",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(insert(@nextHeap, @x, nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-nextHeap+list+append",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@nextHeap, @x, nextOf(@thisRef, @nodeHeap, @nextHeap)), @thisRef, freshRefFromHeap(@nodeHeap))",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+list+append",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "storeAtRef(insert(@prevHeap, @x, @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 28,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+list+append",
+    "setting": "current",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@prevHeap, @x, @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 28,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+list+append",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "storeAtRef(insert(@prevHeap, @x, @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 28,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-prevHeap+list+append",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "storeAtRef(insert(@prevHeap, @x, @thisRef), nextOf(@thisRef, @nodeHeap, @nextHeap), freshRefFromHeap(@nodeHeap))",
+    "agree": 28,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+list+append",
+    "setting": "current",
+    "limits": "adapter",
+    "term": "insert(@valHeap, @x, @x)",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+list+append",
+    "setting": "current",
+    "limits": "paper",
+    "term": "insert(@valHeap, @x, @x)",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+list+append",
+    "setting": "candidate",
+    "limits": "adapter",
+    "term": "insert(@valHeap, @x, @x)",
+    "agree": 25,
+    "total": 105
+  },
+  {
+    "task": "insertAfter-whole-valHeap+list+append",
+    "setting": "candidate",
+    "limits": "paper",
+    "term": "insert(@valHeap, @x, @x)",
+    "agree": 25,
+    "total": 105
+  }
+]
