@@ -593,3 +593,51 @@ async fn every_order_of_the_insert_demonstrations_adopts_a_method_that_matches_t
     assert_eq!(first_write_orders.len(), 2, "{first_write_orders:?}");
     assert!(failures.is_empty(), "{failures:#?}");
 }
+
+/// The recorded append, whose second demonstration writes `next` before `val`, in every order of
+/// its three demonstrations: synthesized, validated on all three and compared with
+/// `reference.mjs`. Hole meanings are checked for insert above, not here.
+#[tokio::test]
+async fn every_order_of_the_append_demonstrations_adopts_a_method_that_matches_the_reference() {
+    let dir = Path::new(ROOT).join("tests/recordings/append");
+    let original: Json =
+        serde_json::from_slice(&std::fs::read(dir.join("request.json")).unwrap()).unwrap();
+    let mut first_write_orders = std::collections::BTreeSet::new();
+    let mut failures = Vec::new();
+    for order in [
+        [0, 1, 2],
+        [0, 2, 1],
+        [1, 0, 2],
+        [1, 2, 0],
+        [2, 0, 1],
+        [2, 1, 0],
+    ] {
+        let mut request = original.clone();
+        for pointer in ["/method_calls", "/validation/cases"] {
+            let items = original.pointer(pointer).unwrap().as_array().unwrap();
+            *request.pointer_mut(pointer).unwrap() =
+                Json::Array(order.iter().map(|&k| items[k].clone()).collect());
+        }
+        let body = serde_json::to_vec(&request).unwrap();
+        let parsed: SynthesisRequest = serde_json::from_slice(&body).unwrap();
+        let stages = stages_before_synthesis(&parsed);
+        first_write_orders.insert(stages["graphs"][0]["writes"].to_string());
+        let response = synthesize(&body).await;
+        let validation = json!(response.validation);
+        if validation["status"] != "passed" || validation["checked_demonstrations"] != 3 {
+            failures.push(format!("{order:?} validation: {validation}"));
+            continue;
+        }
+        let comparison = compare(
+            &parsed,
+            &response,
+            &dir.join("reference.mjs"),
+            COMPARISON_TIMEOUT,
+        );
+        if comparison["cases"] != 15 || comparison["mismatches"] != json!([]) {
+            failures.push(format!("{order:?} comparison: {comparison}"));
+        }
+    }
+    assert_eq!(first_write_orders.len(), 2, "{first_write_orders:?}");
+    assert!(failures.is_empty(), "{failures:#?}");
+}

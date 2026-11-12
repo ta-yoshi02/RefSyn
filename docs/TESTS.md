@@ -247,7 +247,9 @@ each demonstration's PBE input before the earlier holes.
   each, the hole outputs are the inserted value, the node inserted after and its old successor
   read from each pre-state (whichever hole number holds which), escher-ts synthesizes every
   hole, whole-method validation passes on all three demonstrations and the adopted method
-  agrees with `reference.mjs` on its 15 inputs. About 1 s in total.
+  agrees with `reference.mjs` on its 15 inputs. The recorded append (its second
+  demonstration writes `next` before `val`) is run the same way, without the hole check.
+  About 1 s for both.
 - The 2026-10-14 recordings of insert, setAt, append, prepend and popBack are adopted and
   agree with their references on 15, 15, 15, 15 and 12 inputs. The four-demonstration
   rotateRight recording passes validation and differs from a right rotation on 8 of 12
