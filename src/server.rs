@@ -1,7 +1,8 @@
 use crate::handle_synthesis;
 use warp::Filter;
 
-pub async fn run_server() {
+/// The routes `run_server` serves, with CORS applied.
+pub fn routes() -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     let hello = warp::path("hello").map(|| "Hello from RefSyn!");
 
     // CORS設定
@@ -15,11 +16,13 @@ pub async fn run_server() {
         .and(warp::body::bytes())
         .and_then(handle_synthesis);
 
-    let routes = hello.or(synthesize_route).with(cors); // CORSフィルターを適用
+    hello.or(synthesize_route).with(cors) // CORSフィルターを適用
+}
 
+pub async fn run_server() {
     println!("Server running on http://127.0.0.1:3030");
     println!("Available endpoints:");
     println!("  GET  /hello       - Hello message");
     println!("  POST /synthesize  - Code synthesis with integrated operation analysis");
-    warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+    warp::serve(routes()).run(([127, 0, 0, 1], 3030)).await;
 }
