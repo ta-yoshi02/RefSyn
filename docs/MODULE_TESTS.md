@@ -71,10 +71,10 @@ Kanon はクラスをコンストラクタ名で判定するが、比較器は p
 | `alignment` | 実演間の対応を選ぶ | 論文の insert と同じ対応を選ぶ。種類、クラス、向き、多重度を保つ。矛盾しない最初の対応を取る。探索が上限の10,000手で打ち切られた場合を矛盾と区別して報告する（`paper_pipeline_tests`）。書込み順や生成順を入れ替えた実演でも、意味から定めた対応を取る（`operation_order_tests`、下の「操作順序の違い」）。編集種別の異なる実演で、全単射を総当たりする独立オラクルと同じ対応集合を得て、その中から選ぶ（`edit_kind_alignment_tests`、下の「編集種別の違い」） | 上限内で解が見つかる規模の範囲。対応が複数許される場合、どれを選ぶかは操作順に依存する（下の「対応の選択が操作順に依存する事例」） |
 | `template` | hole 付きメソッドを作る | 論文の7文とその順序。生成が hole より前、共有頂点の束縛は1回、書込みは順序と多重度を保つ（`paper_pipeline_tests`）。実記録の insert の hole 出力例が論文と一致する（`recorded_stage_tests`） | 出力した JS を単独では実行しない。実行は全体検証と比較のテストで間接的に行う |
 | `pbe_problem` | hole ごとの PBE 問題を作る | 入力に書込み前の状態、生成物、先行 hole を含み、自分と後続 hole を含まない。表現できない入力と種類の混在を拒否する（`paper_pipeline_tests`）。真偽値の型付けと、真偽値と整数・参照・文字列の混在の拒否（`boolean_values_tests`） | — |
-| `escher_bridge` | escher-ts を起動する | メモリ設定の解析（単体4件）。実際の起動は、合成を含む全テストで間接的に通る | runner が無い、異常終了するなどの起動失敗の扱い |
-| `validation` | Node の全体検証を呼び、通らないコードを消す | 検証を通らない、または検証できないコードを返さない（`whole_method_validation_tests` の `http_*`） | Rust 側の10秒のプロセス時間制限 |
-| `lib`（`handle_synthesis`、`synthesize_core`） | 段階をつなぎ応答を作る | 空の request、異なるメソッドの実演、非同型の実演を合成しない。hole ごとに1タスクを渡す（`paper_pipeline_tests`）。保存した5事例と実記録6件の合成と採用（`whole_method_validation_tests`、`recorded_stage_tests`） | 実ポートでの通信 |
-| `server` | route と CORS | なし | route、CORS、実ポートでの通信 |
+| `escher_bridge` | escher-ts を起動する | メモリ設定の解析。runner が無い、非ゼロ終了、空の出力、JSON でない出力、形の違う JSON、入力を読まず終わらない runner を、それぞれ別のエラーにする。最後は親プロセス側の期限（`ESCHER_JS_PROCESS_TIMEOUT_MS`、既定60秒。テストでは500ミリ秒）で強制終了する（単体）。実際の起動は、合成を含む全テストで間接的に通る | escher-ts 内部の探索上限（`ESCHER_TS_TIMEOUT_MS`）が守られること自体 |
+| `validation` | Node の全体検証を呼び、通らないコードを消す | 検証を通らない、または検証できないコードを返さない（`whole_method_validation_tests` の `http_*`）。runner が失敗した場合は検証せず、理由付きの `unavailable` にする（`runner_failure_tests`） | 10秒のプロセス時間制限そのもの。期限の処理は `child_process` で escher_bridge と共有し、短い期限で確かめている |
+| `lib`（`handle_synthesis`、`synthesize_core`） | 段階をつなぎ応答を作る | 空の request、異なるメソッドの実演、非同型の実演を合成しない。hole ごとに1タスクを渡す（`paper_pipeline_tests`）。保存した5事例と実記録6件の合成と採用（`whole_method_validation_tests`、`recorded_stage_tests`）。runner の失敗を `list_environment_info` と検証結果に書き、コードを返さない（`runner_failure_tests`） | 合成は非同期ハンドラの中で同期的に実行する。同時要求の結果は正しいが（`http_server_tests`）、実行中はそのワーカースレッドを占有する |
+| `server` | route と CORS | `routes()` を一時ポートで起動し、HTTP で確かめる。別オリジンへの CORS、Kanon の POST に要る preflight、空・JSON でない・`{}`・型違いの本文への 400 と空の応答、その他の route への 404/405、4件の同時要求がそれぞれ自分の結果を受け取ること（`http_server_tests`） | 3030番ポートへの bind（`run_server`）。Pages は使わない経路で、ローカル開発用 |
 | `models` | 表示グラフの型 | request の読込みを通して間接的に使う | 専用のテスト |
 | `error` | `RefSynError` | なし。どこからも使われていない | — |
 
@@ -93,7 +93,8 @@ Kanon はクラスをコンストラクタ名で判定するが、比較器は p
 | モジュール | 役割 | 確かめていること（主なテスト） | 確かめていないこと |
 | --- | --- | --- | --- |
 | `web/src/lib/browser-runner.ts` | WASM の合成、翻訳、検証をブラウザでつなぐ | 全実演を再現するメソッドだけを採用する。PBE が成功しても翻訳が失敗すれば失敗とする。helper の結果が出力例と違えば拒否する（`web/src/lib/browser-runner.test.ts`） | 実ブラウザでの実行（テストは Node 上） |
-| `Kanon/src/js/testize.js`（合成の部分） | 実演前状態を取得し、合成を依頼し、検証済みのコードだけを反映する | 型付き実演前状態の取得。未検証や失敗した応答で、エディタを変えない。合成中にソースが変わったら反映しない。直近の結果と反映しなかった理由を `lastSynthesis` に保持する（`testize-whole-method-validation.test.js`） | 実際の UI 操作。エディタと合成応答は代替物で置き換えている |
+| `Kanon/src/refsyn-runtime/client.js` | 合成 Worker への要求と応答を対応付ける | 応答は自分の要求だけを解決する。読み込めない Worker（`error`）、`messageerror`、60秒の要求期限で、待っている要求をすべて失敗させ、Worker を終了し、次の要求で作り直す（Kanon の `refsyn-runtime-client.test.js`、代替 Worker）。実 Chromium で、ローカル配信した Pages ビルドの insert が採用されること、Worker チャンクを消すと修正前は30秒以上応答がなく、修正後はすぐ失敗し、チャンクを戻せば再読込なしで次の要求が通ることを手で確認した | 自動の実ブラウザテスト |
+| `Kanon/src/js/testize.js`（合成の部分） | 実演前状態を取得し、合成を依頼し、検証済みのコードだけを反映する | 型付き実演前状態の取得。未検証や失敗した応答で、エディタを変えない。合成中にソースが変わったら反映しない。直近の結果と反映しなかった理由を `lastSynthesis` に保持する（`testize-whole-method-validation.test.js`） | 自動の UI テスト。テストではエディタと合成応答を代替物で置き換えている。実ブラウザでの手動記録は `evaluation_cases/reruns/2026-11-12-browser-ui-adoption/`（実演記録→合成→検証→反映、合成中のソース変更による不採用） |
 
 ## 操作順序の違い（`tests/operation_order_tests.rs`）
 

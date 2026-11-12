@@ -17,9 +17,8 @@ pub struct ValidationResult {
 
 #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
 pub fn validate_for_adoption(body: &[u8], artifacts: &mut crate::SynthesisArtifacts) {
-    use std::io::{Read, Write};
     use std::process::{Command, Stdio};
-    use std::time::{Duration, Instant};
+    use std::time::Duration;
 
     const PROCESS_TIMEOUT: Duration = Duration::from_secs(10);
 
@@ -44,7 +43,8 @@ pub fn validate_for_adoption(body: &[u8], artifacts: &mut crate::SynthesisArtifa
             "response": artifacts.response,
             "taskNames": names,
         }))?;
-        let mut child = Command::new("node")
+        let mut command = Command::new("node");
+        command
             .arg("--max-old-space-size=128")
             .arg(concat!(
                 env!("CARGO_MANIFEST_DIR"),
@@ -52,41 +52,18 @@ pub fn validate_for_adoption(body: &[u8], artifacts: &mut crate::SynthesisArtifa
             ))
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?;
-        let write_result = child.stdin.take().unwrap().write_all(&input);
-        if let Err(error) = write_result {
-            let _ = child.kill();
-            let _ = child.wait();
-            return Err(error.into());
-        }
+            .stderr(Stdio::piped());
         // The VM timeout only bounds synchronous execution; this bounds the whole process.
-        let read_all = |mut pipe: Box<dyn Read + Send>| {
-            std::thread::spawn(move || {
-                let mut buffer = Vec::new();
-                pipe.read_to_end(&mut buffer).map(|_| buffer)
-            })
-        };
-        let stdout = read_all(Box::new(child.stdout.take().unwrap()));
-        let stderr = read_all(Box::new(child.stderr.take().unwrap()));
-        let deadline = Instant::now() + PROCESS_TIMEOUT;
-        let status = loop {
-            if let Some(status) = child.try_wait()? {
-                break status;
-            }
-            if Instant::now() >= deadline {
-                let _ = child.kill();
-                let _ = child.wait();
-                anyhow::bail!("Whole-method validator process timed out");
-            }
-            std::thread::sleep(Duration::from_millis(10));
-        };
-        let stdout = stdout
-            .join()
-            .map_err(|_| anyhow::anyhow!("stdout reader panicked"))??;
-        let stderr = stderr
-            .join()
-            .map_err(|_| anyhow::anyhow!("stderr reader panicked"))??;
+        let crate::child_process::ChildOutput {
+            status,
+            stdout,
+            stderr,
+        } = crate::child_process::run_with_deadline(
+            "Whole-method validator",
+            command,
+            input,
+            PROCESS_TIMEOUT,
+        )?;
         anyhow::ensure!(
             status.success(),
             "Whole-method validator exited: {}",
@@ -94,11 +71,27 @@ pub fn validate_for_adoption(body: &[u8], artifacts: &mut crate::SynthesisArtifa
         );
         Ok(serde_json::from_slice(&stdout)?)
     };
-    let result = run().unwrap_or_else(|error| ValidationResult {
+    let result = run().unwrap_or_else(|error| unavailable(error.to_string()));
+    record(artifacts, result);
+}
+
+/// Records that nothing could be validated, for a reason found before validation, and drops the code.
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+pub fn reject_without_validation(artifacts: &mut crate::SynthesisArtifacts, error: String) {
+    record(artifacts, unavailable(error));
+}
+
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+fn unavailable(error: String) -> ValidationResult {
+    ValidationResult {
         status: ValidationStatus::Unavailable,
         checked_demonstrations: 0,
-        error: Some(error.to_string()),
-    });
+        error: Some(error),
+    }
+}
+
+#[cfg(all(feature = "server", not(target_arch = "wasm32")))]
+fn record(artifacts: &mut crate::SynthesisArtifacts, result: ValidationResult) {
     if !matches!(result.status, ValidationStatus::Passed) {
         artifacts.response.composed_method_code = None;
         artifacts.response.code.clear();
