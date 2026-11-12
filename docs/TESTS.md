@@ -265,7 +265,7 @@ Each check names the path it actually goes through; a check on one path says not
 
 Not covered by automated checks: a real browser. The runtime client was checked by hand in
 Chromium on a locally served Pages build (a normal insert request, and the worker chunk removed);
-see Kanon's PR for the record. The Kanon editor flow from recording demonstrations to adoption runs
+see ta-yoshi02/Kanon#10 for the record. The Kanon editor flow from recording demonstrations to adoption runs
 only with stand-ins (`testize-whole-method-validation.test.js`).
 
 The native escher-ts runner is bounded from Rust by `ESCHER_JS_PROCESS_TIMEOUT_MS` (60 s by default),
