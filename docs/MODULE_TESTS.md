@@ -93,8 +93,8 @@ Kanon はクラスをコンストラクタ名で判定するが、比較器は p
 | モジュール | 役割 | 確かめていること（主なテスト） | 確かめていないこと |
 | --- | --- | --- | --- |
 | `web/src/lib/browser-runner.ts` | WASM の合成、翻訳、検証をブラウザでつなぐ | 全実演を再現するメソッドだけを採用する。PBE が成功しても翻訳が失敗すれば失敗とする。helper の結果が出力例と違えば拒否する（`web/src/lib/browser-runner.test.ts`） | 実ブラウザでの実行（テストは Node 上） |
-| `Kanon/src/refsyn-runtime/client.js` | 合成 Worker への要求と応答を対応付ける | 応答は自分の要求だけを解決する。読み込めない Worker（`error`）、`messageerror`、60秒の要求期限で、待っている要求をすべて失敗させ、Worker を終了し、次の要求で作り直す（Kanon の `refsyn-runtime-client.test.js`、代替 Worker）。実 Chromium で、ローカル配信した Pages ビルドの insert が採用されること、Worker チャンクを消すと修正前は30秒以上応答がなく、修正後はすぐ失敗し、チャンクを戻せば再読込なしで次の要求が通ることを手で確認した | 自動の実ブラウザテスト |
-| `Kanon/src/js/testize.js`（合成の部分） | 実演前状態を取得し、合成を依頼し、検証済みのコードだけを反映する | 型付き実演前状態の取得。未検証や失敗した応答で、エディタを変えない。合成中にソースが変わったら反映しない。直近の結果と反映しなかった理由を `lastSynthesis` に保持する（`testize-whole-method-validation.test.js`） | 自動の UI テスト。テストではエディタと合成応答を代替物で置き換えている。実ブラウザでの手動記録は `evaluation_cases/reruns/2026-11-12-browser-ui-adoption/`（実演記録→合成→検証→反映、合成中のソース変更による不採用） |
+| `Kanon/src/refsyn-runtime/client.js` | 合成 Worker への要求と応答を対応付ける | 応答は自分の要求だけを解決する。読み込めない Worker（`error`）、`messageerror`、60秒の要求期限で、待っている要求をすべて失敗させ、Worker を終了し、次の要求で作り直す（Kanon の `refsyn-runtime-client.test.js`、代替 Worker）。実 Chromium で、ローカル配信した Pages ビルドの insert が採用されること、Worker チャンクを消すと修正前は30秒以上応答がなく、修正後はすぐ失敗し、チャンクを戻せば再読込なしで次の要求が通ることを手で確認した。Kanon の `verify-refsyn-ui`（Pages ワークフロー）が、Worker チャンクを配信しない状態で画面から合成し、`lastSynthesis` に `error: RefSyn worker failed` が残りエディタが変わらないことを実 Chromium で確かめる | — |
+| `Kanon/src/js/testize.js`（合成の部分） | 実演前状態を取得し、合成を依頼し、検証済みのコードだけを反映する | 型付き実演前状態の取得。未検証や失敗した応答で、エディタを変えない。合成中にソースが変わったら反映しない。直近の結果と反映しなかった理由を `lastSynthesis` に保持する（`testize-whole-method-validation.test.js`） | 合成中のソース変更による不採用は、Jest（代替物）と手動記録（`evaluation_cases/reruns/2026-11-12-browser-ui-adoption/`）だけで確かめている。実演記録→合成→検証→反映は Kanon の `verify-refsyn-ui` が実 Chromium で毎回確かめる（docs/TESTS.md） |
 
 ## 操作順序の違い（`tests/operation_order_tests.rs`）
 

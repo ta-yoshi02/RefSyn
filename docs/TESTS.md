@@ -281,17 +281,26 @@ Each check names the path it actually goes through; a check on one path says not
 | Real HTTP port | `tests/http_server_tests.rs` | `server::routes()` on an ephemeral port: an adopted method with CORS for another origin, the preflight Kanon's POST needs, 400 with an empty reply for an empty, non-JSON, `{}` or mistyped body, 404/405 for other routes, and four concurrent requests each getting its own answer |
 | Browser Worker client | Kanon `src/js/test/refsyn-runtime-client.test.js` | With a stand-in Worker: replies resolve only their own request; `error` (a script that cannot load), `messageerror` and the 60 s request limit fail every waiting request, terminate the Worker and let the next request start a new one |
 
-Not covered by automated checks: a real browser. Two manual records exist. The runtime client
-was checked in Chromium on a locally served Pages build (a normal insert request, and the worker
-chunk removed); see ta-yoshi02/Kanon#10. The whole UI path, recording the three insert
-demonstrations in the Kanon editor, synthesizing in the Worker, validating and applying to the
-editor, and refusing a validated reply after the source changed, is recorded in
-[`2026-11-12-browser-ui-adoption`](evaluation_cases/reruns/2026-11-12-browser-ui-adoption/README.md).
-After the merges, the same path was run on the public Pages site with one, two and three
-demonstrations; one and two are adopted or pass validation yet generalize differently from the
-intended insert. See
+Real browser (ta-yoshi02/Kanon#12): Kanon's `npm run verify-refsyn-ui` (`scripts/verify-refsyn-ui.mjs`) runs in the
+Pages workflow after the site is built, before it is uploaded, in Playwright's Chromium. It records
+the three insert demonstrations through the Kanon UI with real mouse and keyboard input (hover,
+"set test", Add Node and Add Edge, canvas clicks and drags, labels, Literal, accept), presses
+Synthesize, and requires the method to be validated on all three demonstrations, applied with three
+helpers, and to leave `[39, 89, 71, 27, 46, 53]` after the calls. It then serves the site without the
+synthesis Worker's chunk, records one demonstration, and requires `lastSynthesis.reason` to start
+with `error: RefSyn worker failed` and the editor to be unchanged. Only the program text, node
+positions on the canvas and reads of state are set by script. It does not cover a validated reply
+refused because the source changed during synthesis (that depends on timing; the Jest stand-in
+test and the manual records cover it), nor the Literal checkbox of ta-yoshi02/Kanon#11: opening a
+demonstration window in this automation clears the box through Kanon's double-click handler, so
+that defect is guarded by Kanon's Jest test only.
+
+Manual records: the runtime client in Chromium (ta-yoshi02/Kanon#10);
+[`2026-11-12-browser-ui-adoption`](evaluation_cases/reruns/2026-11-12-browser-ui-adoption/README.md)
+(including the refusal after a source change); and the public site with one, two and three
+demonstrations, where one and two pass validation yet generalize differently from the intended
+insert,
 [`2026-11-12-pages-demonstrations`](evaluation_cases/reruns/2026-11-12-pages-demonstrations/README.md).
-Otherwise the editor flow runs only with stand-ins (`testize-whole-method-validation.test.js`).
 
 The native escher-ts runner is bounded from Rust by `ESCHER_JS_PROCESS_TIMEOUT_MS` (60 s by default),
 separately from escher-ts's per-task search limit `ESCHER_TS_TIMEOUT_MS` (2 s by default). The browser
