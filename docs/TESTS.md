@@ -287,6 +287,10 @@ chunk removed); see ta-yoshi02/Kanon#10. The whole UI path, recording the three 
 demonstrations in the Kanon editor, synthesizing in the Worker, validating and applying to the
 editor, and refusing a validated reply after the source changed, is recorded in
 [`2026-11-12-browser-ui-adoption`](evaluation_cases/reruns/2026-11-12-browser-ui-adoption/README.md).
+After the merges, the same path was run on the public Pages site with one, two and three
+demonstrations; one and two are adopted or pass validation yet generalize differently from the
+intended insert. See
+[`2026-11-12-pages-demonstrations`](evaluation_cases/reruns/2026-11-12-pages-demonstrations/README.md).
 Otherwise the editor flow runs only with stand-ins (`testize-whole-method-validation.test.js`).
 
 The native escher-ts runner is bounded from Rust by `ESCHER_JS_PROCESS_TIMEOUT_MS` (60 s by default),
