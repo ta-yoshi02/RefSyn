@@ -1040,18 +1040,15 @@ fn a_refusal_before_validation_is_not_taken_for_a_refusal_by_validation() {
     }
 }
 
-/// The two correspondences above give different helpers, so the adopted methods are compared
-/// with each other, as wholes, at every receiver that has a successor in lists of 2 to 6 cells;
-/// two of these are the demonstrated states. Agreement here is between the two methods, not
-/// with a reference: a mistake both share passes. Receivers without a successor, which the
-/// demonstrations did not have, are left out of this comparison.
-/// Both write orders against `tests/data/point/reference.mjs`, an independent `point` written
-/// before running this, on 18 inputs where the receiver is followed by exactly two cells: the
-/// only inputs on which the readings the demonstrations allow agree. The comparison covers
-/// every field of every object, aliases, a prefix before the receiver, cells pointing into the
-/// list, a detached cell and the return value. Outside that domain no reference is asserted.
+/// Both write orders against `tests/data/point/reference.mjs`, a reference specification chosen
+/// for this test and written before running it, on a domain also chosen here: 18 inputs where the
+/// receiver is followed by exactly two cells. The three readings considered for the
+/// demonstrations agree on that domain, which is why it was chosen; that does not show the
+/// demonstrations fix the meaning there. The comparison covers every field of every object,
+/// aliases, a prefix before the receiver, cells pointing into the list, a detached cell and the
+/// return value. Longer and shorter lists are left undecided and not asserted.
 #[tokio::test]
-async fn both_write_orders_adopt_methods_that_match_a_reference_where_the_demonstrations_decide() {
+async fn both_write_orders_adopt_methods_that_match_a_chosen_reference_on_a_restricted_domain() {
     use std::io::Write;
     use std::process::{Command, Stdio};
 
@@ -1098,7 +1095,11 @@ async fn both_write_orders_adopt_methods_that_match_a_reference_where_the_demons
     }
 }
 
-/// The two adopted methods compared with each other, not with a reference.
+/// The two correspondences above give different helpers, so the adopted methods are compared
+/// with each other, as wholes, at every receiver that has a successor in lists of 2 to 6 cells;
+/// two of these are the demonstrated states. Agreement here is between the two methods, not
+/// with a reference: a mistake both share passes. Receivers without a successor, which the
+/// demonstrations did not have, are left out of this comparison.
 #[tokio::test]
 async fn both_write_orders_adopt_methods_that_agree_where_the_receiver_has_a_successor() {
     let mut methods = Vec::new();

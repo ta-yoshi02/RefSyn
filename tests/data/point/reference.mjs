@@ -1,11 +1,13 @@
 // The `point` demonstrations (operation_order_tests::distinct_lists): on A -> B -> C, A.other = C
 // and B.other = C, and the same on P -> Q -> R with the two writes in either order.
 //
-// Domain: the receiver is followed by exactly two cells (`this.next.next.next === null`). Only
-// there do the readings the demonstrations allow agree: "the receiver and its successor point to
-// the cell two ahead", "... to the last cell", and "the receiver and the second-to-last cell point
-// to the last cell". Outside it they differ, and the demonstrations do not say which is meant, so
-// no reference is given there.
+// A reference specification chosen for the test, on a domain also chosen for it: the receiver is
+// followed by exactly two cells (`this.next.next.next === null`). Three readings of the
+// demonstrations were considered: "the receiver and its successor point to the cell two ahead",
+// "... to the last cell", and "the receiver and the second-to-last cell point to the last cell".
+// They agree on this domain, which is why it was chosen. That does not make this the meaning the
+// demonstrations fix there: other readings are possible. Longer and shorter lists are undecided,
+// and no reference is given for them.
 export const classSource = `class Cell {
   constructor() { this.value = 0; this.next = null; this.other = null; }
   point() {
