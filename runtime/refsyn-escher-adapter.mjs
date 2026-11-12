@@ -446,7 +446,7 @@ const compileComponent = (name, args, ctx) => {
       }
       const left = compileExpr(args[0], ctx);
       const right = compileExpr(args[1], ctx);
-      return { code: `(${left.code} && ${right.code})`, kind: "bool" };
+      return { code: `((${left.code}) && (${right.code}))`, kind: "bool" };
     }
     case "or": {
       if (args.length !== 2) {
@@ -454,7 +454,7 @@ const compileComponent = (name, args, ctx) => {
       }
       const left = compileExpr(args[0], ctx);
       const right = compileExpr(args[1], ctx);
-      return { code: `(${left.code} || ${right.code})`, kind: "bool" };
+      return { code: `((${left.code}) || (${right.code}))`, kind: "bool" };
     }
     case "not": {
       if (args.length !== 1) {

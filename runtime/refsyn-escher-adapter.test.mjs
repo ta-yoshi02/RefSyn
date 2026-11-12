@@ -93,3 +93,21 @@ test('translated boolean terms agree with escher-ts on every input', () => {
 test('translated integer terms agree with escher-ts on every input', () => {
   assert.deepEqual(mismatches('Int', intTerms), []);
 });
+
+for (const op of ['and', 'or']) {
+  for (const side of ['left', 'right']) {
+    test(`${op} preserves a conditional ${side} operand's value`, () => {
+      const yes = c('isZero', c('zero'));
+      const no = c('not', yes);
+      const values = [yes, no];
+      const terms = values.flatMap((condition) =>
+        values.flatMap((thenBranch) =>
+          values.flatMap((elseBranch) =>
+            values.map((other) => {
+              const branch = iff(condition, thenBranch, elseBranch);
+              return side === 'left' ? c(op, branch, other) : c(op, other, branch);
+            }))));
+      assert.deepEqual(mismatches('Bool', terms), []);
+    });
+  }
+}
