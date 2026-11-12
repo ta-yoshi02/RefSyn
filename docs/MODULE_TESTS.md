@@ -213,3 +213,35 @@ rotateRight の入力は、実演と同じく `this.left` と `this.left.right` 
 画面には表示しない。
 保持する理由は、応答なし、検証の状態、検証した実演数の不足、合成中のソース変更、反映の失敗のいずれかである。
 `Kanon/src/js/test/testize-whole-method-validation.test.js` で確かめている。
+
+## データ構造別の証拠（実験記録と常時テスト）
+
+`docs/evaluation_cases/reruns/` の実験記録と、`cargo test` で常に走るテストを、データ構造と入力の軸で対応付ける。
+実験記録は保存した結果であり、CI はその再実行スクリプトを走らせない。
+数値は各記録の README の値で、この表を作るときに再測定はしていない。
+「選択と別」は、反例として追加実演を選んだ入力と、一致を数えた入力が別の集合かどうかを示す。
+
+| 構造・メソッド | 記録（`reruns/` 以下） | 独立参照との一致 | 選択と別 | 範囲外の扱い | 常時テスト |
+| --- | --- | --- | --- | --- | --- |
+| 単方向リスト setAt、append、prepend、insert、popBack | `2026-10-15-off-demo-five-cases` | 実演の条件内 97/97（長さ1〜7） | 実演は追加しない | 別集計：setAt の `a=length` 0/7、popBack の長さ1 0/1（TypeError）、insert の末尾 7/7 | `recorded_stage_tests`（15/15、popBack 12/12）、`whole_method_validation_tests` の多数入力比較 |
+| 同上（反例から実演を追加） | `2026-11-10-single-demo-progression` | insert 164/164、setAt 164/164、append 28/28、prepend 28/28、popBack 24/24（長さ 1〜16、親・途中・末尾・切離しの別名） | 別 | 末尾 insert は非同型として拒否 | なし（`holdout.py`） |
+| 単一実演 | `2026-11-10-single-demo-audit` | insert の単一実演 4/15、5/15、1/15 など | — | — | なし |
+| 双方向リスト unlink | `2026-10-30-dll-unlink` | 途中位置 15/15（長さ3〜7、入力は記録前に `plan.md` で固定） | 別 | 端の10位置は TypeError、数えない | なし |
+| 双方向リスト insertAfter（生成、5書込み） | `2026-10-30-new-cases`、`2026-11-05-boundary-demos` | 21/21（末尾以外）、追加実演後 105/105 | new-cases は別、boundary-demos は同じ入力族（記録が「独立した一般化の検査ではない」と明記） | 末尾は検査外 | `edit_kind_alignment_tests` の5書込み（対応付けだけ） |
+| 二分木 swapChildren | `2026-10-30-new-cases` | 14/14（子が2つのノードだけ） | 別 | 片側の子は未検査 | なし |
+| 二分木 rotateLeft | `2026-10-30-new-cases`、`2026-11-04-environment-audit`、`2026-11-05-boundary-demos` | 現設定 **21/81**、候補設定 81/81、追加実演後 81/81 | 81/81 は同じ入力族 | 部分木の欠落を含む81入力 | なし |
+| 二分木 rotateRight | `2026-10-15-rotate-right-494d6d4`、`…-4demos-494d6d4`、`2026-11-10-single-demo-progression` | 4実演で12入力中 **8件不一致**。追加実演後 160/160（中央部分木 null の32件を含む） | progression は別 | `this.left.right` が null は範囲外として別記 | `recorded_stage_tests`（8件の不一致を再現することを確認） |
+| Union-Find union by rank | `2026-10-30-uf-union`、`2026-11-04-environment-audit` | 実演外 **9/12**（順位 0〜3、異順位）。順位 0〜7 の56組で最大 46/56 | audit の CEGIS は別でない | 同順位は書込み数が違い非同型として拒否（HTTP 400） | `edit_kind_alignment_tests` の拒否テスト（合成の対応ではなく仕様の制限） |
+
+### どの記録にも無い軸
+
+次の軸は、実データ構造のメソッドの評価には見つからなかった（各記録の README と上の常時テストを調べた範囲）。
+
+- 入力に循環があるリストや木。循環は `edit_kind_alignment_tests` の合成した対応付けの例と、部品単体の検査にだけある。
+- 実データ構造のメソッドでの同じフィールドへの再書込み。`Cell` の合成例（`operation_order_tests`、`edit_kind_alignment_tests`）だけ。
+- 木や双方向リストの3書込みの形。
+- 同順位 union の合成（拒否だけを確かめている）。順位差が2以上の実演（入力にはある）。
+- swapChildren の片側の子。insertAfter の末尾。双方向リストの端（unlink では TypeError を記録するだけ）。
+- 長さ32を超える入力。実験記録の最大は長さ16、常時テストの多数入力比較は32。
+
+値とヒープの大きさの偶然の一致は `2026-11-04-environment-audit` が扱う（実演の値 46〜89 と長さ 2〜5）。
