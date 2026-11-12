@@ -251,9 +251,26 @@ each demonstration's PBE input before the earlier holes.
   conditions apply to the input and to every object observed after the call, detached ones
   included; a state outside them is an error or a mismatch, never agreement.
 
-## Bridge helpers
+## Failures and transports
 
-- `src/escher_bridge.rs` unit tests cover the escher-ts process memory setting.
+Each check names the path it actually goes through; a check on one path says nothing about the others.
+
+| Path | Check | What fails and what is asserted |
+| --- | --- | --- |
+| escher-ts runner process | `src/escher_bridge.rs` unit tests | Missing runner, non-zero exit, empty output, invalid JSON, wrong JSON shape, and a runner that neither reads its input nor exits (killed at a 500 ms test deadline). Each gives its own error. Also the memory setting |
+| Child process deadline | `src/child_process.rs` unit tests | A program that cannot start, and stdin/stdout/stderr/exit status of one that does. The validator's 10 s limit uses this same function; it is not run at 10 s in a test |
+| Handler, runner failing | `tests/runner_failure_tests.rs` | With `ESCHER_JS_RUNNER` replaced by each failing runner, the reply has `validation.status = "unavailable"` with `escher-ts runner failed: …` as its error (not a validation failure), no `composed_method_code`, no `code`, and returns within 15 s |
+| Real HTTP port | `tests/http_server_tests.rs` | `server::routes()` on an ephemeral port: an adopted method with CORS for another origin, the preflight Kanon's POST needs, 400 with an empty reply for an empty, non-JSON, `{}` or mistyped body, 404/405 for other routes, and four concurrent requests each getting its own answer |
+| Browser Worker client | Kanon `src/js/test/refsyn-runtime-client.test.js` | With a stand-in Worker: replies resolve only their own request; `error` (a script that cannot load), `messageerror` and the 60 s request limit fail every waiting request, terminate the Worker and let the next request start a new one |
+
+Not covered by automated checks: a real browser. The runtime client was checked by hand in
+Chromium on a locally served Pages build (a normal insert request, and the worker chunk removed);
+see Kanon's PR for the record. The Kanon editor flow from recording demonstrations to adoption runs
+only with stand-ins (`testize-whole-method-validation.test.js`).
+
+The native escher-ts runner is bounded from Rust by `ESCHER_JS_PROCESS_TIMEOUT_MS` (60 s by default),
+separately from escher-ts's per-task search limit `ESCHER_TS_TIMEOUT_MS` (2 s by default). The browser
+has no separate process: the Worker is bounded from the page by the 60 s request limit above.
 
 ## Translation and CI
 
