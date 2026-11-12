@@ -1,0 +1,1 @@
+{"witness":"insert(storeAtRef(@gHeap, last_ptr(@thisRef, @gHeap), freshRefFromHeap(@nodeHeap)), length(storeAtRef(@gHeap, last_ptr(@thisRef, @gHeap), freshRefFromHeap(@nodeHeap))), nthNextRef(@thisRef, @nodeHeap, @gHeap, length(@nodeHeap)))","examples":6,"satisfied":6}

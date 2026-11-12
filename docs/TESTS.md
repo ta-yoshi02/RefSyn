@@ -55,7 +55,12 @@ Uses the paper's three `insert` demonstrations as the fixture.
   two outputs is taken: reversing the edit order of two symmetric writes no longer swaps their
   sources, mu_1 stays the identity, eight symmetric writers (8! isomorphisms) resolve at the
   first one, and exhausting the 10,000-step search is reported apart from a contradiction in
-  every combination.
+  every combination. Combinations that take each field's last write in the first graph to
+  the last write to the corresponding field are tried first, since only they let the template,
+  which keeps the first demonstration's write order, end every field as each demonstration
+  does. The search goes on past consistent combinations that do not, and if it ends or runs
+  out of steps without one that does, takes the first consistent one it met, so the preference
+  never loses a correspondence the plain search found within the limit.
 - The template has one creation, three hole bindings and three writes in the paper's order,
   the paper's hole outputs, and renders the seven-statement method.
 - Hole inputs contain created objects with their constructor state and earlier holes, but no
@@ -89,8 +94,43 @@ hole numbers.
   existing cell. Return values are not compared, and receivers without a successor are left
   out of this check, which does not make them out of scope. This is recorded as
   order-dependent selection, not as a defect (see [the module map](MODULE_TESTS.md)).
+- Two isomorphisms that differ only in which write to `next` comes last: the one that leaves
+  the template's last write where the second demonstration leaves it is taken, although the
+  search meets the other first in declaration order. Synthesis is not run here: the written
+  cells are unreachable from the pre-call state, so no hole beyond the receiver can be found.
+- Equal values from distinct literal nodes (p, q, p against p, p, q, both 1) alongside eight
+  symmetric writers: no isomorphism keeps the last writes, yet the first consistent one is
+  still taken although searching for a better one uses up the step limit.
 - `run_template` runs the template in the test with each hole bound to its expected output; only
   `set` and the `point` comparison execute synthesized JavaScript.
+
+## Edit kinds (`tests/edit_kind_alignment_tests.rs`)
+
+Pairs of demonstrations whose edits are of different Kanon kinds (`addEdge`,
+`editEdgeReference`, `deleteEdge`, `return`) but mean the same update, on small `Cell` heaps.
+Each case states the pre-call states and edits, the expected writes of both graphs, every
+allowed correspondence (by the objects and values the vertices stand for), the hole types and
+each demonstration's PBE input before the earlier holes.
+
+- An oracle tries every bijection between the vertex sets and keeps those that preserve vertex
+  kind, class, constant type, field, direction, multiplicity and the return value. It uses
+  neither `alignment`'s search nor `Vertex::corresponds`. Its set must equal the expected set;
+  `align`'s first isomorphism and `align_consistently`'s choice must be in it.
+- The template under the chosen correspondence must reproduce both demonstrations as replayed
+  directly from their edits (hole outputs bound, not synthesized).
+- Accepted: `addEdge` onto `editEdgeReference` (one write); `deleteEdge` onto `deleteEdge`
+  through the shared null; two independent writes to different fields; two writes to one field;
+  two sources sharing a target; a two-cell cycle with `return`; two created cells; a value write
+  with two reference writes; a five-write doubly linked insertion.
+- Two writes to one field admit two isomorphisms, and only the one that keeps the last write last
+  reproduces the second demonstration. Here the search meets it first in declaration order;
+  with that order reversed (the operation-order case above) it is still taken, because
+  combinations that keep each field's last write are tried first. The
+  shared-target case admits two pairings and both reproduce.
+- Rejected: a stale old target (while normalizing); deletion against replacement; created against
+  existing target; another field; another shape with the same counts; return in only one
+  demonstration; union by rank with one and two writes (a limit of the one-to-one specification,
+  not a supported case).
 
 ## Randomized operation normalization (`tests/operation_graph_randomized_tests.rs`)
 

@@ -1,0 +1,98 @@
+[
+  {
+    "recording": "prepend",
+    "task": "prepend-fixed-fHeap",
+    "examples": 4,
+    "old_examples": 2,
+    "ms": 10,
+    "term": "insert(@fHeap, length(@nodeHeap), @arg0)",
+    "agree": 60,
+    "total": 60
+  },
+  {
+    "recording": "prepend",
+    "task": "prepend-fixed-gHeap",
+    "examples": 4,
+    "old_examples": 2,
+    "ms": 6,
+    "term": "insert(@gHeap, length(@nodeHeap), @thisRef)",
+    "agree": 60,
+    "total": 60
+  },
+  {
+    "recording": "prepend",
+    "task": "prepend-fixed-returnRef",
+    "examples": 4,
+    "old_examples": 2,
+    "ms": 0,
+    "term": "freshRefFromHeap(@nodeHeap)",
+    "agree": 60,
+    "total": 60
+  },
+  {
+    "recording": "prepend",
+    "task": "prepend-fixed-env-pair",
+    "examples": 4,
+    "old_examples": 2,
+    "ms": 328,
+    "term": "pairHeap(insert(@fHeap, length(@nodeHeap), @arg0), insert(@gHeap, length(@nodeHeap), @thisRef))",
+    "agree": 60,
+    "total": 60
+  },
+  {
+    "recording": "append",
+    "task": "append-fixed-fHeap",
+    "examples": 5,
+    "old_examples": 3,
+    "ms": 5,
+    "term": "insert(@fHeap, length(@nodeHeap), @arg0)",
+    "agree": 60,
+    "total": 60
+  },
+  {
+    "recording": "append",
+    "task": "append-fixed-gHeap",
+    "examples": 5,
+    "old_examples": 3,
+    "ms": 8,
+    "term": "insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap))",
+    "agree": 35,
+    "total": 60
+  },
+  {
+    "recording": "append",
+    "task": "append-fixed-env-pair",
+    "examples": 5,
+    "old_examples": 3,
+    "ms": 5102,
+    "term": "pairHeap(insert(@fHeap, length(@nodeHeap), @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))",
+    "agree": 35,
+    "total": 60
+  },
+  {
+    "recording": "append_older_tail",
+    "task": "append-fixed-fHeap",
+    "examples": 6,
+    "old_examples": 3,
+    "ms": 3,
+    "term": "insert(@fHeap, length(@nodeHeap), @arg0)",
+    "agree": 60,
+    "total": 60
+  },
+  {
+    "recording": "append_older_tail",
+    "task": "append-fixed-gHeap",
+    "examples": 6,
+    "old_examples": 3,
+    "ms": 15000,
+    "term": null
+  },
+  {
+    "recording": "append_older_tail",
+    "task": "append-fixed-env-pair",
+    "examples": 6,
+    "old_examples": 3,
+    "ms": 15000,
+    "term": null
+  }
+]

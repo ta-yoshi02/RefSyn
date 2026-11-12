@@ -1,5 +1,6 @@
 //! Vertex correspondence between operation graphs (paper §4.2): a bijection that respects
-//! `~` and preserves edge direction, field names, and multiplicities. Edge order is ignored.
+//! `~` and preserves edge direction, field names, and multiplicities. Edge order is ignored
+//! when deciding isomorphism; `align_consistently` only uses it to prefer some isomorphisms.
 
 use std::cell::Cell;
 use std::collections::BTreeMap;
@@ -52,6 +53,13 @@ pub type Aligned = (Vec<Mapping>, Template, Problems);
 /// demonstration's isomorphisms one at a time, in `align` order, and stops at the first
 /// combination under which no hole receives the same encoded input in two demonstrations with
 /// different outputs; such a PBE problem has no solution. mu_1 is the identity.
+///
+/// The template keeps the first demonstration's write order, so it leaves each field with the
+/// value of the first graph's last write to it. So the search goes on past a consistent
+/// combination under which that is not the image of some other demonstration's last write to
+/// the corresponding field, and takes the first consistent one under which it always is. If the
+/// search ends or runs out of steps without one, it takes the first consistent combination it
+/// met, as it did before the preference: written values can agree although the vertices differ.
 pub fn align_consistently(
     recording: &Recording,
     graphs: &[OperationGraph],
@@ -66,9 +74,13 @@ pub fn align_consistently(
         params,
         mappings: vec![(0..first.vertices.len()).collect()],
         chosen: None,
+        fallback: None,
     };
-    let _ = chooser.extend(&Cell::new(SEARCH_STEP_LIMIT))?;
-    chooser.chosen.ok_or_else(|| {
+    match chooser.extend(&Cell::new(SEARCH_STEP_LIMIT)) {
+        Err(err) if !(err.is::<OutOfSteps>() && chooser.fallback.is_some()) => return Err(err),
+        _ => {}
+    }
+    chooser.chosen.or(chooser.fallback).ok_or_else(|| {
         anyhow::anyhow!(
             "every correspondence between the demonstrations gives some hole the same input with different outputs"
         )
@@ -81,6 +93,8 @@ struct Chooser<'a> {
     params: &'a [String],
     mappings: Vec<Mapping>,
     chosen: Option<Aligned>,
+    /// The first consistent combination, kept while one that keeps the last writes is sought.
+    fallback: Option<Aligned>,
 }
 
 impl Chooser<'_> {
@@ -125,16 +139,38 @@ impl Chooser<'_> {
         if contradictory(&problems) {
             return Ok(ControlFlow::Continue(()));
         }
-        self.chosen = Some((self.mappings.clone(), template, problems));
-        Ok(ControlFlow::Break(()))
+        let aligned = (self.mappings.clone(), template, problems);
+        let graphs = self.graphs;
+        if graphs
+            .iter()
+            .zip(&self.mappings)
+            .all(|(graph, mapping)| keeps_last_writes(&graphs[0], graph, mapping))
+        {
+            self.chosen = Some(aligned);
+            return Ok(ControlFlow::Break(()));
+        }
+        self.fallback.get_or_insert(aligned);
+        Ok(ControlFlow::Continue(()))
     }
 }
 
+#[derive(Debug)]
+struct OutOfSteps;
+
+impl std::fmt::Display for OutOfSteps {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "the correspondence search took {SEARCH_STEP_LIMIT} steps (vertex candidates tried plus combinations checked) without finding one whose hole examples agree"
+        )
+    }
+}
+
+impl std::error::Error for OutOfSteps {}
+
 fn take_step(steps: &Cell<usize>) -> Result<()> {
     let Some(left) = steps.get().checked_sub(1) else {
-        bail!(
-            "the correspondence search took {SEARCH_STEP_LIMIT} steps (vertex candidates tried plus combinations checked) without finding one whose hole examples agree"
-        );
+        return Err(OutOfSteps.into());
     };
     steps.set(left);
     Ok(())
@@ -153,6 +189,25 @@ fn contradictory(problems: &Problems) -> bool {
                     })
             })
     })
+}
+
+type LastWrites = BTreeMap<(VertexId, String), VertexId>;
+
+fn last_writes(graph: &OperationGraph) -> LastWrites {
+    graph
+        .writes
+        .iter()
+        .map(|write| ((write.from, write.field.clone()), write.to))
+        .collect()
+}
+
+/// Whether `mapping` takes the last write to every field of `a` to the last write to the
+/// corresponding field of `b`.
+fn keeps_last_writes(a: &OperationGraph, b: &OperationGraph, mapping: &Mapping) -> bool {
+    let last_b = last_writes(b);
+    last_writes(a)
+        .into_iter()
+        .all(|((from, field), to)| last_b.get(&(mapping[from], field)) == Some(&mapping[to]))
 }
 
 type EdgeCounts = BTreeMap<(VertexId, String, VertexId), usize>;
