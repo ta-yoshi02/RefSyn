@@ -1,0 +1,17 @@
+[
+  {
+    "clazz": "testPassed",
+    "row": 40,
+    "col": 16
+  },
+  {
+    "clazz": "testPassed",
+    "row": 41,
+    "col": 26
+  },
+  {
+    "clazz": "testPassed",
+    "row": 42,
+    "col": 36
+  }
+]

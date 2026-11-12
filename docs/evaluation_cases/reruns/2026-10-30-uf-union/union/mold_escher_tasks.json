@@ -1,0 +1,1663 @@
+[
+  {
+    "name": "union_h0",
+    "category": "refsyn",
+    "classes": [
+      {
+        "name": "UF",
+        "fields": {
+          "parent": "Ref[Object[UF]]",
+          "rank": "Ref[Int]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "strictFieldAccess": true,
+    "signature": {
+      "returnType": "Ref[Object[UF]]",
+      "args": [
+        {
+          "name": "other",
+          "type": "Ref[Object[UF]]"
+        }
+      ],
+      "autoExpandClassSignature": {
+        "className": "UF",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "parent": "parentHeap",
+          "rank": "rankHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 0
+                  },
+                  "rank": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 3
+                  },
+                  "rank": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 4
+                  },
+                  "rank": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 7
+                  },
+                  "rank": {
+                    "ref": 8
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 7
+            }
+          ],
+          [
+            1,
+            0,
+            0,
+            2,
+            1,
+            0,
+            0,
+            1,
+            0
+          ],
+          {
+            "ref": 1
+          }
+        ],
+        {
+          "ref": 1
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 2
+                  },
+                  "rank": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 2
+                  },
+                  "rank": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 5
+                  },
+                  "rank": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 6
+                  },
+                  "rank": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 1
+                  },
+                  "rank": {
+                    "ref": 8
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 5
+            },
+            {
+              "ref": 6
+            },
+            {
+              "ref": 1
+            }
+          ],
+          [
+            0,
+            1,
+            1,
+            0,
+            0,
+            2,
+            1,
+            0,
+            0
+          ],
+          {
+            "ref": 1
+          }
+        ],
+        {
+          "ref": 0
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 1
+                  },
+                  "rank": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 1
+                  },
+                  "rank": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 0
+                  },
+                  "rank": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 4
+                  },
+                  "rank": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 7
+                  },
+                  "rank": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 7
+                  },
+                  "rank": {
+                    "ref": 8
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": 7
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 7
+            }
+          ],
+          [
+            2,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            0
+          ],
+          {
+            "ref": 1
+          }
+        ],
+        {
+          "ref": 1
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 1
+                  },
+                  "rank": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 2
+                  },
+                  "rank": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 2
+                  },
+                  "rank": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 1
+                  },
+                  "rank": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 5
+                  },
+                  "rank": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 0
+                  },
+                  "rank": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 0
+                  },
+                  "rank": {
+                    "ref": 8
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 5
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 0
+            }
+          ],
+          [
+            1,
+            2,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          {
+            "ref": 1
+          }
+        ],
+        {
+          "ref": 0
+        }
+      ]
+    ],
+    "refsynMeta": {
+      "jsMethodName": "union_h0",
+      "className": "UF",
+      "thisRefName": "thisRef",
+      "classHeapName": "nodeHeap",
+      "valueFields": [
+        "rank"
+      ],
+      "pointerFields": [
+        "parent"
+      ],
+      "boolFields": [],
+      "fieldHeapNames": {
+        "parent": "parentHeap",
+        "rank": "rankHeap"
+      },
+      "explicitArgs": [
+        {
+          "name": "other",
+          "legacyType": "Ptr",
+          "taskType": "Ref[Object[UF]]"
+        }
+      ]
+    }
+  },
+  {
+    "name": "union_h1",
+    "category": "refsyn",
+    "classes": [
+      {
+        "name": "UF",
+        "fields": {
+          "parent": "Ref[Object[UF]]",
+          "rank": "Ref[Int]"
+        }
+      }
+    ],
+    "exposeClassComponents": false,
+    "autoClassFieldComponents": true,
+    "strictFieldAccess": true,
+    "signature": {
+      "returnType": "Ref[Object[UF]]",
+      "args": [
+        {
+          "name": "other",
+          "type": "Ref[Object[UF]]"
+        },
+        {
+          "name": "hole0",
+          "type": "Ref[Object[UF]]"
+        }
+      ],
+      "autoExpandClassSignature": {
+        "className": "UF",
+        "thisRefName": "thisRef",
+        "classHeapName": "nodeHeap",
+        "fieldHeapNames": {
+          "parent": "parentHeap",
+          "rank": "rankHeap"
+        }
+      }
+    },
+    "components": [
+      {
+        "name": "isNull",
+        "kind": "libraryRef",
+        "ref": "isNull"
+      },
+      {
+        "name": "equal",
+        "kind": "libraryRef",
+        "ref": "equal"
+      },
+      {
+        "name": "and",
+        "kind": "libraryRef",
+        "ref": "and"
+      },
+      {
+        "name": "or",
+        "kind": "libraryRef",
+        "ref": "or"
+      },
+      {
+        "name": "not",
+        "kind": "libraryRef",
+        "ref": "not"
+      },
+      {
+        "name": "isZero",
+        "kind": "libraryRef",
+        "ref": "isZero"
+      },
+      {
+        "name": "isNonNeg",
+        "kind": "libraryRef",
+        "ref": "isNonNeg"
+      },
+      {
+        "name": "zero",
+        "kind": "libraryRef",
+        "ref": "zero"
+      },
+      {
+        "name": "inc",
+        "kind": "libraryRef",
+        "ref": "inc"
+      },
+      {
+        "name": "dec",
+        "kind": "libraryRef",
+        "ref": "dec"
+      },
+      {
+        "name": "last_ptr",
+        "kind": "libraryRef",
+        "ref": "last_ptr"
+      },
+      {
+        "name": "penultimateRef",
+        "kind": "libraryRef",
+        "ref": "penultimateRef"
+      },
+      {
+        "name": "nthNextRef",
+        "kind": "libraryRef",
+        "ref": "nthNextRef"
+      },
+      {
+        "name": "findByValueRef",
+        "kind": "libraryRef",
+        "ref": "findByValueRef"
+      }
+    ],
+    "examples": [
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 0
+                  },
+                  "rank": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 3
+                  },
+                  "rank": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 4
+                  },
+                  "rank": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 7
+                  },
+                  "rank": {
+                    "ref": 8
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 3
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 7
+            }
+          ],
+          [
+            1,
+            0,
+            0,
+            2,
+            1,
+            0,
+            0,
+            1,
+            0
+          ],
+          {
+            "ref": 1
+          },
+          {
+            "ref": 1
+          }
+        ],
+        {
+          "ref": 0
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 2
+                  },
+                  "rank": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 2
+                  },
+                  "rank": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 5
+                  },
+                  "rank": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 6
+                  },
+                  "rank": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 1
+                  },
+                  "rank": {
+                    "ref": 8
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 5
+            },
+            {
+              "ref": 6
+            },
+            {
+              "ref": 1
+            }
+          ],
+          [
+            0,
+            1,
+            1,
+            0,
+            0,
+            2,
+            1,
+            0,
+            0
+          ],
+          {
+            "ref": 1
+          },
+          {
+            "ref": 0
+          }
+        ],
+        {
+          "ref": 1
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 1
+                  },
+                  "rank": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 1
+                  },
+                  "rank": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 0
+                  },
+                  "rank": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 4
+                  },
+                  "rank": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 7
+                  },
+                  "rank": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 7
+                  },
+                  "rank": {
+                    "ref": 8
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 4
+            },
+            {
+              "ref": 7
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 7
+            }
+          ],
+          [
+            2,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            0
+          ],
+          {
+            "ref": 1
+          },
+          {
+            "ref": 1
+          }
+        ],
+        {
+          "ref": 0
+        }
+      ],
+      [
+        [
+          {
+            "ref": 0
+          },
+          [
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 0
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": -1
+                  },
+                  "rank": {
+                    "ref": 1
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 1
+                  },
+                  "rank": {
+                    "ref": 2
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 2
+                  },
+                  "rank": {
+                    "ref": 3
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 2
+                  },
+                  "rank": {
+                    "ref": 4
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 1
+                  },
+                  "rank": {
+                    "ref": 5
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 5
+                  },
+                  "rank": {
+                    "ref": 6
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 0
+                  },
+                  "rank": {
+                    "ref": 7
+                  }
+                }
+              }
+            },
+            {
+              "object": {
+                "className": "UF",
+                "fields": {
+                  "parent": {
+                    "ref": 0
+                  },
+                  "rank": {
+                    "ref": 8
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {
+              "ref": -1
+            },
+            {
+              "ref": -1
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 2
+            },
+            {
+              "ref": 1
+            },
+            {
+              "ref": 5
+            },
+            {
+              "ref": 0
+            },
+            {
+              "ref": 0
+            }
+          ],
+          [
+            1,
+            2,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          {
+            "ref": 1
+          },
+          {
+            "ref": 0
+          }
+        ],
+        {
+          "ref": 1
+        }
+      ]
+    ],
+    "refsynMeta": {
+      "jsMethodName": "union_h1",
+      "className": "UF",
+      "thisRefName": "thisRef",
+      "classHeapName": "nodeHeap",
+      "valueFields": [
+        "rank"
+      ],
+      "pointerFields": [
+        "parent"
+      ],
+      "boolFields": [],
+      "fieldHeapNames": {
+        "parent": "parentHeap",
+        "rank": "rankHeap"
+      },
+      "explicitArgs": [
+        {
+          "name": "other",
+          "legacyType": "Ptr",
+          "taskType": "Ref[Object[UF]]"
+        },
+        {
+          "name": "hole0",
+          "legacyType": "Ptr",
+          "taskType": "Ref[Object[UF]]"
+        }
+      ]
+    }
+  }
+]

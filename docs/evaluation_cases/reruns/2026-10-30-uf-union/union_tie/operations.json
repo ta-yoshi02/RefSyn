@@ -1,0 +1,46 @@
+[
+  {
+    "callLabel": "call1",
+    "receiverObject": "main-new1",
+    "arguments": [
+      "main-new3"
+    ],
+    "operations": [
+      {
+        "editType": "addEdge",
+        "from": "main-new3",
+        "to": "main-new1",
+        "label": "parent"
+      }
+    ]
+  },
+  {
+    "callLabel": "call2",
+    "receiverObject": "main-new4",
+    "arguments": [
+      "main-new5"
+    ],
+    "operations": [
+      {
+        "editType": "addEdge",
+        "from": "main-new5",
+        "to": "main-new4",
+        "label": "parent"
+      },
+      {
+        "editType": "addNode",
+        "id": "__temp1",
+        "label": "1",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "main-new4",
+        "oldTo": "main-new4-rank",
+        "newTo": "__temp1",
+        "label": "rank"
+      }
+    ]
+  }
+]

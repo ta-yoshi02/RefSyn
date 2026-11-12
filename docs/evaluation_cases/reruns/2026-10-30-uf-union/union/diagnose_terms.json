@@ -1,0 +1,98 @@
+[
+  {
+    "name": "intended: if lt(rank this, rank other) then this else other",
+    "term": "if lt(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap)), loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))) then @thisRef else @other",
+    "cost": 16,
+    "satisfiesAllExamples": true,
+    "perExample": [
+      {
+        "example": 1,
+        "expected": "{\"tag\":\"ref\",\"value\":1}",
+        "got": "{\"tag\":\"ref\",\"value\":1}",
+        "ok": true
+      },
+      {
+        "example": 2,
+        "expected": "{\"tag\":\"ref\",\"value\":0}",
+        "got": "{\"tag\":\"ref\",\"value\":0}",
+        "ok": true
+      },
+      {
+        "example": 3,
+        "expected": "{\"tag\":\"ref\",\"value\":1}",
+        "got": "{\"tag\":\"ref\",\"value\":1}",
+        "ok": true
+      },
+      {
+        "example": 4,
+        "expected": "{\"tag\":\"ref\",\"value\":0}",
+        "got": "{\"tag\":\"ref\",\"value\":0}",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "name": "found, factor 3",
+    "term": "if isZero(loadInt(@rankHeap, rankOf(@thisRef, @nodeHeap, @rankHeap))) then @thisRef else if isNull(findByValueRef(@other, @nodeHeap, @parentHeap, @rankHeap, inc(inc(zero())))) then @other else @thisRef",
+    "cost": 21,
+    "satisfiesAllExamples": true,
+    "perExample": [
+      {
+        "example": 1,
+        "expected": "{\"tag\":\"ref\",\"value\":1}",
+        "got": "{\"tag\":\"ref\",\"value\":1}",
+        "ok": true
+      },
+      {
+        "example": 2,
+        "expected": "{\"tag\":\"ref\",\"value\":0}",
+        "got": "{\"tag\":\"ref\",\"value\":0}",
+        "ok": true
+      },
+      {
+        "example": 3,
+        "expected": "{\"tag\":\"ref\",\"value\":1}",
+        "got": "{\"tag\":\"ref\",\"value\":1}",
+        "ok": true
+      },
+      {
+        "example": 4,
+        "expected": "{\"tag\":\"ref\",\"value\":0}",
+        "got": "{\"tag\":\"ref\",\"value\":0}",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "name": "found, factor 1",
+    "term": "if isNull(findByValueRef(@thisRef, @nodeHeap, @parentHeap, @rankHeap, inc(loadInt(@rankHeap, rankOf(@other, @nodeHeap, @rankHeap))))) then @thisRef else @other",
+    "cost": 16,
+    "satisfiesAllExamples": true,
+    "perExample": [
+      {
+        "example": 1,
+        "expected": "{\"tag\":\"ref\",\"value\":1}",
+        "got": "{\"tag\":\"ref\",\"value\":1}",
+        "ok": true
+      },
+      {
+        "example": 2,
+        "expected": "{\"tag\":\"ref\",\"value\":0}",
+        "got": "{\"tag\":\"ref\",\"value\":0}",
+        "ok": true
+      },
+      {
+        "example": 3,
+        "expected": "{\"tag\":\"ref\",\"value\":1}",
+        "got": "{\"tag\":\"ref\",\"value\":1}",
+        "ok": true
+      },
+      {
+        "example": 4,
+        "expected": "{\"tag\":\"ref\",\"value\":0}",
+        "got": "{\"tag\":\"ref\",\"value\":0}",
+        "ok": true
+      }
+    ]
+  }
+]
