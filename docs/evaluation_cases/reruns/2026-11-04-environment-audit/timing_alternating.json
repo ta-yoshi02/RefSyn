@@ -1,0 +1,2052 @@
+{
+  "node": "v22.17.0",
+  "summary": [
+    {
+      "method": "setAt",
+      "mold": {
+        "trials": 10,
+        "solved": 10,
+        "median_total_ms": 9.363,
+        "min": 9.013,
+        "max": 12.034
+      },
+      "baseline": {
+        "trials": 10,
+        "solved": 10,
+        "median_total_ms": 186.6705,
+        "min": 170.316,
+        "max": 278.204
+      }
+    },
+    {
+      "method": "append",
+      "mold": {
+        "trials": 10,
+        "solved": 10,
+        "median_total_ms": 5.544499999999999,
+        "min": 5.476,
+        "max": 7.006
+      },
+      "baseline": {
+        "trials": 10,
+        "solved": 10,
+        "median_total_ms": 363.365,
+        "min": 333.819,
+        "max": 449.144
+      }
+    },
+    {
+      "method": "prepend",
+      "mold": {
+        "trials": 10,
+        "solved": 10,
+        "median_total_ms": 3.4204999999999997,
+        "min": 3.064,
+        "max": 5.408
+      },
+      "baseline": {
+        "trials": 10,
+        "solved": 10,
+        "median_total_ms": 54.35,
+        "min": 50.668,
+        "max": 66.943
+      }
+    },
+    {
+      "method": "insert",
+      "mold": {
+        "trials": 10,
+        "solved": 10,
+        "median_total_ms": 18.296,
+        "min": 16.589,
+        "max": 20.827
+      },
+      "baseline": {
+        "trials": 10,
+        "solved": 0,
+        "median_total_ms": null,
+        "min": null,
+        "max": null
+      }
+    },
+    {
+      "method": "popBack",
+      "mold": {
+        "trials": 10,
+        "solved": 10,
+        "median_total_ms": 4.558999999999999,
+        "min": 4.428,
+        "max": 6.029
+      },
+      "baseline": {
+        "trials": 10,
+        "solved": 10,
+        "median_total_ms": 107.66149999999999,
+        "min": 101.89,
+        "max": 156.303
+      }
+    }
+  ],
+  "trials": [
+    {
+      "round": 1,
+      "method": "setAt",
+      "side": "mold",
+      "started": "2026-11-05T04:23:55.320Z",
+      "load": [
+        2.65,
+        4.09,
+        4.76
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 9.731,
+      "search_ms": 8.28,
+      "terms": [
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "@b"
+      ]
+    },
+    {
+      "round": 1,
+      "method": "setAt",
+      "side": "baseline",
+      "started": "2026-11-05T04:23:55.384Z",
+      "load": [
+        2.65,
+        4.09,
+        4.76
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 200.992,
+      "search_ms": 199.546,
+      "terms": [
+        "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+      ]
+    },
+    {
+      "round": 1,
+      "method": "append",
+      "side": "mold",
+      "started": "2026-11-05T04:23:55.626Z",
+      "load": [
+        2.65,
+        4.09,
+        4.76
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 5.476,
+      "search_ms": 4.123,
+      "terms": [
+        "@x",
+        "last_ptr(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 1,
+      "method": "append",
+      "side": "baseline",
+      "started": "2026-11-05T04:23:55.668Z",
+      "load": [
+        2.65,
+        4.09,
+        4.76
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 357.806,
+      "search_ms": 356.423,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+      ]
+    },
+    {
+      "round": 1,
+      "method": "prepend",
+      "side": "mold",
+      "started": "2026-11-05T04:23:56.063Z",
+      "load": [
+        2.65,
+        4.09,
+        4.76
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 3.346,
+      "search_ms": 1.772,
+      "terms": [
+        "@x",
+        "@thisRef"
+      ]
+    },
+    {
+      "round": 1,
+      "method": "prepend",
+      "side": "baseline",
+      "started": "2026-11-05T04:23:56.102Z",
+      "load": [
+        2.65,
+        4.09,
+        4.76
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 53.333,
+      "search_ms": 51.63,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "freshRefFromHeap(@nodeHeap)"
+      ]
+    },
+    {
+      "round": 1,
+      "method": "insert",
+      "side": "mold",
+      "started": "2026-11-05T04:23:56.202Z",
+      "load": [
+        2.65,
+        4.09,
+        4.76
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 19.822,
+      "search_ms": 18.242,
+      "terms": [
+        "@arg",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+      ]
+    },
+    {
+      "round": 1,
+      "method": "insert",
+      "side": "baseline",
+      "started": "2026-11-05T04:23:56.263Z",
+      "load": [
+        2.65,
+        4.09,
+        4.76
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": false,
+      "total_ms": 15001.473,
+      "search_ms": 15000.084,
+      "terms": [
+        null
+      ]
+    },
+    {
+      "round": 1,
+      "method": "popBack",
+      "side": "mold",
+      "started": "2026-11-05T04:24:11.309Z",
+      "load": [
+        2.5,
+        3.99,
+        4.71
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 4.652,
+      "search_ms": 3.508,
+      "terms": [
+        "penultimateRef(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 1,
+      "method": "popBack",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:11.353Z",
+      "load": [
+        2.5,
+        3.99,
+        4.71
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 116.962,
+      "search_ms": 115.596,
+      "terms": [
+        "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap)))"
+      ]
+    },
+    {
+      "round": 2,
+      "method": "append",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:11.510Z",
+      "load": [
+        2.5,
+        3.99,
+        4.71
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 449.144,
+      "search_ms": 447.604,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+      ]
+    },
+    {
+      "round": 2,
+      "method": "append",
+      "side": "mold",
+      "started": "2026-11-05T04:24:11.998Z",
+      "load": [
+        2.5,
+        3.99,
+        4.71
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 5.601,
+      "search_ms": 4.075,
+      "terms": [
+        "@x",
+        "last_ptr(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 2,
+      "method": "prepend",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:12.041Z",
+      "load": [
+        2.5,
+        3.99,
+        4.71
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 52.856,
+      "search_ms": 50.118,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "freshRefFromHeap(@nodeHeap)"
+      ]
+    },
+    {
+      "round": 2,
+      "method": "prepend",
+      "side": "mold",
+      "started": "2026-11-05T04:24:12.139Z",
+      "load": [
+        2.5,
+        3.99,
+        4.71
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 3.397,
+      "search_ms": 1.941,
+      "terms": [
+        "@x",
+        "@thisRef"
+      ]
+    },
+    {
+      "round": 2,
+      "method": "insert",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:12.180Z",
+      "load": [
+        2.5,
+        3.99,
+        4.71
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": false,
+      "total_ms": 15001.955,
+      "search_ms": 15000.386,
+      "terms": [
+        null
+      ]
+    },
+    {
+      "round": 2,
+      "method": "insert",
+      "side": "mold",
+      "started": "2026-11-05T04:24:27.235Z",
+      "load": [
+        2.24,
+        3.86,
+        4.65
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 20.022,
+      "search_ms": 17.591,
+      "terms": [
+        "@arg",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+      ]
+    },
+    {
+      "round": 2,
+      "method": "popBack",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:27.304Z",
+      "load": [
+        2.24,
+        3.86,
+        4.65
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 107.18,
+      "search_ms": 105.614,
+      "terms": [
+        "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap)))"
+      ]
+    },
+    {
+      "round": 2,
+      "method": "popBack",
+      "side": "mold",
+      "started": "2026-11-05T04:24:27.451Z",
+      "load": [
+        2.24,
+        3.86,
+        4.65
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 4.937,
+      "search_ms": 3.664,
+      "terms": [
+        "penultimateRef(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 2,
+      "method": "setAt",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:27.493Z",
+      "load": [
+        2.24,
+        3.86,
+        4.65
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 193.462,
+      "search_ms": 191.837,
+      "terms": [
+        "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+      ]
+    },
+    {
+      "round": 2,
+      "method": "setAt",
+      "side": "mold",
+      "started": "2026-11-05T04:24:27.727Z",
+      "load": [
+        2.24,
+        3.86,
+        4.65
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 9.89,
+      "search_ms": 8.298,
+      "terms": [
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "@b"
+      ]
+    },
+    {
+      "round": 3,
+      "method": "prepend",
+      "side": "mold",
+      "started": "2026-11-05T04:24:27.782Z",
+      "load": [
+        2.24,
+        3.86,
+        4.65
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 3.682,
+      "search_ms": 1.904,
+      "terms": [
+        "@x",
+        "@thisRef"
+      ]
+    },
+    {
+      "round": 3,
+      "method": "prepend",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:27.825Z",
+      "load": [
+        2.24,
+        3.86,
+        4.65
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 64.285,
+      "search_ms": 62.286,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "freshRefFromHeap(@nodeHeap)"
+      ]
+    },
+    {
+      "round": 3,
+      "method": "insert",
+      "side": "mold",
+      "started": "2026-11-05T04:24:27.931Z",
+      "load": [
+        2.24,
+        3.86,
+        4.65
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 16.761,
+      "search_ms": 14.964,
+      "terms": [
+        "@arg",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+      ]
+    },
+    {
+      "round": 3,
+      "method": "insert",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:27.991Z",
+      "load": [
+        2.24,
+        3.86,
+        4.65
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": false,
+      "total_ms": 15001.984,
+      "search_ms": 15000.456,
+      "terms": [
+        null
+      ]
+    },
+    {
+      "round": 3,
+      "method": "popBack",
+      "side": "mold",
+      "started": "2026-11-05T04:24:43.047Z",
+      "load": [
+        2.05,
+        3.73,
+        4.59
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 6.029,
+      "search_ms": 4.592,
+      "terms": [
+        "penultimateRef(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 3,
+      "method": "popBack",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:43.099Z",
+      "load": [
+        2.05,
+        3.73,
+        4.59
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 155.282,
+      "search_ms": 151.54,
+      "terms": [
+        "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap)))"
+      ]
+    },
+    {
+      "round": 3,
+      "method": "setAt",
+      "side": "mold",
+      "started": "2026-11-05T04:24:43.304Z",
+      "load": [
+        2.05,
+        3.73,
+        4.59
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 12.034,
+      "search_ms": 10.041,
+      "terms": [
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "@b"
+      ]
+    },
+    {
+      "round": 3,
+      "method": "setAt",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:43.367Z",
+      "load": [
+        2.05,
+        3.73,
+        4.59
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 278.204,
+      "search_ms": 276.467,
+      "terms": [
+        "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+      ]
+    },
+    {
+      "round": 3,
+      "method": "append",
+      "side": "mold",
+      "started": "2026-11-05T04:24:43.692Z",
+      "load": [
+        2.6,
+        3.82,
+        4.62
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 7.006,
+      "search_ms": 5.16,
+      "terms": [
+        "@x",
+        "last_ptr(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 3,
+      "method": "append",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:43.742Z",
+      "load": [
+        2.6,
+        3.82,
+        4.62
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 422.564,
+      "search_ms": 420.921,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+      ]
+    },
+    {
+      "round": 4,
+      "method": "insert",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:44.211Z",
+      "load": [
+        2.6,
+        3.82,
+        4.62
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": false,
+      "total_ms": 15001.408,
+      "search_ms": 15000.045,
+      "terms": [
+        null
+      ]
+    },
+    {
+      "round": 4,
+      "method": "insert",
+      "side": "mold",
+      "started": "2026-11-05T04:24:59.261Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 17.024,
+      "search_ms": 15.23,
+      "terms": [
+        "@arg",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+      ]
+    },
+    {
+      "round": 4,
+      "method": "popBack",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:59.320Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 108.716,
+      "search_ms": 107.193,
+      "terms": [
+        "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap)))"
+      ]
+    },
+    {
+      "round": 4,
+      "method": "popBack",
+      "side": "mold",
+      "started": "2026-11-05T04:24:59.466Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 4.476,
+      "search_ms": 3.374,
+      "terms": [
+        "penultimateRef(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 4,
+      "method": "setAt",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:59.506Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 184.903,
+      "search_ms": 183.547,
+      "terms": [
+        "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+      ]
+    },
+    {
+      "round": 4,
+      "method": "setAt",
+      "side": "mold",
+      "started": "2026-11-05T04:24:59.727Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 9.013,
+      "search_ms": 7.655,
+      "terms": [
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "@b"
+      ]
+    },
+    {
+      "round": 4,
+      "method": "append",
+      "side": "baseline",
+      "started": "2026-11-05T04:24:59.776Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 416.233,
+      "search_ms": 414.884,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+      ]
+    },
+    {
+      "round": 4,
+      "method": "append",
+      "side": "mold",
+      "started": "2026-11-05T04:25:00.230Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 6.146,
+      "search_ms": 4.622,
+      "terms": [
+        "@x",
+        "last_ptr(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 4,
+      "method": "prepend",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:00.276Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 66.943,
+      "search_ms": 65.174,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "freshRefFromHeap(@nodeHeap)"
+      ]
+    },
+    {
+      "round": 4,
+      "method": "prepend",
+      "side": "mold",
+      "started": "2026-11-05T04:25:00.389Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 3.636,
+      "search_ms": 2.258,
+      "terms": [
+        "@x",
+        "@thisRef"
+      ]
+    },
+    {
+      "round": 5,
+      "method": "popBack",
+      "side": "mold",
+      "started": "2026-11-05T04:25:00.429Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 4.56,
+      "search_ms": 3.439,
+      "terms": [
+        "penultimateRef(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 5,
+      "method": "popBack",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:00.469Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 107.595,
+      "search_ms": 106.067,
+      "terms": [
+        "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap)))"
+      ]
+    },
+    {
+      "round": 5,
+      "method": "setAt",
+      "side": "mold",
+      "started": "2026-11-05T04:25:00.614Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 9.276,
+      "search_ms": 7.878,
+      "terms": [
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "@b"
+      ]
+    },
+    {
+      "round": 5,
+      "method": "setAt",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:00.663Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 177.508,
+      "search_ms": 176.174,
+      "terms": [
+        "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+      ]
+    },
+    {
+      "round": 5,
+      "method": "append",
+      "side": "mold",
+      "started": "2026-11-05T04:25:00.880Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 5.812,
+      "search_ms": 4.479,
+      "terms": [
+        "@x",
+        "last_ptr(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 5,
+      "method": "append",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:00.923Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 361.109,
+      "search_ms": 359.707,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+      ]
+    },
+    {
+      "round": 5,
+      "method": "prepend",
+      "side": "mold",
+      "started": "2026-11-05T04:25:01.322Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 3.444,
+      "search_ms": 2.058,
+      "terms": [
+        "@x",
+        "@thisRef"
+      ]
+    },
+    {
+      "round": 5,
+      "method": "prepend",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:01.360Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 50.668,
+      "search_ms": 48.579,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "freshRefFromHeap(@nodeHeap)"
+      ]
+    },
+    {
+      "round": 5,
+      "method": "insert",
+      "side": "mold",
+      "started": "2026-11-05T04:25:01.453Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 17.946,
+      "search_ms": 16.36,
+      "terms": [
+        "@arg",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+      ]
+    },
+    {
+      "round": 5,
+      "method": "insert",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:01.515Z",
+      "load": [
+        2.48,
+        3.73,
+        4.57
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": false,
+      "total_ms": 15001.338,
+      "search_ms": 14999.628,
+      "terms": [
+        null
+      ]
+    },
+    {
+      "round": 6,
+      "method": "setAt",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:16.566Z",
+      "load": [
+        2.37,
+        3.65,
+        4.53
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 180.526,
+      "search_ms": 179.144,
+      "terms": [
+        "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+      ]
+    },
+    {
+      "round": 6,
+      "method": "setAt",
+      "side": "mold",
+      "started": "2026-11-05T04:25:16.784Z",
+      "load": [
+        2.37,
+        3.65,
+        4.53
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 9.45,
+      "search_ms": 8.045,
+      "terms": [
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "@b"
+      ]
+    },
+    {
+      "round": 6,
+      "method": "append",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:16.834Z",
+      "load": [
+        2.37,
+        3.65,
+        4.53
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 375.972,
+      "search_ms": 374.35,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+      ]
+    },
+    {
+      "round": 6,
+      "method": "append",
+      "side": "mold",
+      "started": "2026-11-05T04:25:17.249Z",
+      "load": [
+        2.37,
+        3.65,
+        4.53
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 5.563,
+      "search_ms": 4.2,
+      "terms": [
+        "@x",
+        "last_ptr(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 6,
+      "method": "prepend",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:17.290Z",
+      "load": [
+        2.37,
+        3.65,
+        4.53
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 54.597,
+      "search_ms": 52.665,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "freshRefFromHeap(@nodeHeap)"
+      ]
+    },
+    {
+      "round": 6,
+      "method": "prepend",
+      "side": "mold",
+      "started": "2026-11-05T04:25:17.389Z",
+      "load": [
+        2.37,
+        3.65,
+        4.53
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 5.408,
+      "search_ms": 2.877,
+      "terms": [
+        "@x",
+        "@thisRef"
+      ]
+    },
+    {
+      "round": 6,
+      "method": "insert",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:17.449Z",
+      "load": [
+        2.37,
+        3.65,
+        4.53
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": false,
+      "total_ms": 15011.275,
+      "search_ms": 15009.559,
+      "terms": [
+        null
+      ]
+    },
+    {
+      "round": 6,
+      "method": "insert",
+      "side": "mold",
+      "started": "2026-11-05T04:25:32.514Z",
+      "load": [
+        2.6,
+        3.63,
+        4.5
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 20.827,
+      "search_ms": 19.202,
+      "terms": [
+        "@arg",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+      ]
+    },
+    {
+      "round": 6,
+      "method": "popBack",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:32.581Z",
+      "load": [
+        2.6,
+        3.63,
+        4.5
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 156.303,
+      "search_ms": 154.958,
+      "terms": [
+        "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap)))"
+      ]
+    },
+    {
+      "round": 6,
+      "method": "popBack",
+      "side": "mold",
+      "started": "2026-11-05T04:25:32.775Z",
+      "load": [
+        2.6,
+        3.63,
+        4.5
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 4.477,
+      "search_ms": 3.365,
+      "terms": [
+        "penultimateRef(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 7,
+      "method": "append",
+      "side": "mold",
+      "started": "2026-11-05T04:25:32.817Z",
+      "load": [
+        2.6,
+        3.63,
+        4.5
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 5.513,
+      "search_ms": 4.181,
+      "terms": [
+        "@x",
+        "last_ptr(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 7,
+      "method": "append",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:32.857Z",
+      "load": [
+        2.6,
+        3.63,
+        4.5
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 365.621,
+      "search_ms": 363.39,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+      ]
+    },
+    {
+      "round": 7,
+      "method": "prepend",
+      "side": "mold",
+      "started": "2026-11-05T04:25:33.260Z",
+      "load": [
+        2.6,
+        3.63,
+        4.5
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 3.31,
+      "search_ms": 1.953,
+      "terms": [
+        "@x",
+        "@thisRef"
+      ]
+    },
+    {
+      "round": 7,
+      "method": "prepend",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:33.298Z",
+      "load": [
+        2.6,
+        3.63,
+        4.5
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 54.103,
+      "search_ms": 52.143,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "freshRefFromHeap(@nodeHeap)"
+      ]
+    },
+    {
+      "round": 7,
+      "method": "insert",
+      "side": "mold",
+      "started": "2026-11-05T04:25:33.392Z",
+      "load": [
+        2.6,
+        3.63,
+        4.5
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 19.906,
+      "search_ms": 17.645,
+      "terms": [
+        "@arg",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+      ]
+    },
+    {
+      "round": 7,
+      "method": "insert",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:33.459Z",
+      "load": [
+        2.6,
+        3.63,
+        4.5
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": false,
+      "total_ms": 15009.969,
+      "search_ms": 15008.398,
+      "terms": [
+        null
+      ]
+    },
+    {
+      "round": 7,
+      "method": "popBack",
+      "side": "mold",
+      "started": "2026-11-05T04:25:48.524Z",
+      "load": [
+        2.48,
+        3.55,
+        4.46
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 4.467,
+      "search_ms": 3.368,
+      "terms": [
+        "penultimateRef(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 7,
+      "method": "popBack",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:48.563Z",
+      "load": [
+        2.68,
+        3.57,
+        4.46
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 103.401,
+      "search_ms": 101.987,
+      "terms": [
+        "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap)))"
+      ]
+    },
+    {
+      "round": 7,
+      "method": "setAt",
+      "side": "mold",
+      "started": "2026-11-05T04:25:48.705Z",
+      "load": [
+        2.68,
+        3.57,
+        4.46
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 9.261,
+      "search_ms": 7.826,
+      "terms": [
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "@b"
+      ]
+    },
+    {
+      "round": 7,
+      "method": "setAt",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:48.756Z",
+      "load": [
+        2.68,
+        3.57,
+        4.46
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 190.95,
+      "search_ms": 189.594,
+      "terms": [
+        "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+      ]
+    },
+    {
+      "round": 8,
+      "method": "prepend",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:48.984Z",
+      "load": [
+        2.68,
+        3.57,
+        4.46
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 62.441,
+      "search_ms": 60.427,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "freshRefFromHeap(@nodeHeap)"
+      ]
+    },
+    {
+      "round": 8,
+      "method": "prepend",
+      "side": "mold",
+      "started": "2026-11-05T04:25:49.096Z",
+      "load": [
+        2.68,
+        3.57,
+        4.46
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 3.754,
+      "search_ms": 2.13,
+      "terms": [
+        "@x",
+        "@thisRef"
+      ]
+    },
+    {
+      "round": 8,
+      "method": "insert",
+      "side": "baseline",
+      "started": "2026-11-05T04:25:49.139Z",
+      "load": [
+        2.68,
+        3.57,
+        4.46
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": false,
+      "total_ms": 15008.093,
+      "search_ms": 15006.654,
+      "terms": [
+        null
+      ]
+    },
+    {
+      "round": 8,
+      "method": "insert",
+      "side": "mold",
+      "started": "2026-11-05T04:26:04.205Z",
+      "load": [
+        2.83,
+        3.56,
+        4.44
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 17.636,
+      "search_ms": 16.049,
+      "terms": [
+        "@arg",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+      ]
+    },
+    {
+      "round": 8,
+      "method": "popBack",
+      "side": "baseline",
+      "started": "2026-11-05T04:26:04.266Z",
+      "load": [
+        2.83,
+        3.56,
+        4.44
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 107.728,
+      "search_ms": 106.189,
+      "terms": [
+        "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap)))"
+      ]
+    },
+    {
+      "round": 8,
+      "method": "popBack",
+      "side": "mold",
+      "started": "2026-11-05T04:26:04.411Z",
+      "load": [
+        2.83,
+        3.56,
+        4.44
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 4.428,
+      "search_ms": 3.331,
+      "terms": [
+        "penultimateRef(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 8,
+      "method": "setAt",
+      "side": "baseline",
+      "started": "2026-11-05T04:26:04.451Z",
+      "load": [
+        2.83,
+        3.56,
+        4.44
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 170.316,
+      "search_ms": 168.681,
+      "terms": [
+        "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+      ]
+    },
+    {
+      "round": 8,
+      "method": "setAt",
+      "side": "mold",
+      "started": "2026-11-05T04:26:04.658Z",
+      "load": [
+        2.83,
+        3.56,
+        4.44
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 9.162,
+      "search_ms": 7.778,
+      "terms": [
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "@b"
+      ]
+    },
+    {
+      "round": 8,
+      "method": "append",
+      "side": "baseline",
+      "started": "2026-11-05T04:26:04.707Z",
+      "load": [
+        2.83,
+        3.56,
+        4.44
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 333.819,
+      "search_ms": 332.491,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+      ]
+    },
+    {
+      "round": 8,
+      "method": "append",
+      "side": "mold",
+      "started": "2026-11-05T04:26:05.080Z",
+      "load": [
+        2.83,
+        3.56,
+        4.44
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 5.526,
+      "search_ms": 4.2,
+      "terms": [
+        "@x",
+        "last_ptr(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 9,
+      "method": "insert",
+      "side": "mold",
+      "started": "2026-11-05T04:26:05.120Z",
+      "load": [
+        2.83,
+        3.56,
+        4.44
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 16.589,
+      "search_ms": 15.023,
+      "terms": [
+        "@arg",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+      ]
+    },
+    {
+      "round": 9,
+      "method": "insert",
+      "side": "baseline",
+      "started": "2026-11-05T04:26:05.181Z",
+      "load": [
+        2.83,
+        3.56,
+        4.44
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": false,
+      "total_ms": 15000.996,
+      "search_ms": 14999.632,
+      "terms": [
+        null
+      ]
+    },
+    {
+      "round": 9,
+      "method": "popBack",
+      "side": "mold",
+      "started": "2026-11-05T04:26:20.230Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 4.563,
+      "search_ms": 3.441,
+      "terms": [
+        "penultimateRef(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 9,
+      "method": "popBack",
+      "side": "baseline",
+      "started": "2026-11-05T04:26:20.269Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 101.89,
+      "search_ms": 100.389,
+      "terms": [
+        "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap)))"
+      ]
+    },
+    {
+      "round": 9,
+      "method": "setAt",
+      "side": "mold",
+      "started": "2026-11-05T04:26:20.408Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 10.031,
+      "search_ms": 8.358,
+      "terms": [
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "@b"
+      ]
+    },
+    {
+      "round": 9,
+      "method": "setAt",
+      "side": "baseline",
+      "started": "2026-11-05T04:26:20.457Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 184.854,
+      "search_ms": 183.483,
+      "terms": [
+        "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+      ]
+    },
+    {
+      "round": 9,
+      "method": "append",
+      "side": "mold",
+      "started": "2026-11-05T04:26:20.678Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 5.507,
+      "search_ms": 4.173,
+      "terms": [
+        "@x",
+        "last_ptr(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 9,
+      "method": "append",
+      "side": "baseline",
+      "started": "2026-11-05T04:26:20.719Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 357.501,
+      "search_ms": 356.159,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+      ]
+    },
+    {
+      "round": 9,
+      "method": "prepend",
+      "side": "mold",
+      "started": "2026-11-05T04:26:21.113Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 3.108,
+      "search_ms": 1.751,
+      "terms": [
+        "@x",
+        "@thisRef"
+      ]
+    },
+    {
+      "round": 9,
+      "method": "prepend",
+      "side": "baseline",
+      "started": "2026-11-05T04:26:21.151Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 57.613,
+      "search_ms": 55.923,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "freshRefFromHeap(@nodeHeap)"
+      ]
+    },
+    {
+      "round": 10,
+      "method": "popBack",
+      "side": "baseline",
+      "started": "2026-11-05T04:26:21.250Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 102.895,
+      "search_ms": 101.355,
+      "terms": [
+        "pairHeap(@fHeap, storeAtRef(@gHeap, penultimateRef(@thisRef, @gHeap), penultimateRef(last_ptr(@thisRef, @gHeap), @gHeap)))"
+      ]
+    },
+    {
+      "round": 10,
+      "method": "popBack",
+      "side": "mold",
+      "started": "2026-11-05T04:26:21.391Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 4.558,
+      "search_ms": 3.459,
+      "terms": [
+        "penultimateRef(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 10,
+      "method": "setAt",
+      "side": "baseline",
+      "started": "2026-11-05T04:26:21.430Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 188.438,
+      "search_ms": 186.891,
+      "terms": [
+        "pairHeap(storeAtRef(@fHeap, nthNextRef(@thisRef, @nodeHeap, @gHeap, @arg0), @arg1), @gHeap)"
+      ]
+    },
+    {
+      "round": 10,
+      "method": "setAt",
+      "side": "mold",
+      "started": "2026-11-05T04:26:21.655Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 9.258,
+      "search_ms": 7.875,
+      "terms": [
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @a)",
+        "@b"
+      ]
+    },
+    {
+      "round": 10,
+      "method": "append",
+      "side": "baseline",
+      "started": "2026-11-05T04:26:21.704Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 349.47,
+      "search_ms": 348.128,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, dec(length(@nodeHeap)), freshRefFromHeap(@nodeHeap)))"
+      ]
+    },
+    {
+      "round": 10,
+      "method": "append",
+      "side": "mold",
+      "started": "2026-11-05T04:26:22.091Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 5.523,
+      "search_ms": 3.987,
+      "terms": [
+        "@x",
+        "last_ptr(@thisRef, @nextHeap)"
+      ]
+    },
+    {
+      "round": 10,
+      "method": "prepend",
+      "side": "baseline",
+      "started": "2026-11-05T04:26:22.132Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 50.679,
+      "search_ms": 49.01,
+      "terms": [
+        "pairHeap(insert(@fHeap, @arg0, @arg0), insert(@gHeap, @arg0, @thisRef))",
+        "freshRefFromHeap(@nodeHeap)"
+      ]
+    },
+    {
+      "round": 10,
+      "method": "prepend",
+      "side": "mold",
+      "started": "2026-11-05T04:26:22.223Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 3.064,
+      "search_ms": 1.724,
+      "terms": [
+        "@x",
+        "@thisRef"
+      ]
+    },
+    {
+      "round": 10,
+      "method": "insert",
+      "side": "baseline",
+      "started": "2026-11-05T04:26:22.260Z",
+      "load": [
+        2.64,
+        3.48,
+        4.4
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": false,
+      "total_ms": 15000.268,
+      "search_ms": 14998.743,
+      "terms": [
+        null
+      ]
+    },
+    {
+      "round": 10,
+      "method": "insert",
+      "side": "mold",
+      "started": "2026-11-05T04:26:37.310Z",
+      "load": [
+        2.35,
+        3.38,
+        4.34
+      ],
+      "status": 0,
+      "signal": null,
+      "solved": true,
+      "total_ms": 18.646,
+      "search_ms": 16.723,
+      "terms": [
+        "@arg",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, inc(@i))",
+        "nthNextRef(@thisRef, @nodeHeap, @nextHeap, @i)"
+      ]
+    }
+  ]
+}

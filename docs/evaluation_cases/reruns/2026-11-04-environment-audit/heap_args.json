@@ -1,0 +1,929 @@
+{
+  "list/MOLD": {
+    "task": "popBack_h0",
+    "inputs": [
+      "thisRef:Ref[Object<Node>]",
+      "nodeHeap:List[Object<Node>]",
+      "nextHeap:List[Object<Node>]",
+      "valHeap:List[Int]"
+    ],
+    "components": {
+      "last_ptr": {
+        "type": "Ref[?0] × List[?0] → Ref[?0]",
+        "applications": [
+          "last_ptr(@thisRef, @nodeHeap)",
+          "last_ptr(@thisRef, @nextHeap)"
+        ]
+      },
+      "penultimateRef": {
+        "type": "Ref[?0] × List[?0] → Ref[?0]",
+        "applications": [
+          "penultimateRef(@thisRef, @nodeHeap)",
+          "penultimateRef(@thisRef, @nextHeap)"
+        ]
+      },
+      "nthNextRef": {
+        "type": "Ref[?0] × List[?0] × List[?0] × Int → Ref[?0]",
+        "applications": [
+          "nthNextRef(@thisRef, @nodeHeap, @nodeHeap, zero())",
+          "nthNextRef(@thisRef, @nodeHeap, @nextHeap, zero())",
+          "nthNextRef(@thisRef, @nextHeap, @nodeHeap, zero())",
+          "nthNextRef(@thisRef, @nextHeap, @nextHeap, zero())"
+        ]
+      },
+      "findByValueRef": {
+        "type": "Ref[?0] × List[?0] × List[?0] × List[Int] × Int → Ref[?0]",
+        "applications": [
+          "findByValueRef(@thisRef, @nodeHeap, @nodeHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @nodeHeap, @nextHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @nextHeap, @nodeHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @nextHeap, @nextHeap, @valHeap, zero())"
+        ]
+      },
+      "nextOf": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Object<Node>] → Ref[Object<Node>]",
+        "applications": [
+          "nextOf(@thisRef, @nodeHeap, @nodeHeap)",
+          "nextOf(@thisRef, @nodeHeap, @nextHeap)",
+          "nextOf(@thisRef, @nextHeap, @nodeHeap)",
+          "nextOf(@thisRef, @nextHeap, @nextHeap)"
+        ]
+      },
+      "hasNext": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Object<Node>] → Bool",
+        "applications": [
+          "hasNext(@thisRef, @nodeHeap, @nodeHeap)",
+          "hasNext(@thisRef, @nodeHeap, @nextHeap)",
+          "hasNext(@thisRef, @nextHeap, @nodeHeap)",
+          "hasNext(@thisRef, @nextHeap, @nextHeap)"
+        ]
+      },
+      "valOf": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Int] → Ref[Int]",
+        "applications": [
+          "valOf(@thisRef, @nodeHeap, @valHeap)",
+          "valOf(@thisRef, @nextHeap, @valHeap)"
+        ]
+      },
+      "hasVal": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Int] → Bool",
+        "applications": [
+          "hasVal(@thisRef, @nodeHeap, @valHeap)",
+          "hasVal(@thisRef, @nextHeap, @valHeap)"
+        ]
+      },
+      "loadInt": {
+        "type": "List[Int] × Ref[Int] → Int",
+        "applications": []
+      }
+    }
+  },
+  "list/paper as published": {
+    "task": "popBack-fixed-fHeap",
+    "inputs": [
+      "thisRef:Ref[Object<Obj>]",
+      "nodeHeap:List[Object<Obj>]",
+      "fHeap:List[Int]",
+      "gHeap:List[Ref[Object<Obj>]]"
+    ],
+    "components": {
+      "head": {
+        "type": "List[?0] → ?0",
+        "applications": [
+          "head(@nodeHeap)",
+          "head(@fHeap)",
+          "head(@gHeap)"
+        ]
+      },
+      "tail": {
+        "type": "List[?0] → List[?0]",
+        "applications": [
+          "tail(@nodeHeap)",
+          "tail(@fHeap)",
+          "tail(@gHeap)"
+        ]
+      },
+      "cons": {
+        "type": "?0 × List[?0] → List[?0]",
+        "applications": [
+          "cons(@thisRef, @gHeap)",
+          "cons(zero(), @fHeap)"
+        ]
+      },
+      "concat": {
+        "type": "List[?0] × List[?0] → List[?0]",
+        "applications": [
+          "concat(@nodeHeap, @nodeHeap)",
+          "concat(@fHeap, @fHeap)",
+          "concat(@gHeap, @gHeap)"
+        ]
+      },
+      "insert": {
+        "type": "List[?0] × Int × ?0 → List[?0]",
+        "applications": [
+          "insert(@fHeap, zero(), zero())",
+          "insert(@gHeap, zero(), @thisRef)"
+        ]
+      },
+      "length": {
+        "type": "List[?0] → Int",
+        "applications": [
+          "length(@nodeHeap)",
+          "length(@fHeap)",
+          "length(@gHeap)"
+        ]
+      },
+      "nthNextRef": {
+        "type": "Ref[?0] × List[?0] × List[?0] × Int → Ref[?0]",
+        "applications": [
+          "nthNextRef(@thisRef, @nodeHeap, @nodeHeap, zero())"
+        ]
+      },
+      "last_ptr": {
+        "type": "Ref[?0] × List[?0] → Ref[?0]",
+        "applications": [
+          "last_ptr(@thisRef, @nodeHeap)"
+        ]
+      },
+      "penultimateRef": {
+        "type": "Ref[?0] × List[?0] → Ref[?0]",
+        "applications": [
+          "penultimateRef(@thisRef, @nodeHeap)"
+        ]
+      },
+      "storeAtRef": {
+        "type": "List[?0] × Ref[?1] × ?0 → List[?0]",
+        "applications": [
+          "storeAtRef(@fHeap, @thisRef, zero())",
+          "storeAtRef(@gHeap, @thisRef, @thisRef)"
+        ]
+      },
+      "freshRefFromHeap": {
+        "type": "List[?0] → Ref[?0]",
+        "applications": [
+          "freshRefFromHeap(@nodeHeap)",
+          "freshRefFromHeap(@fHeap)",
+          "freshRefFromHeap(@gHeap)"
+        ]
+      },
+      "loadInt": {
+        "type": "List[Int] × Ref[Int] → Int",
+        "applications": []
+      }
+    }
+  },
+  "list/paper retyped (followthrough)": {
+    "task": "popBack-fixed-fHeap",
+    "inputs": [
+      "thisRef:Ref[Object<Obj>]",
+      "nodeHeap:List[Object<Obj>]",
+      "fHeap:List[Int]",
+      "gHeap:List[Ref[Object<Obj>]]"
+    ],
+    "components": {
+      "head": {
+        "type": "List[?0] → ?0",
+        "applications": [
+          "head(@nodeHeap)",
+          "head(@fHeap)",
+          "head(@gHeap)"
+        ]
+      },
+      "tail": {
+        "type": "List[?0] → List[?0]",
+        "applications": [
+          "tail(@nodeHeap)",
+          "tail(@fHeap)",
+          "tail(@gHeap)"
+        ]
+      },
+      "cons": {
+        "type": "?0 × List[?0] → List[?0]",
+        "applications": [
+          "cons(@thisRef, @gHeap)",
+          "cons(zero(), @fHeap)"
+        ]
+      },
+      "concat": {
+        "type": "List[?0] × List[?0] → List[?0]",
+        "applications": [
+          "concat(@nodeHeap, @nodeHeap)",
+          "concat(@fHeap, @fHeap)",
+          "concat(@gHeap, @gHeap)"
+        ]
+      },
+      "insert": {
+        "type": "List[?0] × Int × ?0 → List[?0]",
+        "applications": [
+          "insert(@fHeap, zero(), zero())",
+          "insert(@gHeap, zero(), @thisRef)"
+        ]
+      },
+      "length": {
+        "type": "List[?0] → Int",
+        "applications": [
+          "length(@nodeHeap)",
+          "length(@fHeap)",
+          "length(@gHeap)"
+        ]
+      },
+      "nthNextRef": {
+        "type": "Ref[Object<Obj>] × List[Object<Obj>] × List[Ref[Object<Obj>]] × Int → Ref[Object<Obj>]",
+        "applications": [
+          "nthNextRef(@thisRef, @nodeHeap, @gHeap, zero())"
+        ]
+      },
+      "last_ptr": {
+        "type": "Ref[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+        "applications": [
+          "last_ptr(@thisRef, @gHeap)"
+        ]
+      },
+      "penultimateRef": {
+        "type": "Ref[Object<Obj>] × List[Ref[Object<Obj>]] → Ref[Object<Obj>]",
+        "applications": [
+          "penultimateRef(@thisRef, @gHeap)"
+        ]
+      },
+      "storeAtRef": {
+        "type": "List[?0] × Ref[?1] × ?0 → List[?0]",
+        "applications": [
+          "storeAtRef(@fHeap, @thisRef, zero())",
+          "storeAtRef(@gHeap, @thisRef, @thisRef)"
+        ]
+      },
+      "freshRefFromHeap": {
+        "type": "List[?0] → Ref[?0]",
+        "applications": [
+          "freshRefFromHeap(@nodeHeap)",
+          "freshRefFromHeap(@fHeap)",
+          "freshRefFromHeap(@gHeap)"
+        ]
+      },
+      "loadInt": {
+        "type": "List[Int] × Ref[Int] → Int",
+        "applications": []
+      }
+    }
+  },
+  "tree/MOLD": {
+    "task": "rotateLeft_h0",
+    "inputs": [
+      "thisRef:Ref[Object<TreeNode>]",
+      "nodeHeap:List[Object<TreeNode>]",
+      "leftHeap:List[Object<TreeNode>]",
+      "rightHeap:List[Object<TreeNode>]",
+      "valHeap:List[Int]"
+    ],
+    "components": {
+      "last_ptr": {
+        "type": "Ref[?0] × List[?0] → Ref[?0]",
+        "applications": [
+          "last_ptr(@thisRef, @nodeHeap)",
+          "last_ptr(@thisRef, @leftHeap)",
+          "last_ptr(@thisRef, @rightHeap)"
+        ]
+      },
+      "penultimateRef": {
+        "type": "Ref[?0] × List[?0] → Ref[?0]",
+        "applications": [
+          "penultimateRef(@thisRef, @nodeHeap)",
+          "penultimateRef(@thisRef, @leftHeap)",
+          "penultimateRef(@thisRef, @rightHeap)"
+        ]
+      },
+      "nthNextRef": {
+        "type": "Ref[?0] × List[?0] × List[?0] × Int → Ref[?0]",
+        "applications": [
+          "nthNextRef(@thisRef, @nodeHeap, @nodeHeap, zero())",
+          "nthNextRef(@thisRef, @nodeHeap, @leftHeap, zero())",
+          "nthNextRef(@thisRef, @nodeHeap, @rightHeap, zero())",
+          "nthNextRef(@thisRef, @leftHeap, @nodeHeap, zero())",
+          "nthNextRef(@thisRef, @leftHeap, @leftHeap, zero())",
+          "nthNextRef(@thisRef, @leftHeap, @rightHeap, zero())",
+          "nthNextRef(@thisRef, @rightHeap, @nodeHeap, zero())",
+          "nthNextRef(@thisRef, @rightHeap, @leftHeap, zero())",
+          "nthNextRef(@thisRef, @rightHeap, @rightHeap, zero())"
+        ]
+      },
+      "findByValueRef": {
+        "type": "Ref[?0] × List[?0] × List[?0] × List[Int] × Int → Ref[?0]",
+        "applications": [
+          "findByValueRef(@thisRef, @nodeHeap, @nodeHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @nodeHeap, @leftHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @nodeHeap, @rightHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @leftHeap, @nodeHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @leftHeap, @leftHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @leftHeap, @rightHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @rightHeap, @nodeHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @rightHeap, @leftHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @rightHeap, @rightHeap, @valHeap, zero())"
+        ]
+      },
+      "leftOf": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Object<TreeNode>] → Ref[Object<TreeNode>]",
+        "applications": [
+          "leftOf(@thisRef, @nodeHeap, @nodeHeap)",
+          "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+          "leftOf(@thisRef, @nodeHeap, @rightHeap)",
+          "leftOf(@thisRef, @leftHeap, @nodeHeap)",
+          "leftOf(@thisRef, @leftHeap, @leftHeap)",
+          "leftOf(@thisRef, @leftHeap, @rightHeap)",
+          "leftOf(@thisRef, @rightHeap, @nodeHeap)",
+          "leftOf(@thisRef, @rightHeap, @leftHeap)",
+          "leftOf(@thisRef, @rightHeap, @rightHeap)"
+        ]
+      },
+      "hasLeft": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Object<TreeNode>] → Bool",
+        "applications": [
+          "hasLeft(@thisRef, @nodeHeap, @nodeHeap)",
+          "hasLeft(@thisRef, @nodeHeap, @leftHeap)",
+          "hasLeft(@thisRef, @nodeHeap, @rightHeap)",
+          "hasLeft(@thisRef, @leftHeap, @nodeHeap)",
+          "hasLeft(@thisRef, @leftHeap, @leftHeap)",
+          "hasLeft(@thisRef, @leftHeap, @rightHeap)",
+          "hasLeft(@thisRef, @rightHeap, @nodeHeap)",
+          "hasLeft(@thisRef, @rightHeap, @leftHeap)",
+          "hasLeft(@thisRef, @rightHeap, @rightHeap)"
+        ]
+      },
+      "rightOf": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Object<TreeNode>] → Ref[Object<TreeNode>]",
+        "applications": [
+          "rightOf(@thisRef, @nodeHeap, @nodeHeap)",
+          "rightOf(@thisRef, @nodeHeap, @leftHeap)",
+          "rightOf(@thisRef, @nodeHeap, @rightHeap)",
+          "rightOf(@thisRef, @leftHeap, @nodeHeap)",
+          "rightOf(@thisRef, @leftHeap, @leftHeap)",
+          "rightOf(@thisRef, @leftHeap, @rightHeap)",
+          "rightOf(@thisRef, @rightHeap, @nodeHeap)",
+          "rightOf(@thisRef, @rightHeap, @leftHeap)",
+          "rightOf(@thisRef, @rightHeap, @rightHeap)"
+        ]
+      },
+      "hasRight": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Object<TreeNode>] → Bool",
+        "applications": [
+          "hasRight(@thisRef, @nodeHeap, @nodeHeap)",
+          "hasRight(@thisRef, @nodeHeap, @leftHeap)",
+          "hasRight(@thisRef, @nodeHeap, @rightHeap)",
+          "hasRight(@thisRef, @leftHeap, @nodeHeap)",
+          "hasRight(@thisRef, @leftHeap, @leftHeap)",
+          "hasRight(@thisRef, @leftHeap, @rightHeap)",
+          "hasRight(@thisRef, @rightHeap, @nodeHeap)",
+          "hasRight(@thisRef, @rightHeap, @leftHeap)",
+          "hasRight(@thisRef, @rightHeap, @rightHeap)"
+        ]
+      },
+      "valOf": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Int] → Ref[Int]",
+        "applications": [
+          "valOf(@thisRef, @nodeHeap, @valHeap)",
+          "valOf(@thisRef, @leftHeap, @valHeap)",
+          "valOf(@thisRef, @rightHeap, @valHeap)"
+        ]
+      },
+      "hasVal": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Int] → Bool",
+        "applications": [
+          "hasVal(@thisRef, @nodeHeap, @valHeap)",
+          "hasVal(@thisRef, @leftHeap, @valHeap)",
+          "hasVal(@thisRef, @rightHeap, @valHeap)"
+        ]
+      },
+      "loadInt": {
+        "type": "List[Int] × Ref[Int] → Int",
+        "applications": []
+      }
+    }
+  },
+  "tree/2026-10-30 baseline": {
+    "task": "rotateLeft-whole-leftHeap",
+    "inputs": [
+      "thisRef:Ref[Object<TreeNode>]",
+      "nodeHeap:List[Object<TreeNode>]",
+      "leftHeap:List[Ref[Object<TreeNode>]]",
+      "rightHeap:List[Ref[Object<TreeNode>]]",
+      "valHeap:List[Int]"
+    ],
+    "components": {
+      "last_ptr": {
+        "type": "Ref[?0] × List[?0] → Ref[?0]",
+        "applications": [
+          "last_ptr(@thisRef, @nodeHeap)"
+        ]
+      },
+      "penultimateRef": {
+        "type": "Ref[?0] × List[?0] → Ref[?0]",
+        "applications": [
+          "penultimateRef(@thisRef, @nodeHeap)"
+        ]
+      },
+      "nthNextRef": {
+        "type": "Ref[?0] × List[?0] × List[?0] × Int → Ref[?0]",
+        "applications": [
+          "nthNextRef(@thisRef, @nodeHeap, @nodeHeap, zero())"
+        ]
+      },
+      "findByValueRef": {
+        "type": "Ref[?0] × List[?0] × List[?0] × List[Int] × Int → Ref[?0]",
+        "applications": [
+          "findByValueRef(@thisRef, @nodeHeap, @nodeHeap, @valHeap, zero())"
+        ]
+      },
+      "storeAtRef": {
+        "type": "List[?0] × Ref[?1] × ?0 → List[?0]",
+        "applications": [
+          "storeAtRef(@leftHeap, @thisRef, @thisRef)",
+          "storeAtRef(@rightHeap, @thisRef, @thisRef)",
+          "storeAtRef(@valHeap, @thisRef, zero())"
+        ]
+      },
+      "freshRefFromHeap": {
+        "type": "List[?0] → Ref[?0]",
+        "applications": [
+          "freshRefFromHeap(@nodeHeap)",
+          "freshRefFromHeap(@leftHeap)",
+          "freshRefFromHeap(@rightHeap)",
+          "freshRefFromHeap(@valHeap)"
+        ]
+      },
+      "leftOf": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Ref[Object<TreeNode>]] → Ref[Object<TreeNode>]",
+        "applications": [
+          "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+          "leftOf(@thisRef, @nodeHeap, @rightHeap)"
+        ]
+      },
+      "hasLeft": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Ref[Object<TreeNode>]] → Bool",
+        "applications": [
+          "hasLeft(@thisRef, @nodeHeap, @leftHeap)",
+          "hasLeft(@thisRef, @nodeHeap, @rightHeap)"
+        ]
+      },
+      "rightOf": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Ref[Object<TreeNode>]] → Ref[Object<TreeNode>]",
+        "applications": [
+          "rightOf(@thisRef, @nodeHeap, @leftHeap)",
+          "rightOf(@thisRef, @nodeHeap, @rightHeap)"
+        ]
+      },
+      "hasRight": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Ref[Object<TreeNode>]] → Bool",
+        "applications": [
+          "hasRight(@thisRef, @nodeHeap, @leftHeap)",
+          "hasRight(@thisRef, @nodeHeap, @rightHeap)"
+        ]
+      },
+      "valOf": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Int] → Ref[Int]",
+        "applications": [
+          "valOf(@thisRef, @nodeHeap, @valHeap)"
+        ]
+      },
+      "hasVal": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Int] → Bool",
+        "applications": [
+          "hasVal(@thisRef, @nodeHeap, @valHeap)"
+        ]
+      },
+      "loadInt": {
+        "type": "List[Int] × Ref[Int] → Int",
+        "applications": []
+      }
+    }
+  },
+  "tree/2026-10-30 baseline +list": {
+    "task": "rotateLeft-whole-leftHeap+list",
+    "inputs": [
+      "thisRef:Ref[Object<TreeNode>]",
+      "nodeHeap:List[Object<TreeNode>]",
+      "leftHeap:List[Ref[Object<TreeNode>]]",
+      "rightHeap:List[Ref[Object<TreeNode>]]",
+      "valHeap:List[Int]"
+    ],
+    "components": {
+      "storeAtRef": {
+        "type": "List[?0] × Ref[?1] × ?0 → List[?0]",
+        "applications": [
+          "storeAtRef(@leftHeap, @thisRef, @thisRef)",
+          "storeAtRef(@rightHeap, @thisRef, @thisRef)",
+          "storeAtRef(@valHeap, @thisRef, zero())"
+        ]
+      },
+      "freshRefFromHeap": {
+        "type": "List[?0] → Ref[?0]",
+        "applications": [
+          "freshRefFromHeap(@nodeHeap)",
+          "freshRefFromHeap(@leftHeap)",
+          "freshRefFromHeap(@rightHeap)",
+          "freshRefFromHeap(@valHeap)"
+        ]
+      },
+      "last_ptr": {
+        "type": "Ref[Object<TreeNode>] × List[Ref[Object<TreeNode>]] → Ref[Object<TreeNode>]",
+        "applications": [
+          "last_ptr(@thisRef, @leftHeap)",
+          "last_ptr(@thisRef, @rightHeap)"
+        ]
+      },
+      "penultimateRef": {
+        "type": "Ref[Object<TreeNode>] × List[Ref[Object<TreeNode>]] → Ref[Object<TreeNode>]",
+        "applications": [
+          "penultimateRef(@thisRef, @leftHeap)",
+          "penultimateRef(@thisRef, @rightHeap)"
+        ]
+      },
+      "nthNextRef": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Ref[Object<TreeNode>]] × Int → Ref[Object<TreeNode>]",
+        "applications": [
+          "nthNextRef(@thisRef, @nodeHeap, @leftHeap, zero())",
+          "nthNextRef(@thisRef, @nodeHeap, @rightHeap, zero())"
+        ]
+      },
+      "findByValueRef": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Ref[Object<TreeNode>]] × List[Int] × Int → Ref[Object<TreeNode>]",
+        "applications": [
+          "findByValueRef(@thisRef, @nodeHeap, @leftHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @nodeHeap, @rightHeap, @valHeap, zero())"
+        ]
+      },
+      "leftOf": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Ref[Object<TreeNode>]] → Ref[Object<TreeNode>]",
+        "applications": [
+          "leftOf(@thisRef, @nodeHeap, @leftHeap)",
+          "leftOf(@thisRef, @nodeHeap, @rightHeap)"
+        ]
+      },
+      "hasLeft": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Ref[Object<TreeNode>]] → Bool",
+        "applications": [
+          "hasLeft(@thisRef, @nodeHeap, @leftHeap)",
+          "hasLeft(@thisRef, @nodeHeap, @rightHeap)"
+        ]
+      },
+      "rightOf": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Ref[Object<TreeNode>]] → Ref[Object<TreeNode>]",
+        "applications": [
+          "rightOf(@thisRef, @nodeHeap, @leftHeap)",
+          "rightOf(@thisRef, @nodeHeap, @rightHeap)"
+        ]
+      },
+      "hasRight": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Ref[Object<TreeNode>]] → Bool",
+        "applications": [
+          "hasRight(@thisRef, @nodeHeap, @leftHeap)",
+          "hasRight(@thisRef, @nodeHeap, @rightHeap)"
+        ]
+      },
+      "valOf": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Int] → Ref[Int]",
+        "applications": [
+          "valOf(@thisRef, @nodeHeap, @valHeap)"
+        ]
+      },
+      "hasVal": {
+        "type": "Ref[Object<TreeNode>] × List[Object<TreeNode>] × List[Int] → Bool",
+        "applications": [
+          "hasVal(@thisRef, @nodeHeap, @valHeap)"
+        ]
+      },
+      "loadInt": {
+        "type": "List[Int] × Ref[Int] → Int",
+        "applications": []
+      }
+    }
+  },
+  "dll/MOLD": {
+    "task": "unlink_h0",
+    "inputs": [
+      "thisRef:Ref[Object<Node>]",
+      "nodeHeap:List[Object<Node>]",
+      "nextHeap:List[Object<Node>]",
+      "prevHeap:List[Object<Node>]",
+      "valHeap:List[Int]"
+    ],
+    "components": {
+      "last_ptr": {
+        "type": "Ref[?0] × List[?0] → Ref[?0]",
+        "applications": [
+          "last_ptr(@thisRef, @nodeHeap)",
+          "last_ptr(@thisRef, @nextHeap)",
+          "last_ptr(@thisRef, @prevHeap)"
+        ]
+      },
+      "penultimateRef": {
+        "type": "Ref[?0] × List[?0] → Ref[?0]",
+        "applications": [
+          "penultimateRef(@thisRef, @nodeHeap)",
+          "penultimateRef(@thisRef, @nextHeap)",
+          "penultimateRef(@thisRef, @prevHeap)"
+        ]
+      },
+      "nthNextRef": {
+        "type": "Ref[?0] × List[?0] × List[?0] × Int → Ref[?0]",
+        "applications": [
+          "nthNextRef(@thisRef, @nodeHeap, @nodeHeap, zero())",
+          "nthNextRef(@thisRef, @nodeHeap, @nextHeap, zero())",
+          "nthNextRef(@thisRef, @nodeHeap, @prevHeap, zero())",
+          "nthNextRef(@thisRef, @nextHeap, @nodeHeap, zero())",
+          "nthNextRef(@thisRef, @nextHeap, @nextHeap, zero())",
+          "nthNextRef(@thisRef, @nextHeap, @prevHeap, zero())",
+          "nthNextRef(@thisRef, @prevHeap, @nodeHeap, zero())",
+          "nthNextRef(@thisRef, @prevHeap, @nextHeap, zero())",
+          "nthNextRef(@thisRef, @prevHeap, @prevHeap, zero())"
+        ]
+      },
+      "findByValueRef": {
+        "type": "Ref[?0] × List[?0] × List[?0] × List[Int] × Int → Ref[?0]",
+        "applications": [
+          "findByValueRef(@thisRef, @nodeHeap, @nodeHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @nodeHeap, @nextHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @nodeHeap, @prevHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @nextHeap, @nodeHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @nextHeap, @nextHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @nextHeap, @prevHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @prevHeap, @nodeHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @prevHeap, @nextHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @prevHeap, @prevHeap, @valHeap, zero())"
+        ]
+      },
+      "nextOf": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Object<Node>] → Ref[Object<Node>]",
+        "applications": [
+          "nextOf(@thisRef, @nodeHeap, @nodeHeap)",
+          "nextOf(@thisRef, @nodeHeap, @nextHeap)",
+          "nextOf(@thisRef, @nodeHeap, @prevHeap)",
+          "nextOf(@thisRef, @nextHeap, @nodeHeap)",
+          "nextOf(@thisRef, @nextHeap, @nextHeap)",
+          "nextOf(@thisRef, @nextHeap, @prevHeap)",
+          "nextOf(@thisRef, @prevHeap, @nodeHeap)",
+          "nextOf(@thisRef, @prevHeap, @nextHeap)",
+          "nextOf(@thisRef, @prevHeap, @prevHeap)"
+        ]
+      },
+      "hasNext": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Object<Node>] → Bool",
+        "applications": [
+          "hasNext(@thisRef, @nodeHeap, @nodeHeap)",
+          "hasNext(@thisRef, @nodeHeap, @nextHeap)",
+          "hasNext(@thisRef, @nodeHeap, @prevHeap)",
+          "hasNext(@thisRef, @nextHeap, @nodeHeap)",
+          "hasNext(@thisRef, @nextHeap, @nextHeap)",
+          "hasNext(@thisRef, @nextHeap, @prevHeap)",
+          "hasNext(@thisRef, @prevHeap, @nodeHeap)",
+          "hasNext(@thisRef, @prevHeap, @nextHeap)",
+          "hasNext(@thisRef, @prevHeap, @prevHeap)"
+        ]
+      },
+      "prevOf": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Object<Node>] → Ref[Object<Node>]",
+        "applications": [
+          "prevOf(@thisRef, @nodeHeap, @nodeHeap)",
+          "prevOf(@thisRef, @nodeHeap, @nextHeap)",
+          "prevOf(@thisRef, @nodeHeap, @prevHeap)",
+          "prevOf(@thisRef, @nextHeap, @nodeHeap)",
+          "prevOf(@thisRef, @nextHeap, @nextHeap)",
+          "prevOf(@thisRef, @nextHeap, @prevHeap)",
+          "prevOf(@thisRef, @prevHeap, @nodeHeap)",
+          "prevOf(@thisRef, @prevHeap, @nextHeap)",
+          "prevOf(@thisRef, @prevHeap, @prevHeap)"
+        ]
+      },
+      "hasPrev": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Object<Node>] → Bool",
+        "applications": [
+          "hasPrev(@thisRef, @nodeHeap, @nodeHeap)",
+          "hasPrev(@thisRef, @nodeHeap, @nextHeap)",
+          "hasPrev(@thisRef, @nodeHeap, @prevHeap)",
+          "hasPrev(@thisRef, @nextHeap, @nodeHeap)",
+          "hasPrev(@thisRef, @nextHeap, @nextHeap)",
+          "hasPrev(@thisRef, @nextHeap, @prevHeap)",
+          "hasPrev(@thisRef, @prevHeap, @nodeHeap)",
+          "hasPrev(@thisRef, @prevHeap, @nextHeap)",
+          "hasPrev(@thisRef, @prevHeap, @prevHeap)"
+        ]
+      },
+      "valOf": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Int] → Ref[Int]",
+        "applications": [
+          "valOf(@thisRef, @nodeHeap, @valHeap)",
+          "valOf(@thisRef, @nextHeap, @valHeap)",
+          "valOf(@thisRef, @prevHeap, @valHeap)"
+        ]
+      },
+      "hasVal": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Int] → Bool",
+        "applications": [
+          "hasVal(@thisRef, @nodeHeap, @valHeap)",
+          "hasVal(@thisRef, @nextHeap, @valHeap)",
+          "hasVal(@thisRef, @prevHeap, @valHeap)"
+        ]
+      },
+      "loadInt": {
+        "type": "List[Int] × Ref[Int] → Int",
+        "applications": []
+      }
+    }
+  },
+  "dll/2026-10-30 baseline": {
+    "task": "unlink-whole-nextHeap",
+    "inputs": [
+      "thisRef:Ref[Object<Node>]",
+      "nodeHeap:List[Object<Node>]",
+      "nextHeap:List[Ref[Object<Node>]]",
+      "prevHeap:List[Ref[Object<Node>]]",
+      "valHeap:List[Int]"
+    ],
+    "components": {
+      "last_ptr": {
+        "type": "Ref[?0] × List[?0] → Ref[?0]",
+        "applications": [
+          "last_ptr(@thisRef, @nodeHeap)"
+        ]
+      },
+      "penultimateRef": {
+        "type": "Ref[?0] × List[?0] → Ref[?0]",
+        "applications": [
+          "penultimateRef(@thisRef, @nodeHeap)"
+        ]
+      },
+      "nthNextRef": {
+        "type": "Ref[?0] × List[?0] × List[?0] × Int → Ref[?0]",
+        "applications": [
+          "nthNextRef(@thisRef, @nodeHeap, @nodeHeap, zero())"
+        ]
+      },
+      "findByValueRef": {
+        "type": "Ref[?0] × List[?0] × List[?0] × List[Int] × Int → Ref[?0]",
+        "applications": [
+          "findByValueRef(@thisRef, @nodeHeap, @nodeHeap, @valHeap, zero())"
+        ]
+      },
+      "storeAtRef": {
+        "type": "List[?0] × Ref[?1] × ?0 → List[?0]",
+        "applications": [
+          "storeAtRef(@nextHeap, @thisRef, @thisRef)",
+          "storeAtRef(@prevHeap, @thisRef, @thisRef)",
+          "storeAtRef(@valHeap, @thisRef, zero())"
+        ]
+      },
+      "freshRefFromHeap": {
+        "type": "List[?0] → Ref[?0]",
+        "applications": [
+          "freshRefFromHeap(@nodeHeap)",
+          "freshRefFromHeap(@nextHeap)",
+          "freshRefFromHeap(@prevHeap)",
+          "freshRefFromHeap(@valHeap)"
+        ]
+      },
+      "nextOf": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Ref[Object<Node>]] → Ref[Object<Node>]",
+        "applications": [
+          "nextOf(@thisRef, @nodeHeap, @nextHeap)",
+          "nextOf(@thisRef, @nodeHeap, @prevHeap)"
+        ]
+      },
+      "hasNext": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Ref[Object<Node>]] → Bool",
+        "applications": [
+          "hasNext(@thisRef, @nodeHeap, @nextHeap)",
+          "hasNext(@thisRef, @nodeHeap, @prevHeap)"
+        ]
+      },
+      "prevOf": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Ref[Object<Node>]] → Ref[Object<Node>]",
+        "applications": [
+          "prevOf(@thisRef, @nodeHeap, @nextHeap)",
+          "prevOf(@thisRef, @nodeHeap, @prevHeap)"
+        ]
+      },
+      "hasPrev": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Ref[Object<Node>]] → Bool",
+        "applications": [
+          "hasPrev(@thisRef, @nodeHeap, @nextHeap)",
+          "hasPrev(@thisRef, @nodeHeap, @prevHeap)"
+        ]
+      },
+      "valOf": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Int] → Ref[Int]",
+        "applications": [
+          "valOf(@thisRef, @nodeHeap, @valHeap)"
+        ]
+      },
+      "hasVal": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Int] → Bool",
+        "applications": [
+          "hasVal(@thisRef, @nodeHeap, @valHeap)"
+        ]
+      },
+      "loadInt": {
+        "type": "List[Int] × Ref[Int] → Int",
+        "applications": []
+      }
+    }
+  },
+  "dll/2026-10-30 baseline +list": {
+    "task": "unlink-whole-nextHeap+list",
+    "inputs": [
+      "thisRef:Ref[Object<Node>]",
+      "nodeHeap:List[Object<Node>]",
+      "nextHeap:List[Ref[Object<Node>]]",
+      "prevHeap:List[Ref[Object<Node>]]",
+      "valHeap:List[Int]"
+    ],
+    "components": {
+      "storeAtRef": {
+        "type": "List[?0] × Ref[?1] × ?0 → List[?0]",
+        "applications": [
+          "storeAtRef(@nextHeap, @thisRef, @thisRef)",
+          "storeAtRef(@prevHeap, @thisRef, @thisRef)",
+          "storeAtRef(@valHeap, @thisRef, zero())"
+        ]
+      },
+      "freshRefFromHeap": {
+        "type": "List[?0] → Ref[?0]",
+        "applications": [
+          "freshRefFromHeap(@nodeHeap)",
+          "freshRefFromHeap(@nextHeap)",
+          "freshRefFromHeap(@prevHeap)",
+          "freshRefFromHeap(@valHeap)"
+        ]
+      },
+      "last_ptr": {
+        "type": "Ref[Object<Node>] × List[Ref[Object<Node>]] → Ref[Object<Node>]",
+        "applications": [
+          "last_ptr(@thisRef, @nextHeap)",
+          "last_ptr(@thisRef, @prevHeap)"
+        ]
+      },
+      "penultimateRef": {
+        "type": "Ref[Object<Node>] × List[Ref[Object<Node>]] → Ref[Object<Node>]",
+        "applications": [
+          "penultimateRef(@thisRef, @nextHeap)",
+          "penultimateRef(@thisRef, @prevHeap)"
+        ]
+      },
+      "nthNextRef": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Ref[Object<Node>]] × Int → Ref[Object<Node>]",
+        "applications": [
+          "nthNextRef(@thisRef, @nodeHeap, @nextHeap, zero())",
+          "nthNextRef(@thisRef, @nodeHeap, @prevHeap, zero())"
+        ]
+      },
+      "findByValueRef": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Ref[Object<Node>]] × List[Int] × Int → Ref[Object<Node>]",
+        "applications": [
+          "findByValueRef(@thisRef, @nodeHeap, @nextHeap, @valHeap, zero())",
+          "findByValueRef(@thisRef, @nodeHeap, @prevHeap, @valHeap, zero())"
+        ]
+      },
+      "nextOf": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Ref[Object<Node>]] → Ref[Object<Node>]",
+        "applications": [
+          "nextOf(@thisRef, @nodeHeap, @nextHeap)",
+          "nextOf(@thisRef, @nodeHeap, @prevHeap)"
+        ]
+      },
+      "hasNext": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Ref[Object<Node>]] → Bool",
+        "applications": [
+          "hasNext(@thisRef, @nodeHeap, @nextHeap)",
+          "hasNext(@thisRef, @nodeHeap, @prevHeap)"
+        ]
+      },
+      "prevOf": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Ref[Object<Node>]] → Ref[Object<Node>]",
+        "applications": [
+          "prevOf(@thisRef, @nodeHeap, @nextHeap)",
+          "prevOf(@thisRef, @nodeHeap, @prevHeap)"
+        ]
+      },
+      "hasPrev": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Ref[Object<Node>]] → Bool",
+        "applications": [
+          "hasPrev(@thisRef, @nodeHeap, @nextHeap)",
+          "hasPrev(@thisRef, @nodeHeap, @prevHeap)"
+        ]
+      },
+      "valOf": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Int] → Ref[Int]",
+        "applications": [
+          "valOf(@thisRef, @nodeHeap, @valHeap)"
+        ]
+      },
+      "hasVal": {
+        "type": "Ref[Object<Node>] × List[Object<Node>] × List[Int] → Bool",
+        "applications": [
+          "hasVal(@thisRef, @nodeHeap, @valHeap)"
+        ]
+      },
+      "loadInt": {
+        "type": "List[Int] × Ref[Int] → Int",
+        "applications": []
+      }
+    }
+  }
+}
