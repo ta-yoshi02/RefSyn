@@ -1,0 +1,10 @@
+{
+  "reference": "/Users/taku/workspace/kenkyu/proj-ref/refsyn/docs/evaluation_cases/reruns/2026-11-10-single-demo-progression/holdout-prepend-0/reference.mjs",
+  "className": "Node",
+  "method": "prepend",
+  "helpers": [
+    "prepend_h0(x, created0) { return x; }",
+    "prepend_h1(x, created0, hole0) { return this; }"
+  ],
+  "composedMethod": "prepend(x) {\n    const created0 = new Node();\n    const hole0 = this.prepend_h0(x, created0);\n    const hole1 = this.prepend_h1(x, created0, hole0);\n    created0.val = hole0;\n    created0.next = hole1;\n    return created0;\n}"
+}

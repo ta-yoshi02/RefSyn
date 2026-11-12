@@ -1,0 +1,58 @@
+{
+  "method_calls": [
+    {
+      "callLabel": "c1",
+      "contextSensitiveID": "main",
+      "receiverObject": "A",
+      "receiverClassName": "Node",
+      "methodName": "setVal",
+      "methodParamNames": ["arg"],
+      "arguments": [89],
+      "operations": [
+        { "editType": "addNode", "id": "n89", "label": "89", "isLiteral": true, "type": "number" },
+        { "editType": "editEdgeReference", "from": "A", "label": "val", "oldTo": "A-val", "newTo": "n89" }
+      ]
+    },
+    {
+      "callLabel": "c2",
+      "contextSensitiveID": "main",
+      "receiverObject": "A",
+      "receiverClassName": "Node",
+      "methodName": "setVal",
+      "methodParamNames": ["arg"],
+      "arguments": [7],
+      "operations": [
+        { "editType": "addNode", "id": "n7", "label": "7", "isLiteral": true, "type": "number" },
+        { "editType": "editEdgeReference", "from": "A", "label": "val", "oldTo": "A-val", "newTo": "n7" }
+      ]
+    }
+  ],
+  "vis_graph": { "nodes": [], "edges": [] },
+  "validation": {
+    "version": 3,
+    "classes": [
+      { "name": "Node", "source": "class Node {}", "instance": { "val": { "undefined": true }, "next": null } }
+    ],
+    "cases": [
+      {
+        "callLabel": "c1",
+        "contextSensitiveID": "main",
+        "objects": [
+          { "id": "A", "className": "Node", "fields": { "val": 39, "next": null } }
+        ],
+        "arguments": [89],
+        "values": { "A-val": 39, "A-next": null }
+      },
+      {
+        "callLabel": "c2",
+        "contextSensitiveID": "main",
+        "objects": [
+          { "id": "A", "className": "Node", "fields": { "val": 5, "next": { "ref": "B" } } },
+          { "id": "B", "className": "Node", "fields": { "val": 6, "next": null } }
+        ],
+        "arguments": [7],
+        "values": { "A-val": 5, "B-val": 6, "B-next": null }
+      }
+    ]
+  }
+}

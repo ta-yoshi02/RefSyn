@@ -1,0 +1,10 @@
+{
+  "src/template.rs": "ce6d28aea9c6c38fd96c14ce0ea59376abf8398c38d8208bb47541aa191bcbfa",
+  "src/alignment.rs": "163e9b3b3a160126219db923b1a288c449c6d19da532eb159b0ab2ceb5f69c16",
+  "src/pbe_problem.rs": "7c7906dea062eb13237290c8fed267433826b29af0f3961804e96a778af13a8d",
+  "src/lib.rs": "88dacecbb9f1385dbce4505aaed14ee4f42e88f386fd33c58c7f7897dec0d8bf",
+  "runtime/refsyn-escher-adapter.mjs": "c1861cdc7044edc6b65c3a557290e7e54ae839a6e9a447c3574ed1a827cd81f6",
+  "runtime/whole-method-validation.mjs": "6f9ea58f8a6c1b3bfc3c774bfd31bf6e9a2eb0ab527cb834e8664b5e46aa6b41",
+  "scripts/compare_with_reference.mjs": "db6cd41873161ed000d10e9e0473a2e1870d608bcfad86669bc8fdd1820f75d0",
+  "external/escher-ts/dist/synthesis/ascendrec/synthesizer.js": "405a3d69f138afd0b886c493e604274c88b6e920d89f7f0f05f81f18198a1b1c"
+}

@@ -1,0 +1,10 @@
+{
+  "reference": "/Users/taku/workspace/kenkyu/proj-ref/refsyn/docs/evaluation_cases/reruns/2026-11-10-single-demo-audit/ui-1/reference.mjs",
+  "className": "Cell",
+  "method": "setSeven",
+  "helpers": [
+    "setSeven_h0() { return this; }",
+    "setSeven_h1(hole0) { return (((((((0 + 1) + 1) + 1) + 1) + 1) + 1) + 1); }"
+  ],
+  "composedMethod": "setSeven() {\n    const hole0 = this.setSeven_h0();\n    const hole1 = this.setSeven_h1(hole0);\n    hole0.val = hole1;\n}"
+}

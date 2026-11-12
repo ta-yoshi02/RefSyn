@@ -1,0 +1,10 @@
+{
+  "reference": "/Users/taku/workspace/kenkyu/proj-ref/refsyn/tests/recordings/setAt/reference.mjs",
+  "className": "Node",
+  "method": "setAt",
+  "helpers": [
+    "setAt_h0(a, b) { return ((__refsynCur, __refsynSteps) => { while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = (__refsynCur).next; __refsynSteps -= 1; } return __refsynCur; })(this, a); }",
+    "setAt_h1(a, b, hole0) { return b; }"
+  ],
+  "composedMethod": "setAt(a, b) {\n    const hole0 = this.setAt_h0(a, b);\n    const hole1 = this.setAt_h1(a, b, hole0);\n    hole0.val = hole1;\n}"
+}

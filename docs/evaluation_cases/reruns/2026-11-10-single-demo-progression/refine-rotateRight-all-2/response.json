@@ -1,0 +1,137 @@
+{
+  "validation": {
+    "status": "passed",
+    "checked_demonstrations": 6,
+    "error": null
+  },
+  "hole_checks": [
+    {
+      "helper": "rotateRight_h0",
+      "expected": [
+        {
+          "ref": "main-new1"
+        },
+        {
+          "ref": "main-new7"
+        },
+        {
+          "ref": "main-new4"
+        },
+        {
+          "ref": "main-new2"
+        },
+        {
+          "ref": "ce0"
+        },
+        {
+          "ref": "ce0"
+        }
+      ]
+    },
+    {
+      "helper": "rotateRight_h1",
+      "expected": [
+        {
+          "ref": "main-new4"
+        },
+        {
+          "ref": "main-new9"
+        },
+        {
+          "ref": "main-new6"
+        },
+        {
+          "ref": "main-new11"
+        },
+        {
+          "ref": "ce4"
+        },
+        {
+          "ref": "ce4"
+        }
+      ]
+    },
+    {
+      "helper": "rotateRight_h2",
+      "expected": [
+        {
+          "ref": "main-new2"
+        },
+        {
+          "ref": "main-new8"
+        },
+        {
+          "ref": "main-new5"
+        },
+        {
+          "ref": "main-new3"
+        },
+        {
+          "ref": "ce1"
+        },
+        {
+          "ref": "ce1"
+        }
+      ]
+    }
+  ],
+  "common_pattern": "BindHole(0, Hole { vertex: 0, ty: Object(\"TreeNode\"), examples: [Object(\"main-new1\"), Object(\"main-new7\"), Object(\"main-new4\"), Object(\"main-new2\"), Object(\"ce0\"), Object(\"ce0\")] })\nBindHole(1, Hole { vertex: 1, ty: Object(\"TreeNode\"), examples: [Object(\"main-new4\"), Object(\"main-new9\"), Object(\"main-new6\"), Object(\"main-new11\"), Object(\"ce4\"), Object(\"ce4\")] })\nBindHole(2, Hole { vertex: 2, ty: Object(\"TreeNode\"), examples: [Object(\"main-new2\"), Object(\"main-new8\"), Object(\"main-new5\"), Object(\"main-new3\"), Object(\"ce1\"), Object(\"ce1\")] })\nWrite(Write { from: 0, field: \"left\", to: 1 })\nWrite(Write { from: 2, field: \"right\", to: 0 })\nReturn(2)",
+  "hole_information": {
+    "rotateRight_h1": [
+      "object main-new4",
+      "object main-new9",
+      "object main-new6",
+      "object main-new11",
+      "object ce4",
+      "object ce4"
+    ],
+    "rotateRight_h2": [
+      "object main-new2",
+      "object main-new8",
+      "object main-new5",
+      "object main-new3",
+      "object ce1",
+      "object ce1"
+    ],
+    "rotateRight_h0": [
+      "object main-new1",
+      "object main-new7",
+      "object main-new4",
+      "object main-new2",
+      "object ce0",
+      "object ce0"
+    ]
+  },
+  "code": [
+    "rotateRight_h0() { return this; }",
+    "rotateRight_h1(hole0) { return ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((this).left)).right); }",
+    "rotateRight_h2(hole0, hole1) { return ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((this).left); }"
+  ],
+  "composed_method_code": "rotateRight() {\n    const hole0 = this.rotateRight_h0();\n    const hole1 = this.rotateRight_h1(hole0);\n    const hole2 = this.rotateRight_h2(hole0, hole1);\n    hole0.left = hole1;\n    hole2.right = hole0;\n    return hole2;\n}",
+  "individual_codes": [
+    "rotateRight_h0: rotateRight_h0() { return this; }",
+    "rotateRight_h1: rotateRight_h1(hole0) { return ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((this).left)).right); }",
+    "rotateRight_h2: rotateRight_h2(hole0, hole1) { return ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((this).left); }"
+  ],
+  "list_environment_info": "escher-ts task JSON saved: target/escher/ts/rotateRight_1794280936_227484000_p33968_0.json",
+  "escher_results": [
+    {
+      "name": "rotateRight_h0",
+      "success": true,
+      "rendered": "rotateRight_h0(@thisRef: Ref[Object<TreeNode>], @nodeHeap: List[Object<TreeNode>], @leftHeap: List[Object<TreeNode>], @rightHeap: List[Object<TreeNode>], @valHeap: List[Int]): Ref[Object<TreeNode>] =\n  @thisRef",
+      "error": null
+    },
+    {
+      "name": "rotateRight_h1",
+      "success": true,
+      "rendered": "rotateRight_h1(@thisRef: Ref[Object<TreeNode>], @nodeHeap: List[Object<TreeNode>], @leftHeap: List[Object<TreeNode>], @rightHeap: List[Object<TreeNode>], @valHeap: List[Int], @hole0: Ref[Object<TreeNode>]): Ref[Object<TreeNode>] =\n  rightOf(leftOf(@thisRef, @nodeHeap, @nodeHeap), @nodeHeap, @nodeHeap)",
+      "error": null
+    },
+    {
+      "name": "rotateRight_h2",
+      "success": true,
+      "rendered": "rotateRight_h2(@thisRef: Ref[Object<TreeNode>], @nodeHeap: List[Object<TreeNode>], @leftHeap: List[Object<TreeNode>], @rightHeap: List[Object<TreeNode>], @valHeap: List[Int], @hole0: Ref[Object<TreeNode>], @hole1: Ref[Object<TreeNode>]): Ref[Object<TreeNode>] =\n  leftOf(@thisRef, @nodeHeap, @nodeHeap)",
+      "error": null
+    }
+  ]
+}

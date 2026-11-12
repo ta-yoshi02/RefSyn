@@ -1,0 +1,56 @@
+{
+  "validation": {
+    "status": "passed",
+    "checked_demonstrations": 1,
+    "error": null
+  },
+  "hole_checks": [
+    {
+      "helper": "set_h0",
+      "expected": [
+        {
+          "ref": "main-new1"
+        }
+      ]
+    },
+    {
+      "helper": "set_h1",
+      "expected": [
+        7
+      ]
+    }
+  ],
+  "common_pattern": "BindHole(0, Hole { vertex: 0, ty: Object(\"Cell\"), examples: [Object(\"main-new1\")] })\nBindHole(1, Hole { vertex: 1, ty: Number, examples: [Constant(Number(Number(7)))] })\nWrite(Write { from: 0, field: \"val\", to: 1 })",
+  "hole_information": {
+    "set_h1": [
+      "Number(Number(7))"
+    ],
+    "set_h0": [
+      "object main-new1"
+    ]
+  },
+  "code": [
+    "set_h0(arg) { return this; }",
+    "set_h1(arg, hole0) { return arg; }"
+  ],
+  "composed_method_code": "set(arg) {\n    const hole0 = this.set_h0(arg);\n    const hole1 = this.set_h1(arg, hole0);\n    hole0.val = hole1;\n}",
+  "individual_codes": [
+    "set_h0: set_h0(arg) { return this; }",
+    "set_h1: set_h1(arg, hole0) { return arg; }"
+  ],
+  "list_environment_info": "escher-ts task JSON saved: target/escher/ts/set_1794278353_934792000_p30785_0.json",
+  "escher_results": [
+    {
+      "name": "set_h0",
+      "success": true,
+      "rendered": "set_h0(@thisRef: Ref[Object<Cell>], @nodeHeap: List[Object<Cell>], @nextHeap: List[Object<Cell>], @valHeap: List[Int], @arg: Int): Ref[Object<Cell>] =\n  @thisRef",
+      "error": null
+    },
+    {
+      "name": "set_h1",
+      "success": true,
+      "rendered": "set_h1(@thisRef: Ref[Object<Cell>], @nodeHeap: List[Object<Cell>], @nextHeap: List[Object<Cell>], @valHeap: List[Int], @arg: Int, @hole0: Ref[Object<Cell>]): Int =\n  @arg",
+      "error": null
+    }
+  ]
+}

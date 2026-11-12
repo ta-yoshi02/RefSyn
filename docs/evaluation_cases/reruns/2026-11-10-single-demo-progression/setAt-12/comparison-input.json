@@ -1,0 +1,10 @@
+{
+  "reference": "/Users/taku/workspace/kenkyu/proj-ref/refsyn/tests/recordings/setAt/reference.mjs",
+  "className": "Node",
+  "method": "setAt",
+  "helpers": [
+    "setAt_h0(a, b) { return ((a === 0)) ? (this) : ((() => { let __refsynCur = this; const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError(\"refsyn: penultimateRef met a cycle\"); } __refsynSeen.add(__refsynCur); const __refsynNext = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); if (__refsynNext === null) { return null; } if (((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynNext).next) === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })()); }",
+    "setAt_h1(a, b, hole0) { return b; }"
+  ],
+  "composedMethod": "setAt(a, b) {\n    const hole0 = this.setAt_h0(a, b);\n    const hole1 = this.setAt_h1(a, b, hole0);\n    hole0.val = hole1;\n}"
+}

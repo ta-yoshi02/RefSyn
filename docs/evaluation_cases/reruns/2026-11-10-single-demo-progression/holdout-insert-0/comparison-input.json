@@ -1,0 +1,11 @@
+{
+  "reference": "/Users/taku/workspace/kenkyu/proj-ref/refsyn/docs/evaluation_cases/reruns/2026-11-10-single-demo-progression/holdout-insert-0/reference.mjs",
+  "className": "Node",
+  "method": "insert",
+  "helpers": [
+    "insert_h0(i, arg, created0) { return arg; }",
+    "insert_h1(i, arg, created0, hole0) { return (() => { let __refsynCur = this; let __refsynSteps = (i + 1); if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError(\"refsyn: nthNextRef needs a non-negative step count\"); } while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); __refsynSteps -= 1; } return __refsynCur; })(); }",
+    "insert_h2(i, arg, created0, hole0, hole1) { return (() => { let __refsynCur = this; let __refsynSteps = i; if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError(\"refsyn: nthNextRef needs a non-negative step count\"); } while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); __refsynSteps -= 1; } return __refsynCur; })(); }"
+  ],
+  "composedMethod": "insert(i, arg) {\n    const created0 = new Node();\n    const hole0 = this.insert_h0(i, arg, created0);\n    const hole1 = this.insert_h1(i, arg, created0, hole0);\n    const hole2 = this.insert_h2(i, arg, created0, hole0, hole1);\n    created0.val = hole0;\n    created0.next = hole1;\n    hole2.next = created0;\n}"
+}

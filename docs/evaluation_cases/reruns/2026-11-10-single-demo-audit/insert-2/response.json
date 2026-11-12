@@ -1,0 +1,75 @@
+{
+  "validation": {
+    "status": "passed",
+    "checked_demonstrations": 1,
+    "error": null
+  },
+  "hole_checks": [
+    {
+      "helper": "insert_h0",
+      "expected": [
+        {
+          "ref": "__temp1"
+        }
+      ]
+    },
+    {
+      "helper": "insert_h1",
+      "expected": [
+        71
+      ]
+    },
+    {
+      "helper": "insert_h2",
+      "expected": [
+        {
+          "ref": "main-new2"
+        }
+      ]
+    }
+  ],
+  "common_pattern": "Create(Create { vertex: 0, class: \"Node\" })\nBindHole(0, Hole { vertex: 1, ty: Object(\"Node\"), examples: [Object(\"__temp1\")] })\nBindHole(1, Hole { vertex: 2, ty: Number, examples: [Constant(Number(Number(71)))] })\nBindHole(2, Hole { vertex: 3, ty: Object(\"Node\"), examples: [Object(\"main-new2\")] })\nWrite(Write { from: 1, field: \"next\", to: 0 })\nWrite(Write { from: 0, field: \"val\", to: 2 })\nWrite(Write { from: 0, field: \"next\", to: 3 })",
+  "hole_information": {
+    "insert_h2": [
+      "object main-new2"
+    ],
+    "insert_h0": [
+      "object __temp1"
+    ],
+    "insert_h1": [
+      "Number(Number(71))"
+    ]
+  },
+  "code": [
+    "insert_h0(i, arg, created0) { return (this).next; }",
+    "insert_h1(i, arg, created0, hole0) { return arg; }",
+    "insert_h2(i, arg, created0, hole0, hole1) { return (hole0).next; }"
+  ],
+  "composed_method_code": "insert(i, arg) {\n    const created0 = new Node();\n    const hole0 = this.insert_h0(i, arg, created0);\n    const hole1 = this.insert_h1(i, arg, created0, hole0);\n    const hole2 = this.insert_h2(i, arg, created0, hole0, hole1);\n    hole0.next = created0;\n    created0.val = hole1;\n    created0.next = hole2;\n}",
+  "individual_codes": [
+    "insert_h0: insert_h0(i, arg, created0) { return (this).next; }",
+    "insert_h1: insert_h1(i, arg, created0, hole0) { return arg; }",
+    "insert_h2: insert_h2(i, arg, created0, hole0, hole1) { return (hole0).next; }"
+  ],
+  "list_environment_info": "escher-ts task JSON saved: target/escher/ts/insert_1794210326_842249000_p9663_0.json",
+  "escher_results": [
+    {
+      "name": "insert_h0",
+      "success": true,
+      "rendered": "insert_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @i: Int, @arg: Int, @created0: Ref[Object<Node>]): Ref[Object<Node>] =\n  nextOf(@thisRef, @nodeHeap, @nodeHeap)",
+      "error": null
+    },
+    {
+      "name": "insert_h1",
+      "success": true,
+      "rendered": "insert_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @i: Int, @arg: Int, @created0: Ref[Object<Node>], @hole0: Ref[Object<Node>]): Int =\n  @arg",
+      "error": null
+    },
+    {
+      "name": "insert_h2",
+      "success": true,
+      "rendered": "insert_h2(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @i: Int, @arg: Int, @created0: Ref[Object<Node>], @hole0: Ref[Object<Node>], @hole1: Int): Ref[Object<Node>] =\n  nextOf(@hole0, @nodeHeap, @nodeHeap)",
+      "error": null
+    }
+  ]
+}

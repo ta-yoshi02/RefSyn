@@ -82,7 +82,7 @@ Kanon はクラスをコンストラクタ名で判定するが、比較器は p
 
 | モジュール | 役割 | 確かめていること（主なテスト） | 確かめていないこと |
 | --- | --- | --- | --- |
-| `runtime/refsyn-escher-adapter.mjs` | escher-ts の項を JS に翻訳する | 翻訳した整数・真偽値の項が、テストで与えた入力のすべてで escher-ts の評価と一致する。null、undefined、欠落、循環での失敗。演算子の優先順位、`loadInt` が読むヒープ、引数名の扱い（`runtime/refsyn-escher-adapter*.test.mjs`）。翻訳した部品が自分の局所変数以外へ書き込まない（`web/src/lib/binding-conditions.test.ts`） | テストで与えた入力以外での一致 |
+| `runtime/refsyn-escher-adapter.mjs` | escher-ts の項を JS に翻訳する | 翻訳契約：escher-ts が値を返す項と入力の組では、翻訳した JS も停止して同じ値を返す。テストで与えた入力（null、undefined、欠落、循環を含むヒープ）のうち escher-ts が値を返す組すべてで確認する。演算子の優先順位、`loadInt` が読むヒープ、引数名の扱い、走査の局所変数と同名の引数（`runtime/refsyn-escher-adapter*.test.mjs`）。翻訳した部品が自分の局所変数以外へ書き込まない（`web/src/lib/binding-conditions.test.ts`） | テストで与えた入力以外での一致。escher-ts がエラー値になる組での JS の挙動（契約の対象外） |
 | `runtime/whole-method-validation.mjs` | 実演前状態でメソッドを再実行し、期待状態と比べる | 参照の同一性、循環、undefined、constructor の既定値、戻り値。2つ目の実演だけの誤り、helper の出力例との不一致、型の違う同じラベルの値を拒否する。非停止を時間制限で打ち切る（`runtime/whole-method-validation.test.mjs`、23件） | 呼出し途中で元に戻した変更。監視対象外の副作用 |
 | `runtime/whole-method-validator-{client,worker}.mjs` | ブラウザで検証器を Worker 上で動かす | 終わらない検証の打切り、起動しない Worker を `unavailable` とすること、無関係なメッセージの無視（`web/src/lib/whole-method-validator.test.ts`） | 実ブラウザの Worker |
 | `scripts/compare_with_reference.mjs` | 合成解と参照実装を同じ入力で比べる | 正しい解と生成順の違う正しい解を受理する。誤った値、参照の複製、記録できない状態（実行前の入力、実行後の切り離された既存オブジェクトを含む）、余分な戻り値、フィールドの削除、切り離したノードの破壊、例外、終わらない呼出し、メソッド欠落を拒否する。終わらない参照はエラーにする（`tests/js/compare-with-reference.test.mjs`） | 呼出し途中の変更。到達できない生成物 |

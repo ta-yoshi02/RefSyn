@@ -81,14 +81,10 @@ const isValidJsField = (raw) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(raw);
 const fieldAccess = (baseExpr, field) =>
   isValidJsField(field) ? `(${baseExpr}).${field}` : `(${baseExpr})[${JSON.stringify(field)}]`;
 
-// escher-ts reads an undefined or absent reference or integer field as the error value, so the
-// emitted read throws there instead of passing undefined on; a null receiver throws by itself.
-const readDefined = "((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })";
-const definedAccess = (baseExpr, field) => `${readDefined}(${fieldAccess(baseExpr, field)})`;
-// A Bool field holds a boolean in every demonstration; any other value, undefined and null
-// included, has no counterpart in escher-ts, so the read fails instead of being taken as false.
-const readBoolean = "((__refsynValue) => { if (typeof __refsynValue !== \"boolean\") { throw new TypeError(\"refsyn: a boolean field holds no boolean\"); } return __refsynValue; })";
-// Traversals fail on a revisited object, as escher-ts does, so that a cyclic heap cannot hang.
+// Translation contract: where escher-ts gives the term a value, the emitted JS terminates with the
+// same value. Where escher-ts gives the error value (an undefined or absent field read, a cycle),
+// the JS outcome is unspecified, so reads are plain property accesses.
+// Traversals still fail on a revisited object so that a cyclic heap cannot hang.
 const visit = (what) =>
   `if (__refsynSeen.has(__refsynCur)) { throw new RangeError("refsyn: ${what} met a cycle"); } __refsynSeen.add(__refsynCur);`;
 
@@ -252,10 +248,10 @@ const compileAutoFieldComponent = (name, args, ctx) => {
         throw new Error(`${name} expects receiver + heap args`);
       }
       const base = compileExpr(args[0], ctx);
-      // escher-ts keeps the boolean in the slot: reading fails on undefined or absent, while the
-      // test answers false there, as for an integer field.
+      // escher-ts keeps the boolean in the slot; the test answers false on undefined or absent, as
+      // for an integer field.
       return name === `${field}Of`
-        ? { code: `${readBoolean}(${fieldAccess(base.code, field)})`, kind: "bool" }
+        ? { code: fieldAccess(base.code, field), kind: "bool" }
         : { code: `(${fieldAccess(base.code, field)} !== undefined)`, kind: "bool" };
     }
   }
@@ -270,7 +266,7 @@ const compileAutoFieldComponent = (name, args, ctx) => {
         throw new Error(`${name} is only supported as the reference read by loadInt`);
       }
       const base = compileExpr(args[0], ctx);
-      return { code: definedAccess(base.code, field), kind: "object" };
+      return { code: fieldAccess(base.code, field), kind: "object" };
     }
     if (name === `has${capitalize(field)}`) {
       if (args.length < 2) {
@@ -278,7 +274,7 @@ const compileAutoFieldComponent = (name, args, ctx) => {
       }
       const base = compileExpr(args[0], ctx);
       if (ctx.pointerFields.has(field)) {
-        return { code: `(${definedAccess(base.code, field)} !== null)`, kind: "bool" };
+        return { code: `(${fieldAccess(base.code, field)} !== null)`, kind: "bool" };
       }
       // As with loadInt, the value heap passed last decides which field is tested.
       const tested = ctx.valueFieldByHeapName.get(variableNameFromTerm(args[2]));
@@ -308,16 +304,11 @@ const compileValueFieldRead = (heapTerm, slotTerm, ctx) => {
   if (owner === null || owner.kind !== "object") {
     throw new Error("loadInt is only supported on a value field reference of an object");
   }
-  // The reference component fails unless the field of its own heap argument is defined, even
-  // when loadInt then reads another field; the emitted code checks both.
-  const checked = slotTerm.args[2] === undefined ? field : ctx.valueFieldByHeapName.get(variableNameFromTerm(slotTerm.args[2]));
-  if (checked === undefined) {
+  // The reference component names the heap of a value field, possibly another one than loadInt reads.
+  if (slotTerm.args[2] !== undefined && !ctx.valueFieldByHeapName.has(variableNameFromTerm(slotTerm.args[2]))) {
     throw new Error(`${slotTerm.name} must name the heap of a value field`);
   }
-  if (checked === field) {
-    return definedAccess(owner.code, field);
-  }
-  return `((__refsynOwner) => { ${definedAccess("__refsynOwner", checked)}; return ${definedAccess("__refsynOwner", field)}; })(${owner.code})`;
+  return fieldAccess(owner.code, field);
 };
 
 const compileRecursiveCall = (args, ctx) => {
@@ -365,10 +356,9 @@ const compileComponent = (name, args, ctx) => {
       const steps = compileExpr(args[3], ctx);
       return {
         code:
-          `(() => { let __refsynCur = ${base.code}; let __refsynSteps = ${steps.code}; ` +
-          'if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError("refsyn: nthNextRef needs a non-negative step count"); } ' +
-          `while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ${definedAccess("__refsynCur", fieldName)}; __refsynSteps -= 1; } ` +
-          "return __refsynCur; })()",
+          `((__refsynCur, __refsynSteps) => { ` +
+          `while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ${fieldAccess("__refsynCur", fieldName)}; __refsynSteps -= 1; } ` +
+          `return __refsynCur; })(${base.code}, ${steps.code})`,
         kind: "object",
       };
     }
@@ -385,10 +375,10 @@ const compileComponent = (name, args, ctx) => {
       const target = compileExpr(args[4], ctx);
       return {
         code:
-          `(() => { let __refsynCur = ${base.code}; const __refsynTarget = ${target.code}; const __refsynSeen = new Set(); ` +
+          `((__refsynCur, __refsynTarget) => { const __refsynSeen = new Set(); ` +
           `while (__refsynCur !== null) { ${visit("findByValueRef")} ` +
           `if (${fieldAccess("__refsynCur", valueField)} === __refsynTarget) { return __refsynCur; } ` +
-          `__refsynCur = ${definedAccess("__refsynCur", pointerField)}; } return null; })()`,
+          `__refsynCur = ${fieldAccess("__refsynCur", pointerField)}; } return null; })(${base.code}, ${target.code})`,
         kind: "object",
       };
     }
@@ -403,10 +393,10 @@ const compileComponent = (name, args, ctx) => {
       const base = compileExpr(args[0], ctx);
       return {
         code:
-          `(() => { let __refsynCur = ${base.code}; const __refsynSeen = new Set(); ` +
+          `((__refsynCur) => { const __refsynSeen = new Set(); ` +
           `while (__refsynCur !== null) { ${visit("last_ptr")} ` +
-          `const __refsynNext = ${definedAccess("__refsynCur", fieldName)}; if (__refsynNext === null) { return __refsynCur; } __refsynCur = __refsynNext; } ` +
-          "return null; })()",
+          `const __refsynNext = ${fieldAccess("__refsynCur", fieldName)}; if (__refsynNext === null) { return __refsynCur; } __refsynCur = __refsynNext; } ` +
+          `return null; })(${base.code})`,
         kind: "object",
       };
     }
@@ -421,11 +411,11 @@ const compileComponent = (name, args, ctx) => {
       const base = compileExpr(args[0], ctx);
       return {
         code:
-          `(() => { let __refsynCur = ${base.code}; const __refsynSeen = new Set(); ` +
+          `((__refsynCur) => { const __refsynSeen = new Set(); ` +
           `while (__refsynCur !== null) { ${visit("penultimateRef")} ` +
-          `const __refsynNext = ${definedAccess("__refsynCur", fieldName)}; if (__refsynNext === null) { return null; } ` +
-          `if (${definedAccess("__refsynNext", fieldName)} === null) { return __refsynCur; } __refsynCur = __refsynNext; } ` +
-          "return null; })()",
+          `const __refsynNext = ${fieldAccess("__refsynCur", fieldName)}; if (__refsynNext === null) { return null; } ` +
+          `if (${fieldAccess("__refsynNext", fieldName)} === null) { return __refsynCur; } __refsynCur = __refsynNext; } ` +
+          `return null; })(${base.code})`,
         kind: "object",
       };
     }
@@ -456,8 +446,7 @@ const compileComponent = (name, args, ctx) => {
       }
       const left = compileExpr(args[0], ctx);
       const right = compileExpr(args[1], ctx);
-      // escher-ts evaluates both operands (an error in either fails), so JS must not short-circuit.
-      return { code: `((__refsynLeft, __refsynRight) => __refsynLeft && __refsynRight)(${left.code}, ${right.code})`, kind: "bool" };
+      return { code: `((${left.code}) && (${right.code}))`, kind: "bool" };
     }
     case "or": {
       if (args.length !== 2) {
@@ -465,7 +454,7 @@ const compileComponent = (name, args, ctx) => {
       }
       const left = compileExpr(args[0], ctx);
       const right = compileExpr(args[1], ctx);
-      return { code: `((__refsynLeft, __refsynRight) => __refsynLeft || __refsynRight)(${left.code}, ${right.code})`, kind: "bool" };
+      return { code: `((${left.code}) || (${right.code}))`, kind: "bool" };
     }
     case "not": {
       if (args.length !== 1) {

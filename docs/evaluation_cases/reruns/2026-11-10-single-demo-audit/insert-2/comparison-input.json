@@ -1,0 +1,11 @@
+{
+  "reference": "/Users/taku/workspace/kenkyu/proj-ref/refsyn/tests/recordings/insert/reference.mjs",
+  "className": "Node",
+  "method": "insert",
+  "helpers": [
+    "insert_h0(i, arg, created0) { return (this).next; }",
+    "insert_h1(i, arg, created0, hole0) { return arg; }",
+    "insert_h2(i, arg, created0, hole0, hole1) { return (hole0).next; }"
+  ],
+  "composedMethod": "insert(i, arg) {\n    const created0 = new Node();\n    const hole0 = this.insert_h0(i, arg, created0);\n    const hole1 = this.insert_h1(i, arg, created0, hole0);\n    const hole2 = this.insert_h2(i, arg, created0, hole0, hole1);\n    hole0.next = created0;\n    created0.val = hole1;\n    created0.next = hole2;\n}"
+}

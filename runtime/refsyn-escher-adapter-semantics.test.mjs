@@ -5,8 +5,9 @@ import { compileRefsynMethod } from './refsyn-escher-adapter.mjs';
 import { parseJsonSynthesisSpec, prepareJsonSynthesisJob } from '../external/escher-ts/dist/components/user-friendly-json.js';
 import { executeTerm } from '../external/escher-ts/dist/types/term.js';
 
-// The translated helper must have the outcome escher-ts gives the term: the same value, or a
-// failure (escher-ts error, JS exception) where escher-ts fails. It must also terminate.
+// Translation contract: where escher-ts gives a term a value on an input, the translated helper
+// terminates with the same value. Where escher-ts gives the error value, the JS outcome is
+// unspecified, so that term and input pair is not run; the input stays for the other terms.
 // class C { next; val }, encoded as src/pbe_problem.rs does: `undefined` marks an undefined
 // field, `absent` a missing property, both the error value in escher-ts.
 const U = 'undefined';
@@ -118,7 +119,7 @@ const jsOutcome = (code, heap, k, x) => {
 };
 
 for (const [returnType, termList] of Object.entries(terms)) {
-  test(`${returnType} helpers have escher-ts's outcome, failures and termination included`, () => {
+  test(`${returnType} helpers return escher-ts's value wherever it has one`, () => {
     const mismatches = [];
     const counts = { value: 0, failure: 0 };
     for (const [name, heap] of Object.entries(heaps)) {
@@ -128,15 +129,16 @@ for (const [returnType, termList] of Object.entries(terms)) {
           for (const term of termList) {
             const { job, outcome: expected } = escherOutcome(raw, term);
             const code = compileRefsynMethod(raw, job, term);
-            const actual = jsOutcome(code, heap, k, x);
             counts[expected === 'failure' ? 'failure' : 'value'] += 1;
+            if (expected === 'failure') continue;
+            const actual = jsOutcome(code, heap, k, x);
             if (actual !== expected) mismatches.push(`${name} k=${k} x=${x}: ${JSON.stringify(term)} js ${actual}, escher ${expected}`);
           }
         }
       }
     }
     assert.deepEqual(mismatches, []);
-    // Both outcomes must actually be exercised for the comparison to mean anything.
+    // Both outcomes must occur, so that the comparison is not vacuous and the exclusion is exercised.
     assert.ok(counts.value > 0 && counts.failure > 0, JSON.stringify(counts));
   });
 }
@@ -147,17 +149,32 @@ test('the cases the contract singles out', () => {
     const { job, outcome: expected } = escherOutcome(raw, term);
     return { expected, actual: jsOutcome(compileRefsynMethod(raw, job, term), heaps[heapName], k, x) };
   };
-  // A field of null fails rather than reading as null.
-  assert.deepEqual(outcome('Ref[Object[C]]', 'list', nextOf(X)), { expected: 'failure', actual: 'failure' });
-  assert.deepEqual(outcome('Bool', 'list', c('hasNext', X, H.nodes, H.next)), { expected: 'failure', actual: 'failure' });
-  // A cycle fails in every traversal instead of hanging or claiming absence.
-  for (const term of [c('last_ptr', T, H.next), c('penultimateRef', T, H.next), c('findByValueRef', T, H.nodes, H.next, H.val, K)]) {
-    assert.deepEqual(outcome('Ref[Object[C]]', 'cycle', term, 9), { expected: 'failure', actual: 'failure' });
-  }
-  // A bounded walk around a cycle is still an answer.
+  // A cyclic or undefined heap still has values for some terms; only the pair decides exclusion.
+  // A bounded walk around a cycle is an answer.
   assert.deepEqual(outcome('Ref[Object[C]]', 'cycle', c('nthNextRef', T, H.nodes, H.next, K), 5), { expected: 'ref 1', actual: 'ref 1' });
-  // and/or do not short-circuit past a failing operand.
-  assert.deepEqual(outcome('Bool', 'list', c('and', c('not', c('isNull', X)), c('hasNext', X, H.nodes, H.next))), { expected: 'failure', actual: 'failure' });
+  // A search that finds its value before revisiting an object is an answer.
+  assert.deepEqual(outcome('Ref[Object[C]]', 'cycle', c('findByValueRef', T, H.nodes, H.next, H.val, K), 2), { expected: 'ref 1', actual: 'ref 1' });
   // An undefined integer field tests false.
   assert.deepEqual(outcome('Bool', 'undefinedVal', c('hasVal', T, H.nodes, H.val)), { expected: 'bool false', actual: 'bool false' });
+});
+
+// The operands of a traversal are evaluated outside its own locals, so a parameter may share their names.
+test('a parameter named like a traversal local is read as the parameter', () => {
+  const raw = task('Ref[Object[C]]', heaps.list, 2, 0);
+  raw.signature.args[0].name = '__refsynSteps';
+  raw.signature.args[1].name = '__refsynCur';
+  raw.refsynMeta.explicitArgs[0].name = '__refsynSteps';
+  raw.refsynMeta.explicitArgs[1].name = '__refsynCur';
+  const steps = v('__refsynSteps');
+  const cur = v('__refsynCur');
+  for (const [term, expected] of [
+    [c('nthNextRef', cur, H.nodes, H.next, steps), 'ref 2'],
+    [c('findByValueRef', cur, H.nodes, H.next, H.val, steps), 'ref 1'],
+    [c('last_ptr', cur, H.next), 'ref 2'],
+    [c('penultimateRef', cur, H.next), 'ref 1'],
+  ]) {
+    const { job, outcome } = escherOutcome(raw, term);
+    assert.equal(outcome, expected);
+    assert.equal(jsOutcome(compileRefsynMethod(raw, job, term), heaps.list, 2, 0), expected, JSON.stringify(term));
+  }
 });

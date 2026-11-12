@@ -62,7 +62,6 @@ it("copies a boolean field from another object", () => {
     expect(d.on).toBe(mine);
     expect(r.next).toBe(d);
   }
-  expect(() => flag(Flag, undefined, flag(Flag, true)).copy()).toThrow(TypeError);
 });
 
 it("keeps demonstrated numbers numbers and refuses demonstrated strings", () => {

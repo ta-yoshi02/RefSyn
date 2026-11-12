@@ -1,0 +1,55 @@
+Starting RefSyn server...
+Server running on http://127.0.0.1:3030
+Available endpoints:
+  GET  /hello       - Hello message
+  POST /synthesize  - Code synthesis with integrated operation analysis
+--- RAW REQUEST PAYLOAD ---
+{"method_calls":[{"callLabel":"call1","contextSensitiveID":"main","receiverObject":"main-new1","methodName":"set","operations":[{"editType":"addNode","id":"__temp1","label":"7","isLiteral":true,"type":"number"},{"editType":"editEdgeReference","from":"main-new1","oldTo":"main-new1-val","newTo":"__temp1","label":"val"}],"arguments":[7],"argumentTypes":["Int"],"argumentNames":["arg0"],"receiverClassName":"Cell","methodParamNames":["arg"],"precondGraph":{"nodes":[{"color":"skyblue","id":"main-new1","label":"Cell","shape":"ellipse","fixed":false,"value":15,"scaling":{"label":{"enable":true,"min":15,"max":15}}},{"color":{"border":"white","background":"white","highlight":{"border":"white","background":"white"},"hover":{"border":"white","background":"white"}},"id":"main-new1-val","label":"3","type":"number","isLiteral":true,"scaling":{"label":{"enable":true,"min":10,"max":10}},"fixed":false,"value":10},{"hidden":true,"id":"__Variable-cell","label":"cell"}],"edges":[{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"main-new1","to":"main-new1-val","label":"val","width":3,"font":{"size":14},"smooth":{"enabled":true}},{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"__Variable-cell","to":"main-new1","label":"cell","width":3,"font":{"size":14},"smooth":{"enabled":true},"color":"seagreen"}]},"actualGraph":{"nodes":[{"color":"skyblue","id":"main-new1","label":"Cell","shape":"ellipse","fixed":true,"value":15,"scaling":{"label":{"enable":true,"min":15,"max":15}}},{"color":{"border":"white","background":"white","highlight":{"border":"white","background":"white"},"hover":{"border":"white","background":"white"}},"id":"main-new1-val","label":"3","type":"number","isLiteral":true,"scaling":{"label":{"enable":true,"min":10,"max":10}},"fixed":true,"value":10},{"hidden":true,"id":"__Variable-cell","label":"cell"}],"edges":[{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"main-new1","to":"main-new1-val","label":"val","width":3,"font":{"size":14},"smooth":{"enabled":true}},{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"__Variable-cell","to":"main-new1","label":"cell","width":3,"font":{"size":14},"smooth":{"enabled":true},"color":"seagreen"}]},"idMapping":{}}],"vis_graph":{"nodes":[{"color":"skyblue","id":"main-new1","label":"Cell","shape":"ellipse","fixed":true,"value":15,"scaling":{"label":{"enable":true,"min":15,"max":15}},"x":0,"y":5},{"color":{"border":"white","background":"white","highlight":{"border":"white","background":"white"},"hover":{"border":"white","background":"white"}},"id":"main-new1-val","label":"3","type":"number","isLiteral":true,"scaling":{"label":{"enable":true,"min":15,"max":15}},"fixed":true,"value":15,"x":0,"y":95},{"hidden":true,"id":"__Variable-cell","label":"cell"},{"id":"__RectForVariable__","label":"def var","color":{"border":"lightsalmon","background":"lightsalmon","highlight":{"border":"lightsalmon","background":"lightsalmon"},"hover":{"border":"lightsalmon","background":"lightsalmon"}},"shape":"box","physics":false},{"id":"__temp1","x":75.44755059463958,"y":133.08984606959083,"label":"7","isLiteral":true,"fixed":true,"color":{"border":"white","background":"white","highlight":{"border":"white","background":"white"},"hover":{"border":"white","background":"white"}},"type":"number"}],"edges":[{"arrows":{"to":{"enabled":true,"scaleFactor":0.35}},"from":"main-new1","to":"__temp1","label":"val","length":45.5,"width":3,"font":{"size":14},"smooth":{"enabled":true},"id":"d41efc41-29e5-4cb2-b2d7-eeac0bfe97a6"},{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"__Variable-cell","to":"main-new1","label":"cell","width":3,"font":{"size":14},"smooth":{"enabled":true},"color":"seagreen","id":"05455ebd-96bd-4404-ba54-eda0d5ea635e"}]},"validation":{"version":3,"classes":[{"name":"Cell","source":"class Cell {\n constructor(v) { this.val = v; this.next = null; }\n set(arg) {}\n}","instance":{"val":{"undefined":true},"next":null}}],"cases":[{"callLabel":"call1","contextSensitiveID":"main","objects":[{"id":"main-new1","className":"Cell","fields":{"val":3,"next":null}}],"values":{"main-new1-val":3,"main-new1-next":null},"arguments":[7]}]}}
+---------------------------
+escher-ts synthesis completed (2 success / 0 failure)
+=== IMPROVED SYNTHESIS RESPONSE ===
+Common Pattern: BindHole(0, Hole { vertex: 0, ty: Object("Cell"), examples: [Object("main-new1")] })
+BindHole(1, Hole { vertex: 1, ty: Number, examples: [Constant(Number(Number(7)))] })
+Write(Write { from: 0, field: "val", to: 1 })
+Holes: {"set_h0": ["object main-new1"], "set_h1": ["Number(Number(7))"]}
+List Environment Summary: escher-ts task JSON saved: target/escher/ts/set_1794211550_082259000_p14716_0.json
+Synthesized code:
+  [0] set_h0(arg) { return this; }
+  [1] set_h1(arg, hole0) { return arg; }
+Composed method code:
+set(arg) {
+    const hole0 = this.set_h0(arg);
+    const hole1 = this.set_h1(arg, hole0);
+    hole0.val = hole1;
+}
+Escher results:
+  [OK] set_h0 -> set_h0(@thisRef: Ref[Object<Cell>], @nodeHeap: List[Object<Cell>], @nextHeap: List[Object<Cell>], @valHeap: List[Int], @arg: Int): Ref[Object<Cell>] =
+  @thisRef
+  [OK] set_h1 -> set_h1(@thisRef: Ref[Object<Cell>], @nodeHeap: List[Object<Cell>], @nextHeap: List[Object<Cell>], @valHeap: List[Int], @arg: Int, @hole0: Ref[Object<Cell>]): Int =
+  @arg
+=====================================
+--- RAW REQUEST PAYLOAD ---
+{"method_calls":[{"callLabel":"call1","contextSensitiveID":"main","receiverObject":"main-new1","methodName":"setSeven","operations":[{"editType":"addNode","id":"__temp1","label":"7","isLiteral":true,"type":"number"},{"editType":"editEdgeReference","from":"main-new1","oldTo":"main-new1-val","newTo":"__temp1","label":"val"}],"arguments":[],"receiverClassName":"Cell","precondGraph":{"nodes":[{"color":"skyblue","id":"main-new1","label":"Cell","shape":"ellipse","fixed":false,"value":15,"scaling":{"label":{"enable":true,"min":15,"max":15}}},{"color":{"border":"white","background":"white","highlight":{"border":"white","background":"white"},"hover":{"border":"white","background":"white"}},"id":"main-new1-val","label":"3","type":"number","isLiteral":true,"scaling":{"label":{"enable":true,"min":10,"max":10}},"fixed":false,"value":10},{"hidden":true,"id":"__Variable-cell","label":"cell"}],"edges":[{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"main-new1","to":"main-new1-val","label":"val","width":3,"font":{"size":14},"smooth":{"enabled":true}},{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"__Variable-cell","to":"main-new1","label":"cell","width":3,"font":{"size":14},"smooth":{"enabled":true},"color":"seagreen"}]},"actualGraph":{"nodes":[{"color":"skyblue","id":"main-new1","label":"Cell","shape":"ellipse","fixed":true,"value":15,"scaling":{"label":{"enable":true,"min":15,"max":15}}},{"color":{"border":"white","background":"white","highlight":{"border":"white","background":"white"},"hover":{"border":"white","background":"white"}},"id":"main-new1-val","label":"3","type":"number","isLiteral":true,"scaling":{"label":{"enable":true,"min":10,"max":10}},"fixed":true,"value":10},{"hidden":true,"id":"__Variable-cell","label":"cell"}],"edges":[{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"main-new1","to":"main-new1-val","label":"val","width":3,"font":{"size":14},"smooth":{"enabled":true}},{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"__Variable-cell","to":"main-new1","label":"cell","width":3,"font":{"size":14},"smooth":{"enabled":true},"color":"seagreen"}]},"idMapping":{}}],"vis_graph":{"nodes":[{"color":"skyblue","id":"main-new1","label":"Cell","shape":"ellipse","fixed":true,"value":15,"scaling":{"label":{"enable":true,"min":15,"max":15}},"x":0,"y":5},{"color":{"border":"white","background":"white","highlight":{"border":"white","background":"white"},"hover":{"border":"white","background":"white"}},"id":"main-new1-val","label":"3","type":"number","isLiteral":true,"scaling":{"label":{"enable":true,"min":15,"max":15}},"fixed":true,"value":15,"x":0,"y":95},{"hidden":true,"id":"__Variable-cell","label":"cell"},{"id":"__RectForVariable__","label":"def var","color":{"border":"lightsalmon","background":"lightsalmon","highlight":{"border":"lightsalmon","background":"lightsalmon"},"hover":{"border":"lightsalmon","background":"lightsalmon"}},"shape":"box","physics":false},{"id":"__temp1","x":89.62382145137306,"y":138.23001268672363,"label":"7","isLiteral":true,"fixed":true,"color":{"border":"white","background":"white","highlight":{"border":"white","background":"white"},"hover":{"border":"white","background":"white"}},"type":"number"}],"edges":[{"arrows":{"to":{"enabled":true,"scaleFactor":0.35}},"from":"main-new1","to":"__temp1","label":"val","length":45.5,"width":3,"font":{"size":14},"smooth":{"enabled":true},"id":"27532ec6-cb57-4bbb-84a6-2c0238453d1a"},{"arrows":{"to":{"enabled":true,"scaleFactor":1}},"from":"__Variable-cell","to":"main-new1","label":"cell","width":3,"font":{"size":14},"smooth":{"enabled":true},"color":"seagreen","id":"a2b882b4-9844-464c-a9c1-fdb9dee01ada"}]},"validation":{"version":3,"classes":[{"name":"Cell","source":"class Cell {\n constructor(v) { this.val = v; this.next = null; }\n setSeven() {}\n}","instance":{"val":{"undefined":true},"next":null}}],"cases":[{"callLabel":"call1","contextSensitiveID":"main","objects":[{"id":"main-new1","className":"Cell","fields":{"val":3,"next":null}}],"values":{"main-new1-val":3,"main-new1-next":null},"arguments":[]}]}}
+---------------------------
+escher-ts synthesis completed (2 success / 0 failure)
+=== IMPROVED SYNTHESIS RESPONSE ===
+Common Pattern: BindHole(0, Hole { vertex: 0, ty: Object("Cell"), examples: [Object("main-new1")] })
+BindHole(1, Hole { vertex: 1, ty: Number, examples: [Constant(Number(Number(7)))] })
+Write(Write { from: 0, field: "val", to: 1 })
+Holes: {"setSeven_h0": ["object main-new1"], "setSeven_h1": ["Number(Number(7))"]}
+List Environment Summary: escher-ts task JSON saved: target/escher/ts/setSeven_1794278324_692244000_p14716_1.json
+Synthesized code:
+  [0] setSeven_h0() { return this; }
+  [1] setSeven_h1(hole0) { return (((((((0 + 1) + 1) + 1) + 1) + 1) + 1) + 1); }
+Composed method code:
+setSeven() {
+    const hole0 = this.setSeven_h0();
+    const hole1 = this.setSeven_h1(hole0);
+    hole0.val = hole1;
+}
+Escher results:
+  [OK] setSeven_h0 -> setSeven_h0(@thisRef: Ref[Object<Cell>], @nodeHeap: List[Object<Cell>], @nextHeap: List[Object<Cell>], @valHeap: List[Int]): Ref[Object<Cell>] =
+  @thisRef
+  [OK] setSeven_h1 -> setSeven_h1(@thisRef: Ref[Object<Cell>], @nodeHeap: List[Object<Cell>], @nextHeap: List[Object<Cell>], @valHeap: List[Int], @hole0: Ref[Object<Cell>]): Int =
+  inc(inc(inc(inc(inc(inc(inc(zero())))))))
+=====================================

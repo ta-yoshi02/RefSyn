@@ -1,0 +1,118 @@
+{
+  "source": "interior, length 3, args [2,-49]",
+  "caseIndex": 7,
+  "call": {
+    "callLabel": "counterexample7",
+    "contextSensitiveID": "independent",
+    "receiverObject": "ce0",
+    "methodName": "setAt",
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "lit0",
+        "label": "-49",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "ce3",
+        "label": "val",
+        "oldTo": "ce3-val",
+        "newTo": "lit0"
+      }
+    ],
+    "arguments": [
+      2,
+      -49
+    ],
+    "argumentTypes": [
+      "Int",
+      "Int"
+    ],
+    "argumentNames": [
+      "arg0",
+      "arg1"
+    ],
+    "receiverClassName": "Node",
+    "methodParamNames": [
+      "a",
+      "b"
+    ],
+    "precondGraph": {
+      "nodes": [],
+      "edges": []
+    },
+    "actualGraph": {
+      "nodes": [],
+      "edges": []
+    },
+    "idMapping": {}
+  },
+  "validation": {
+    "callLabel": "counterexample7",
+    "contextSensitiveID": "independent",
+    "objects": [
+      {
+        "id": "ce0",
+        "className": "Node",
+        "fields": {
+          "next": {
+            "ref": "ce1"
+          },
+          "val": 46
+        }
+      },
+      {
+        "id": "ce1",
+        "className": "Node",
+        "fields": {
+          "next": {
+            "ref": "ce3"
+          },
+          "val": 39
+        }
+      },
+      {
+        "id": "ce2",
+        "className": "Node",
+        "fields": {
+          "next": {
+            "ref": "ce4"
+          },
+          "val": 7
+        }
+      },
+      {
+        "id": "ce3",
+        "className": "Node",
+        "fields": {
+          "next": null,
+          "val": -27
+        }
+      },
+      {
+        "id": "ce4",
+        "className": "Node",
+        "fields": {
+          "next": {
+            "ref": "ce0"
+          },
+          "val": 8
+        }
+      }
+    ],
+    "values": {
+      "ce0-val": 46,
+      "ce1-val": 39,
+      "ce2-val": 7,
+      "ce3-next": null,
+      "ce3-val": -27,
+      "ce4-val": 8
+    },
+    "arguments": [
+      2,
+      -49
+    ]
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "source": "shared, length 3, args [1,-56]",
+  "caseIndex": 8,
+  "call": {
+    "callLabel": "counterexample8",
+    "contextSensitiveID": "independent",
+    "receiverObject": "ce0",
+    "methodName": "setAt",
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "lit0",
+        "label": "-56",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "ce1",
+        "label": "val",
+        "oldTo": "ce1-val",
+        "newTo": "lit0"
+      }
+    ],
+    "arguments": [
+      1,
+      -56
+    ],
+    "argumentTypes": [
+      "Int",
+      "Int"
+    ],
+    "argumentNames": [
+      "arg0",
+      "arg1"
+    ],
+    "receiverClassName": "Node",
+    "methodParamNames": [
+      "a",
+      "b"
+    ],
+    "precondGraph": {
+      "nodes": [],
+      "edges": []
+    },
+    "actualGraph": {
+      "nodes": [],
+      "edges": []
+    },
+    "idMapping": {}
+  },
+  "validation": {
+    "callLabel": "counterexample8",
+    "contextSensitiveID": "independent",
+    "objects": [
+      {
+        "id": "ce0",
+        "className": "Node",
+        "fields": {
+          "next": {
+            "ref": "ce1"
+          },
+          "val": 39
+        }
+      },
+      {
+        "id": "ce1",
+        "className": "Node",
+        "fields": {
+          "next": {
+            "ref": "ce4"
+          },
+          "val": -27
+        }
+      },
+      {
+        "id": "ce2",
+        "className": "Node",
+        "fields": {
+          "next": {
+            "ref": "ce1"
+          },
+          "val": 77
+        }
+      },
+      {
+        "id": "ce3",
+        "className": "Node",
+        "fields": {
+          "next": {
+            "ref": "ce5"
+          },
+          "val": -5
+        }
+      },
+      {
+        "id": "ce4",
+        "className": "Node",
+        "fields": {
+          "next": null,
+          "val": 0
+        }
+      },
+      {
+        "id": "ce5",
+        "className": "Node",
+        "fields": {
+          "next": null,
+          "val": 6
+        }
+      }
+    ],
+    "values": {
+      "ce0-val": 39,
+      "ce1-val": -27,
+      "ce2-val": 77,
+      "ce3-val": -5,
+      "ce4-next": null,
+      "ce4-val": 0,
+      "ce5-next": null,
+      "ce5-val": 6
+    },
+    "arguments": [
+      1,
+      -56
+    ]
+  }
+}

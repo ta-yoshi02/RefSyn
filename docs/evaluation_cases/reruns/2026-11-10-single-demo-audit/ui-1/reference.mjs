@@ -1,0 +1,2 @@
+export const classSource="class Cell { constructor(v) { this.val=v; this.next=null; } setSeven() { this.val = 7; } }";
+export const cases = [-9,0,3,7,89].flatMap(v=>[0].map(arg=>({name:`v=${v}, arg=${arg}`,build({Cell}) { const cell=new Cell(v); const next=new Cell(42);cell.next=next;return {receiver:cell,args:[],roots:{cell,next}}; }})));

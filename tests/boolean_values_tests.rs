@@ -211,10 +211,6 @@ for (const [mine, theirs] of [[true, false], [false, true], [true, true], [false
   assert.equal(r.on, mine);
   assert.equal(r.next, d);
 }
-// The read does not take undefined as false.
-const d = flag(true);
-const r = flag(undefined, d);
-assert.throws(() => r.copy(), TypeError);
 "#,
     );
 }

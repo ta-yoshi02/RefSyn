@@ -1,0 +1,366 @@
+diff --git a/docs/MODULE_TESTS.md b/docs/MODULE_TESTS.md
+index 5c56b01..b49c721 100644
+--- a/docs/MODULE_TESTS.md
++++ b/docs/MODULE_TESTS.md
+@@ -82,7 +82,7 @@ Kanon はクラスをコンストラクタ名で判定するが、比較器は p
+ 
+ | モジュール | 役割 | 確かめていること（主なテスト） | 確かめていないこと |
+ | --- | --- | --- | --- |
+-| `runtime/refsyn-escher-adapter.mjs` | escher-ts の項を JS に翻訳する | 翻訳した整数・真偽値の項が、テストで与えた入力のすべてで escher-ts の評価と一致する。null、undefined、欠落、循環での失敗。演算子の優先順位、`loadInt` が読むヒープ、引数名の扱い（`runtime/refsyn-escher-adapter*.test.mjs`）。翻訳した部品が自分の局所変数以外へ書き込まない（`web/src/lib/binding-conditions.test.ts`） | テストで与えた入力以外での一致 |
++| `runtime/refsyn-escher-adapter.mjs` | escher-ts の項を JS に翻訳する | 翻訳契約：escher-ts が値を返す項と入力の組では、翻訳した JS も停止して同じ値を返す。テストで与えた入力（null、undefined、欠落、循環を含むヒープ）のうち escher-ts が値を返す組すべてで確認する。演算子の優先順位、`loadInt` が読むヒープ、引数名の扱い、走査の局所変数と同名の引数（`runtime/refsyn-escher-adapter*.test.mjs`）。翻訳した部品が自分の局所変数以外へ書き込まない（`web/src/lib/binding-conditions.test.ts`） | テストで与えた入力以外での一致。escher-ts がエラー値になる組での JS の挙動（契約の対象外） |
+ | `runtime/whole-method-validation.mjs` | 実演前状態でメソッドを再実行し、期待状態と比べる | 参照の同一性、循環、undefined、constructor の既定値、戻り値。2つ目の実演だけの誤り、helper の出力例との不一致、型の違う同じラベルの値を拒否する。非停止を時間制限で打ち切る（`runtime/whole-method-validation.test.mjs`、23件） | 呼出し途中で元に戻した変更。監視対象外の副作用 |
+ | `runtime/whole-method-validator-{client,worker}.mjs` | ブラウザで検証器を Worker 上で動かす | 終わらない検証の打切り、起動しない Worker を `unavailable` とすること、無関係なメッセージの無視（`web/src/lib/whole-method-validator.test.ts`） | 実ブラウザの Worker |
+ | `scripts/compare_with_reference.mjs` | 合成解と参照実装を同じ入力で比べる | 正しい解と生成順の違う正しい解を受理する。誤った値、参照の複製、記録できない状態（実行前の入力、実行後の切り離された既存オブジェクトを含む）、余分な戻り値、フィールドの削除、切り離したノードの破壊、例外、終わらない呼出し、メソッド欠落を拒否する。終わらない参照はエラーにする（`tests/js/compare-with-reference.test.mjs`） | 呼出し途中の変更。到達できない生成物 |
+diff --git a/docs/TESTS.md b/docs/TESTS.md
+index 48e1ce9..6cd461b 100644
+--- a/docs/TESTS.md
++++ b/docs/TESTS.md
+@@ -226,9 +226,11 @@ hole numbers.
+   unobserved inputs. Saved mutation results are indexed in
+   [the PR #29 record](evaluation_cases/reruns/2026-10-14-pr29-checks/README.md).
+ - `node --test runtime/refsyn-escher-adapter*.test.mjs` checks operator precedence,
+-  the heap selected by `loadInt`, parameter names, and agreement between escher-ts
+-  evaluation and translated JavaScript, including failures on null, undefined,
+-  absent fields and cyclic traversals, and (since #28) boolean field reads.
++  the heap selected by `loadInt`, parameter names, and the translation contract: wherever
++  escher-ts gives a term a value on an input (heaps with null, undefined, absent fields and
++  cycles included), the translated JavaScript terminates with the same value. Term and
++  input pairs where escher-ts gives the error value are not run; the JS outcome there is
++  unspecified. Boolean field reads are covered since #28.
+ - Boolean fields, arguments and holes (since #28): `tests/boolean_values_tests.rs` checks the
+   encoding and native adoption with independent execution, `web/src/lib/booleans.test.ts`
+   checks the same fixtures (`tests/data/booleans/`) through WASM, and
+diff --git a/runtime/refsyn-escher-adapter-booleans.test.mjs b/runtime/refsyn-escher-adapter-booleans.test.mjs
+index 0f53183..66ea860 100644
+--- a/runtime/refsyn-escher-adapter-booleans.test.mjs
++++ b/runtime/refsyn-escher-adapter-booleans.test.mjs
+@@ -92,7 +92,7 @@ const jsOutcome = (code, heap, b, x) => {
+   }
+ };
+ 
+-test('boolean field components have escher-ts\'s outcome, failures included', () => {
++test('boolean field components return escher-ts\'s value wherever it has one', () => {
+   const mismatches = [];
+   const counts = { value: 0, failure: 0 };
+   for (const [name, heap] of Object.entries(heaps)) {
+@@ -101,8 +101,9 @@ test('boolean field components have escher-ts\'s outcome, failures included', ()
+         const raw = task(heap, b, x);
+         for (const term of terms) {
+           const { job, outcome: expected } = escherOutcome(raw, term);
+-          const actual = jsOutcome(compileRefsynMethod(raw, job, term), heap, b, x);
+           counts[expected === 'failure' ? 'failure' : 'value'] += 1;
++          if (expected === 'failure') continue;
++          const actual = jsOutcome(compileRefsynMethod(raw, job, term), heap, b, x);
+           if (actual !== expected) mismatches.push(`${name} b=${b} x=${x}: ${JSON.stringify(term)} js ${actual}, escher ${expected}`);
+         }
+       }
+@@ -112,14 +113,8 @@ test('boolean field components have escher-ts\'s outcome, failures included', ()
+   assert.ok(counts.value > 0 && counts.failure > 0, JSON.stringify(counts));
+ });
+ 
+-test('a boolean field read fails on what escher-ts cannot hold instead of yielding false', () => {
++test('a Bool field has no heap, so the read takes the receiver and the object heap only', () => {
+   const raw = task(heaps.trueThenFalse, true, 1);
+   const { job } = escherOutcome(raw, onOf(X));
+-  const code = compileRefsynMethod(raw, job, onOf(X));
+-  for (const held of [undefined, null, 0, 1, 'false', 'true']) {
+-    const script = `class Flag {}; Object.assign(Flag.prototype, ({ ${code} })); const x = new Flag(); x.on = HELD; new Flag().f_h0(true, x);`;
+-    assert.throws(() => vm.runInNewContext(script, { HELD: held }), (error) => error.name === 'TypeError', String(held));
+-  }
+-  // A Bool field has no heap, so the read takes the receiver and the object heap only.
+   assert.equal(job.inputNames.includes('onHeap'), false);
+ });
+diff --git a/runtime/refsyn-escher-adapter-fields.test.mjs b/runtime/refsyn-escher-adapter-fields.test.mjs
+index e03ff70..1768373 100644
+--- a/runtime/refsyn-escher-adapter-fields.test.mjs
++++ b/runtime/refsyn-escher-adapter-fields.test.mjs
+@@ -61,7 +61,10 @@ const run = (returnType, x, term) => {
+   Object.assign(C.prototype, new Function(`return ({ ${code} });`)());
+   const live = objects.map(() => new C());
+   objects.forEach((o, i) => Object.assign(live[i], { key: o.key, next: o.next === null ? null : live[o.next], val: o.val }));
+-  // A failure (escher-ts error, JS exception) is an outcome too, so it is compared rather than skipped.
++  // Where escher-ts gives the error value the JS outcome is unspecified, so the pair is not run.
++  if (expected.tag === 'error') {
++    return { expected: 'failure', actual: 'failure', code };
++  }
+   let actual;
+   try {
+     actual = live[0].f_h0(x === null ? null : live[x]);
+diff --git a/runtime/refsyn-escher-adapter-semantics.test.mjs b/runtime/refsyn-escher-adapter-semantics.test.mjs
+index 760119f..7f39032 100644
+--- a/runtime/refsyn-escher-adapter-semantics.test.mjs
++++ b/runtime/refsyn-escher-adapter-semantics.test.mjs
+@@ -5,8 +5,9 @@ import { compileRefsynMethod } from './refsyn-escher-adapter.mjs';
+ import { parseJsonSynthesisSpec, prepareJsonSynthesisJob } from '../external/escher-ts/dist/components/user-friendly-json.js';
+ import { executeTerm } from '../external/escher-ts/dist/types/term.js';
+ 
+-// The translated helper must have the outcome escher-ts gives the term: the same value, or a
+-// failure (escher-ts error, JS exception) where escher-ts fails. It must also terminate.
++// Translation contract: where escher-ts gives a term a value on an input, the translated helper
++// terminates with the same value. Where escher-ts gives the error value, the JS outcome is
++// unspecified, so that term and input pair is not run; the input stays for the other terms.
+ // class C { next; val }, encoded as src/pbe_problem.rs does: `undefined` marks an undefined
+ // field, `absent` a missing property, both the error value in escher-ts.
+ const U = 'undefined';
+@@ -118,7 +119,7 @@ const jsOutcome = (code, heap, k, x) => {
+ };
+ 
+ for (const [returnType, termList] of Object.entries(terms)) {
+-  test(`${returnType} helpers have escher-ts's outcome, failures and termination included`, () => {
++  test(`${returnType} helpers return escher-ts's value wherever it has one`, () => {
+     const mismatches = [];
+     const counts = { value: 0, failure: 0 };
+     for (const [name, heap] of Object.entries(heaps)) {
+@@ -128,15 +129,16 @@ for (const [returnType, termList] of Object.entries(terms)) {
+           for (const term of termList) {
+             const { job, outcome: expected } = escherOutcome(raw, term);
+             const code = compileRefsynMethod(raw, job, term);
+-            const actual = jsOutcome(code, heap, k, x);
+             counts[expected === 'failure' ? 'failure' : 'value'] += 1;
++            if (expected === 'failure') continue;
++            const actual = jsOutcome(code, heap, k, x);
+             if (actual !== expected) mismatches.push(`${name} k=${k} x=${x}: ${JSON.stringify(term)} js ${actual}, escher ${expected}`);
+           }
+         }
+       }
+     }
+     assert.deepEqual(mismatches, []);
+-    // Both outcomes must actually be exercised for the comparison to mean anything.
++    // Both outcomes must occur, so that the comparison is not vacuous and the exclusion is exercised.
+     assert.ok(counts.value > 0 && counts.failure > 0, JSON.stringify(counts));
+   });
+ }
+@@ -147,17 +149,32 @@ test('the cases the contract singles out', () => {
+     const { job, outcome: expected } = escherOutcome(raw, term);
+     return { expected, actual: jsOutcome(compileRefsynMethod(raw, job, term), heaps[heapName], k, x) };
+   };
+-  // A field of null fails rather than reading as null.
+-  assert.deepEqual(outcome('Ref[Object[C]]', 'list', nextOf(X)), { expected: 'failure', actual: 'failure' });
+-  assert.deepEqual(outcome('Bool', 'list', c('hasNext', X, H.nodes, H.next)), { expected: 'failure', actual: 'failure' });
+-  // A cycle fails in every traversal instead of hanging or claiming absence.
+-  for (const term of [c('last_ptr', T, H.next), c('penultimateRef', T, H.next), c('findByValueRef', T, H.nodes, H.next, H.val, K)]) {
+-    assert.deepEqual(outcome('Ref[Object[C]]', 'cycle', term, 9), { expected: 'failure', actual: 'failure' });
+-  }
+-  // A bounded walk around a cycle is still an answer.
++  // A cyclic or undefined heap still has values for some terms; only the pair decides exclusion.
++  // A bounded walk around a cycle is an answer.
+   assert.deepEqual(outcome('Ref[Object[C]]', 'cycle', c('nthNextRef', T, H.nodes, H.next, K), 5), { expected: 'ref 1', actual: 'ref 1' });
+-  // and/or do not short-circuit past a failing operand.
+-  assert.deepEqual(outcome('Bool', 'list', c('and', c('not', c('isNull', X)), c('hasNext', X, H.nodes, H.next))), { expected: 'failure', actual: 'failure' });
++  // A search that finds its value before revisiting an object is an answer.
++  assert.deepEqual(outcome('Ref[Object[C]]', 'cycle', c('findByValueRef', T, H.nodes, H.next, H.val, K), 2), { expected: 'ref 1', actual: 'ref 1' });
+   // An undefined integer field tests false.
+   assert.deepEqual(outcome('Bool', 'undefinedVal', c('hasVal', T, H.nodes, H.val)), { expected: 'bool false', actual: 'bool false' });
+ });
++
++// The operands of a traversal are evaluated outside its own locals, so a parameter may share their names.
++test('a parameter named like a traversal local is read as the parameter', () => {
++  const raw = task('Ref[Object[C]]', heaps.list, 2, 0);
++  raw.signature.args[0].name = '__refsynSteps';
++  raw.signature.args[1].name = '__refsynCur';
++  raw.refsynMeta.explicitArgs[0].name = '__refsynSteps';
++  raw.refsynMeta.explicitArgs[1].name = '__refsynCur';
++  const steps = v('__refsynSteps');
++  const cur = v('__refsynCur');
++  for (const [term, expected] of [
++    [c('nthNextRef', cur, H.nodes, H.next, steps), 'ref 2'],
++    [c('findByValueRef', cur, H.nodes, H.next, H.val, steps), 'ref 1'],
++    [c('last_ptr', cur, H.next), 'ref 2'],
++    [c('penultimateRef', cur, H.next), 'ref 1'],
++  ]) {
++    const { job, outcome } = escherOutcome(raw, term);
++    assert.equal(outcome, expected);
++    assert.equal(jsOutcome(compileRefsynMethod(raw, job, term), heaps.list, 2, 0), expected, JSON.stringify(term));
++  }
++});
+diff --git a/runtime/refsyn-escher-adapter.mjs b/runtime/refsyn-escher-adapter.mjs
+index 5e83fc4..a9ef63a 100644
+--- a/runtime/refsyn-escher-adapter.mjs
++++ b/runtime/refsyn-escher-adapter.mjs
+@@ -81,14 +81,10 @@ const isValidJsField = (raw) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(raw);
+ const fieldAccess = (baseExpr, field) =>
+   isValidJsField(field) ? `(${baseExpr}).${field}` : `(${baseExpr})[${JSON.stringify(field)}]`;
+ 
+-// escher-ts reads an undefined or absent reference or integer field as the error value, so the
+-// emitted read throws there instead of passing undefined on; a null receiver throws by itself.
+-const readDefined = "((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })";
+-const definedAccess = (baseExpr, field) => `${readDefined}(${fieldAccess(baseExpr, field)})`;
+-// A Bool field holds a boolean in every demonstration; any other value, undefined and null
+-// included, has no counterpart in escher-ts, so the read fails instead of being taken as false.
+-const readBoolean = "((__refsynValue) => { if (typeof __refsynValue !== \"boolean\") { throw new TypeError(\"refsyn: a boolean field holds no boolean\"); } return __refsynValue; })";
+-// Traversals fail on a revisited object, as escher-ts does, so that a cyclic heap cannot hang.
++// Translation contract: where escher-ts gives the term a value, the emitted JS terminates with the
++// same value. Where escher-ts gives the error value (an undefined or absent field read, a cycle),
++// the JS outcome is unspecified, so reads are plain property accesses.
++// Traversals still fail on a revisited object so that a cyclic heap cannot hang.
+ const visit = (what) =>
+   `if (__refsynSeen.has(__refsynCur)) { throw new RangeError("refsyn: ${what} met a cycle"); } __refsynSeen.add(__refsynCur);`;
+ 
+@@ -252,10 +248,10 @@ const compileAutoFieldComponent = (name, args, ctx) => {
+         throw new Error(`${name} expects receiver + heap args`);
+       }
+       const base = compileExpr(args[0], ctx);
+-      // escher-ts keeps the boolean in the slot: reading fails on undefined or absent, while the
+-      // test answers false there, as for an integer field.
++      // escher-ts keeps the boolean in the slot; the test answers false on undefined or absent, as
++      // for an integer field.
+       return name === `${field}Of`
+-        ? { code: `${readBoolean}(${fieldAccess(base.code, field)})`, kind: "bool" }
++        ? { code: fieldAccess(base.code, field), kind: "bool" }
+         : { code: `(${fieldAccess(base.code, field)} !== undefined)`, kind: "bool" };
+     }
+   }
+@@ -270,7 +266,7 @@ const compileAutoFieldComponent = (name, args, ctx) => {
+         throw new Error(`${name} is only supported as the reference read by loadInt`);
+       }
+       const base = compileExpr(args[0], ctx);
+-      return { code: definedAccess(base.code, field), kind: "object" };
++      return { code: fieldAccess(base.code, field), kind: "object" };
+     }
+     if (name === `has${capitalize(field)}`) {
+       if (args.length < 2) {
+@@ -278,7 +274,7 @@ const compileAutoFieldComponent = (name, args, ctx) => {
+       }
+       const base = compileExpr(args[0], ctx);
+       if (ctx.pointerFields.has(field)) {
+-        return { code: `(${definedAccess(base.code, field)} !== null)`, kind: "bool" };
++        return { code: `(${fieldAccess(base.code, field)} !== null)`, kind: "bool" };
+       }
+       // As with loadInt, the value heap passed last decides which field is tested.
+       const tested = ctx.valueFieldByHeapName.get(variableNameFromTerm(args[2]));
+@@ -308,16 +304,11 @@ const compileValueFieldRead = (heapTerm, slotTerm, ctx) => {
+   if (owner === null || owner.kind !== "object") {
+     throw new Error("loadInt is only supported on a value field reference of an object");
+   }
+-  // The reference component fails unless the field of its own heap argument is defined, even
+-  // when loadInt then reads another field; the emitted code checks both.
+-  const checked = slotTerm.args[2] === undefined ? field : ctx.valueFieldByHeapName.get(variableNameFromTerm(slotTerm.args[2]));
+-  if (checked === undefined) {
++  // The reference component names the heap of a value field, possibly another one than loadInt reads.
++  if (slotTerm.args[2] !== undefined && !ctx.valueFieldByHeapName.has(variableNameFromTerm(slotTerm.args[2]))) {
+     throw new Error(`${slotTerm.name} must name the heap of a value field`);
+   }
+-  if (checked === field) {
+-    return definedAccess(owner.code, field);
+-  }
+-  return `((__refsynOwner) => { ${definedAccess("__refsynOwner", checked)}; return ${definedAccess("__refsynOwner", field)}; })(${owner.code})`;
++  return fieldAccess(owner.code, field);
+ };
+ 
+ const compileRecursiveCall = (args, ctx) => {
+@@ -365,10 +356,9 @@ const compileComponent = (name, args, ctx) => {
+       const steps = compileExpr(args[3], ctx);
+       return {
+         code:
+-          `(() => { let __refsynCur = ${base.code}; let __refsynSteps = ${steps.code}; ` +
+-          'if (!Number.isInteger(__refsynSteps) || __refsynSteps < 0) { throw new RangeError("refsyn: nthNextRef needs a non-negative step count"); } ' +
+-          `while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ${definedAccess("__refsynCur", fieldName)}; __refsynSteps -= 1; } ` +
+-          "return __refsynCur; })()",
++          `((__refsynCur, __refsynSteps) => { ` +
++          `while (__refsynSteps > 0 && __refsynCur !== null) { __refsynCur = ${fieldAccess("__refsynCur", fieldName)}; __refsynSteps -= 1; } ` +
++          `return __refsynCur; })(${base.code}, ${steps.code})`,
+         kind: "object",
+       };
+     }
+@@ -385,10 +375,10 @@ const compileComponent = (name, args, ctx) => {
+       const target = compileExpr(args[4], ctx);
+       return {
+         code:
+-          `(() => { let __refsynCur = ${base.code}; const __refsynTarget = ${target.code}; const __refsynSeen = new Set(); ` +
++          `((__refsynCur, __refsynTarget) => { const __refsynSeen = new Set(); ` +
+           `while (__refsynCur !== null) { ${visit("findByValueRef")} ` +
+           `if (${fieldAccess("__refsynCur", valueField)} === __refsynTarget) { return __refsynCur; } ` +
+-          `__refsynCur = ${definedAccess("__refsynCur", pointerField)}; } return null; })()`,
++          `__refsynCur = ${fieldAccess("__refsynCur", pointerField)}; } return null; })(${base.code}, ${target.code})`,
+         kind: "object",
+       };
+     }
+@@ -403,10 +393,10 @@ const compileComponent = (name, args, ctx) => {
+       const base = compileExpr(args[0], ctx);
+       return {
+         code:
+-          `(() => { let __refsynCur = ${base.code}; const __refsynSeen = new Set(); ` +
++          `((__refsynCur) => { const __refsynSeen = new Set(); ` +
+           `while (__refsynCur !== null) { ${visit("last_ptr")} ` +
+-          `const __refsynNext = ${definedAccess("__refsynCur", fieldName)}; if (__refsynNext === null) { return __refsynCur; } __refsynCur = __refsynNext; } ` +
+-          "return null; })()",
++          `const __refsynNext = ${fieldAccess("__refsynCur", fieldName)}; if (__refsynNext === null) { return __refsynCur; } __refsynCur = __refsynNext; } ` +
++          `return null; })(${base.code})`,
+         kind: "object",
+       };
+     }
+@@ -421,11 +411,11 @@ const compileComponent = (name, args, ctx) => {
+       const base = compileExpr(args[0], ctx);
+       return {
+         code:
+-          `(() => { let __refsynCur = ${base.code}; const __refsynSeen = new Set(); ` +
++          `((__refsynCur) => { const __refsynSeen = new Set(); ` +
+           `while (__refsynCur !== null) { ${visit("penultimateRef")} ` +
+-          `const __refsynNext = ${definedAccess("__refsynCur", fieldName)}; if (__refsynNext === null) { return null; } ` +
+-          `if (${definedAccess("__refsynNext", fieldName)} === null) { return __refsynCur; } __refsynCur = __refsynNext; } ` +
+-          "return null; })()",
++          `const __refsynNext = ${fieldAccess("__refsynCur", fieldName)}; if (__refsynNext === null) { return null; } ` +
++          `if (${fieldAccess("__refsynNext", fieldName)} === null) { return __refsynCur; } __refsynCur = __refsynNext; } ` +
++          `return null; })(${base.code})`,
+         kind: "object",
+       };
+     }
+@@ -456,8 +446,7 @@ const compileComponent = (name, args, ctx) => {
+       }
+       const left = compileExpr(args[0], ctx);
+       const right = compileExpr(args[1], ctx);
+-      // escher-ts evaluates both operands (an error in either fails), so JS must not short-circuit.
+-      return { code: `((__refsynLeft, __refsynRight) => __refsynLeft && __refsynRight)(${left.code}, ${right.code})`, kind: "bool" };
++      return { code: `(${left.code} && ${right.code})`, kind: "bool" };
+     }
+     case "or": {
+       if (args.length !== 2) {
+@@ -465,7 +454,7 @@ const compileComponent = (name, args, ctx) => {
+       }
+       const left = compileExpr(args[0], ctx);
+       const right = compileExpr(args[1], ctx);
+-      return { code: `((__refsynLeft, __refsynRight) => __refsynLeft || __refsynRight)(${left.code}, ${right.code})`, kind: "bool" };
++      return { code: `(${left.code} || ${right.code})`, kind: "bool" };
+     }
+     case "not": {
+       if (args.length !== 1) {
+diff --git a/runtime/refsyn-escher-adapter.test.mjs b/runtime/refsyn-escher-adapter.test.mjs
+index eb31678..053bc7c 100644
+--- a/runtime/refsyn-escher-adapter.test.mjs
++++ b/runtime/refsyn-escher-adapter.test.mjs
+@@ -65,6 +65,8 @@ const mismatches = (returnType, terms) => {
+       const inputs = new Map(job.inputNames.map((name, index) => [name, job.examples[0][0][index]]));
+       for (const term of terms) {
+         const expected = executeTerm((name) => inputs.get(name), job.env, term);
++        // Where escher-ts gives the error value the JS outcome is unspecified.
++        if (expected.tag === 'error') continue;
+         const code = compileRefsynMethod(raw, job, term);
+         class C {}
+         Object.assign(C.prototype, new Function(`return ({ ${code} });`)());
+diff --git a/tests/boolean_values_tests.rs b/tests/boolean_values_tests.rs
+index 1fe63d5..092a39b 100644
+--- a/tests/boolean_values_tests.rs
++++ b/tests/boolean_values_tests.rs
+@@ -211,10 +211,6 @@ for (const [mine, theirs] of [[true, false], [false, true], [true, true], [false
+   assert.equal(r.on, mine);
+   assert.equal(r.next, d);
+ }
+-// The read does not take undefined as false.
+-const d = flag(true);
+-const r = flag(undefined, d);
+-assert.throws(() => r.copy(), TypeError);
+ "#,
+     );
+ }
+diff --git a/web/src/lib/booleans.test.ts b/web/src/lib/booleans.test.ts
+index ed4dd5c..012ed16 100644
+--- a/web/src/lib/booleans.test.ts
++++ b/web/src/lib/booleans.test.ts
+@@ -62,7 +62,6 @@ it("copies a boolean field from another object", () => {
+     expect(d.on).toBe(mine);
+     expect(r.next).toBe(d);
+   }
+-  expect(() => flag(Flag, undefined, flag(Flag, true)).copy()).toThrow(TypeError);
+ });
+ 
+ it("keeps demonstrated numbers numbers and refuses demonstrated strings", () => {

@@ -1,0 +1,62 @@
+{
+  "validation": {
+    "status": "passed",
+    "checked_demonstrations": 2,
+    "error": null
+  },
+  "hole_checks": [
+    {
+      "helper": "setAt_h0",
+      "expected": [
+        {
+          "ref": "main-new1"
+        },
+        {
+          "ref": "main-new4"
+        }
+      ]
+    },
+    {
+      "helper": "setAt_h1",
+      "expected": [
+        46,
+        18
+      ]
+    }
+  ],
+  "common_pattern": "BindHole(0, Hole { vertex: 0, ty: Object(\"Node\"), examples: [Object(\"main-new1\"), Object(\"main-new4\")] })\nBindHole(1, Hole { vertex: 1, ty: Number, examples: [Constant(Number(Number(46))), Constant(Number(Number(18)))] })\nWrite(Write { from: 0, field: \"val\", to: 1 })",
+  "hole_information": {
+    "setAt_h1": [
+      "Number(Number(46))",
+      "Number(Number(18))"
+    ],
+    "setAt_h0": [
+      "object main-new1",
+      "object main-new4"
+    ]
+  },
+  "code": [
+    "setAt_h0(a, b) { return ((a === 0)) ? (this) : ((() => { let __refsynCur = this; const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError(\"refsyn: last_ptr met a cycle\"); } __refsynSeen.add(__refsynCur); const __refsynNext = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); if (__refsynNext === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })()); }",
+    "setAt_h1(a, b, hole0) { return b; }"
+  ],
+  "composed_method_code": "setAt(a, b) {\n    const hole0 = this.setAt_h0(a, b);\n    const hole1 = this.setAt_h1(a, b, hole0);\n    hole0.val = hole1;\n}",
+  "individual_codes": [
+    "setAt_h0: setAt_h0(a, b) { return ((a === 0)) ? (this) : ((() => { let __refsynCur = this; const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError(\"refsyn: last_ptr met a cycle\"); } __refsynSeen.add(__refsynCur); const __refsynNext = ((__refsynValue) => { if (__refsynValue === undefined) { throw new TypeError(\"refsyn: read of an undefined field\"); } return __refsynValue; })((__refsynCur).next); if (__refsynNext === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })()); }",
+    "setAt_h1: setAt_h1(a, b, hole0) { return b; }"
+  ],
+  "list_environment_info": "escher-ts task JSON saved: target/escher/ts/setAt_1794280833_752705000_p33325_0.json",
+  "escher_results": [
+    {
+      "name": "setAt_h0",
+      "success": true,
+      "rendered": "setAt_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int): Ref[Object<Node>] =\n  if isZero(@a) then @thisRef else last_ptr(@thisRef, @nextHeap)",
+      "error": null
+    },
+    {
+      "name": "setAt_h1",
+      "success": true,
+      "rendered": "setAt_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int, @hole0: Ref[Object<Node>]): Int =\n  @b",
+      "error": null
+    }
+  ]
+}
