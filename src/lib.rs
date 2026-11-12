@@ -1,4 +1,6 @@
 pub mod alignment;
+#[cfg(not(target_arch = "wasm32"))]
+mod child_process;
 pub mod demonstration;
 pub mod error;
 pub mod escher_bridge;
@@ -225,8 +227,10 @@ pub async fn handle_synthesis(body: bytes::Bytes) -> Result<impl warp::Reply, wa
             ));
         }
     };
-    finalize_native_synthesis(&mut artifacts);
-    validation::validate_for_adoption(&body, &mut artifacts);
+    match finalize_native_synthesis(&mut artifacts) {
+        Ok(()) => validation::validate_for_adoption(&body, &mut artifacts),
+        Err(error) => validation::reject_without_validation(&mut artifacts, error),
+    }
     log_synthesis_response(&artifacts.response);
 
     Ok(warp::reply::with_status(
@@ -388,13 +392,14 @@ fn apply_escher_results(artifacts: &mut SynthesisArtifacts, results: &[EscherJsI
 }
 
 #[cfg(all(feature = "server", not(target_arch = "wasm32")))]
-fn finalize_native_synthesis(artifacts: &mut SynthesisArtifacts) {
+/// Runs escher-ts on the hole tasks. An error means the runner gave no usable result.
+fn finalize_native_synthesis(artifacts: &mut SynthesisArtifacts) -> Result<(), String> {
     for warning in artifacts.warnings.clone() {
         append_list_env_info(&mut artifacts.response.list_environment_info, warning);
     }
 
     let Some(task_json) = artifacts.task_json.as_ref() else {
-        return;
+        return Ok(());
     };
 
     let base_name = artifacts
@@ -419,8 +424,14 @@ fn finalize_native_synthesis(artifacts: &mut SynthesisArtifacts) {
                 success_count, failure_count
             );
             apply_escher_results(artifacts, &results);
+            Ok(())
         }
-        Err(err) => eprintln!("Escher JS synthesis failed: {}", err),
+        Err(err) => {
+            eprintln!("Escher JS synthesis failed: {}", err);
+            let error = format!("escher-ts runner failed: {}", err);
+            append_list_env_info(&mut artifacts.response.list_environment_info, error.clone());
+            Err(error)
+        }
     }
 }
 

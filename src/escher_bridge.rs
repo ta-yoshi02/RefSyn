@@ -12,17 +12,19 @@
 //! - Deterministic ordering of inputs (args, then value lists, then pointer lists)
 
 #[cfg(not(target_arch = "wasm32"))]
+use crate::child_process::run_with_deadline;
+#[cfg(not(target_arch = "wasm32"))]
 use anyhow::anyhow;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{BTreeMap, HashSet};
 #[cfg(not(target_arch = "wasm32"))]
-use std::io::Write;
-#[cfg(not(target_arch = "wasm32"))]
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 #[cfg(not(target_arch = "wasm32"))]
 use std::process::{Command, Stdio};
+#[cfg(not(target_arch = "wasm32"))]
+use std::time::Duration;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct EscherTaskSpec {
@@ -196,7 +198,25 @@ fn resolve_escher_js_max_old_space_mb() -> Result<usize> {
     parse_escher_js_max_old_space_mb(std::env::var("ESCHER_JS_MAX_OLD_SPACE_MB").ok().as_deref())
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+fn resolve_escher_js_process_timeout() -> Result<Duration> {
+    const DEFAULT_MS: u64 = 60_000;
+    match std::env::var("ESCHER_JS_PROCESS_TIMEOUT_MS") {
+        Err(_) => Ok(Duration::from_millis(DEFAULT_MS)),
+        Ok(raw) => match raw.trim().parse::<u64>() {
+            Ok(ms) if ms > 0 => Ok(Duration::from_millis(ms)),
+            _ => Err(anyhow!(
+                "Invalid ESCHER_JS_PROCESS_TIMEOUT_MS='{}'. Expected a positive integer (ms).",
+                raw.trim()
+            )),
+        },
+    }
+}
+
 /// Invoke the configured escher-ts runner via Node and parse normalized results.
+///
+/// escher-ts bounds each task's search itself (`ESCHER_TS_TIMEOUT_MS`); the runner process as a
+/// whole is bounded here (`ESCHER_JS_PROCESS_TIMEOUT_MS`, 60 s by default) and killed past it.
 #[cfg(not(target_arch = "wasm32"))]
 pub fn run_escher_js(task_json: &str) -> Result<Vec<EscherJsInternalOutcome>> {
     let default_runner = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -205,7 +225,18 @@ pub fn run_escher_js(task_json: &str) -> Result<Vec<EscherJsInternalOutcome>> {
     let runner = std::env::var("ESCHER_JS_RUNNER")
         .map(PathBuf::from)
         .unwrap_or(default_runner);
+    let max_old_space_mb = resolve_escher_js_max_old_space_mb()?;
+    let timeout = resolve_escher_js_process_timeout()?;
+    run_escher_runner(&runner, task_json, max_old_space_mb, timeout)
+}
 
+#[cfg(not(target_arch = "wasm32"))]
+fn run_escher_runner(
+    runner: &Path,
+    task_json: &str,
+    max_old_space_mb: usize,
+    timeout: Duration,
+) -> Result<Vec<EscherJsInternalOutcome>> {
     if !runner.exists() {
         return Err(anyhow!(
             "Escher JS runner not found at {}",
@@ -213,29 +244,21 @@ pub fn run_escher_js(task_json: &str) -> Result<Vec<EscherJsInternalOutcome>> {
         ));
     }
 
-    let max_old_space_mb = resolve_escher_js_max_old_space_mb()?;
     let mut command = Command::new("node");
     command
         .arg(format!("--max-old-space-size={}", max_old_space_mb))
-        .arg(&runner)
+        .arg(runner)
         .arg("--quiet")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit());
 
-    let mut child = command
-        .spawn()
-        .map_err(|e| anyhow!("Failed to spawn Node runner: {}", e))?;
-
-    {
-        let stdin = child
-            .stdin
-            .as_mut()
-            .ok_or_else(|| anyhow!("Failed to open stdin for Node runner"))?;
-        stdin.write_all(task_json.as_bytes())?;
-    }
-
-    let output = child.wait_with_output()?;
+    let output = run_with_deadline(
+        "Escher JS runner",
+        command,
+        task_json.as_bytes().to_vec(),
+        timeout,
+    )?;
     if !output.status.success() {
         return Err(anyhow!(
             "Escher JS runner exited with status {} (node max-old-space-size={} MB; override via ESCHER_JS_MAX_OLD_SPACE_MB)",
@@ -250,7 +273,8 @@ pub fn run_escher_js(task_json: &str) -> Result<Vec<EscherJsInternalOutcome>> {
         return Err(anyhow!("Escher JS runner returned empty output"));
     }
 
-    let outcomes: Vec<EscherJsInternalOutcome> = serde_json::from_str(trimmed)?;
+    let outcomes: Vec<EscherJsInternalOutcome> = serde_json::from_str(trimmed)
+        .map_err(|error| anyhow!("Escher JS runner returned invalid JSON: {}", error))?;
     Ok(outcomes)
 }
 
@@ -315,6 +339,97 @@ fn push_library_component(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Writes `body` as a Node script in a fresh directory and returns its path.
+    fn runner(name: &str, body: &str) -> PathBuf {
+        let dir =
+            std::env::temp_dir().join(format!("refsyn-runner-{}-{}", std::process::id(), name));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("runner.js");
+        std::fs::write(&path, body).unwrap();
+        path
+    }
+
+    fn run(name: &str, body: &str, timeout_ms: u64) -> Result<Vec<EscherJsInternalOutcome>> {
+        run_escher_runner(
+            &runner(name, body),
+            "[]",
+            256,
+            Duration::from_millis(timeout_ms),
+        )
+    }
+
+    fn error_of(result: Result<Vec<EscherJsInternalOutcome>>) -> String {
+        result.expect_err("the runner must fail").to_string()
+    }
+
+    #[test]
+    fn a_runner_reply_is_parsed_into_outcomes() {
+        let outcomes = run(
+            "ok",
+            r#"process.stdin.resume(); process.stdin.on("end", () => process.stdout.write('[{"name":"h0","success":true,"rendered":"x","error":null}]'));"#,
+            10_000,
+        )
+        .unwrap();
+        assert_eq!(outcomes.len(), 1);
+        assert_eq!(outcomes[0].name, "h0");
+        assert!(outcomes[0].success);
+    }
+
+    #[test]
+    fn a_missing_runner_is_reported_without_starting_node() {
+        let missing = std::env::temp_dir().join("refsyn-no-such-runner/runner.js");
+        let error = error_of(run_escher_runner(
+            &missing,
+            "[]",
+            256,
+            Duration::from_secs(10),
+        ));
+        assert!(
+            error.starts_with("Escher JS runner not found at "),
+            "{error}"
+        );
+    }
+
+    #[test]
+    fn each_kind_of_runner_failure_is_reported_as_such() {
+        let cases = [
+            (
+                "exit",
+                "process.exit(3);",
+                "Escher JS runner exited with status",
+            ),
+            ("empty", "", "Escher JS runner returned empty output"),
+            (
+                "invalid",
+                "process.stdout.write('not json');",
+                "Escher JS runner returned invalid JSON",
+            ),
+            (
+                "shape",
+                "process.stdout.write('{\"name\":1}');",
+                "Escher JS runner returned invalid JSON",
+            ),
+        ];
+        for (name, body, expected) in cases {
+            let error = error_of(run(name, body, 10_000));
+            assert!(error.starts_with(expected), "{name}: {error}");
+        }
+    }
+
+    #[test]
+    fn a_runner_that_does_not_finish_is_killed_at_the_deadline() {
+        let started = std::time::Instant::now();
+        // The runner neither reads its input nor exits, so neither the write nor the wait returns.
+        let error = error_of(run_escher_runner(
+            &runner("hang", "setInterval(() => {}, 1000);"),
+            &"x".repeat(1 << 20),
+            256,
+            Duration::from_millis(500),
+        ));
+        assert_eq!(error, "Escher JS runner did not finish within 500 ms");
+        assert!(started.elapsed() < Duration::from_secs(5));
+    }
 
     #[test]
     fn parse_escher_js_max_old_space_mb_defaults_to_8192() {
