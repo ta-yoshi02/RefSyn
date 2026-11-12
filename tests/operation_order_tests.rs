@@ -1122,6 +1122,61 @@ fn a_refusal_before_validation_is_not_taken_for_a_refusal_by_validation() {
     }
 }
 
+/// Both write orders against `tests/data/point/reference.mjs`, a reference specification chosen
+/// for this test and written before running it, on a domain also chosen here: 18 inputs where the
+/// receiver is followed by exactly two cells. The three readings considered for the
+/// demonstrations agree on that domain, which is why it was chosen; that does not show the
+/// demonstrations fix the meaning there. The comparison covers every field of every object,
+/// aliases, a prefix before the receiver, cells pointing into the list, a detached cell and the
+/// return value. Longer and shorter lists are left undecided and not asserted.
+#[tokio::test]
+async fn both_write_orders_adopt_methods_that_match_a_chosen_reference_on_a_restricted_domain() {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+
+    for second in [["P", "Q"], ["Q", "P"]] {
+        let body = synthesize(&distinct_lists(second)).await;
+        assert_eq!(body["validation"]["status"], "passed", "{body:#}");
+        let mut child = Command::new("node")
+            .arg(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/scripts/compare_with_reference.mjs"
+            ))
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        child
+            .stdin
+            .take()
+            .unwrap()
+            .write_all(
+                &serde_json::to_vec(&json!({
+                    "reference": concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/point/reference.mjs"),
+                    "className": "Cell",
+                    "method": "point",
+                    "helpers": body["code"],
+                    "composedMethod": body["composed_method_code"],
+                }))
+                .unwrap(),
+            )
+            .unwrap();
+        let output = child.wait_with_output().unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let comparison: Json = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(
+            comparison,
+            json!({"cases": 18, "mismatches": []}),
+            "second demonstration writes {second:?}"
+        );
+    }
+}
+
 /// The two correspondences above give different helpers, so the adopted methods are compared
 /// with each other, as wholes, at every receiver that has a successor in lists of 2 to 6 cells;
 /// two of these are the demonstrated states. Agreement here is between the two methods, not
