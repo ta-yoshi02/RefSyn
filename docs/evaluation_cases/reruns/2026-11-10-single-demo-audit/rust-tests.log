@@ -1,0 +1,52 @@
+   Compiling refsyn v0.1.0 (/Users/taku/workspace/kenkyu/proj-ref/refsyn)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.69s
+     Running tests/paper_pipeline_tests.rs (target/debug/deps/paper_pipeline_tests-80ac25f7230520b8)
+
+running 26 tests
+test creating_a_class_outside_the_supported_constructors_fails ... ok
+test creations_precede_holes_shared_vertices_bind_once_and_writes_keep_order_and_multiplicity ... ok
+test creation_and_write_history_do_not_carry_over_to_the_next_demonstration ... ok
+test delete_edges_write_one_shared_null_vertex ... ok
+test edits_become_writes_in_order_with_duplicates ... ok
+test hole_inputs_add_created_objects_and_earlier_holes_but_no_writes ... ok
+test an_unrepresentable_or_mixed_kind_input_state_is_rejected_by_the_pbe_encoding ... ok
+test holes_read_the_state_before_any_write_with_user_names_and_detached_objects ... ok
+test hole_inputs_keep_the_constructor_default_of_a_created_object ... ok
+test correspondence_preserves_kind_class_direction_and_multiplicity ... ok
+test insert_demonstrations_correspond_as_in_the_paper ... ok
+test edit_order_does_not_swap_symmetric_vertices_into_contradictory_examples ... ok
+test insert_template_has_seven_statements_in_the_paper_order ... ok
+test reading_keeps_null_undefined_and_absent_fields_apart ... ok
+test add_edge_replaces_an_unwritten_constructor_default_of_a_created_object ... ok
+test inconsistent_or_unsupported_edits_fail ... ok
+test reading_rejects_unknown_references_and_untyped_state ... ok
+test the_core_hands_the_browser_one_task_per_hole_and_the_hole_checks ... ok
+test the_web_tests_use_the_paper_insert_request ... ok
+test the_first_consistent_correspondence_is_taken_however_many_others_exist ... ok
+test non_isomorphic_demonstrations_are_not_synthesized ... ok
+test an_empty_request_produces_no_code ... ok
+test demonstrations_of_different_methods_are_rejected_before_synthesis ... ok
+test insert_with_a_numeric_constructor_default_is_synthesized_validated_and_adopted ... ok
+test paper_insert_is_synthesized_validated_and_adopted ... ok
+test running_out_of_search_steps_is_not_reported_as_a_contradiction ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.02s
+
+     Running tests/whole_method_validation_tests.rs (target/debug/deps/whole_method_validation_tests-0f52fbe82432cad5)
+
+running 12 tests
+test http_never_exposes_code_that_was_not_validated ... ok
+test http_adopts_a_composed_method_only_after_replaying_the_demonstration ... ok
+test http_validates_demonstrated_return_values ... ok
+test adopted_pop_back_matches_the_reference_on_unseen_inputs ... ok
+test adopted_append_matches_the_reference_on_unseen_inputs ... ok
+test adopted_prepend_matches_the_reference_on_unseen_inputs ... ok
+test untyped_numeral_literals_are_not_adopted_as_numbers ... ok
+test adopted_set_at_matches_the_reference_on_unseen_inputs ... ok
+test adopted_insert_matches_the_reference_on_unseen_inputs ... ok
+test saved_evaluation_cases_are_adopted_after_validation ... ok
+test adopted_methods_match_the_reference_after_each_seeded_random_call ... ok
+test reference_comparator_accepts_correct_methods_and_rejects_faulty_candidates ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.65s
+

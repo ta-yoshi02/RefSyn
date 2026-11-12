@@ -1,0 +1,56 @@
+{
+  "validation": {
+    "status": "passed",
+    "checked_demonstrations": 1,
+    "error": null
+  },
+  "hole_checks": [
+    {
+      "helper": "setAt_h0",
+      "expected": [
+        {
+          "ref": "main-new3"
+        }
+      ]
+    },
+    {
+      "helper": "setAt_h1",
+      "expected": [
+        60
+      ]
+    }
+  ],
+  "common_pattern": "BindHole(0, Hole { vertex: 0, ty: Object(\"Node\"), examples: [Object(\"main-new3\")] })\nBindHole(1, Hole { vertex: 1, ty: Number, examples: [Constant(Number(Number(60)))] })\nWrite(Write { from: 0, field: \"val\", to: 1 })",
+  "hole_information": {
+    "setAt_h0": [
+      "object main-new3"
+    ],
+    "setAt_h1": [
+      "Number(Number(60))"
+    ]
+  },
+  "code": [
+    "setAt_h0(a, b) { return ((__refsynCur) => { const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError(\"refsyn: penultimateRef met a cycle\"); } __refsynSeen.add(__refsynCur); const __refsynNext = (__refsynCur).next; if (__refsynNext === null) { return null; } if ((__refsynNext).next === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })(this); }",
+    "setAt_h1(a, b, hole0) { return b; }"
+  ],
+  "composed_method_code": "setAt(a, b) {\n    const hole0 = this.setAt_h0(a, b);\n    const hole1 = this.setAt_h1(a, b, hole0);\n    hole0.val = hole1;\n}",
+  "individual_codes": [
+    "setAt_h0: setAt_h0(a, b) { return ((__refsynCur) => { const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError(\"refsyn: penultimateRef met a cycle\"); } __refsynSeen.add(__refsynCur); const __refsynNext = (__refsynCur).next; if (__refsynNext === null) { return null; } if ((__refsynNext).next === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })(this); }",
+    "setAt_h1: setAt_h1(a, b, hole0) { return b; }"
+  ],
+  "list_environment_info": "escher-ts task JSON saved: target/escher/ts/setAt_1794210327_341439000_p9717_0.json",
+  "escher_results": [
+    {
+      "name": "setAt_h0",
+      "success": true,
+      "rendered": "setAt_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int): Ref[Object<Node>] =\n  penultimateRef(@thisRef, @nextHeap)",
+      "error": null
+    },
+    {
+      "name": "setAt_h1",
+      "success": true,
+      "rendered": "setAt_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int, @hole0: Ref[Object<Node>]): Int =\n  @b",
+      "error": null
+    }
+  ]
+}

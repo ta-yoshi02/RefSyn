@@ -1,0 +1,12 @@
+{
+  "good": {
+    "status": "passed",
+    "checked_demonstrations": 1,
+    "error": null
+  },
+  "rejected": {
+    "status": "failed",
+    "checked_demonstrations": 0,
+    "error": "Value or return mismatch at main-new1.val"
+  }
+}

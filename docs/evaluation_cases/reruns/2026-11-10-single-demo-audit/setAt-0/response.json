@@ -1,0 +1,56 @@
+{
+  "validation": {
+    "status": "passed",
+    "checked_demonstrations": 1,
+    "error": null
+  },
+  "hole_checks": [
+    {
+      "helper": "setAt_h0",
+      "expected": [
+        {
+          "ref": "main-new1"
+        }
+      ]
+    },
+    {
+      "helper": "setAt_h1",
+      "expected": [
+        46
+      ]
+    }
+  ],
+  "common_pattern": "BindHole(0, Hole { vertex: 0, ty: Object(\"Node\"), examples: [Object(\"main-new1\")] })\nBindHole(1, Hole { vertex: 1, ty: Number, examples: [Constant(Number(Number(46)))] })\nWrite(Write { from: 0, field: \"val\", to: 1 })",
+  "hole_information": {
+    "setAt_h1": [
+      "Number(Number(46))"
+    ],
+    "setAt_h0": [
+      "object main-new1"
+    ]
+  },
+  "code": [
+    "setAt_h0(a, b) { return this; }",
+    "setAt_h1(a, b, hole0) { return b; }"
+  ],
+  "composed_method_code": "setAt(a, b) {\n    const hole0 = this.setAt_h0(a, b);\n    const hole1 = this.setAt_h1(a, b, hole0);\n    hole0.val = hole1;\n}",
+  "individual_codes": [
+    "setAt_h0: setAt_h0(a, b) { return this; }",
+    "setAt_h1: setAt_h1(a, b, hole0) { return b; }"
+  ],
+  "list_environment_info": "escher-ts task JSON saved: target/escher/ts/setAt_1794210327_179880000_p9699_0.json",
+  "escher_results": [
+    {
+      "name": "setAt_h0",
+      "success": true,
+      "rendered": "setAt_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int): Ref[Object<Node>] =\n  @thisRef",
+      "error": null
+    },
+    {
+      "name": "setAt_h1",
+      "success": true,
+      "rendered": "setAt_h1(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int], @a: Int, @b: Int, @hole0: Ref[Object<Node>]): Int =\n  @b",
+      "error": null
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "validation": {
+    "status": "passed",
+    "checked_demonstrations": 1,
+    "error": null
+  },
+  "hole_checks": [
+    {
+      "helper": "popBack_h0",
+      "expected": [
+        {
+          "ref": "main-new2"
+        }
+      ]
+    }
+  ],
+  "common_pattern": "BindHole(0, Hole { vertex: 0, ty: Object(\"Node\"), examples: [Object(\"main-new2\")] })\nWrite(Write { from: 0, field: \"next\", to: 1 })",
+  "hole_information": {
+    "popBack_h0": [
+      "object main-new2"
+    ]
+  },
+  "code": [
+    "popBack_h0() { return ((__refsynCur) => { const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError(\"refsyn: penultimateRef met a cycle\"); } __refsynSeen.add(__refsynCur); const __refsynNext = (__refsynCur).next; if (__refsynNext === null) { return null; } if ((__refsynNext).next === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })(this); }"
+  ],
+  "composed_method_code": "popBack() {\n    const hole0 = this.popBack_h0();\n    hole0.next = null;\n}",
+  "individual_codes": [
+    "popBack_h0: popBack_h0() { return ((__refsynCur) => { const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError(\"refsyn: penultimateRef met a cycle\"); } __refsynSeen.add(__refsynCur); const __refsynNext = (__refsynCur).next; if (__refsynNext === null) { return null; } if ((__refsynNext).next === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })(this); }"
+  ],
+  "list_environment_info": "escher-ts task JSON saved: target/escher/ts/popBack_1794210329_006581000_p9915_0.json",
+  "escher_results": [
+    {
+      "name": "popBack_h0",
+      "success": true,
+      "rendered": "popBack_h0(@thisRef: Ref[Object<Node>], @nodeHeap: List[Object<Node>], @nextHeap: List[Object<Node>], @valHeap: List[Int]): Ref[Object<Node>] =\n  penultimateRef(@thisRef, @nextHeap)",
+      "error": null
+    }
+  ]
+}

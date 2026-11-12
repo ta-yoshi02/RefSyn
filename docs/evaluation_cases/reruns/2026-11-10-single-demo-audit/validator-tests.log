@@ -1,0 +1,340 @@
+TAP version 13
+# Subtest: accepts null assignment and retains identity, cycles and undefined fields
+ok 1 - accepts null assignment and retains identity, cycles and undefined fields
+  ---
+  duration_ms: 20.728334
+  type: 'test'
+  ...
+# Subtest: property deletion is different from null
+ok 2 - property deletion is different from null
+  ---
+  duration_ms: 0.543834
+  type: 'test'
+  ...
+# Subtest: return identity is not value equality
+ok 3 - return identity is not value equality
+  ---
+  duration_ms: 3.769791
+  type: 'test'
+  ...
+# Subtest: unchanged unreachable object is still checked
+ok 4 - unchanged unreachable object is still checked
+  ---
+  duration_ms: 0.324834
+  type: 'test'
+  ...
+# Subtest: undefined is not an absent field
+ok 5 - undefined is not an absent field
+  ---
+  duration_ms: 2.591958
+  type: 'test'
+  ...
+# Subtest: throwing generated code is rejected
+ok 6 - throwing generated code is rejected
+  ---
+  duration_ms: 0.249125
+  type: 'test'
+  ...
+# Subtest: constructor defaults and fresh return aliases are compared
+ok 7 - constructor defaults and fresh return aliases are compared
+  ---
+  duration_ms: 1.1125
+  type: 'test'
+  ...
+# Subtest: a wrong second demonstration rejects the entire candidate
+ok 8 - a wrong second demonstration rejects the entire candidate
+  ---
+  duration_ms: 0.92375
+  type: 'test'
+  ...
+# Subtest: missing state and missing successful holes never produce adoptable code
+ok 9 - missing state and missing successful holes never produce adoptable code
+  ---
+  duration_ms: 0.326708
+  type: 'test'
+  ...
+# Subtest: value-field delete, stale old targets and unresolved sources are unavailable
+ok 10 - value-field delete, stale old targets and unresolved sources are unavailable
+  ---
+  duration_ms: 0.526084
+  type: 'test'
+  ...
+# Subtest: hole helpers are installed with composed code
+ok 11 - hole helpers are installed with composed code
+  ---
+  duration_ms: 2.981459
+  type: 'test'
+  ...
+# Subtest: repeated writes are replayed in demonstration order without compression or rejection
+ok 12 - repeated writes are replayed in demonstration order without compression or rejection
+  ---
+  duration_ms: 0.492583
+  type: 'test'
+  ...
+# Subtest: native validation bounds non-termination and returns a failure
+ok 13 - native validation bounds non-termination and returns a failure
+  ---
+  duration_ms: 1038.901667
+  type: 'test'
+  ...
+# Subtest: class names cannot capture the allocation tracker
+ok 14 - class names cannot capture the allocation tracker
+  ---
+  duration_ms: 0.402334
+  type: 'test'
+  ...
+# Subtest: duplicate generated method names are rejected before execution
+ok 15 - duplicate generated method names are rejected before execution
+  ---
+  duration_ms: 0.121083
+  type: 'test'
+  ...
+# Subtest: doing nothing is rejected
+ok 16 - doing nothing is rejected
+  ---
+  duration_ms: 0.282292
+  type: 'test'
+  ...
+# Subtest: updating a different object is rejected
+ok 17 - updating a different object is rejected
+  ---
+  duration_ms: 0.225917
+  type: 'test'
+  ...
+# Subtest: allocating instead of writing null is rejected
+ok 18 - allocating instead of writing null is rejected
+  ---
+  duration_ms: 0.265291
+  type: 'test'
+  ...
+# Subtest: prototype mutation is rejected
+ok 19 - prototype mutation is rejected
+  ---
+  duration_ms: 1.978458
+  type: 'test'
+  ...
+# Subtest: static state mutation is rejected
+ok 20 - static state mutation is rejected
+  ---
+  duration_ms: 0.233
+  type: 'test'
+  ...
+# Subtest: global mutation is rejected
+ok 21 - global mutation is rejected
+  ---
+  duration_ms: 0.18475
+  type: 'test'
+  ...
+# Subtest: builtin prototype mutation is rejected
+ok 22 - builtin prototype mutation is rejected
+  ---
+  duration_ms: 0.25125
+  type: 'test'
+  ...
+# Subtest: without a return edit the demonstrated return value is undefined
+ok 23 - without a return edit the demonstrated return value is undefined
+  ---
+  duration_ms: 0.523833
+  type: 'test'
+  ...
+# Subtest: addEdge starts from a field without an edge
+ok 24 - addEdge starts from a field without an edge
+  ---
+  duration_ms: 0.30925
+  type: 'test'
+  ...
+# Subtest: addEdge replaces an unwritten constructor default of a created object
+ok 25 - addEdge replaces an unwritten constructor default of a created object
+  ---
+  duration_ms: 1.490958
+  type: 'test'
+  ...
+# Subtest: the first-write exception applies per field and survives addEdge, deleteEdge, addEdge
+ok 26 - the first-write exception applies per field and survives addEdge, deleteEdge, addEdge
+  ---
+  duration_ms: 0.382208
+  type: 'test'
+  ...
+# Subtest: a written field, a pre-call value and a stale old target still reject the edit
+ok 27 - a written field, a pre-call value and a stale old target still reject the edit
+  ---
+  duration_ms: 0.25225
+  type: 'test'
+  ...
+# Subtest: unreachable allocations are paired by structure rather than creation order
+ok 28 - unreachable allocations are paired by structure rather than creation order
+  ---
+  duration_ms: 0.689792
+  type: 'test'
+  ...
+# Subtest: a constructor that cannot run in isolation makes the demonstration unavailable
+ok 29 - a constructor that cannot run in isolation makes the demonstration unavailable
+  ---
+  duration_ms: 0.130334
+  type: 'test'
+  ...
+# Subtest: demonstrations of different methods are not validated together
+ok 30 - demonstrations of different methods are not validated together
+  ---
+  duration_ms: 0.13775
+  type: 'test'
+  ...
+# Subtest: literals keep their recorded type
+ok 31 - literals keep their recorded type
+  ---
+  duration_ms: 0.782084
+  type: 'test'
+  ...
+# Subtest: a helper must return its output example, not just lead to the right final state
+ok 32 - a helper must return its output example, not just lead to the right final state
+  ---
+  duration_ms: 0.836791
+  type: 'test'
+  ...
+# Subtest: a value with the demonstrated label but another type fails: set_flag
+ok 33 - a value with the demonstrated label but another type fails: set_flag
+  ---
+  duration_ms: 1.356375
+  type: 'test'
+  ...
+# Subtest: a value with the demonstrated label but another type fails: set_flag_number_literal
+ok 34 - a value with the demonstrated label but another type fails: set_flag_number_literal
+  ---
+  duration_ms: 0.962958
+  type: 'test'
+  ...
+# Subtest: a value with the demonstrated label but another type fails: set_flag_string_literal
+ok 35 - a value with the demonstrated label but another type fails: set_flag_string_literal
+  ---
+  duration_ms: 0.584958
+  type: 'test'
+  ...
+# Subtest: accepts the reference and an equivalent method that creates its objects in another order
+ok 36 - accepts the reference and an equivalent method that creates its objects in another order
+  ---
+  duration_ms: 109.619583
+  type: 'test'
+  ...
+# Subtest: rejects a wrong value
+ok 37 - rejects a wrong value
+  ---
+  duration_ms: 45.195833
+  type: 'test'
+  ...
+# Subtest: rejects a copy in place of the original last node
+ok 38 - rejects a copy in place of the original last node
+  ---
+  duration_ms: 44.076291
+  type: 'test'
+  ...
+# Subtest: rejects a return value the reference does not give
+ok 39 - rejects a return value the reference does not give
+  ---
+  duration_ms: 43.399666
+  type: 'test'
+  ...
+# Subtest: rejects a deleted field in place of null
+ok 40 - rejects a deleted field in place of null
+  ---
+  duration_ms: 42.074625
+  type: 'test'
+  ...
+# Subtest: rejects damage to the node it unlinks
+ok 41 - rejects damage to the node it unlinks
+  ---
+  duration_ms: 41.177334
+  type: 'test'
+  ...
+# Subtest: rejects throwing
+ok 42 - rejects throwing
+  ---
+  duration_ms: 44.873916
+  type: 'test'
+  ...
+# Subtest: rejects not defining the method
+ok 43 - rejects not defining the method
+  ---
+  duration_ms: 39.333375
+  type: 'test'
+  ...
+# Subtest: stops a candidate that does not finish and reports it as a mismatch
+ok 44 - stops a candidate that does not finish and reports it as a mismatch
+  ---
+  duration_ms: 2031.496458
+  type: 'test'
+  ...
+# Subtest: a reference that does not finish is an error rather than an agreement
+ok 45 - a reference that does not finish is an error rather than an agreement
+  ---
+  duration_ms: 2029.932708
+  type: 'test'
+  ...
+# Subtest: refuses an input with a Map in the input, even once detached instead of comparing it
+ok 46 - refuses an input with a Map in the input, even once detached instead of comparing it
+  ---
+  duration_ms: 32.695417
+  type: 'test'
+  ...
+# Subtest: refuses an input with a symbol value instead of comparing it
+ok 47 - refuses an input with a symbol value instead of comparing it
+  ---
+  duration_ms: 32.801708
+  type: 'test'
+  ...
+# Subtest: refuses an input with a getter instead of comparing it
+ok 48 - refuses an input with a getter instead of comparing it
+  ---
+  duration_ms: 32.259792
+  type: 'test'
+  ...
+# Subtest: refuses an input with a symbol key instead of comparing it
+ok 49 - refuses an input with a symbol key instead of comparing it
+  ---
+  duration_ms: 31.964583
+  type: 'test'
+  ...
+# Subtest: refuses an input with a non-enumerable field instead of comparing it
+ok 50 - refuses an input with a non-enumerable field instead of comparing it
+  ---
+  duration_ms: 31.559167
+  type: 'test'
+  ...
+# Subtest: refuses an input with -0 instead of comparing it
+ok 51 - refuses an input with -0 instead of comparing it
+  ---
+  duration_ms: 31.07675
+  type: 'test'
+  ...
+# Subtest: refuses an input with NaN instead of comparing it
+ok 52 - refuses an input with NaN instead of comparing it
+  ---
+  duration_ms: 31.302959
+  type: 'test'
+  ...
+# Subtest: refuses an input with Infinity instead of comparing it
+ok 53 - refuses an input with Infinity instead of comparing it
+  ---
+  duration_ms: 31.324792
+  type: 'test'
+  ...
+# Subtest: refuses an input with a frozen object instead of comparing it
+ok 54 - refuses an input with a frozen object instead of comparing it
+  ---
+  duration_ms: 25.0915
+  type: 'test'
+  ...
+# Subtest: a candidate that leaves a state Kanon would not record is a mismatch
+ok 55 - a candidate that leaves a state Kanon would not record is a mismatch
+  ---
+  duration_ms: 377.531417
+  type: 'test'
+  ...
+1..55
+# tests 55
+# suites 0
+# pass 55
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5182.650625

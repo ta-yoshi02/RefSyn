@@ -1,0 +1,56 @@
+{
+  "validation": {
+    "status": "passed",
+    "checked_demonstrations": 1,
+    "error": null
+  },
+  "hole_checks": [
+    {
+      "helper": "setSeven_h0",
+      "expected": [
+        {
+          "ref": "main-new1"
+        }
+      ]
+    },
+    {
+      "helper": "setSeven_h1",
+      "expected": [
+        7
+      ]
+    }
+  ],
+  "common_pattern": "BindHole(0, Hole { vertex: 0, ty: Object(\"Cell\"), examples: [Object(\"main-new1\")] })\nBindHole(1, Hole { vertex: 1, ty: Number, examples: [Constant(Number(Number(7)))] })\nWrite(Write { from: 0, field: \"val\", to: 1 })",
+  "hole_information": {
+    "setSeven_h1": [
+      "Number(Number(7))"
+    ],
+    "setSeven_h0": [
+      "object main-new1"
+    ]
+  },
+  "code": [
+    "setSeven_h0() { return this; }",
+    "setSeven_h1(hole0) { return (((((((0 + 1) + 1) + 1) + 1) + 1) + 1) + 1); }"
+  ],
+  "composed_method_code": "setSeven() {\n    const hole0 = this.setSeven_h0();\n    const hole1 = this.setSeven_h1(hole0);\n    hole0.val = hole1;\n}",
+  "individual_codes": [
+    "setSeven_h0: setSeven_h0() { return this; }",
+    "setSeven_h1: setSeven_h1(hole0) { return (((((((0 + 1) + 1) + 1) + 1) + 1) + 1) + 1); }"
+  ],
+  "list_environment_info": "escher-ts task JSON saved: target/escher/ts/setSeven_1794278354_254074000_p30803_0.json",
+  "escher_results": [
+    {
+      "name": "setSeven_h0",
+      "success": true,
+      "rendered": "setSeven_h0(@thisRef: Ref[Object<Cell>], @nodeHeap: List[Object<Cell>], @nextHeap: List[Object<Cell>], @valHeap: List[Int]): Ref[Object<Cell>] =\n  @thisRef",
+      "error": null
+    },
+    {
+      "name": "setSeven_h1",
+      "success": true,
+      "rendered": "setSeven_h1(@thisRef: Ref[Object<Cell>], @nodeHeap: List[Object<Cell>], @nextHeap: List[Object<Cell>], @valHeap: List[Int], @hole0: Ref[Object<Cell>]): Int =\n  inc(inc(inc(inc(inc(inc(inc(zero())))))))",
+      "error": null
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "reference": "/Users/taku/workspace/kenkyu/proj-ref/refsyn/tests/recordings/insert/reference.mjs",
+  "className": "Node",
+  "method": "insert",
+  "helpers": [
+    "insert_h0(i, arg, created0) { return arg; }",
+    "insert_h1(i, arg, created0, hole0) { return ((__refsynCur) => { const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError(\"refsyn: penultimateRef met a cycle\"); } __refsynSeen.add(__refsynCur); const __refsynNext = (__refsynCur).next; if (__refsynNext === null) { return null; } if ((__refsynNext).next === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })(this); }",
+    "insert_h2(i, arg, created0, hole0, hole1) { return this; }"
+  ],
+  "composedMethod": "insert(i, arg) {\n    const created0 = new Node();\n    const hole0 = this.insert_h0(i, arg, created0);\n    const hole1 = this.insert_h1(i, arg, created0, hole0);\n    const hole2 = this.insert_h2(i, arg, created0, hole0, hole1);\n    created0.val = hole0;\n    created0.next = hole1;\n    hole2.next = created0;\n}"
+}

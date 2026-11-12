@@ -1,0 +1,10 @@
+{
+  "reference": "/Users/taku/workspace/kenkyu/proj-ref/refsyn/tests/recordings/append/reference.mjs",
+  "className": "Node",
+  "method": "append",
+  "helpers": [
+    "append_h0(x, created0) { return ((__refsynCur) => { const __refsynSeen = new Set(); while (__refsynCur !== null) { if (__refsynSeen.has(__refsynCur)) { throw new RangeError(\"refsyn: last_ptr met a cycle\"); } __refsynSeen.add(__refsynCur); const __refsynNext = (__refsynCur).next; if (__refsynNext === null) { return __refsynCur; } __refsynCur = __refsynNext; } return null; })(this); }",
+    "append_h1(x, created0, hole0) { return x; }"
+  ],
+  "composedMethod": "append(x) {\n    const created0 = new Node();\n    const hole0 = this.append_h0(x, created0);\n    const hole1 = this.append_h1(x, created0, hole0);\n    hole0.next = created0;\n    created0.val = hole1;\n}"
+}
