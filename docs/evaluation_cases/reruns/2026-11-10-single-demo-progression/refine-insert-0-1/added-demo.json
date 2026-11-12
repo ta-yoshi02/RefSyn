@@ -1,0 +1,103 @@
+{
+  "source": "head, length 2, args [0,61]",
+  "caseIndex": 3,
+  "call": {
+    "callLabel": "counterexample3",
+    "contextSensitiveID": "independent",
+    "receiverObject": "ce0",
+    "methodName": "insert",
+    "operations": [
+      {
+        "editType": "addNode",
+        "id": "created",
+        "label": "Node",
+        "isLiteral": false
+      },
+      {
+        "editType": "addNode",
+        "id": "lit1",
+        "label": "61",
+        "isLiteral": true,
+        "type": "number"
+      },
+      {
+        "editType": "addEdge",
+        "from": "created",
+        "label": "val",
+        "to": "lit1"
+      },
+      {
+        "editType": "addEdge",
+        "from": "created",
+        "label": "next",
+        "to": "ce1"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "ce0",
+        "label": "next",
+        "oldTo": "ce1",
+        "newTo": "created"
+      }
+    ],
+    "arguments": [
+      0,
+      61
+    ],
+    "argumentTypes": [
+      "Int",
+      "Int"
+    ],
+    "argumentNames": [
+      "arg0",
+      "arg1"
+    ],
+    "receiverClassName": "Node",
+    "methodParamNames": [
+      "i",
+      "arg"
+    ],
+    "precondGraph": {
+      "nodes": [],
+      "edges": []
+    },
+    "actualGraph": {
+      "nodes": [],
+      "edges": []
+    },
+    "idMapping": {}
+  },
+  "validation": {
+    "callLabel": "counterexample3",
+    "contextSensitiveID": "independent",
+    "objects": [
+      {
+        "id": "ce0",
+        "className": "Node",
+        "fields": {
+          "next": {
+            "ref": "ce1"
+          },
+          "val": 53
+        }
+      },
+      {
+        "id": "ce1",
+        "className": "Node",
+        "fields": {
+          "next": null,
+          "val": -27
+        }
+      }
+    ],
+    "values": {
+      "ce0-val": 53,
+      "ce1-next": null,
+      "ce1-val": -27
+    },
+    "arguments": [
+      0,
+      61
+    ]
+  }
+}

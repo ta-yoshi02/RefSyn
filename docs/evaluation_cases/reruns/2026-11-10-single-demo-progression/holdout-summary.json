@@ -1,0 +1,51 @@
+[
+  {
+    "method": "insert",
+    "start": "0",
+    "examples": 4,
+    "cases": 164,
+    "matches": 164
+  },
+  {
+    "method": "setAt",
+    "start": "0",
+    "examples": 3,
+    "cases": 164,
+    "matches": 164
+  },
+  {
+    "method": "append",
+    "start": "0",
+    "examples": 1,
+    "cases": 28,
+    "matches": 28
+  },
+  {
+    "method": "prepend",
+    "start": "0",
+    "examples": 1,
+    "cases": 28,
+    "matches": 28
+  },
+  {
+    "method": "popBack",
+    "start": "0",
+    "examples": 1,
+    "cases": 24,
+    "matches": 24
+  },
+  {
+    "method": "rotateRight",
+    "start": "0",
+    "examples": 4,
+    "cases": 160,
+    "matches": 160
+  },
+  {
+    "method": "rotateRight",
+    "start": "all",
+    "examples": 6,
+    "cases": 160,
+    "matches": 160
+  }
+]

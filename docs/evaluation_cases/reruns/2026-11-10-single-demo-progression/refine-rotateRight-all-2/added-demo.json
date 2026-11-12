@@ -1,0 +1,128 @@
+{
+  "source": "root 50(30(20(10, -), 40), 70)",
+  "caseIndex": 4,
+  "call": {
+    "callLabel": "counterexample4",
+    "contextSensitiveID": "independent",
+    "receiverObject": "ce0",
+    "methodName": "rotateRight",
+    "operations": [
+      {
+        "editType": "editEdgeReference",
+        "from": "ce0",
+        "label": "left",
+        "oldTo": "ce1",
+        "newTo": "ce4"
+      },
+      {
+        "editType": "editEdgeReference",
+        "from": "ce1",
+        "label": "right",
+        "oldTo": "ce4",
+        "newTo": "ce0"
+      },
+      {
+        "editType": "addVariable",
+        "label": "return",
+        "to": "ce1"
+      }
+    ],
+    "arguments": [],
+    "receiverClassName": "TreeNode",
+    "precondGraph": {
+      "nodes": [],
+      "edges": []
+    },
+    "actualGraph": {
+      "nodes": [],
+      "edges": []
+    },
+    "idMapping": {}
+  },
+  "validation": {
+    "callLabel": "counterexample4",
+    "contextSensitiveID": "independent",
+    "objects": [
+      {
+        "id": "ce0",
+        "className": "TreeNode",
+        "fields": {
+          "left": {
+            "ref": "ce1"
+          },
+          "right": {
+            "ref": "ce2"
+          },
+          "val": 50
+        }
+      },
+      {
+        "id": "ce1",
+        "className": "TreeNode",
+        "fields": {
+          "left": {
+            "ref": "ce3"
+          },
+          "right": {
+            "ref": "ce4"
+          },
+          "val": 30
+        }
+      },
+      {
+        "id": "ce2",
+        "className": "TreeNode",
+        "fields": {
+          "left": null,
+          "right": null,
+          "val": 70
+        }
+      },
+      {
+        "id": "ce3",
+        "className": "TreeNode",
+        "fields": {
+          "left": {
+            "ref": "ce5"
+          },
+          "right": null,
+          "val": 20
+        }
+      },
+      {
+        "id": "ce4",
+        "className": "TreeNode",
+        "fields": {
+          "left": null,
+          "right": null,
+          "val": 40
+        }
+      },
+      {
+        "id": "ce5",
+        "className": "TreeNode",
+        "fields": {
+          "left": null,
+          "right": null,
+          "val": 10
+        }
+      }
+    ],
+    "values": {
+      "ce0-val": 50,
+      "ce1-val": 30,
+      "ce2-left": null,
+      "ce2-right": null,
+      "ce2-val": 70,
+      "ce3-right": null,
+      "ce3-val": 20,
+      "ce4-left": null,
+      "ce4-right": null,
+      "ce4-val": 40,
+      "ce5-left": null,
+      "ce5-right": null,
+      "ce5-val": 10
+    },
+    "arguments": []
+  }
+}
